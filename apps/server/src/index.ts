@@ -1,3 +1,4 @@
+import type { R2Bucket } from "@cloudflare/workers-types";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
@@ -65,6 +66,35 @@ app.use("/*", async (c, next) => {
   }
 
   await next();
+});
+
+app.get("/image/*", async (c) => {
+  const key = c.req.path.replace("/image/", "");
+  if (!key) return c.json({ message: "Key required" }, 400);
+
+  if (env.NODE_ENV === "production") {
+    const asset = await env.ASSETS.fetch(c.req.raw);
+    if (!asset.ok) return c.json({ message: "Not found" }, 404);
+    const body = asset.body;
+    if (!body) return c.json({ message: "Not found" }, 404);
+    const headers: Record<string, string> = { "Cache-Control": "public, max-age=31536000" };
+    const contentType = asset.headers.get("content-type");
+    if (contentType) headers["Content-Type"] = contentType;
+    const contentLength = asset.headers.get("content-length");
+    if (contentLength) headers["Content-Length"] = contentLength;
+    return c.newResponse(body, { headers });
+  }
+
+  const bucket = env.PUBLIC_ASSETS_BUCKET;
+  if (!bucket) return c.json({ message: "Bucket not bound" }, 500);
+  const obj = await bucket.get(key);
+  if (!obj) return c.json({ message: "Not found" }, 404);
+  const headers: Record<string, string> = {
+    "Content-Type": obj.httpMetadata?.contentType ?? "image/jpeg",
+    "Cache-Control": "public, max-age=31536000",
+  };
+  if (obj.size) headers["Content-Length"] = String(obj.size);
+  return c.newResponse(obj.body, { headers });
 });
 
 app.get("/", (c) => {

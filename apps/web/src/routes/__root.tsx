@@ -8,8 +8,6 @@ import { useEffect } from "react";
 
 import { setClerkAuthTokenGetter } from "@/utils/clerk-auth";
 
-import Header from "../components/header";
-
 import appCss from "../index.css?url";
 
 function ClerkApiAuthBridge() {
@@ -66,8 +64,7 @@ function RootDocument() {
           <HeadContent />
         </head>
         <body>
-          <div className="grid h-svh grid-rows-[auto_1fr]">
-            <Header />
+          <div>
             <Outlet />
           </div>
           <Toaster richColors />
