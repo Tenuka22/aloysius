@@ -4,7 +4,7 @@ import { Show, SignInButton, SignUpButton, UserButton, useAuth } from "@clerk/ta
 
 function AdminLink() {
   const { sessionClaims } = useAuth()
-  const role = (sessionClaims as any)?.metadata?.role
+  const role = (sessionClaims)?.metadata?.role
 
   if (role !== "admin") return null
 
