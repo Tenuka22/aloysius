@@ -61,9 +61,6 @@ export function Navbar() {
         {/* Right Side */}
         <div ref={ctaRef} className="flex items-center gap-3">
           <UserMenu />
-          <button className="hidden sm:inline-flex h-8 items-center rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-            Apply Now
-          </button>
           <button
             className="lg:hidden inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
