@@ -1,8 +1,7 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { auth } from "@clerk/tanstack-react-start/server"
-import { SidebarProvider, SidebarInset } from "@aloysius-web/ui/components/sidebar"
-import { AdminSidebar } from "@/components/app-sidebar"
+import { AdminLayout } from "@/components-client/admin-layout"
 
 const requireAdmin = createServerFn({ method: "GET" }).handler(async () => {
   const { isAuthenticated, sessionClaims } = await auth()
@@ -24,14 +23,3 @@ export const Route = createFileRoute("/admin")({
   beforeLoad: () => requireAdmin(),
   component: AdminLayout,
 })
-
-function AdminLayout() {
-  return (
-    <SidebarProvider>
-      <AdminSidebar />
-      <SidebarInset>
-        <Outlet />
-      </SidebarInset>
-    </SidebarProvider>
-  )
-}
