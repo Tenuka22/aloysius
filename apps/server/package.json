@@ -11,9 +11,9 @@
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
-    "@web-template/api": "workspace:*",
-    "@web-template/db": "workspace:*",
-    "@web-template/env": "workspace:*",
+    "@aloysius-web/api": "workspace:*",
+    "@aloysius-web/db": "workspace:*",
+    "@aloysius-web/env": "workspace:*",
     "dotenv": "catalog:",
     "hono": "catalog:",
     "zod": "catalog:"
@@ -21,7 +21,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
     "@types/node": "catalog:",
-    "@web-template/config": "workspace:*",
+    "@aloysius-web/config": "workspace:*",
     "alchemy": "catalog:",
     "tsdown": "^0.22.3",
     "typescript": "catalog:",

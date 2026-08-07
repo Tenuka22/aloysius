@@ -1,5 +1,5 @@
 {
-  "extends": "@web-template/config/tsconfig.base.json",
+  "extends": "@aloysius-web/config/tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
     "outDir": "dist",

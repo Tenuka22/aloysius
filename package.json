@@ -1,5 +1,5 @@
 {
-  "name": "web-template",
+  "name": "aloysius-web",
   "private": true,
   "workspaces": {
     "packages": [
@@ -41,19 +41,19 @@
     "hooks:setup": "vp config",
     "dev:web": "vp run --filter web dev",
     "dev:server": "vp run --filter server dev",
-    "db:generate": "vp run --filter @web-template/db db:generate",
-    "deploy": "vp run --filter @web-template/infra deploy",
-    "destroy": "vp run --filter @web-template/infra destroy"
+    "db:generate": "vp run --filter @aloysius-web/db db:generate",
+    "deploy": "vp run --filter @aloysius-web/infra deploy",
+    "destroy": "vp run --filter @aloysius-web/infra destroy"
   },
   "dependencies": {
-    "@web-template/env": "workspace:*",
+    "@aloysius-web/env": "workspace:*",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
     "@types/node": "catalog:",
-    "@web-template/config": "workspace:*",
+    "@aloysius-web/config": "workspace:*",
     "rolldown": "1.1.4",
     "typescript": "catalog:",
     "vite-plus": "0.2.2"

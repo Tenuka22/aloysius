@@ -3,8 +3,8 @@ import { RPCLink } from "@orpc/client/fetch";
 import type { RouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
-import type { AppRouter } from "@web-template/api/routers/index";
-import { env } from "@web-template/env/web";
+import type { AppRouter } from "@aloysius-web/api/routers/index";
+import { env } from "@aloysius-web/env/web";
 import { toast } from "sonner";
 
 import { getClerkAuthToken } from "@/utils/clerk-auth";

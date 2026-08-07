@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@web-template/ui/components",
-    "utils": "@web-template/ui/lib/utils",
-    "hooks": "@web-template/ui/hooks",
-    "lib": "@web-template/ui/lib",
-    "ui": "@web-template/ui/components"
+    "components": "@aloysius-web/ui/components",
+    "utils": "@aloysius-web/ui/lib/utils",
+    "hooks": "@aloysius-web/ui/hooks",
+    "lib": "@aloysius-web/ui/lib",
+    "ui": "@aloysius-web/ui/components"
   },
   "menuColor": "default",
   "menuAccent": "subtle",

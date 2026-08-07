@@ -6,7 +6,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@web-template/ui/components/dialog"
+} from "@aloysius-web/ui/components/dialog"
 import { FormBuilder } from "./form-builder"
 
 import type { FormConfig, FormBuilderProps } from "./types"

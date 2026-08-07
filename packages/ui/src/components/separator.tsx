@@ -2,7 +2,7 @@
 
 import { Separator as SeparatorPrimitive } from "@base-ui/react/separator"
 
-import { cn } from "@web-template/ui/lib/utils"
+import { cn } from "@aloysius-web/ui/lib/utils"
 
 function Separator({
   className,

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
-import { createDb } from "@web-template/db";
-import { files } from "@web-template/db/schema";
+import { createDb } from "@aloysius-web/db";
+import { files } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure } from "../index";
 

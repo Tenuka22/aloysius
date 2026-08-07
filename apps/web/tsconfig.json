@@ -21,7 +21,7 @@
     "noUncheckedSideEffectImports": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@web-template/ui/*": ["../../packages/ui/src/*"]
+      "@aloysius-web/ui/*": ["../../packages/ui/src/*"]
     }
   }
 }

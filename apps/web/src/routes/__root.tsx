@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { Toaster } from "@web-template/ui/components/sonner";
+import { Toaster } from "@aloysius-web/ui/components/sonner";
 import { useEffect } from "react";
 
 import { setClerkAuthTokenGetter } from "@/utils/clerk-auth";
@@ -41,7 +41,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "Web Template",
+        title: "Aloysius College Galle",
       },
     ],
     links: [
@@ -59,7 +59,7 @@ function RootDocument() {
   return (
     <ClerkProvider>
       <ClerkApiAuthBridge />
-      <html lang="en" className="dark">
+      <html lang="en" className="light">
         <head>
           <HeadContent />
         </head>

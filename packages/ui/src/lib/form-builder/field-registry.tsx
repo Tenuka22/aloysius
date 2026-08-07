@@ -1,21 +1,21 @@
-import { Input } from "@web-template/ui/components/input"
-import { Textarea } from "@web-template/ui/components/textarea"
+import { Input } from "@aloysius-web/ui/components/input"
+import { Textarea } from "@aloysius-web/ui/components/textarea"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@web-template/ui/components/select"
-import { Checkbox } from "@web-template/ui/components/checkbox"
-import { Slider } from "@web-template/ui/components/slider"
+} from "@aloysius-web/ui/components/select"
+import { Checkbox } from "@aloysius-web/ui/components/checkbox"
+import { Slider } from "@aloysius-web/ui/components/slider"
 import {
   Field,
   FieldContent,
   FieldDescription,
   FieldError,
   FieldLabel,
-} from "@web-template/ui/components/field"
+} from "@aloysius-web/ui/components/field"
 import type { FieldKind, SelectOption } from "./types"
 
 export type RenderFieldArgs = {

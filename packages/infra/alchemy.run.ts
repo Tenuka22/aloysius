@@ -24,7 +24,7 @@ if (process.env.NODE_ENV === "production") {
 const DOMAIN = "template.com";
 const stage = process.env.STAGE ?? "dev";
 
-const app = await alchemy("web-template", { stage });
+const app = await alchemy("aloysius-web", { stage });
 
 const db = await D1Database("database", {
   migrationsDir: "../../packages/db/src/migrations",

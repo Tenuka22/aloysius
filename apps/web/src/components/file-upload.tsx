@@ -8,7 +8,7 @@ import {
   MusicIcon,
   FileIcon,
 } from "lucide-react";
-import { cn } from "@web-template/ui/lib/utils";
+import { cn } from "@aloysius-web/ui/lib/utils";
 import {
   Attachment,
   AttachmentAction,
@@ -17,7 +17,7 @@ import {
   AttachmentDescription,
   AttachmentMedia,
   AttachmentTitle,
-} from "@web-template/ui/components/attachment";
+} from "@aloysius-web/ui/components/attachment";
 import {
   Dialog,
   DialogContent,
@@ -25,8 +25,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@web-template/ui/components/dialog";
-import { Button } from "@web-template/ui/components/button";
+} from "@aloysius-web/ui/components/dialog";
+import { Button } from "@aloysius-web/ui/components/button";
 import { client } from "@/utils/orpc";
 
 type UploadState = "idle" | "uploading" | "processing" | "error" | "done";

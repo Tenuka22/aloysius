@@ -1,6 +1,6 @@
 import * as React from "react"
 
-import { cn } from "@web-template/ui/lib/utils"
+import { cn } from "@aloysius-web/ui/lib/utils"
 
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
   return (

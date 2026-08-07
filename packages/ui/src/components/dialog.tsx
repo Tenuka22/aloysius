@@ -3,9 +3,9 @@
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 
-import { cn } from "@web-template/ui/lib/utils"
-import { Button } from "@web-template/ui/components/button"
-import { XIcon } from "lucide-react"
+import { cn } from "@aloysius-web/ui/lib/utils"
+import { Button } from "@aloysius-web/ui/components/button"
+import { IconX } from "@tabler/icons-react"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -70,7 +70,7 @@ function DialogContent({
               />
             }
           >
-            <XIcon
+            <IconX
             />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>

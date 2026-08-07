@@ -5,5 +5,5 @@ export default defineConfig({
   format: "esm",
   outDir: "./dist",
   clean: true,
-  noExternal: [/@web-template\/.*/],
+  noExternal: [/@aloysius-web\/.*/],
 });

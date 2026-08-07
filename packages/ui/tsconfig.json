@@ -1,11 +1,11 @@
 {
-  "extends": "@web-template/config/tsconfig.base.json",
+  "extends": "@aloysius-web/config/tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": [],
     "paths": {
-      "@web-template/ui/*": ["./src/*"]
+      "@aloysius-web/ui/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

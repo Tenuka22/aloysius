@@ -1,4 +1,4 @@
-import { env } from "@web-template/env/server";
+import { env } from "@aloysius-web/env/server";
 import { drizzle } from "drizzle-orm/d1";
 
 import * as schema from "./schema";

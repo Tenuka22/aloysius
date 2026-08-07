@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-import { cn } from "@web-template/ui/lib/utils"
+import { cn } from "@aloysius-web/ui/lib/utils"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (

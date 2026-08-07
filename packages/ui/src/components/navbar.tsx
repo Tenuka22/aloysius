@@ -1,14 +1,15 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { cn } from "@web-template/ui/lib/utils"
+import { cn } from "@aloysius-web/ui/lib/utils"
 import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
   navigationMenuTriggerStyle,
-} from "@web-template/ui/components/navigation-menu"
+} from "@aloysius-web/ui/components/navigation-menu"
+import { Button } from "@aloysius-web/ui/components/button"
 
 export interface NavItem {
   label: string
@@ -20,9 +21,10 @@ export interface NavbarProps {
   items: NavItem[]
   actions?: React.ReactNode
   className?: string
+  onApplyNow?: () => void
 }
 
-export function Navbar({ logo, items, actions, className }: NavbarProps) {
+export function Navbar({ logo, items, actions, className, onApplyNow }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleResize = useCallback(() => {
@@ -36,10 +38,10 @@ export function Navbar({ logo, items, actions, className }: NavbarProps) {
 
   return (
     <header className={cn("sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", className)}>
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {logo && <div className="shrink-0">{logo}</div>}
 
-        <NavigationMenu className="hidden md:flex">
+        <NavigationMenu className="hidden lg:flex">
           <NavigationMenuList>
             {items.map((item) => (
               <NavigationMenuItem key={item.href}>
@@ -54,11 +56,36 @@ export function Navbar({ logo, items, actions, className }: NavbarProps) {
           </NavigationMenuList>
         </NavigationMenu>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {onApplyNow && (
+            <Button
+              size="sm"
+              className="hidden sm:inline-flex bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={onApplyNow}
+            >
+              Apply Now
+            </Button>
+          )}
           {actions}
           <button
             type="button"
-            className="md:hidden inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="inline-flex items-center justify-center rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label="User account"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="size-5"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="lg:hidden inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
             onClick={() => setIsOpen((prev) => !prev)}
             aria-label="Toggle menu"
           >
@@ -80,7 +107,7 @@ export function Navbar({ logo, items, actions, className }: NavbarProps) {
       </div>
 
       {isOpen && (
-        <div className="md:hidden border-t">
+        <div className="lg:hidden border-t">
           <div className="space-y-1 px-4 py-3">
             {items.map((item) => (
               <a
@@ -92,6 +119,18 @@ export function Navbar({ logo, items, actions, className }: NavbarProps) {
                 {item.label}
               </a>
             ))}
+            {onApplyNow && (
+              <Button
+                size="sm"
+                className="w-full mt-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={() => {
+                  onApplyNow()
+                  setIsOpen(false)
+                }}
+              >
+                Apply Now
+              </Button>
+            )}
           </div>
         </div>
       )}

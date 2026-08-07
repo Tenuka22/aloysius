@@ -3,13 +3,13 @@
 import { useCallback } from "react"
 import { useForm, useStore } from "@tanstack/react-form"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Button } from "@web-template/ui/components/button"
-import { FieldGroup, FieldSet, FieldLegend } from "@web-template/ui/components/field"
+import { Button } from "@aloysius-web/ui/components/button"
+import { FieldGroup, FieldSet, FieldLegend } from "@aloysius-web/ui/components/field"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@web-template/ui/components/collapsible"
+} from "@aloysius-web/ui/components/collapsible"
 import { FieldControl, type RenderFieldArgs } from "./field-registry"
 import { FormContext } from "./form-context"
 

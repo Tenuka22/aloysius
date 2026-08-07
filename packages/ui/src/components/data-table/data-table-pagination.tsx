@@ -5,14 +5,14 @@ import {
   ChevronsLeftIcon,
   ChevronsRightIcon,
 } from "lucide-react"
-import { Button } from "@web-template/ui/components/button"
+import { Button } from "@aloysius-web/ui/components/button"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@web-template/ui/components/select"
+} from "@aloysius-web/ui/components/select"
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>

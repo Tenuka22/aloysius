@@ -1,5 +1,5 @@
 {
-  "name": "@web-template/env",
+  "name": "@aloysius-web/env",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,8 +14,8 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "@web-template/config": "workspace:*",
-    "@web-template/infra": "workspace:*",
+    "@aloysius-web/config": "workspace:*",
+    "@aloysius-web/infra": "workspace:*",
     "typescript": "catalog:"
   }
 }
