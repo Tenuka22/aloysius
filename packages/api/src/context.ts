@@ -5,6 +5,8 @@ type ClerkContextAuth = {
 type ClerkRequestContext = {
   auth: ClerkContextAuth | null;
   session: null;
+  bucket: import("@cloudflare/workers-types").R2Bucket | null;
+  r2PublicUrl: string;
 };
 
 function toClerkContextAuth(auth: { userId: string | null } | null): ClerkContextAuth | null {
@@ -39,6 +41,8 @@ export async function createContext({
   return {
     auth: clerkAuth,
     session: null,
+    bucket: context.env.PUBLIC_ASSETS_BUCKET ?? null,
+    r2PublicUrl: context.env.R2_PUBLIC_URL ?? "",
   };
 }
 

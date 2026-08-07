@@ -3,7 +3,6 @@ import { TanStackStart } from "alchemy/cloudflare";
 import { Worker } from "alchemy/cloudflare";
 import { D1Database } from "alchemy/cloudflare";
 import { R2Bucket } from "alchemy/cloudflare";
-import { Assets } from "alchemy/cloudflare";
 import { config } from "dotenv";
 
 const load = (p: string) => {
@@ -61,7 +60,7 @@ export const server = await Worker("server", {
   bindings: {
     DB: db,
     PUBLIC_ASSETS_BUCKET: publicAssetsBucket,
-    R2_PUBLIC_URL: r2PublicUrl || process.env.R2_PUBLIC_URL || "",
+    R2_PUBLIC_URL: process.env.R2_PUBLIC_URL || r2PublicUrl || "",
     CORS_ORIGIN: alchemy.env.CORS_ORIGIN!,
     CLERK_SECRET_KEY: alchemy.secret.env.CLERK_SECRET_KEY!,
     CLERK_PUBLISHABLE_KEY: alchemy.env.CLERK_PUBLISHABLE_KEY!,
