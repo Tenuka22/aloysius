@@ -6,14 +6,20 @@ import { R2Bucket } from "alchemy/cloudflare";
 import { Assets } from "alchemy/cloudflare";
 import { config } from "dotenv";
 
-config({ path: "./.env" });
+const load = (p: string) => {
+  config({ path: p });
+};
+
+load("./.env");
+load("../../apps/web/.env");
+load("../../apps/server/.env");
 
 if (process.env.NODE_ENV === "production") {
-  config({ path: "../../apps/server/.env.production" });
-  config({ path: "../../apps/web/.env.production" });
+  load("../../apps/web/.env.production");
+  load("../../apps/server/.env.production");
 } else {
-  config({ path: "../../apps/server/.env" });
-  config({ path: "../../apps/web/.env" });
+  load("../../apps/web/.env.local");
+  load("../../apps/server/.env.local");
 }
 
 const DOMAIN = "template.com";
@@ -46,7 +52,6 @@ const r2PublicUrl = (() => {
   return undefined;
 })();
 
-const serverPublicAssets = await Assets({ path: "../../apps/server/public" });
 
 export const server = await Worker("server", {
   cwd: "../../apps/server",
@@ -55,12 +60,11 @@ export const server = await Worker("server", {
   url: true,
   bindings: {
     DB: db,
-    ASSETS: serverPublicAssets,
     PUBLIC_ASSETS_BUCKET: publicAssetsBucket,
-    R2_PUBLIC_URL: r2PublicUrl ?? alchemy.env("R2_PUBLIC_URL", ""),
-    CORS_ORIGIN: alchemy.env("CORS_ORIGIN", "http://localhost:3001"),
-    CLERK_SECRET_KEY: alchemy.secret.env("CLERK_SECRET_KEY", ""),
-    CLERK_PUBLISHABLE_KEY: alchemy.env("CLERK_PUBLISHABLE_KEY", ""),
+    R2_PUBLIC_URL: r2PublicUrl || process.env.R2_PUBLIC_URL || "",
+    CORS_ORIGIN: alchemy.env.CORS_ORIGIN!,
+    CLERK_SECRET_KEY: alchemy.secret.env.CLERK_SECRET_KEY!,
+    CLERK_PUBLISHABLE_KEY: alchemy.env.CLERK_PUBLISHABLE_KEY!,
     NODE_ENV: process.env.NODE_ENV ?? "development",
   },
   dev: {
@@ -73,15 +77,9 @@ export const web = await TanStackStart("web", {
   bindings: {
     VITE_SERVER_URL: server.url!,
     DB: db,
-    CORS_ORIGIN: alchemy.env("CORS_ORIGIN", "http://localhost:3001"),
-    CLERK_SECRET_KEY: alchemy.secret.env("CLERK_SECRET_KEY", ""),
-    CLERK_PUBLISHABLE_KEY: alchemy.env("CLERK_PUBLISHABLE_KEY", ""),
-  },
-  dev: {
-    env: {
-      PORT: "3001",
-      NODE_ENV: "development",
-    },
+    CORS_ORIGIN: alchemy.env.CORS_ORIGIN!,
+    CLERK_SECRET_KEY: alchemy.secret.env.CLERK_SECRET_KEY!,
+    CLERK_PUBLISHABLE_KEY: alchemy.env.CLERK_PUBLISHABLE_KEY!,
   },
 });
 

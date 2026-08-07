@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=development alchemy dev --profile='template'",
-    "deploy": "NODE_ENV=production alchemy deploy --profile='template' --stage=prod",
-    "destroy": "NODE_ENV=production alchemy destroy --profile='template' --stage=prod"
+    "dev": "NODE_ENV=development alchemy dev --profile='default'",
+    "deploy": "NODE_ENV=production alchemy deploy --profile='default' --stage=prod",
+    "destroy": "NODE_ENV=production alchemy destroy --profile='default' --stage=prod"
   },
   "dependencies": {
     "dotenv": "catalog:",
