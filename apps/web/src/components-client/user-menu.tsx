@@ -1,15 +1,34 @@
 "use client"
 
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/tanstack-react-start"
+import { Show, SignInButton, SignUpButton, UserButton, useAuth } from "@clerk/tanstack-react-start"
+
+function AdminLink() {
+  const { sessionClaims } = useAuth()
+  const role = (sessionClaims as any)?.metadata?.role
+
+  if (role !== "admin") return null
+
+  return (
+    <a
+      href="/admin"
+      className="inline-flex h-8 items-center rounded-lg border border-border bg-background px-3 text-xs font-medium hover:bg-muted transition-colors"
+    >
+      Admin
+    </a>
+  )
+}
 
 export function UserMenu() {
   return (
     <>
       <Show when="signed-in">
-        <UserButton
-          afterSignOutUrl="/"
-          appearance={{ elements: { avatarBox: "size-8" } }}
-        />
+        <div className="flex items-center gap-2">
+          <AdminLink />
+          <UserButton
+            afterSignOutUrl="/"
+            appearance={{ elements: { avatarBox: "size-8" } }}
+          />
+        </div>
       </Show>
       <Show when="signed-out">
         <div className="flex items-center gap-2">
