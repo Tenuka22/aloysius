@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { UserMenu } from "@/components-client/user-menu"
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -59,14 +60,9 @@ export function Navbar() {
 
         {/* Right Side */}
         <div ref={ctaRef} className="flex items-center gap-3">
+          <UserMenu />
           <button className="hidden sm:inline-flex h-8 items-center rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
             Apply Now
-          </button>
-          <button className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label="User account">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
           </button>
           <button
             className="lg:hidden inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
