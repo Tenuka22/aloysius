@@ -1,5 +1,6 @@
 type ClerkContextAuth = {
   userId: string | null;
+  adminCalled: boolean;
 };
 
 type ClerkRequestContext = {
@@ -9,8 +10,13 @@ type ClerkRequestContext = {
   r2PublicUrl: string;
 };
 
-function toClerkContextAuth(auth: { userId: string | null } | null): ClerkContextAuth | null {
-  return auth ? { userId: auth.userId } : null;
+function toClerkContextAuth(auth: { userId: string | null; sessionClaims?: Record<string, unknown> } | null): ClerkContextAuth | null {
+  if (!auth) return null;
+  const role = (auth.sessionClaims as any)?.metadata?.role;
+  return {
+    userId: auth.userId,
+    adminCalled: role === "admin",
+  };
 }
 
 import { createClerkClient } from "@clerk/backend";
@@ -25,7 +31,11 @@ async function authenticateClerkRequest(request: Request): Promise<ClerkContextA
   const requestState = await clerkClient.authenticateRequest(request, {
     authorizedParties: [env.CORS_ORIGIN],
   });
-  return toClerkContextAuth(requestState.toAuth());
+  const auth = requestState.toAuth();
+  return toClerkContextAuth({
+    userId: auth?.userId ?? null,
+    sessionClaims: auth?.sessionClaims as Record<string, unknown> | undefined,
+  });
 }
 
 import type { Context as HonoContext } from "hono";
