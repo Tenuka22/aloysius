@@ -112,3 +112,134 @@ export const eventRecords = sqliteTable("event_records", {
     .$defaultFn(() => new Date()),
   userId: text("user_id").notNull(),
 });
+
+// --- Achievements table (student/school accomplishments) ---
+
+export const achievements = sqliteTable("achievements", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category", { enum: ["academic", "sports", "arts", "clubs", "community", "other"] })
+    .notNull()
+    .default("other"),
+  recipientName: text("recipient_name"),
+  recipientType: text("recipient_type", { enum: ["student", "faculty", "school"] })
+    .notNull()
+    .default("student"),
+  year: integer("year"),
+  coverImage: text("cover_image"),
+  tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
+  status: text("status", { enum: ["draft", "published", "archived"] })
+    .notNull()
+    .default("draft"),
+  publishedAt: integer("published_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  userId: text("user_id").notNull(),
+});
+
+// --- Gallery table (photo albums connected to events) ---
+
+export const gallery = sqliteTable("gallery", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  eventId: text("event_id").references(() => events.id, { onDelete: "set null" }),
+  coverImage: text("cover_image"),
+  tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
+  status: text("status", { enum: ["draft", "published", "archived"] })
+    .notNull()
+    .default("draft"),
+  publishedAt: integer("published_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  userId: text("user_id").notNull(),
+});
+
+// --- Gallery Images table ---
+
+export const galleryImages = sqliteTable("gallery_images", {
+  id: text("id").primaryKey(),
+  galleryId: text("gallery_id")
+    .notNull()
+    .references(() => gallery.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  caption: text("caption"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+// --- Student Works table ---
+
+export const studentWorks = sqliteTable("student_works", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category", { enum: ["film", "art", "music", "writing", "design", "photography", "code", "other"] })
+    .notNull()
+    .default("other"),
+  studentName: text("student_name").notNull(),
+  studentGrade: text("student_grade"),
+  coverImage: text("cover_image"),
+  contentUrl: text("content_url"),
+  tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
+  status: text("status", { enum: ["draft", "published", "archived"] })
+    .notNull()
+    .default("draft"),
+  publishedAt: integer("published_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  userId: text("user_id").notNull(),
+});
+
+// --- Pages table (CMS pages: About, Academics, etc.) ---
+
+export const pages = sqliteTable("pages", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  excerpt: text("excerpt"),
+  coverImage: text("cover_image"),
+  status: text("status", { enum: ["draft", "published", "archived"] })
+    .notNull()
+    .default("draft"),
+  publishedAt: integer("published_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  userId: text("user_id").notNull(),
+});
+
+// --- Stats table (editable homepage statistics) ---
+
+export const stats = sqliteTable("stats", {
+  id: text("id").primaryKey(),
+  label: text("label").notNull(),
+  value: text("value").notNull(),
+  icon: text("icon"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});

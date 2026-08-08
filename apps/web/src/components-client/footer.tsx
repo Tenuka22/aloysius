@@ -3,11 +3,22 @@
 import { useRef, useEffect } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { Link } from "@tanstack/react-router"
 
 gsap.registerPlugin(ScrollTrigger)
 
-const quickLinks = ["About Us", "Academics", "Campus Life", "Admissions", "Alumni", "Contact Us"]
-const resources = ["Student Portal", "E-Learning", "Library", "News & Events", "Gallery", "FAQs"]
+const quickLinks = [
+  { label: "About Us", to: "/about" },
+  { label: "Academics", to: "/academics" },
+  { label: "Campus Life", to: "/campus-life" },
+  { label: "Admissions", to: "/admissions" },
+  { label: "Achievements", to: "/achievements" },
+]
+const resources = [
+  { label: "Student Works", to: "/student-works" },
+  { label: "Gallery", to: "/gallery" },
+  { label: "News & Events", to: "/" },
+]
 
 export function Footer() {
   const ref = useRef<HTMLElement>(null)
@@ -80,10 +91,10 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               {quickLinks.map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    {link}
-                  </a>
+                <li key={link.label}>
+                  <Link to={link.to} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -94,10 +105,10 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Resources</h3>
             <ul className="space-y-2">
               {resources.map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    {link}
-                  </a>
+                <li key={link.label}>
+                  <Link to={link.to} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>

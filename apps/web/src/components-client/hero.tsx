@@ -76,9 +76,9 @@ export function Hero() {
         </p>
 
         <div ref={buttonsRef} className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <button className="inline-flex h-10 items-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+          <a href="/student-works" className="inline-flex h-10 items-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
             Explore Student Works
-          </button>
+          </a>
           <button className="inline-flex h-10 items-center rounded-lg border border-border bg-background px-6 text-sm font-medium hover:bg-muted transition-colors">
             About Our College
           </button>

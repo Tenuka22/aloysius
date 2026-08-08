@@ -1,20 +1,34 @@
 "use client"
 
 import { useRef, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { client } from "@/utils/orpc"
 
 gsap.registerPlugin(ScrollTrigger)
 
-const stats = [
-  { value: "150+", label: "Years of Excellence", icon: "graduation" },
-  { value: "5000+", label: "Students", icon: "users" },
+const defaultStats = [
+  { value: `${Math.floor(new Date().getFullYear() - 1895)}+`, label: "Years of Excellence", icon: "graduation" },
+  { value: "4500+", label: "Students", icon: "users" },
   { value: "100+", label: "Co-Curricular Activities", icon: "trophy" },
   { value: "20+", label: "Global Partnerships", icon: "globe" },
 ]
 
+const iconMap: Record<string, string> = {
+  graduation: "graduation",
+  school: "graduation",
+  users: "users",
+  trophy: "trophy",
+  activity: "trophy",
+  globe: "globe",
+  world: "globe",
+}
+
 function StatIcon({ icon }: { icon: string }) {
-  if (icon === "graduation") {
+  const mapped = iconMap[icon] ?? icon
+
+  if (mapped === "graduation") {
     return (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-5">
         <path d="M12 2L2 7l10 5 10-5-10-5z" />
@@ -23,7 +37,7 @@ function StatIcon({ icon }: { icon: string }) {
       </svg>
     )
   }
-  if (icon === "users") {
+  if (mapped === "users") {
     return (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-5">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -33,7 +47,7 @@ function StatIcon({ icon }: { icon: string }) {
       </svg>
     )
   }
-  if (icon === "trophy") {
+  if (mapped === "trophy") {
     return (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-5">
         <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
@@ -56,6 +70,19 @@ function StatIcon({ icon }: { icon: string }) {
 
 export function Stats() {
   const ref = useRef<HTMLDivElement>(null)
+
+  const { data } = useQuery({
+    queryKey: ["stats"],
+    queryFn: () => client.stats.list(),
+  })
+
+  const stats = data && data.length > 0
+    ? data.map((s) => ({
+        value: s.value,
+        label: s.label,
+        icon: s.icon ?? "graduation",
+      }))
+    : defaultStats
 
   useEffect(() => {
     const el = ref.current

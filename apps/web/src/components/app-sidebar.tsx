@@ -9,7 +9,7 @@ import {
 } from "@aloysius-web/ui/components/sidebar"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { IconDashboard, IconUsers, IconCalendarEvent, IconSchool, IconNews, IconSettings, IconSpeakerphone } from "@tabler/icons-react"
+import { IconDashboard, IconCalendarEvent, IconSchool, IconNews, IconSpeakerphone, IconTrophy, IconPhoto, IconFileText, IconChartBar } from "@tabler/icons-react"
 
 const overviewItems = [
   {
@@ -52,6 +52,16 @@ const contentItems = [
     ],
   },
   {
+    title: "Achievements",
+    url: "/admin/achievements",
+    icon: <IconTrophy />,
+  },
+  {
+    title: "Gallery",
+    url: "/admin/gallery",
+    icon: <IconPhoto />,
+  },
+  {
     title: "Student Works",
     url: "/admin/student-works",
     icon: <IconSchool />,
@@ -62,20 +72,16 @@ const contentItems = [
   },
 ]
 
-const managementItems = [
+const cmsItems = [
   {
-    title: "Users",
-    url: "/admin/users",
-    icon: <IconUsers />,
-    items: [
-      { title: "All Users", url: "/admin/users" },
-      { title: "Roles & Permissions", url: "/admin/users/roles" },
-    ],
+    title: "Pages",
+    url: "/admin/pages",
+    icon: <IconFileText />,
   },
   {
-    title: "Settings",
-    url: "/admin/settings",
-    icon: <IconSettings />,
+    title: "Stats",
+    url: "/admin/stats",
+    icon: <IconChartBar />,
   },
 ]
 
@@ -99,7 +105,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
         <NavMain items={overviewItems} label="Overview" />
         <NavMain items={publishingItems} label="Publishing" />
         <NavMain items={contentItems} label="Content" />
-        <NavMain items={managementItems} label="Management" />
+        <NavMain items={cmsItems} label="CMS" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

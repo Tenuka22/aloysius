@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { Link } from "@tanstack/react-router"
 import { UserMenu } from "@/components-client/user-menu"
 
 gsap.registerPlugin(ScrollTrigger)
@@ -47,14 +48,22 @@ export function Navbar() {
 
         {/* Nav Links */}
         <nav ref={linksRef} aria-label="Main navigation" className="hidden lg:flex items-center gap-1">
-          {["About Us", "Academics", "Campus Life", "Admissions", "News & Events", "Alumni"].map((item) => (
-            <a
-              key={item}
-              href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
+          {[
+            { label: "About Us", to: "/about" },
+            { label: "Academics", to: "/academics" },
+            { label: "Campus Life", to: "/campus-life" },
+            { label: "Admissions", to: "/admissions" },
+            { label: "News & Events", to: "/" },
+            { label: "Achievements", to: "/achievements" },
+            { label: "Gallery", to: "/gallery" },
+          ].map((item) => (
+            <Link
+              key={item.label}
+              to={item.to}
               className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted"
             >
-              {item}
-            </a>
+              {item.label}
+            </Link>
           ))}
         </nav>
 
