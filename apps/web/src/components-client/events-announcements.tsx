@@ -1,8 +1,10 @@
 "use client"
 
 import { useRef, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { client } from "@/utils/orpc"
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -12,15 +14,30 @@ const events = [
   { date: "Jul 05", isoDate: "2026-07-05", title: "Aloysian Art Exhibition", time: "10:00 AM", location: "Loyola Hall" },
 ]
 
-const announcements = [
-  { title: "Admissions Open for Grade 6 – 2026", description: "Applications are now open.", date: "May 15, 2026", isoDate: "2026-05-15" },
-  { title: "Exam Timetable – Term 2", description: "Please check the timetable for updates.", date: "May 12, 2026", isoDate: "2026-05-12" },
-  { title: "Congratulations to Our Debaters!", description: "Winners at the All-Island Inter-School Competition.", date: "May 10, 2026", isoDate: "2026-05-10" },
-]
+const audienceLabels: Record<string, string> = {
+  all: "Everyone",
+  students: "Students",
+  parents: "Parents",
+  staff: "Staff",
+  alumni: "Alumni",
+}
 
 export function EventsAnnouncements() {
   const eventsRef = useRef<HTMLDivElement>(null)
   const announcementsRef = useRef<HTMLDivElement>(null)
+
+  const { data: newsData } = useQuery({
+    queryKey: ["news"],
+    queryFn: () => client.news.list({ page: 1, pageSize: 10 }),
+  })
+
+  const { data: announcementsData } = useQuery({
+    queryKey: ["announcements"],
+    queryFn: () => client.announcements.list({ page: 1, pageSize: 10 }),
+  })
+
+  const publishedNews = (newsData?.rows ?? []).filter((n: any) => n.status === "published").slice(0, 3)
+  const publishedAnnouncements = (announcementsData?.rows ?? []).filter((a: any) => a.status === "published").slice(0, 3)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -52,7 +69,7 @@ export function EventsAnnouncements() {
     })
 
     return () => ctx.revert()
-  }, [])
+  }, [publishedNews, publishedAnnouncements])
 
   return (
     <section aria-label="Events and announcements" className="px-4 sm:px-6 lg:px-8 py-16 border-t">
@@ -103,22 +120,110 @@ export function EventsAnnouncements() {
             </a>
           </div>
           <ul role="list" className="space-y-4">
-            {announcements.map((item) => (
-              <li
-                key={item.title}
-                role="listitem"
-                data-animate
-                aria-label={`${item.title}. ${item.description}`}
-                className="p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
-              >
-                <div className="font-medium mb-1">{item.title}</div>
-                <div className="text-sm text-muted-foreground mb-2">{item.description}</div>
-                <time dateTime={item.isoDate} className="text-xs text-muted-foreground">{item.date}</time>
+            {publishedAnnouncements.length > 0 ? (
+              publishedAnnouncements.map((item: any) => (
+                <li
+                  key={item.id}
+                  role="listitem"
+                  data-animate
+                  className="p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                >
+                  {item.coverImage && (
+                    <div className="mb-3 overflow-hidden rounded-md">
+                      <img
+                        src={item.coverImage}
+                        alt={item.title}
+                        className="w-full h-32 object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="font-medium mb-1">{item.title}</div>
+                  {item.excerpt && (
+                    <div className="text-sm text-muted-foreground mb-2">{item.excerpt}</div>
+                  )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <time dateTime={item.createdAt} className="text-xs text-muted-foreground">
+                      {new Date(item.createdAt).toLocaleDateString()}
+                    </time>
+                    {item.audience && item.audience !== "all" && (
+                      <span className="inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                        {audienceLabels[item.audience] ?? item.audience}
+                      </span>
+                    )}
+                    {item.tags && item.tags.length > 0 && (
+                      <div className="flex gap-1">
+                        {item.tags.slice(0, 2).map((tag: string) => (
+                          <span key={tag} className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </li>
+              ))
+            ) : (
+              <li className="p-4 rounded-lg border text-center text-muted-foreground">
+                No announcements yet
               </li>
-            ))}
+            )}
           </ul>
         </div>
       </div>
+
+      {/* Published News Section */}
+      {publishedNews.length > 0 && (
+        <div className="mx-auto max-w-6xl mt-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold">Latest News</h2>
+            <a href="#news" aria-label="View all news" className="text-sm font-medium hover:underline">
+              View All
+            </a>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {publishedNews.map((item: any) => (
+              <article
+                key={item.id}
+                className="group rounded-lg border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+              >
+                {item.coverImage ? (
+                  <div className="aspect-video overflow-hidden">
+                    <img
+                      src={item.coverImage}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-video bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 flex items-center justify-center">
+                    <span className="text-4xl font-bold text-blue-200 dark:text-blue-800">N</span>
+                  </div>
+                )}
+                <div className="p-4">
+                  <div className="font-medium mb-1 group-hover:text-primary transition-colors">{item.title}</div>
+                  {item.excerpt && (
+                    <div className="text-sm text-muted-foreground mb-2 line-clamp-2">{item.excerpt}</div>
+                  )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <time dateTime={item.createdAt} className="text-xs text-muted-foreground">
+                      {new Date(item.createdAt).toLocaleDateString()}
+                    </time>
+                    {item.tags && item.tags.length > 0 && (
+                      <div className="flex gap-1">
+                        {item.tags.slice(0, 2).map((tag: string) => (
+                          <span key={tag} className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   )
 }

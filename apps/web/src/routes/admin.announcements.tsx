@@ -45,15 +45,25 @@ import { client } from "@/utils/orpc"
 import { toast } from "sonner"
 import type { ColumnDef } from "@tanstack/react-table"
 
-type NewsItem = {
+type AnnouncementItem = {
   id: string
   title: string
   excerpt: string | null
   coverImage: string | null
   tags: string[] | null
   status: string
+  audience: string
+  addressedTo: string | null
   publishedAt: string | null
   createdAt: string
+}
+
+const audienceLabels: Record<string, string> = {
+  all: "Everyone",
+  students: "Students",
+  parents: "Parents",
+  staff: "Staff",
+  alumni: "Alumni",
 }
 
 function DeleteDialog({
@@ -71,7 +81,7 @@ function DeleteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Article</DialogTitle>
+          <DialogTitle>Delete Announcement</DialogTitle>
           <DialogDescription>
             Are you sure you want to delete <strong>{title}</strong>? This action cannot be undone.
           </DialogDescription>
@@ -89,15 +99,15 @@ function DeleteDialog({
   )
 }
 
-function ActionsMenu({ item }: { item: NewsItem }) {
+function ActionsMenu({ item }: { item: AnnouncementItem }) {
   const queryClient = useQueryClient()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   const deleteMutation = useMutation({
-    mutationFn: () => client.news.delete({ id: item.id }),
+    mutationFn: () => client.announcements.delete({ id: item.id }),
     onSuccess: () => {
-      toast.success("Article deleted")
-      queryClient.invalidateQueries({ queryKey: ["news"] })
+      toast.success("Announcement deleted")
+      queryClient.invalidateQueries({ queryKey: ["announcements"] })
       setDeleteOpen(false)
     },
     onError: (err) => {
@@ -116,7 +126,7 @@ function ActionsMenu({ item }: { item: NewsItem }) {
           <IconDotsVertical className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem render={<Link to="/admin/news/$id/edit" params={{ id: item.id }} />}>
+          <DropdownMenuItem render={<Link to="/admin/announcements/$id/edit" params={{ id: item.id }} />}>
             <IconPencil className="size-4" />
             Edit
           </DropdownMenuItem>
@@ -141,7 +151,7 @@ function ActionsMenu({ item }: { item: NewsItem }) {
   )
 }
 
-const columns: ColumnDef<NewsItem, any>[] = [
+const columns: ColumnDef<AnnouncementItem, any>[] = [
   {
     accessorKey: "coverImage",
     header: "Cover",
@@ -163,10 +173,19 @@ const columns: ColumnDef<NewsItem, any>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Title" />,
   },
   {
-    accessorKey: "excerpt",
-    header: "Excerpt",
+    accessorKey: "audience",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Audience" />,
     cell: ({ row }) => (
-      <span className="text-muted-foreground line-clamp-1">{row.original.excerpt ?? "—"}</span>
+      <span className="inline-flex items-center rounded-full bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+        {audienceLabels[row.original.audience] ?? row.original.audience}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "addressedTo",
+    header: "Addressed To",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground line-clamp-1">{row.original.addressedTo ?? "—"}</span>
     ),
   },
   {
@@ -177,13 +196,13 @@ const columns: ColumnDef<NewsItem, any>[] = [
       if (!tags || tags.length === 0) return <span className="text-muted-foreground">—</span>
       return (
         <div className="flex flex-wrap gap-1">
-          {tags.slice(0, 3).map((tag) => (
+          {tags.slice(0, 2).map((tag) => (
             <span key={tag} className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
               {tag}
             </span>
           ))}
-          {tags.length > 3 && (
-            <span className="text-xs text-muted-foreground">+{tags.length - 3}</span>
+          {tags.length > 2 && (
+            <span className="text-xs text-muted-foreground">+{tags.length - 2}</span>
           )}
         </div>
       )
@@ -222,11 +241,11 @@ const columns: ColumnDef<NewsItem, any>[] = [
   },
 ]
 
-export const Route = createFileRoute("/admin/news")({
-  component: AdminNewsList,
+export const Route = createFileRoute("/admin/announcements")({
+  component: AdminAnnouncementsList,
 })
 
-function AdminNewsList() {
+function AdminAnnouncementsList() {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -240,16 +259,19 @@ function AdminNewsList() {
   const search = typeof rawSearch === "string" && rawSearch.length > 0 ? rawSearch : undefined
   const rawStatus = columnFilters.find((f) => f.id === "status")?.value
   const status = typeof rawStatus === "string" && rawStatus.length > 0 ? (rawStatus as "draft" | "published" | "archived") : undefined
+  const rawAudience = columnFilters.find((f) => f.id === "audience")?.value
+  const audience = typeof rawAudience === "string" && rawAudience.length > 0 ? (rawAudience as "all" | "students" | "parents" | "staff" | "alumni") : undefined
 
   const { data, isLoading } = useQuery({
-    queryKey: ["news", pagination.pageIndex, pagination.pageSize, sort?.id, sort?.desc, search, status],
-    queryFn: () => client.news.list({
+    queryKey: ["announcements", pagination.pageIndex, pagination.pageSize, sort?.id, sort?.desc, search, status, audience],
+    queryFn: () => client.announcements.list({
       page: pagination.pageIndex + 1,
       pageSize: pagination.pageSize,
       sort: sort?.id,
       sortDir: sort?.desc ? "desc" : "asc",
       search,
       status,
+      audience,
     }),
   })
 
@@ -261,11 +283,11 @@ function AdminNewsList() {
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <h1 className="text-lg font-semibold">News</h1>
+        <h1 className="text-lg font-semibold">Announcements</h1>
         <div className="ml-auto">
-          <Button size="sm" render={<Link to="/admin/news/new" />} nativeButton={false}>
+          <Button size="sm" render={<Link to="/admin/announcements/new" />} nativeButton={false}>
             <IconPlus className="mr-1 size-4" />
-            New Article
+            New Announcement
           </Button>
         </div>
       </header>
@@ -310,6 +332,21 @@ function AdminNewsList() {
                       <SelectItem value="draft">Draft</SelectItem>
                       <SelectItem value="published">Published</SelectItem>
                       <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={(filters.find((f) => f.id === "audience")?.value as string) ?? ""}
+                    onValueChange={(val) => setFilter("audience", val ?? "")}
+                  >
+                    <SelectTrigger className="h-8 w-[140px]">
+                      <SelectValue placeholder="All audiences" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Everyone</SelectItem>
+                      <SelectItem value="students">Students</SelectItem>
+                      <SelectItem value="parents">Parents</SelectItem>
+                      <SelectItem value="staff">Staff</SelectItem>
+                      <SelectItem value="alumni">Alumni</SelectItem>
                     </SelectContent>
                   </Select>
                   {isFiltered && (

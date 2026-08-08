@@ -9,34 +9,68 @@ import {
 } from "@aloysius-web/ui/components/sidebar"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { IconDashboard, IconUsers, IconCalendarEvent, IconSchool, IconNews, IconSettings } from "@tabler/icons-react"
+import { IconDashboard, IconUsers, IconCalendarEvent, IconSchool, IconNews, IconSettings, IconSpeakerphone } from "@tabler/icons-react"
 
-const adminNavItems = [
+const overviewItems = [
   {
     title: "Dashboard",
     url: "/admin",
     icon: <IconDashboard />,
     isActive: true,
   },
+]
+
+const publishingItems = [
   {
-    title: "Users",
-    url: "/admin/users",
-    icon: <IconUsers />,
+    title: "News",
+    url: "/admin/news",
+    icon: <IconNews />,
+    items: [
+      { title: "All News", url: "/admin/news" },
+      { title: "New Article", url: "/admin/news/new" },
+    ],
   },
+  {
+    title: "Announcements",
+    url: "/admin/announcements",
+    icon: <IconSpeakerphone />,
+    items: [
+      { title: "All Announcements", url: "/admin/announcements" },
+      { title: "New Announcement", url: "/admin/announcements/new" },
+    ],
+  },
+]
+
+const contentItems = [
   {
     title: "Events",
     url: "/admin/events",
     icon: <IconCalendarEvent />,
+    items: [
+      { title: "All Events", url: "/admin/events" },
+      { title: "Create Event", url: "/admin/events/new" },
+    ],
   },
   {
     title: "Student Works",
     url: "/admin/student-works",
     icon: <IconSchool />,
+    items: [
+      { title: "All Works", url: "/admin/student-works" },
+      { title: "Submit Work", url: "/admin/student-works/new" },
+    ],
   },
+]
+
+const managementItems = [
   {
-    title: "News",
-    url: "/admin/news",
-    icon: <IconNews />,
+    title: "Users",
+    url: "/admin/users",
+    icon: <IconUsers />,
+    items: [
+      { title: "All Users", url: "/admin/users" },
+      { title: "Roles & Permissions", url: "/admin/users/roles" },
+    ],
   },
   {
     title: "Settings",
@@ -62,7 +96,10 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
         </a>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={adminNavItems} label="Management" />
+        <NavMain items={overviewItems} label="Overview" />
+        <NavMain items={publishingItems} label="Publishing" />
+        <NavMain items={contentItems} label="Content" />
+        <NavMain items={managementItems} label="Management" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { eq, desc, asc, like, and, count } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
-import { announcements } from "@aloysius-web/db/schema";
+import { news } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 
 const sortDirection = z.enum(["asc", "desc"]);
 
-export const announcementsRouter = {
+export const newsRouter = {
   list: publicProcedure
     .input(
       z.object({
@@ -17,47 +17,41 @@ export const announcementsRouter = {
         sortDir: sortDirection.default("desc"),
         search: z.string().optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
-        audience: z.enum(["all", "students", "parents", "staff", "alumni"]).optional(),
       })
     )
     .handler(async ({ input }) => {
       const db = createDb();
-      const { page, pageSize, sort, sortDir, search, status, audience } = input;
+      const { page, pageSize, sort, sortDir, search, status } = input;
       const offset = (page - 1) * pageSize;
 
       const conditions = [];
       if (search) {
-        conditions.push(like(announcements.title, `%${search}%`));
+        conditions.push(like(news.title, `%${search}%`));
       }
       if (status) {
-        conditions.push(eq(announcements.status, status));
-      }
-      if (audience) {
-        conditions.push(eq(announcements.audience, audience));
+        conditions.push(eq(news.status, status));
       }
       const where = conditions.length > 0 ? and(...conditions) : undefined;
 
       const sortColumn =
         sort === "title"
-          ? announcements.title
+          ? news.title
           : sort === "status"
-            ? announcements.status
-            : sort === "audience"
-              ? announcements.audience
-              : sort === "createdAt"
-                ? announcements.createdAt
-                : announcements.createdAt;
+            ? news.status
+            : sort === "createdAt"
+              ? news.createdAt
+              : news.createdAt;
       const orderFn = sortDir === "asc" ? asc : desc;
 
       const [{ total }] = await db
         .select({ total: count() })
-        .from(announcements)
+        .from(news)
         .where(where)
         .all();
 
       const rows = await db
         .select()
-        .from(announcements)
+        .from(news)
         .where(where)
         .orderBy(orderFn(sortColumn))
         .limit(pageSize)
@@ -72,8 +66,6 @@ export const announcementsRouter = {
           coverImage: row.coverImage,
           tags: row.tags,
           status: row.status,
-          audience: row.audience,
-          addressedTo: row.addressedTo,
           publishedAt: row.publishedAt?.toISOString() ?? null,
           createdAt: row.createdAt.toISOString(),
           updatedAt: row.updatedAt.toISOString(),
@@ -91,12 +83,12 @@ export const announcementsRouter = {
       const db = createDb();
       const row = await db
         .select()
-        .from(announcements)
-        .where(eq(announcements.id, input.id))
+        .from(news)
+        .where(eq(news.id, input.id))
         .get();
 
       if (!row) {
-        throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
+        throw new ORPCError("NOT_FOUND", { message: "News not found" });
       }
 
       return {
@@ -107,8 +99,6 @@ export const announcementsRouter = {
         coverImage: row.coverImage,
         tags: row.tags,
         status: row.status,
-        audience: row.audience,
-        addressedTo: row.addressedTo,
         publishedAt: row.publishedAt?.toISOString() ?? null,
         createdAt: row.createdAt.toISOString(),
         updatedAt: row.updatedAt.toISOString(),
@@ -123,8 +113,6 @@ export const announcementsRouter = {
         excerpt: z.string().optional(),
         coverImage: z.string().optional(),
         tags: z.array(z.string()).optional(),
-        audience: z.enum(["all", "students", "parents", "staff", "alumni"]).optional(),
-        addressedTo: z.string().optional(),
         publishNow: z.boolean().optional(),
       })
     )
@@ -138,7 +126,7 @@ export const announcementsRouter = {
 
       const db = createDb();
       const record = await db
-        .insert(announcements)
+        .insert(news)
         .values({
           id,
           title: input.title,
@@ -147,8 +135,6 @@ export const announcementsRouter = {
           coverImage: input.coverImage ?? null,
           tags: input.tags ?? [],
           status: input.publishNow ? "published" : "draft",
-          audience: input.audience ?? "all",
-          addressedTo: input.addressedTo ?? null,
           publishedAt: input.publishNow ? now : null,
           userId: context.auth.userId,
         })
@@ -163,8 +149,6 @@ export const announcementsRouter = {
         coverImage: record.coverImage,
         tags: record.tags,
         status: record.status,
-        audience: record.audience,
-        addressedTo: record.addressedTo,
         publishedAt: record.publishedAt?.toISOString() ?? null,
         createdAt: record.createdAt.toISOString(),
         updatedAt: record.updatedAt.toISOString(),
@@ -180,8 +164,6 @@ export const announcementsRouter = {
         excerpt: z.string().optional(),
         coverImage: z.string().optional(),
         tags: z.array(z.string()).optional(),
-        audience: z.enum(["all", "students", "parents", "staff", "alumni"]).optional(),
-        addressedTo: z.string().optional(),
         publishNow: z.boolean().optional(),
       })
     )
@@ -193,12 +175,12 @@ export const announcementsRouter = {
       const db = createDb();
       const existing = await db
         .select()
-        .from(announcements)
-        .where(eq(announcements.id, input.id))
+        .from(news)
+        .where(eq(news.id, input.id))
         .get();
 
       if (!existing) {
-        throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
+        throw new ORPCError("NOT_FOUND", { message: "News not found" });
       }
 
       const now = new Date();
@@ -211,17 +193,15 @@ export const announcementsRouter = {
       if (input.excerpt !== undefined) updateData.excerpt = input.excerpt;
       if (input.coverImage !== undefined) updateData.coverImage = input.coverImage;
       if (input.tags !== undefined) updateData.tags = input.tags;
-      if (input.audience !== undefined) updateData.audience = input.audience;
-      if (input.addressedTo !== undefined) updateData.addressedTo = input.addressedTo;
       if (input.publishNow === true && !existing.publishedAt) {
         updateData.publishedAt = now;
         updateData.status = "published";
       }
 
       const record = await db
-        .update(announcements)
+        .update(news)
         .set(updateData)
-        .where(eq(announcements.id, input.id))
+        .where(eq(news.id, input.id))
         .returning()
         .get();
 
@@ -233,8 +213,6 @@ export const announcementsRouter = {
         coverImage: record.coverImage,
         tags: record.tags,
         status: record.status,
-        audience: record.audience,
-        addressedTo: record.addressedTo,
         publishedAt: record.publishedAt?.toISOString() ?? null,
         createdAt: record.createdAt.toISOString(),
         updatedAt: record.updatedAt.toISOString(),
@@ -251,17 +229,17 @@ export const announcementsRouter = {
       const db = createDb();
       const existing = await db
         .select()
-        .from(announcements)
-        .where(eq(announcements.id, input.id))
+        .from(news)
+        .where(eq(news.id, input.id))
         .get();
 
       if (!existing) {
-        throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
+        throw new ORPCError("NOT_FOUND", { message: "News not found" });
       }
 
       await db
-        .delete(announcements)
-        .where(eq(announcements.id, input.id))
+        .delete(news)
+        .where(eq(news.id, input.id))
         .run();
 
       return { success: true };

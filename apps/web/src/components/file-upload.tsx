@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@aloysius-web/ui/components/dialog";
 import { Button } from "@aloysius-web/ui/components/button";
+import { ImageCropDialog } from "@aloysius-web/ui/components/image-crop-dialog";
 import { client } from "@/utils/orpc";
 
 type UploadState = "idle" | "uploading" | "processing" | "error" | "done";
@@ -57,7 +58,7 @@ export interface FileUploadProps {
   className?: string;
 }
 
-function formatFileSize(bytes: number): string {
+export function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB"];
@@ -231,20 +232,28 @@ export function FileUpload({
   );
 }
 
-function Dropzone({
+export function Dropzone({
   onFilesSelected,
   maxFiles,
   maxSize,
   className,
   disabled = false,
+  crop = false,
+  aspect = 16 / 9,
+  cropTitle = "Crop Image",
 }: {
   onFilesSelected: (files: File[]) => void;
   maxFiles: number;
   maxSize: number;
   className?: string;
   disabled?: boolean;
+  crop?: boolean;
+  aspect?: number;
+  cropTitle?: string;
 }) {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(
@@ -252,43 +261,68 @@ function Dropzone({
       if (!fileList) return;
       const files = Array.from(fileList).slice(0, maxFiles);
       const valid = files.filter((f) => f.size <= maxSize);
-      onFilesSelected(valid);
+
+      if (crop && valid.length === 1 && isImageFile(valid[0]!.type)) {
+        setPendingFile(valid[0]!);
+        setCropOpen(true);
+      } else {
+        onFilesSelected(valid);
+      }
     },
-    [maxFiles, maxSize, onFilesSelected]
+    [maxFiles, maxSize, crop, onFilesSelected]
+  );
+
+  const handleCropComplete = useCallback(
+    (file: File) => {
+      setPendingFile(null);
+      setCropOpen(false);
+      onFilesSelected([file]);
+    },
+    [onFilesSelected]
   );
 
   return (
-    <div
-      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-      onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
-      onDrop={(e) => { e.preventDefault(); setIsDragOver(false); handleFiles(e.dataTransfer.files); }}
-      onClick={() => !disabled && inputRef.current?.click()}
-      className={cn(
-        "flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition-colors",
-        isDragOver
-          ? "border-primary bg-primary/5"
-          : "border-muted-foreground/25 hover:border-muted-foreground/50",
-        disabled && "cursor-not-allowed opacity-50",
-        className
-      )}
-    >
-      <input
-        ref={inputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={(e) => handleFiles(e.target.files)}
-        disabled={disabled}
+    <>
+      <div
+        onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+        onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
+        onDrop={(e) => { e.preventDefault(); setIsDragOver(false); handleFiles(e.dataTransfer.files); }}
+        onClick={() => !disabled && inputRef.current?.click()}
+        className={cn(
+          "flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition-colors",
+          isDragOver
+            ? "border-primary bg-primary/5"
+            : "border-muted-foreground/25 hover:border-muted-foreground/50",
+          disabled && "cursor-not-allowed opacity-50",
+          className
+        )}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => handleFiles(e.target.files)}
+          disabled={disabled}
+        />
+        <UploadIcon className="size-8 text-muted-foreground" />
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">Click to upload</span>{" "}
+          or drag and drop
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Max {formatFileSize(maxSize)} per file, up to {maxFiles} files
+        </div>
+      </div>
+      <ImageCropDialog
+        open={cropOpen}
+        onOpenChange={setCropOpen}
+        file={pendingFile}
+        onCropComplete={handleCropComplete}
+        aspect={aspect}
+        title={cropTitle}
       />
-      <UploadIcon className="size-8 text-muted-foreground" />
-      <div className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">Click to upload</span>{" "}
-        or drag and drop
-      </div>
-      <div className="text-xs text-muted-foreground">
-        Max {formatFileSize(maxSize)} per file, up to {maxFiles} files
-      </div>
-    </div>
+    </>
   );
 }
 

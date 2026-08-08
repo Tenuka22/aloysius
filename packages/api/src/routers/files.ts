@@ -6,6 +6,7 @@ import { ORPCError } from "@orpc/server";
 import { protectedProcedure } from "../index";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"];
 
 export const filesRouter = {
   uploadFile: protectedProcedure
@@ -23,8 +24,23 @@ export const filesRouter = {
 
       const id = crypto.randomUUID();
       const file = input as File;
-      const ext = file.name.split(".").pop() ?? "";
-      const key = `${context.auth.userId}/${id}${ext ? `.${ext}` : ""}`;
+      const isImage = IMAGE_TYPES.includes(file.type);
+
+      let uploadBuffer: Buffer;
+      let ext: string;
+      let contentType: string;
+
+      if (isImage) {
+        uploadBuffer = Buffer.from(await file.arrayBuffer());
+        ext = "webp";
+        contentType = "image/webp";
+      } else {
+        uploadBuffer = Buffer.from(await file.arrayBuffer());
+        ext = file.name.split(".").pop() ?? "";
+        contentType = file.type;
+      }
+
+      const key = `${context.auth.userId}/${id}.${ext}`;
 
       if (!context.bucket) {
         throw new ORPCError("INTERNAL_SERVER_ERROR", {
@@ -32,8 +48,8 @@ export const filesRouter = {
         });
       }
 
-      await context.bucket.put(key, input as unknown as Blob, {
-        httpMetadata: { contentType: input.type },
+      await context.bucket.put(key, uploadBuffer, {
+        httpMetadata: { contentType },
       });
 
       const db = createDb();
@@ -42,8 +58,8 @@ export const filesRouter = {
         .values({
           id,
           name: file.name,
-          size: file.size,
-          type: file.type,
+          size: uploadBuffer.length,
+          type: contentType,
           key,
           userId: context.auth.userId,
         })

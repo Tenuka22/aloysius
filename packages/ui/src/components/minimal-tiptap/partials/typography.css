@@ -1,0 +1,37 @@
+@reference "../../../styles/globals.css";
+
+.minimal-tiptap-editor .ProseMirror .heading-node {
+  @apply relative font-semibold;
+}
+
+.minimal-tiptap-editor .ProseMirror .heading-node:first-child {
+  @apply mt-0;
+}
+
+.minimal-tiptap-editor .ProseMirror h1 {
+  @apply mt-8 mb-4 text-2xl leading-7;
+}
+
+.minimal-tiptap-editor .ProseMirror h2 {
+  @apply mt-6 mb-3 text-xl leading-7;
+}
+
+.minimal-tiptap-editor .ProseMirror h3 {
+  @apply mt-4 mb-3 text-lg leading-6;
+}
+
+.minimal-tiptap-editor .ProseMirror h4 {
+  @apply mt-4 mb-2 text-base leading-6;
+}
+
+.minimal-tiptap-editor .ProseMirror h5 {
+  @apply mt-4 mb-2 text-sm;
+}
+
+.minimal-tiptap-editor .ProseMirror a.link {
+  @apply text-primary underline;
+}
+
+.minimal-tiptap-editor .ProseMirror a.link:hover {
+  @apply underline;
+}

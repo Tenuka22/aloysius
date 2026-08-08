@@ -2,6 +2,7 @@ import type { RouterClient } from "@orpc/server";
 
 import { protectedProcedure, publicProcedure } from "../index";
 import { filesRouter } from "./files";
+import { newsRouter } from "./news";
 import { announcementsRouter } from "./announcements";
 
 export const appRouter = {
@@ -15,6 +16,7 @@ export const appRouter = {
     };
   }),
   files: filesRouter,
+  news: newsRouter,
   announcements: announcementsRouter,
 };
 export type AppRouter = typeof appRouter;
