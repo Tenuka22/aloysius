@@ -62,3 +62,53 @@ export const announcements = sqliteTable("announcements", {
     .$defaultFn(() => new Date()),
   userId: text("user_id").notNull(),
 });
+
+// --- Events table ---
+
+export const events = sqliteTable("events", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  excerpt: text("excerpt"),
+  coverImage: text("cover_image"),
+  bodyImage: text("body_image"),
+  purpose: text("purpose"),
+  organization: text("organization"),
+  location: text("location"),
+  startDate: integer("start_date", { mode: "timestamp" }).notNull(),
+  endDate: integer("end_date", { mode: "timestamp" }),
+  isRecurring: integer("is_recurring", { mode: "boolean" }).notNull().default(false),
+  isAllDay: integer("is_all_day", { mode: "boolean" }).notNull().default(false),
+  recurrenceRule: text("recurrence_rule"),
+  tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
+  status: text("status", { enum: ["draft", "published", "archived"] })
+    .notNull()
+    .default("draft"),
+  publishedAt: integer("published_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  userId: text("user_id").notNull(),
+});
+
+// --- Event Records (success/postponed/failed outcomes) ---
+
+export const eventRecords = sqliteTable("event_records", {
+  id: text("id").primaryKey(),
+  eventId: text("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  outcome: text("outcome", { enum: ["success", "postponed", "failed"] }).notNull(),
+  reason: text("reason"),
+  notes: text("notes"),
+  recordedAt: integer("recorded_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  userId: text("user_id").notNull(),
+});

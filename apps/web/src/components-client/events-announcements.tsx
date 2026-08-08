@@ -8,12 +8,6 @@ import { client } from "@/utils/orpc"
 
 gsap.registerPlugin(ScrollTrigger)
 
-const events = [
-  { date: "Jun 20", isoDate: "2026-06-20", title: "Founders' Day Celebration", time: "08:30 AM", location: "College Main Hall" },
-  { date: "Jun 28", isoDate: "2026-06-28", title: "Inter-House Sports Meet", time: "07:30 AM", location: "College Grounds" },
-  { date: "Jul 05", isoDate: "2026-07-05", title: "Aloysian Art Exhibition", time: "10:00 AM", location: "Loyola Hall" },
-]
-
 const audienceLabels: Record<string, string> = {
   all: "Everyone",
   students: "Students",
@@ -26,6 +20,11 @@ export function EventsAnnouncements() {
   const eventsRef = useRef<HTMLDivElement>(null)
   const announcementsRef = useRef<HTMLDivElement>(null)
 
+  const { data: eventsData } = useQuery({
+    queryKey: ["events"],
+    queryFn: () => client.events.list({ page: 1, pageSize: 10 }),
+  })
+
   const { data: newsData } = useQuery({
     queryKey: ["news"],
     queryFn: () => client.news.list({ page: 1, pageSize: 10 }),
@@ -36,6 +35,7 @@ export function EventsAnnouncements() {
     queryFn: () => client.announcements.list({ page: 1, pageSize: 10 }),
   })
 
+  const publishedEvents = (eventsData?.rows ?? []).filter((e: any) => e.status === "published").slice(0, 3)
   const publishedNews = (newsData?.rows ?? []).filter((n: any) => n.status === "published").slice(0, 3)
   const publishedAnnouncements = (announcementsData?.rows ?? []).filter((a: any) => a.status === "published").slice(0, 3)
 
@@ -69,7 +69,7 @@ export function EventsAnnouncements() {
     })
 
     return () => ctx.revert()
-  }, [publishedNews, publishedAnnouncements])
+  }, [publishedEvents, publishedNews, publishedAnnouncements])
 
   return (
     <section aria-label="Events and announcements" className="px-4 sm:px-6 lg:px-8 py-16 border-t">
@@ -83,31 +83,53 @@ export function EventsAnnouncements() {
             </a>
           </div>
           <ul role="list" className="space-y-4">
-            {events.map((event) => (
-              <li
-                key={event.title}
-                role="listitem"
-                data-animate
-                aria-label={`${event.title}, ${event.date}, ${event.time} at ${event.location}`}
-                className="flex items-start gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
-              >
-                <div className="shrink-0 text-center">
-                  <div className="text-xs font-medium text-muted-foreground uppercase">
-                    {event.date.split(" ")[0]}
-                  </div>
-                  <time dateTime={event.isoDate} className="text-2xl font-bold">{event.date.split(" ")[1]}</time>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium mb-1">{event.title}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {event.time} • {event.location}
-                  </div>
-                </div>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5 shrink-0 text-muted-foreground" aria-hidden="true">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
+            {publishedEvents.length > 0 ? (
+              publishedEvents.map((event: any) => {
+                const eventDate = new Date(event.startDate)
+                const month = eventDate.toLocaleString("default", { month: "short" })
+                const day = eventDate.getDate()
+                const time = eventDate.toLocaleTimeString("default", { hour: "2-digit", minute: "2-digit" })
+
+                return (
+                  <li
+                    key={event.id}
+                    role="listitem"
+                    data-animate
+                    className="flex items-start gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                  >
+                    {event.coverImage ? (
+                      <div className="shrink-0 w-12 h-12 rounded-md overflow-hidden">
+                        <img src={event.coverImage} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="shrink-0 text-center">
+                        <div className="text-xs font-medium text-muted-foreground uppercase">{month}</div>
+                        <time dateTime={event.startDate} className="text-2xl font-bold">{day}</time>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium mb-1">{event.title}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {time}
+                        {event.location && ` • ${event.location}`}
+                      </div>
+                      {event.isRecurring && (
+                        <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400 mt-1">
+                          Recurring
+                        </span>
+                      )}
+                    </div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5 shrink-0 text-muted-foreground" aria-hidden="true">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </li>
+                )
+              })
+            ) : (
+              <li className="p-4 rounded-lg border text-center text-muted-foreground">
+                No upcoming events
               </li>
-            ))}
+            )}
           </ul>
         </div>
 

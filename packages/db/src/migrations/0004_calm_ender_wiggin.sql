@@ -1,0 +1,1 @@
+ALTER TABLE `events` ADD `is_all_day` integer DEFAULT false NOT NULL;
