@@ -40,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@aloysius-web/ui/components/select"
-import { IconPlus, IconDotsVertical, IconPencil, IconTrash, IconClipboard } from "@tabler/icons-react"
+import { IconPlus, IconDotsVertical, IconPencil, IconTrash, IconClipboard, IconSend, IconArchive, IconRotate } from "@tabler/icons-react"
 import { client } from "@/utils/orpc"
 import { toast } from "sonner"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -112,6 +112,18 @@ function ActionsMenu({ item }: { item: EventItem }) {
     },
   })
 
+  const statusMutation = useMutation({
+    mutationFn: (status: "draft" | "published" | "archived") =>
+      client.events.update({ id: item.id, status, publishNow: status === "published" }),
+    onSuccess: () => {
+      toast.success("Status updated")
+      queryClient.invalidateQueries({ queryKey: ["events"] })
+    },
+    onError: (err) => {
+      toast.error(err.message)
+    },
+  })
+
   return (
     <>
       <DropdownMenu>
@@ -131,6 +143,31 @@ function ActionsMenu({ item }: { item: EventItem }) {
             <IconClipboard className="size-4" />
             Records
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {item.status === "draft" && (
+            <DropdownMenuItem onClick={() => statusMutation.mutate("published")}>
+              <IconSend className="size-4" />
+              Publish
+            </DropdownMenuItem>
+          )}
+          {item.status === "published" && (
+            <>
+              <DropdownMenuItem onClick={() => statusMutation.mutate("draft")}>
+                <IconRotate className="size-4" />
+                Unpublish
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => statusMutation.mutate("archived")}>
+                <IconArchive className="size-4" />
+                Archive
+              </DropdownMenuItem>
+            </>
+          )}
+          {item.status === "archived" && (
+            <DropdownMenuItem onClick={() => statusMutation.mutate("draft")}>
+              <IconRotate className="size-4" />
+              Restore to Draft
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
@@ -172,6 +209,33 @@ const columns: ColumnDef<EventItem, any>[] = [
   {
     accessorKey: "title",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Title" />,
+  },
+  {
+    accessorKey: "excerpt",
+    header: "Excerpt",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground line-clamp-1">{row.original.excerpt ?? "—"}</span>
+    ),
+  },
+  {
+    accessorKey: "tags",
+    header: "Tags",
+    cell: ({ row }) => {
+      const tags = row.original.tags
+      if (!tags || tags.length === 0) return <span className="text-muted-foreground">—</span>
+      return (
+        <div className="flex flex-wrap gap-1">
+          {tags.slice(0, 3).map((tag) => (
+            <span key={tag} className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+              {tag}
+            </span>
+          ))}
+          {tags.length > 3 && (
+            <span className="text-xs text-muted-foreground">+{tags.length - 3}</span>
+          )}
+        </div>
+      )
+    },
   },
   {
     accessorKey: "startDate",

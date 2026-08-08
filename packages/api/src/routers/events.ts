@@ -220,6 +220,7 @@ export const eventsRouter = {
         isAllDay: z.boolean().optional(),
         recurrenceRule: z.string().optional(),
         tags: z.array(z.string()).optional(),
+        status: z.enum(["draft", "published", "archived"]).optional(),
         publishNow: z.boolean().optional(),
       })
     )
@@ -258,7 +259,12 @@ export const eventsRouter = {
       if (input.isAllDay !== undefined) updateData.isAllDay = input.isAllDay;
       if (input.recurrenceRule !== undefined) updateData.recurrenceRule = input.recurrenceRule;
       if (input.tags !== undefined) updateData.tags = input.tags;
-      if (input.publishNow === true && !existing.publishedAt) {
+      if (input.status !== undefined) {
+        updateData.status = input.status;
+        if (input.status === "published" && !existing.publishedAt) {
+          updateData.publishedAt = now;
+        }
+      } else if (input.publishNow === true && !existing.publishedAt) {
         updateData.publishedAt = now;
         updateData.status = "published";
       }

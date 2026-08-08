@@ -14,6 +14,7 @@ import { Dropzone } from "@/components/file-upload"
 import { IconX } from "@tabler/icons-react"
 import { cn } from "@aloysius-web/ui/lib/utils"
 import { client } from "@/utils/orpc"
+import { convertToWebp } from "@/utils/convert-to-webp"
 import { toast } from "sonner"
 import * as v from "valibot"
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
@@ -86,7 +87,8 @@ function CoverImageField() {
     if (!file) return
     setUploading(true)
     try {
-      const result = await client.files.uploadFile(file)
+      const webp = await convertToWebp(file)
+      const result = await client.files.uploadFile(webp)
       form.setFieldValue("coverImage", result.url)
     } catch {
       toast.error("Failed to upload image")
@@ -144,7 +146,8 @@ function BodyImageField() {
     if (!file) return
     setUploading(true)
     try {
-      const result = await client.files.uploadFile(file)
+      const webp = await convertToWebp(file)
+      const result = await client.files.uploadFile(webp)
       form.setFieldValue("bodyImage", result.url)
     } catch {
       toast.error("Failed to upload image")
@@ -275,6 +278,11 @@ function TagsField() {
 function ContentEditor() {
   const form = useBuildForm()
   const content = (form.state.values.content as string) ?? ""
+  const handleImageUpload = useCallback(async (file: File) => {
+    const webp = await convertToWebp(file)
+    const result = await client.files.uploadFile(webp)
+    return result.url
+  }, [])
 
   return (
     <div className="space-y-1.5">
@@ -284,6 +292,7 @@ function ContentEditor() {
       <MinimalTiptapEditor
         value={content}
         onChange={(val) => form.setFieldValue("content", val)}
+        onImageUpload={handleImageUpload}
         className="min-h-[300px]"
       />
     </div>
@@ -354,7 +363,17 @@ export function EventForm({
   }
 
   if (mode === "edit" && existingEvent.isLoading) {
-    return <div className="p-4 text-muted-foreground">Loading...</div>
+    return (
+      <div className="space-y-6 p-1">
+        <div className="h-10 rounded bg-muted animate-pulse" />
+        <div className="h-20 rounded bg-muted animate-pulse" />
+        <div className="h-[300px] rounded bg-muted animate-pulse" />
+      </div>
+    )
+  }
+
+  if (mode === "edit" && !existingEvent.data) {
+    return <div className="p-4 text-center text-muted-foreground">Event not found.</div>
   }
 
   return (
