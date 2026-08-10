@@ -1,10 +1,8 @@
 "use client"
 
 import { useRef, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
-import { client } from "@/utils/orpc"
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -16,28 +14,26 @@ const audienceLabels: Record<string, string> = {
   alumni: "Alumni",
 }
 
-export function EventsAnnouncements() {
+const authorTypeLabels: Record<string, string> = {
+  student: "Student",
+  faculty: "Faculty",
+  club: "Club",
+  org: "Organization",
+}
+
+interface EventsAnnouncementsProps {
+  initialEvents?: any[]
+  initialNews?: any[]
+  initialAnnouncements?: any[]
+}
+
+export function EventsAnnouncements({ initialEvents = [], initialNews = [], initialAnnouncements = [] }: EventsAnnouncementsProps) {
   const eventsRef = useRef<HTMLDivElement>(null)
   const announcementsRef = useRef<HTMLDivElement>(null)
 
-  const { data: eventsData } = useQuery({
-    queryKey: ["events"],
-    queryFn: () => client.events.list({ page: 1, pageSize: 10 }),
-  })
-
-  const { data: newsData } = useQuery({
-    queryKey: ["news"],
-    queryFn: () => client.news.list({ page: 1, pageSize: 10 }),
-  })
-
-  const { data: announcementsData } = useQuery({
-    queryKey: ["announcements"],
-    queryFn: () => client.announcements.list({ page: 1, pageSize: 10 }),
-  })
-
-  const publishedEvents = (eventsData?.rows ?? []).filter((e: any) => e.status === "published").slice(0, 3)
-  const publishedNews = (newsData?.rows ?? []).filter((n: any) => n.status === "published").slice(0, 3)
-  const publishedAnnouncements = (announcementsData?.rows ?? []).filter((a: any) => a.status === "published").slice(0, 3)
+  const publishedEvents = initialEvents.slice(0, 3)
+  const publishedNews = initialNews.slice(0, 3)
+  const publishedAnnouncements = initialAnnouncements.slice(0, 3)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -109,15 +105,41 @@ export function EventsAnnouncements() {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="font-medium mb-1">{event.title}</div>
+                      {event.excerpt && (
+                        <div className="text-xs text-muted-foreground mb-1 line-clamp-1">{event.excerpt}</div>
+                      )}
+                      {event.purpose && (
+                        <div className="text-xs text-muted-foreground mb-1 line-clamp-1">{event.purpose}</div>
+                      )}
                       <div className="text-sm text-muted-foreground">
-                        {time}
+                        {event.isAllDay ? "All day" : time}
                         {event.location && ` • ${event.location}`}
                       </div>
-                      {event.isRecurring && (
-                        <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400 mt-1">
-                          Recurring
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {event.organization && (
+                          <span className="text-xs text-muted-foreground">{event.organization}</span>
+                        )}
+                        {event.organizerName && (
+                          <span className="text-xs text-muted-foreground">
+                            by {event.organizerName}
+                            {event.organizerType && ` (${authorTypeLabels[event.organizerType] ?? event.organizerType})`}
+                          </span>
+                        )}
+                        {event.isRecurring && (
+                          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            Recurring
+                          </span>
+                        )}
+                        {event.tags && event.tags.length > 0 && (
+                          <div className="flex gap-1">
+                            {event.tags.slice(0, 2).map((tag: string) => (
+                              <span key={tag} className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5 shrink-0 text-muted-foreground" aria-hidden="true">
                       <path d="M5 12h14M12 5l7 7-7 7" />
@@ -167,9 +189,20 @@ export function EventsAnnouncements() {
                     <time dateTime={item.createdAt} className="text-xs text-muted-foreground">
                       {new Date(item.createdAt).toLocaleDateString()}
                     </time>
+                    {item.authorName && (
+                      <span className="text-xs text-muted-foreground">
+                        by {item.authorName}
+                        {item.authorType && ` (${authorTypeLabels[item.authorType] ?? item.authorType})`}
+                      </span>
+                    )}
                     {item.audience && item.audience !== "all" && (
                       <span className="inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
                         {audienceLabels[item.audience] ?? item.audience}
+                      </span>
+                    )}
+                    {item.addressedTo && (
+                      <span className="text-xs text-muted-foreground">
+                        To: {item.addressedTo}
                       </span>
                     )}
                     {item.tags && item.tags.length > 0 && (
@@ -230,6 +263,12 @@ export function EventsAnnouncements() {
                     <time dateTime={item.createdAt} className="text-xs text-muted-foreground">
                       {new Date(item.createdAt).toLocaleDateString()}
                     </time>
+                    {item.authorName && (
+                      <span className="text-xs text-muted-foreground">
+                        by {item.authorName}
+                        {item.authorType && ` (${authorTypeLabels[item.authorType] ?? item.authorType})`}
+                      </span>
+                    )}
                     {item.tags && item.tags.length > 0 && (
                       <div className="flex gap-1">
                         {item.tags.slice(0, 2).map((tag: string) => (

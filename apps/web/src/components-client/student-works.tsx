@@ -1,20 +1,10 @@
 "use client"
 
 import { useRef, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
-import { client } from "@/utils/orpc"
 
 gsap.registerPlugin(ScrollTrigger)
-
-const fallbackWorks = [
-  { id: "1", title: "The Silent Witness", category: "film", studentNames: ["Media Club"], coverImage: null },
-  { id: "2", title: "Fragments", category: "art", studentNames: ["Visual Arts Society"], coverImage: null },
-  { id: "3", title: "Form & Function", category: "design", studentNames: ["Design Studio"], coverImage: null },
-  { id: "4", title: "Strike, Serve, Shine.", category: "design", studentNames: ["Tech Club"], coverImage: null },
-  { id: "5", title: "Reverie", category: "music", studentNames: ["Music Society"], coverImage: null },
-]
 
 const categoryLabels: Record<string, string> = {
   film: "Short Film",
@@ -27,16 +17,31 @@ const categoryLabels: Record<string, string> = {
   other: "Other",
 }
 
-export function StudentWorks() {
+const authorTypeLabels: Record<string, string> = {
+  student: "Student",
+  faculty: "Faculty",
+  club: "Club",
+  org: "Organization",
+}
+
+interface StudentWorkRow {
+  id: string
+  title: string
+  description: string | null
+  category: string
+  studentNames: string[] | null
+  studentGrade: string | null
+  authorType: string | null
+  coverImage: string | null
+  contentUrl: string | null
+  tags: string[] | null
+}
+
+export function StudentWorks({ initialData }: { initialData?: StudentWorkRow[] }) {
   const ref = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLDivElement>(null)
 
-  const { data } = useQuery({
-    queryKey: ["student-works-home"],
-    queryFn: () => client.studentWorks.list({ page: 1, pageSize: 5, status: "published" }),
-  })
-
-  const works = data?.rows && data.rows.length > 0 ? data.rows : fallbackWorks
+  const works = initialData ?? []
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -83,7 +88,11 @@ export function StudentWorks() {
           </a>
         </div>
         <div ref={ref} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-          {works.map((work) => (
+          {works.length === 0 ? (
+            <div className="col-span-full text-center text-muted-foreground py-8">
+              No student works published yet.
+            </div>
+          ) : works.map((work) => (
             <div key={work.id} className="group cursor-pointer">
               <div className="aspect-[3/4] rounded-xl bg-muted flex items-center justify-center overflow-hidden mb-3">
                 {work.coverImage ? (
@@ -104,7 +113,23 @@ export function StudentWorks() {
                 {categoryLabels[work.category] ?? work.category}
               </div>
               <div className="text-sm font-medium mb-1">{work.title}</div>
-              <div className="text-xs text-muted-foreground">by {work.studentNames?.join(", ")}</div>
+              <div className="text-xs text-muted-foreground">
+                {work.studentNames && work.studentNames.length > 0
+                  ? `by ${work.studentNames.join(", ")}`
+                  : work.authorType
+                    ? authorTypeLabels[work.authorType] ?? work.authorType
+                    : ""}
+                {work.studentGrade && ` · ${work.studentGrade}`}
+              </div>
+              {work.tags && work.tags.length > 0 && (
+                <div className="flex gap-1 mt-1">
+                  {work.tags.slice(0, 2).map((tag) => (
+                    <span key={tag} className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
