@@ -232,3 +232,13 @@ export const stats = sqliteTable("stats", {
     .notNull()
     .$defaultFn(() => new Date()),
 });
+
+// --- Site Settings table (key-value for homepage content) ---
+
+export const siteSettings = sqliteTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: text("value"),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});

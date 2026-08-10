@@ -1,7 +1,19 @@
 "use client"
 
 import { useRef, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import gsap from "gsap"
+import { client } from "@/utils/orpc"
+
+const DEFAULTS = {
+  hero_title: "A place to shape\ncharacter. A stage to\nshowcase greatness.",
+  hero_badge: "#AloysiusPride",
+  hero_subtitle: "At Aloysius College, students don\u2019t just learn \u2014 they create, explore, and inspire. Discover the talent, innovation, and spirit of our students.",
+  hero_cta1_text: "Explore Student Works",
+  hero_cta1_url: "/student-works",
+  hero_cta2_text: "About Our College",
+  hero_cta2_url: "#",
+}
 
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null)
@@ -10,6 +22,13 @@ export function Hero() {
   const gridRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLParagraphElement>(null)
   const buttonsRef = useRef<HTMLDivElement>(null)
+
+  const { data: settings = {} } = useQuery({
+    queryKey: ["settings", "hero"],
+    queryFn: () => client.settings.getAll(),
+  })
+
+  const s = (key: string) => settings[key] || DEFAULTS[key as keyof typeof DEFAULTS] || ""
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -35,6 +54,8 @@ export function Hero() {
     return () => ctx.revert()
   }, [])
 
+  const titleLines = s("hero_title").split("\n")
+
   return (
     <section ref={sectionRef} className="px-4 sm:px-6 lg:px-8 pt-16 pb-12">
       <div className="mx-auto max-w-5xl text-center">
@@ -42,18 +63,20 @@ export function Hero() {
           ref={headingRef}
           className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-8"
         >
-          A place to shape
-          <br />
-          character. A stage to
-          <br />
-          showcase greatness.
+          {titleLines.map((line: string, i: number) => (
+            <span key={i}>
+              {line}
+              {i < titleLines.length - 1 && <br />}
+            </span>
+          ))}
         </h1>
 
-        <div ref={badgeRef} className="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2 mb-8">
-          <span className="text-sm font-medium">#AloysiusPride</span>
-        </div>
+        {s("hero_badge") && (
+          <div ref={badgeRef} className="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2 mb-8">
+            <span className="text-sm font-medium">{s("hero_badge")}</span>
+          </div>
+        )}
 
-        {/* Image Grid Placeholder */}
         <div ref={gridRef} className="grid grid-cols-3 sm:grid-cols-5 gap-3 max-w-3xl mx-auto mb-8 perspective-[1000px]">
           {Array.from({ length: 5 }).map((_, i) => (
             <div
@@ -70,18 +93,16 @@ export function Hero() {
         </div>
 
         <p ref={textRef} className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto mb-8">
-          At Aloysius College, students don&apos;t just learn — they create, explore, and inspire.
-          <br className="hidden sm:block" />
-          Discover the talent, innovation, and spirit of our students.
+          {s("hero_subtitle")}
         </p>
 
         <div ref={buttonsRef} className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <a href="/student-works" className="inline-flex h-10 items-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-            Explore Student Works
+          <a href={s("hero_cta1_url") || "/student-works"} className="inline-flex h-10 items-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+            {s("hero_cta1_text") || "Explore Student Works"}
           </a>
-          <button className="inline-flex h-10 items-center rounded-lg border border-border bg-background px-6 text-sm font-medium hover:bg-muted transition-colors">
-            About Our College
-          </button>
+          <a href={s("hero_cta2_url") || "#"} className="inline-flex h-10 items-center rounded-lg border border-border bg-background px-6 text-sm font-medium hover:bg-muted transition-colors">
+            {s("hero_cta2_text") || "About Our College"}
+          </a>
         </div>
       </div>
     </section>

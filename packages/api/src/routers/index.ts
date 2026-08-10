@@ -10,6 +10,7 @@ import { galleryRouter } from "./gallery";
 import { studentWorksRouter } from "./student-works";
 import { statsRouter } from "./stats";
 import { tagsRouter } from "./tags";
+import { settingsRouter } from "./settings";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -30,6 +31,7 @@ export const appRouter = {
   studentWorks: studentWorksRouter,
   stats: statsRouter,
   tags: tagsRouter,
+  settings: settingsRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

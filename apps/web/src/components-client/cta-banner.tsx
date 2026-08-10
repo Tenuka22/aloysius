@@ -1,13 +1,29 @@
 "use client"
 
 import { useRef, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { client } from "@/utils/orpc"
 
 gsap.registerPlugin(ScrollTrigger)
 
+const DEFAULTS = {
+  cta_title: "Be part of a legacy.\nBuild your future.",
+  cta_subtitle: "Join a community where values meet vision, and every student shines.",
+  cta_button_text: "Apply Now",
+  cta_button_url: "#",
+}
+
 export function CTABanner() {
   const ref = useRef<HTMLDivElement>(null)
+
+  const { data: settings = {} } = useQuery({
+    queryKey: ["settings", "cta"],
+    queryFn: () => client.settings.getAll(),
+  })
+
+  const s = (key: string) => settings[key] || DEFAULTS[key as keyof typeof DEFAULTS] || ""
 
   useEffect(() => {
     const el = ref.current
@@ -31,6 +47,8 @@ export function CTABanner() {
     return () => ctx.revert()
   }, [])
 
+  const titleLines = s("cta_title").split("\n")
+
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-12">
       <div
@@ -39,18 +57,21 @@ export function CTABanner() {
       >
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-            Be part of a legacy.
-            <br />
-            Build your future.
+            {titleLines.map((line: string, i: number) => (
+              <span key={i}>
+                {line}
+                {i < titleLines.length - 1 && <br />}
+              </span>
+            ))}
           </h2>
         </div>
         <div className="text-center sm:text-left">
           <p className="text-muted-foreground mb-4">
-            Join a community where values meet vision, and every student shines.
+            {s("cta_subtitle")}
           </p>
-          <button className="inline-flex h-10 items-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-            Apply Now
-          </button>
+          <a href={s("cta_button_url") || "#"} className="inline-flex h-10 items-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+            {s("cta_button_text") || "Apply Now"}
+          </a>
         </div>
       </div>
     </section>

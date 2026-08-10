@@ -9,7 +9,7 @@ import {
 } from "@aloysius-web/ui/components/sidebar"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { IconDashboard, IconCalendarEvent, IconSchool, IconNews, IconSpeakerphone, IconTrophy, IconPhoto, IconChartBar } from "@tabler/icons-react"
+import { IconDashboard, IconCalendarEvent, IconSchool, IconNews, IconSpeakerphone, IconTrophy, IconPhoto, IconChartBar, IconHome } from "@tabler/icons-react"
 
 const overviewItems = [
   {
@@ -73,6 +73,11 @@ const contentItems = [
 ]
 
 const cmsItems = [
+  {
+    title: "Homepage",
+    url: "/admin/homepage",
+    icon: <IconHome />,
+  },
   {
     title: "Stats",
     url: "/admin/stats",
