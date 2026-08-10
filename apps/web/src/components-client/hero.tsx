@@ -1,11 +1,9 @@
 "use client"
 
 import { useRef, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
 import gsap from "gsap"
-import { client } from "@/utils/orpc"
 
-const DEFAULTS = {
+const DEFAULTS: Record<string, string> = {
   hero_title: "A place to shape\ncharacter. A stage to\nshowcase greatness.",
   hero_badge: "#AloysiusPride",
   hero_subtitle: "At Aloysius College, students don\u2019t just learn \u2014 they create, explore, and inspire. Discover the talent, innovation, and spirit of our students.",
@@ -15,7 +13,7 @@ const DEFAULTS = {
   hero_cta2_url: "#",
 }
 
-export function Hero() {
+export function Hero({ settings }: { settings?: Record<string, string> }) {
   const sectionRef = useRef<HTMLElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const badgeRef = useRef<HTMLDivElement>(null)
@@ -23,12 +21,7 @@ export function Hero() {
   const textRef = useRef<HTMLParagraphElement>(null)
   const buttonsRef = useRef<HTMLDivElement>(null)
 
-  const { data: settings = {} } = useQuery({
-    queryKey: ["settings", "hero"],
-    queryFn: () => client.settings.getAll(),
-  })
-
-  const s = (key: string) => settings[key] || DEFAULTS[key as keyof typeof DEFAULTS] || ""
+  const s = (key: string) => settings?.[key] || DEFAULTS[key] || ""
 
   useEffect(() => {
     const ctx = gsap.context(() => {

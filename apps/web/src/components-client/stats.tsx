@@ -68,16 +68,11 @@ function StatIcon({ icon }: { icon: string }) {
   )
 }
 
-export function Stats() {
+export function Stats({ initialData }: { initialData?: { id: string; value: string; label: string; icon: string | null }[] }) {
   const ref = useRef<HTMLDivElement>(null)
 
-  const { data } = useQuery({
-    queryKey: ["stats"],
-    queryFn: () => client.stats.list(),
-  })
-
-  const stats = data && data.length > 0
-    ? data.map((s) => ({
+  const stats = initialData && initialData.length > 0
+    ? initialData.map((s) => ({
         value: s.value,
         label: s.label,
         icon: s.icon ?? "graduation",

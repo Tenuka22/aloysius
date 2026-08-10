@@ -109,7 +109,7 @@ function HomepageEditor() {
   }
 
   return (
-    <div className="space-y-8 p-6 max-w-3xl">
+    <div className="space-y-8 p-6 w-full max-w-4xl">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Homepage Content</h1>
         <Button onClick={handleSave} disabled={mutation.isPending}>

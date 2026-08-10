@@ -7,7 +7,27 @@ import { EventsAnnouncements } from "@/components-client/events-announcements";
 import { CTABanner } from "@/components-client/cta-banner";
 import { Footer } from "@/components-client/footer";
 
+export const Route = createFileRoute("/")({
+  loader: async ({ context }) => {
+    const { orpc } = context;
+
+    const [settings, stats] = await Promise.all([
+      orpc.settings.getAll.call(),
+      orpc.stats.list.call(),
+    ]);
+
+    return { settings, stats };
+  },
+  headers: () => ({
+    "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
+  }),
+  staleTime: 60_000,
+  component: Home,
+});
+
 function Home() {
+  const { settings, stats } = Route.useLoaderData();
+
   return (
     <div className="min-h-screen bg-background">
       <a
@@ -18,17 +38,13 @@ function Home() {
       </a>
       <Navbar />
       <main id="main-content">
-        <Hero />
-        <Stats />
+        <Hero settings={settings} />
+        <Stats initialData={stats} />
         <StudentWorks />
         <EventsAnnouncements />
-        <CTABanner />
+        <CTABanner settings={settings} />
       </main>
       <Footer />
     </div>
   );
 }
-
-export const Route = createFileRoute("/")({
-  component: Home,
-});

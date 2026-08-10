@@ -1,29 +1,22 @@
 "use client"
 
 import { useRef, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
-import { client } from "@/utils/orpc"
 
 gsap.registerPlugin(ScrollTrigger)
 
-const DEFAULTS = {
+const DEFAULTS: Record<string, string> = {
   cta_title: "Be part of a legacy.\nBuild your future.",
   cta_subtitle: "Join a community where values meet vision, and every student shines.",
   cta_button_text: "Apply Now",
   cta_button_url: "#",
 }
 
-export function CTABanner() {
+export function CTABanner({ settings }: { settings?: Record<string, string> }) {
   const ref = useRef<HTMLDivElement>(null)
 
-  const { data: settings = {} } = useQuery({
-    queryKey: ["settings", "cta"],
-    queryFn: () => client.settings.getAll(),
-  })
-
-  const s = (key: string) => settings[key] || DEFAULTS[key as keyof typeof DEFAULTS] || ""
+  const s = (key: string) => settings?.[key] || DEFAULTS[key] || ""
 
   useEffect(() => {
     const el = ref.current
