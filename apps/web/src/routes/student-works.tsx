@@ -22,7 +22,7 @@ type StudentWork = {
   title: string
   description: string | null
   category: string
-  studentName: string
+  studentNames: string[]
   studentGrade: string | null
   coverImage: string | null
 }
@@ -100,7 +100,7 @@ function StudentWorksPage() {
                       </div>
                       <h3 className="font-semibold text-lg mb-1 line-clamp-2">{item.title}</h3>
                       <p className="text-sm text-muted-foreground mb-2">
-                        {item.studentName}
+                        {item.studentNames?.join(", ")}
                         {item.studentGrade && (
                           <span className="ml-1 text-xs opacity-60">({item.studentGrade})</span>
                         )}

@@ -20,7 +20,7 @@ type Achievement = {
   title: string
   description: string | null
   category: string
-  recipientName: string | null
+  recipientNames: string[]
   recipientType: string
   year: number | null
   coverImage: string | null
@@ -101,9 +101,9 @@ function AchievementsPage() {
                         )}
                       </div>
                       <h3 className="font-semibold text-lg mb-1 line-clamp-2">{item.title}</h3>
-                      {item.recipientName && (
+                      {item.recipientNames && item.recipientNames.length > 0 && (
                         <p className="text-sm text-muted-foreground mb-2">
-                          {item.recipientName}
+                          {item.recipientNames.join(", ")}
                           <span className="ml-1 text-xs capitalize opacity-60">({item.recipientType})</span>
                         </p>
                       )}

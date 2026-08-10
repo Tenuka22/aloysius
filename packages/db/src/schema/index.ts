@@ -23,6 +23,8 @@ export const news = sqliteTable("news", {
   content: text("content").notNull(),
   excerpt: text("excerpt"),
   coverImage: text("cover_image"),
+  authorName: text("author_name"),
+  authorType: text("author_type", { enum: ["student", "faculty", "club", "org"] }),
   tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
   status: text("status", { enum: ["draft", "published", "archived"] })
     .notNull()
@@ -45,6 +47,8 @@ export const announcements = sqliteTable("announcements", {
   content: text("content").notNull(),
   excerpt: text("excerpt"),
   coverImage: text("cover_image"),
+  authorName: text("author_name"),
+  authorType: text("author_type", { enum: ["student", "faculty", "club", "org"] }),
   tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
   status: text("status", { enum: ["draft", "published", "archived"] })
     .notNull()
@@ -74,6 +78,8 @@ export const events = sqliteTable("events", {
   bodyImage: text("body_image"),
   purpose: text("purpose"),
   organization: text("organization"),
+  organizerName: text("organizer_name"),
+  organizerType: text("organizer_type", { enum: ["student", "faculty", "club", "org"] }),
   location: text("location"),
   startDate: integer("start_date", { mode: "timestamp" }).notNull(),
   endDate: integer("end_date", { mode: "timestamp" }),
@@ -122,8 +128,8 @@ export const achievements = sqliteTable("achievements", {
   category: text("category", { enum: ["academic", "sports", "arts", "clubs", "community", "other"] })
     .notNull()
     .default("other"),
-  recipientName: text("recipient_name"),
-  recipientType: text("recipient_type", { enum: ["student", "faculty", "school"] })
+  recipientNames: text("recipient_names", { mode: "json" }).$type<string[]>().default([]),
+  recipientType: text("recipient_type", { enum: ["student", "faculty", "club", "org"] })
     .notNull()
     .default("student"),
   year: integer("year"),
@@ -149,7 +155,11 @@ export const gallery = sqliteTable("gallery", {
   title: text("title").notNull(),
   description: text("description"),
   eventId: text("event_id").references(() => events.id, { onDelete: "set null" }),
+  studentWorkId: text("student_work_id").references(() => studentWorks.id, { onDelete: "set null" }),
+  achievementId: text("achievement_id").references(() => achievements.id, { onDelete: "set null" }),
   coverImage: text("cover_image"),
+  authorName: text("author_name"),
+  authorType: text("author_type", { enum: ["student", "faculty", "club", "org"] }),
   tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
   status: text("status", { enum: ["draft", "published", "archived"] })
     .notNull()
@@ -188,33 +198,12 @@ export const studentWorks = sqliteTable("student_works", {
   category: text("category", { enum: ["film", "art", "music", "writing", "design", "photography", "code", "other"] })
     .notNull()
     .default("other"),
-  studentName: text("student_name").notNull(),
+  studentNames: text("student_names", { mode: "json" }).$type<string[]>().default([]),
   studentGrade: text("student_grade"),
+  authorType: text("author_type", { enum: ["student", "faculty", "club", "org"] }),
   coverImage: text("cover_image"),
   contentUrl: text("content_url"),
   tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
-  status: text("status", { enum: ["draft", "published", "archived"] })
-    .notNull()
-    .default("draft"),
-  publishedAt: integer("published_at", { mode: "timestamp" }),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .$defaultFn(() => new Date()),
-  userId: text("user_id").notNull(),
-});
-
-// --- Pages table (CMS pages: About, Academics, etc.) ---
-
-export const pages = sqliteTable("pages", {
-  id: text("id").primaryKey(),
-  slug: text("slug").notNull().unique(),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  excerpt: text("excerpt"),
-  coverImage: text("cover_image"),
   status: text("status", { enum: ["draft", "published", "archived"] })
     .notNull()
     .default("draft"),

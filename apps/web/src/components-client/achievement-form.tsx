@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@aloysius-web/ui/components/button"
 import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder"
 import { TagInput } from "@/components-client/tag-input"
+import { NameListInput } from "@/components-client/name-list-input"
 import { Dropzone } from "@/components/file-upload"
 import { IconX } from "@tabler/icons-react"
 import { cn } from "@aloysius-web/ui/lib/utils"
@@ -19,7 +20,7 @@ const createAchievementSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
   description: v.optional(v.string()),
   category: v.pipe(v.string(), v.minLength(1, "Category is required")),
-  recipientName: v.optional(v.string()),
+  recipientNames: v.array(v.string()),
   recipientType: v.pipe(v.string(), v.minLength(1, "Recipient type is required")),
   year: v.optional(v.union([v.number(), v.string()])),
   coverImage: v.optional(v.string()),
@@ -33,7 +34,7 @@ const updateAchievementSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
   description: v.optional(v.string()),
   category: v.pipe(v.string(), v.minLength(1, "Category is required")),
-  recipientName: v.optional(v.string()),
+  recipientNames: v.array(v.string()),
   recipientType: v.pipe(v.string(), v.minLength(1, "Recipient type is required")),
   year: v.optional(v.union([v.number(), v.string()])),
   coverImage: v.optional(v.string()),
@@ -42,29 +43,6 @@ const updateAchievementSchema = v.object({
 })
 
 type UpdateAchievementValues = v.InferOutput<typeof updateAchievementSchema>
-
-const fields: FieldEntry<CreateAchievementValues | UpdateAchievementValues>[] = [
-  { name: "title", kind: "text", label: "Title", placeholder: "Enter achievement title", required: true },
-  { name: "description", kind: "textarea", label: "Description", placeholder: "Describe the achievement", required: false },
-  { name: "category", kind: "select", label: "Category", required: true, options: [
-    { value: "academic", label: "Academic" },
-    { value: "sports", label: "Sports" },
-    { value: "arts", label: "Arts" },
-    { value: "clubs", label: "Clubs" },
-    { value: "community", label: "Community" },
-    { value: "other", label: "Other" },
-  ]},
-  { name: "recipientName", kind: "text", label: "Recipient Name", placeholder: "Name of recipient", required: false },
-  { name: "recipientType", kind: "select", label: "Recipient Type", required: true, options: [
-    { value: "student", label: "Student" },
-    { value: "faculty", label: "Faculty" },
-    { value: "school", label: "School" },
-  ]},
-  { name: "year", kind: "text", label: "Year", placeholder: "e.g. 2025", required: false },
-  { name: "coverImage", kind: "text", label: "Cover Image", hidden: true, required: false },
-  { name: "tags", kind: "text", label: "Tags", hidden: true, required: false },
-  { name: "publishNow", kind: "checkbox", label: "Publish immediately", required: false },
-]
 
 function CoverImageField() {
   const form = useBuildForm()
@@ -94,10 +72,10 @@ function CoverImageField() {
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Cover Image (1:1)</label>
+      <label className="text-sm font-medium leading-none">Cover Image (16:9)</label>
       {coverImage ? (
         <div className="relative overflow-hidden rounded-xl border">
-          <img src={coverImage} alt="Cover" className="w-full aspect-square object-cover pointer-events-none" />
+          <img src={coverImage} alt="Cover" className="w-full aspect-video object-cover pointer-events-none" />
           <Button
             variant="destructive"
             size="sm"
@@ -116,11 +94,91 @@ function CoverImageField() {
           maxSize={10 * 1024 * 1024}
           disabled={uploading}
           crop
-          aspect={1}
+          aspect={16 / 9}
           cropTitle="Crop Cover Image"
-          className={cn("aspect-square justify-center", uploading && "opacity-50 pointer-events-none")}
+          className={cn("aspect-video justify-center", uploading && "opacity-50 pointer-events-none")}
         />
       )}
+    </div>
+  )
+}
+
+function TitleField() {
+  const form = useBuildForm()
+  const value = useStore(form.store, (state: any) => state.values.title) as string
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Title <span className="text-destructive">*</span></label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => form.setFieldValue("title", e.target.value)}
+        placeholder="Enter achievement title"
+        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      />
+    </div>
+  )
+}
+
+function CategoryField() {
+  const form = useBuildForm()
+  const value = useStore(form.store, (state: any) => state.values.category) as string
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Category <span className="text-destructive">*</span></label>
+      <select
+        value={value}
+        onChange={(e) => form.setFieldValue("category", e.target.value)}
+        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <option value="">Select category</option>
+        <option value="academic">Academic</option>
+        <option value="sports">Sports</option>
+        <option value="arts">Arts</option>
+        <option value="clubs">Clubs</option>
+        <option value="community">Community</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+  )
+}
+
+function RecipientTypeField() {
+  const form = useBuildForm()
+  const value = useStore(form.store, (state: any) => state.values.recipientType) as string
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Recipient Type <span className="text-destructive">*</span></label>
+      <select
+        value={value}
+        onChange={(e) => form.setFieldValue("recipientType", e.target.value)}
+        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <option value="">Select type</option>
+        <option value="student">Student</option>
+        <option value="faculty">Faculty</option>
+        <option value="club">Club</option>
+        <option value="org">Organization</option>
+      </select>
+    </div>
+  )
+}
+
+function RecipientNamesField() {
+  const form = useBuildForm()
+  const recipientNames = useStore(form.store, (state: any) => state.values.recipientNames) as string[]
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Recipient Names</label>
+      <NameListInput
+        value={recipientNames}
+        onChange={(names) => form.setFieldValue("recipientNames", names)}
+        placeholder="Add recipient name"
+      />
     </div>
   )
 }
@@ -140,6 +198,18 @@ function TagsField() {
     </div>
   )
 }
+
+const fields: FieldEntry<CreateAchievementValues | UpdateAchievementValues>[] = [
+  { name: "title", kind: "text", label: "Title", placeholder: "Enter achievement title", required: true, hidden: true },
+  { name: "description", kind: "textarea", label: "Description", placeholder: "Describe the achievement", required: false },
+  { name: "category", kind: "text", label: "Category", hidden: true, required: true },
+  { name: "recipientNames", kind: "text", label: "Recipient Names", hidden: true, required: false },
+  { name: "recipientType", kind: "text", label: "Recipient Type", hidden: true, required: true },
+  { name: "year", kind: "text", label: "Year", placeholder: "e.g. 2025", required: false },
+  { name: "coverImage", kind: "text", label: "Cover Image", hidden: true, required: false },
+  { name: "tags", kind: "text", label: "Tags", hidden: true, required: false },
+  { name: "publishNow", kind: "checkbox", label: "Publish immediately", required: false },
+]
 
 export function AchievementForm({
   mode,
@@ -180,16 +250,33 @@ export function AchievementForm({
   const config: FormConfig<CreateAchievementValues | UpdateAchievementValues> = {
     fields,
     layout: [
-      { columns: [{ fields: ["title"] }] },
-      { columns: [{ fields: ["category"], span: 1 }, { fields: ["recipientType"], span: 1 }] },
-      { columns: [{ fields: ["recipientName"] }] },
-      { columns: [{ fields: ["year"] }] },
       { columns: [{ fields: ["description"] }] },
+      { columns: [{ fields: ["year"] }] },
       { columns: [{ fields: ["publishNow"] }] },
     ],
     submitLabel: mode === "create" ? "Create Achievement" : "Save Changes",
     onCancel: () => onSuccess?.(),
-    renderAboveFields: () => <CoverImageField />,
+    hooks: {
+      beforeSubmit: (values) => ({
+        ...values,
+        year: values.year === "" || values.year == null ? undefined : Number(values.year),
+        recipientType: values.recipientType || undefined,
+        category: values.category || undefined,
+      }),
+    },
+    renderAboveFields: () => (
+      <div className="flex gap-6">
+        <div className="w-[200px] shrink-0">
+          <CoverImageField />
+        </div>
+        <div className="flex-1 grid grid-cols-2 gap-4">
+          <TitleField />
+          <CategoryField />
+          <RecipientTypeField />
+          <RecipientNamesField />
+        </div>
+      </div>
+    ),
     renderBelowFields: () => <TagsField />,
   }
 
@@ -217,7 +304,7 @@ export function AchievementForm({
               title: achievement.title,
               description: achievement.description ?? "",
               category: achievement.category,
-              recipientName: achievement.recipientName ?? "",
+              recipientNames: achievement.recipientNames ?? [],
               recipientType: achievement.recipientType,
               year: achievement.year ?? "",
               coverImage: achievement.coverImage ?? "",
@@ -228,7 +315,7 @@ export function AchievementForm({
               title: "",
               description: "",
               category: "",
-              recipientName: "",
+              recipientNames: [],
               recipientType: "student",
               year: "",
               coverImage: "",

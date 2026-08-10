@@ -9,11 +9,11 @@ import { client } from "@/utils/orpc"
 gsap.registerPlugin(ScrollTrigger)
 
 const fallbackWorks = [
-  { id: "1", title: "The Silent Witness", category: "film", studentName: "Media Club", coverImage: null },
-  { id: "2", title: "Fragments", category: "art", studentName: "Visual Arts Society", coverImage: null },
-  { id: "3", title: "Form & Function", category: "design", studentName: "Design Studio", coverImage: null },
-  { id: "4", title: "Strike, Serve, Shine.", category: "design", studentName: "Tech Club", coverImage: null },
-  { id: "5", title: "Reverie", category: "music", studentName: "Music Society", coverImage: null },
+  { id: "1", title: "The Silent Witness", category: "film", studentNames: ["Media Club"], coverImage: null },
+  { id: "2", title: "Fragments", category: "art", studentNames: ["Visual Arts Society"], coverImage: null },
+  { id: "3", title: "Form & Function", category: "design", studentNames: ["Design Studio"], coverImage: null },
+  { id: "4", title: "Strike, Serve, Shine.", category: "design", studentNames: ["Tech Club"], coverImage: null },
+  { id: "5", title: "Reverie", category: "music", studentNames: ["Music Society"], coverImage: null },
 ]
 
 const categoryLabels: Record<string, string> = {
@@ -104,7 +104,7 @@ export function StudentWorks() {
                 {categoryLabels[work.category] ?? work.category}
               </div>
               <div className="text-sm font-medium mb-1">{work.title}</div>
-              <div className="text-xs text-muted-foreground">by {work.studentName}</div>
+              <div className="text-xs text-muted-foreground">by {work.studentNames?.join(", ")}</div>
             </div>
           ))}
         </div>

@@ -69,6 +69,8 @@ export const eventsRouter = {
           bodyImage: row.bodyImage,
           purpose: row.purpose,
           organization: row.organization,
+          organizerName: row.organizerName,
+          organizerType: row.organizerType,
           location: row.location,
           startDate: row.startDate.toISOString(),
           endDate: row.endDate?.toISOString() ?? null,
@@ -111,6 +113,8 @@ export const eventsRouter = {
         bodyImage: row.bodyImage,
         purpose: row.purpose,
         organization: row.organization,
+        organizerName: row.organizerName,
+        organizerType: row.organizerType,
         location: row.location,
         startDate: row.startDate.toISOString(),
         endDate: row.endDate?.toISOString() ?? null,
@@ -135,6 +139,8 @@ export const eventsRouter = {
         bodyImage: z.string().optional(),
         purpose: z.string().optional(),
         organization: z.string().optional(),
+        organizerName: z.string().optional(),
+        organizerType: z.enum(["student", "faculty", "club", "org"]).optional(),
         location: z.string().optional(),
         startDate: z.string(),
         endDate: z.string().optional(),
@@ -165,6 +171,8 @@ export const eventsRouter = {
           bodyImage: input.bodyImage ?? null,
           purpose: input.purpose ?? null,
           organization: input.organization ?? null,
+          organizerName: input.organizerName ?? null,
+          organizerType: input.organizerType ?? null,
           location: input.location ?? null,
           startDate: new Date(input.startDate),
           endDate: input.endDate ? new Date(input.endDate) : null,
@@ -188,6 +196,8 @@ export const eventsRouter = {
         bodyImage: record.bodyImage,
         purpose: record.purpose,
         organization: record.organization,
+        organizerName: record.organizerName,
+        organizerType: record.organizerType,
         location: record.location,
         startDate: record.startDate.toISOString(),
         endDate: record.endDate?.toISOString() ?? null,
@@ -213,6 +223,8 @@ export const eventsRouter = {
         bodyImage: z.string().optional(),
         purpose: z.string().optional(),
         organization: z.string().optional(),
+        organizerName: z.string().optional(),
+        organizerType: z.enum(["student", "faculty", "club", "org"]).optional(),
         location: z.string().optional(),
         startDate: z.string().optional(),
         endDate: z.string().optional(),
@@ -252,6 +264,8 @@ export const eventsRouter = {
       if (input.bodyImage !== undefined) updateData.bodyImage = input.bodyImage;
       if (input.purpose !== undefined) updateData.purpose = input.purpose;
       if (input.organization !== undefined) updateData.organization = input.organization;
+      if (input.organizerName !== undefined) updateData.organizerName = input.organizerName || null;
+      if (input.organizerType !== undefined) updateData.organizerType = input.organizerType || null;
       if (input.location !== undefined) updateData.location = input.location;
       if (input.startDate !== undefined) updateData.startDate = new Date(input.startDate);
       if (input.endDate !== undefined) updateData.endDate = input.endDate ? new Date(input.endDate) : null;
@@ -285,6 +299,8 @@ export const eventsRouter = {
         bodyImage: record.bodyImage,
         purpose: record.purpose,
         organization: record.organization,
+        organizerName: record.organizerName,
+        organizerType: record.organizerType,
         location: record.location,
         startDate: record.startDate.toISOString(),
         endDate: record.endDate?.toISOString() ?? null,

@@ -1,13 +1,12 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
 import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar"
 import { Separator } from "@aloysius-web/ui/components/separator"
 import { Button } from "@aloysius-web/ui/components/button"
 import { Input } from "@aloysius-web/ui/components/input"
-import { Textarea } from "@aloysius-web/ui/components/textarea"
 import {
   Dialog,
   DialogContent,
@@ -16,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@aloysius-web/ui/components/dialog"
-import { IconPlus, IconTrash, IconGripVertical, IconX } from "@tabler/icons-react"
+import { IconTrash } from "@tabler/icons-react"
 import { Dropzone } from "@/components/file-upload"
 import { cn } from "@aloysius-web/ui/lib/utils"
 import { client } from "@/utils/orpc"
@@ -28,7 +27,7 @@ type GalleryImage = {
   galleryId: string
   url: string
   caption: string | null
-  sort: number
+  sortOrder: number
   createdAt: string
 }
 
@@ -42,16 +41,46 @@ function GalleryImagesPage() {
   const queryClient = useQueryClient()
   const [uploading, setUploading] = useState(false)
   const [deleteImageId, setDeleteImageId] = useState<string | null>(null)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const { data: gallery } = useQuery({
     queryKey: ["gallery", id],
     queryFn: () => client.gallery.get({ id }),
   })
 
-  const { data: images = [], isLoading } = useQuery({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery({
     queryKey: ["gallery", id, "images"],
-    queryFn: () => client.gallery.listImages({ galleryId: id }),
+    queryFn: ({ pageParam = 1 }) =>
+      client.gallery.listImages({ galleryId: id, page: pageParam, pageSize: 20 }),
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.pageCount ? lastPage.page + 1 : undefined,
+    initialPageParam: 1,
   })
+
+  const images = data?.pages.flatMap((page) => page.rows) ?? []
+
+  useEffect(() => {
+    const el = loadMoreRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   const addImage = useMutation({
     mutationFn: (body: { galleryId: string; url: string; caption?: string }) =>
@@ -78,7 +107,7 @@ function GalleryImagesPage() {
   })
 
   const updateImage = useMutation({
-    mutationFn: (body: { id: string; caption?: string; sort?: number }) =>
+    mutationFn: (body: { id: string; caption?: string; sortOrder?: number }) =>
       client.gallery.updateImage(body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["gallery", id, "images"] })
@@ -133,55 +162,40 @@ function GalleryImagesPage() {
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Images ({images.length})</label>
-            <div>
-              <Dropzone
-                onFilesSelected={handleFilesSelected}
-                maxFiles={10}
-                maxSize={10 * 1024 * 1024}
-                disabled={uploading}
-                className={cn("h-8 w-auto px-3", uploading && "opacity-50 pointer-events-none")}
-              >
-                <IconPlus className="mr-1 size-4" />
-                Upload
-              </Dropzone>
-            </div>
-          </div>
+          <label className="text-sm font-medium">Images ({images.length})</label>
 
           {isLoading ? (
             <div className="text-muted-foreground py-8">Loading images...</div>
-          ) : images.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground border rounded-lg">
-              <span className="text-sm">No images yet</span>
-              <Dropzone
-                onFilesSelected={handleFilesSelected}
-                maxFiles={10}
-                maxSize={10 * 1024 * 1024}
-                disabled={uploading}
-                crop
-                aspect={16 / 9}
-                cropTitle="Upload Image"
-                className="aspect-video max-w-sm"
-              />
-            </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {images.map((image: GalleryImage) => (
-                <ImageCard
-                  key={image.id}
-                  image={image}
-                  onCaptionChange={handleCaptionChange}
-                  onDelete={() => setDeleteImageId(image.id)}
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <Dropzone
+                  onFilesSelected={handleFilesSelected}
+                  maxFiles={10}
+                  maxSize={10 * 1024 * 1024}
+                  disabled={uploading}
+                  className={cn("aspect-video", uploading && "opacity-50 pointer-events-none")}
                 />
-              ))}
-            </div>
+                {images.map((image: GalleryImage) => (
+                  <ImageCard
+                    key={image.id}
+                    image={image}
+                    onCaptionChange={handleCaptionChange}
+                    onDelete={() => setDeleteImageId(image.id)}
+                  />
+                ))}
+              </div>
+              <div ref={loadMoreRef} className="h-4" />
+              {isFetchingNextPage && (
+                <div className="text-muted-foreground py-4 text-center text-sm">Loading more...</div>
+              )}
+            </>
           )}
         </div>
       </div>
 
       <Dialog open={!!deleteImageId} onOpenChange={(open) => { if (!open) setDeleteImageId(null) }}>
-        <DialogContent>
+        <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Delete Image</DialogTitle>
             <DialogDescription>
@@ -225,19 +239,23 @@ function ImageCard({
 
   return (
     <div className="group relative overflow-hidden rounded-lg border">
-      <img
-        src={image.url}
-        alt={image.caption ?? ""}
-        className="aspect-video w-full object-cover"
-      />
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors opacity-0 group-hover:opacity-100 flex items-start justify-end p-2">
-        <Button
-          variant="destructive"
-          size="icon-xs"
-          onClick={onDelete}
-        >
-          <IconTrash className="size-3" />
-        </Button>
+      <div className="relative">
+        <img
+          src={image.url}
+          alt={image.caption ?? ""}
+          className="aspect-video w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors opacity-0 group-hover:opacity-100 flex items-start justify-end p-2 pointer-events-none group-hover:pointer-events-auto">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={onDelete}
+            className="shadow-lg"
+          >
+            <IconTrash className="size-4 mr-1" />
+            Delete
+          </Button>
+        </div>
       </div>
       <div className="p-2">
         <Input

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
 import {
   Combobox,
   ComboboxChip,
@@ -9,30 +8,26 @@ import {
   ComboboxChipsInput,
   ComboboxContent,
   ComboboxEmpty,
-  ComboboxItem,
   ComboboxList,
+  ComboboxItem,
   ComboboxValue,
   useComboboxAnchor,
 } from "@aloysius-web/ui/components/combobox"
-import { client } from "@/utils/orpc"
 
-interface TagInputProps {
+interface NameListInputProps {
   value: string[]
   onChange: (value: string[]) => void
   placeholder?: string
   className?: string
 }
 
-export function TagInput({ value, onChange, placeholder = "Add tags...", className }: TagInputProps) {
+export function NameListInput({ value, onChange, placeholder = "Add name...", className }: NameListInputProps) {
   const anchor = useComboboxAnchor()
   const [searchValue, setSearchValue] = useState("")
 
-  const { data: allTags = [] } = useQuery({
-    queryKey: ["tags", "list", searchValue],
-    queryFn: () => client.tags.list({ search: searchValue || undefined }),
-  })
-
-  const items = allTags.filter((tag) => !value.includes(tag))
+  const items = value.filter((name) =>
+    name.toLowerCase().includes(searchValue.toLowerCase())
+  )
 
   return (
     <Combobox
@@ -64,16 +59,16 @@ export function TagInput({ value, onChange, placeholder = "Add tags...", classNa
               className="w-full px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
               onMouseDown={(e) => {
                 e.preventDefault()
-                if (searchValue.trim()) {
+                if (searchValue.trim() && !value.includes(searchValue.trim())) {
                   onChange([...value, searchValue.trim()])
                   setSearchValue("")
                 }
               }}
             >
-              Create &quot;{searchValue.trim()}&quot;
+              Add &quot;{searchValue.trim()}&quot;
             </button>
           ) : (
-            "Type to add tags..."
+            "Type a name and press Enter..."
           )}
         </ComboboxEmpty>
         {items.length > 0 && (

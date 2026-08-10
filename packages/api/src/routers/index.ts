@@ -8,8 +8,8 @@ import { eventsRouter } from "./events";
 import { achievementsRouter } from "./achievements";
 import { galleryRouter } from "./gallery";
 import { studentWorksRouter } from "./student-works";
-import { pagesRouter } from "./pages";
 import { statsRouter } from "./stats";
+import { tagsRouter } from "./tags";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -28,8 +28,8 @@ export const appRouter = {
   achievements: achievementsRouter,
   gallery: galleryRouter,
   studentWorks: studentWorksRouter,
-  pages: pagesRouter,
   stats: statsRouter,
+  tags: tagsRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

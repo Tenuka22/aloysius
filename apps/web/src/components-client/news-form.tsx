@@ -23,6 +23,8 @@ const createNewsSchema = v.object({
   coverImage: v.optional(v.string()),
   tags: v.array(v.string()),
   publishNow: v.boolean(),
+  authorName: v.optional(v.string()),
+  authorType: v.optional(v.string()),
 })
 
 type CreateNewsValues = v.InferOutput<typeof createNewsSchema>
@@ -34,6 +36,8 @@ const updateNewsSchema = v.object({
   coverImage: v.optional(v.string()),
   tags: v.array(v.string()),
   publishNow: v.boolean(),
+  authorName: v.optional(v.string()),
+  authorType: v.optional(v.string()),
 })
 
 type UpdateNewsValues = v.InferOutput<typeof updateNewsSchema>
@@ -51,6 +55,20 @@ const fields: FieldEntry<CreateNewsValues | UpdateNewsValues>[] = [
     kind: "textarea",
     label: "Excerpt",
     placeholder: "Brief summary for previews",
+    required: false,
+  },
+  {
+    name: "authorName",
+    kind: "text",
+    label: "Author Name",
+    placeholder: "Who wrote this?",
+    required: false,
+  },
+  {
+    name: "authorType",
+    kind: "select",
+    label: "Author Type",
+    options: [{value:"student",label:"Student"},{value:"faculty",label:"Faculty"},{value:"club",label:"Club"},{value:"org",label:"Organization"}],
     required: false,
   },
   {
@@ -214,9 +232,16 @@ export function NewsForm({ mode, id, onSuccess }: { mode: "create" | "edit"; id?
     layout: [
       { columns: [{ fields: ["title"] }] },
       { columns: [{ fields: ["excerpt"] }] },
+      { columns: [{ fields: ["authorName", "authorType"] }] },
       { columns: [{ fields: ["publishNow"] }] },
     ],
     submitLabel: mode === "create" ? "Create Article" : "Save Changes",
+    hooks: {
+      beforeSubmit: (values) => ({
+        ...values,
+        authorType: values.authorType || undefined,
+      }),
+    },
   }
 
   return (
@@ -224,8 +249,8 @@ export function NewsForm({ mode, id, onSuccess }: { mode: "create" | "edit"; id?
       config={formConfig}
       defaultValues={
         mode === "edit" && newsItem
-          ? { title: newsItem.title, excerpt: newsItem.excerpt ?? "", content: newsItem.content, coverImage: newsItem.coverImage ?? "", tags: newsItem.tags ?? [], publishNow: newsItem.status === "published" }
-          : { title: "", excerpt: "", content: "", coverImage: "", tags: [], publishNow: false }
+          ? { title: newsItem.title, excerpt: newsItem.excerpt ?? "", content: newsItem.content, coverImage: newsItem.coverImage ?? "", tags: newsItem.tags ?? [], publishNow: newsItem.status === "published", authorName: (newsItem as any).authorName ?? "", authorType: (newsItem as any).authorType ?? "" }
+          : { title: "", excerpt: "", content: "", coverImage: "", tags: [], publishNow: false, authorName: "", authorType: "" }
       }
       valibotSchema={mode === "create" ? createNewsSchema : updateNewsSchema}
       onSubmit={handleSubmit}

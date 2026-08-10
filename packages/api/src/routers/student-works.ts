@@ -73,8 +73,9 @@ export const studentWorksRouter = {
           title: row.title,
           description: row.description,
           category: row.category,
-          studentName: row.studentName,
+          studentNames: row.studentNames,
           studentGrade: row.studentGrade,
+          authorType: row.authorType,
           coverImage: row.coverImage,
           contentUrl: row.contentUrl,
           tags: row.tags,
@@ -110,8 +111,9 @@ export const studentWorksRouter = {
         title: row.title,
         description: row.description,
         category: row.category,
-        studentName: row.studentName,
+        studentNames: row.studentNames,
         studentGrade: row.studentGrade,
+        authorType: row.authorType,
         coverImage: row.coverImage,
         contentUrl: row.contentUrl,
         tags: row.tags,
@@ -129,8 +131,9 @@ export const studentWorksRouter = {
         title: z.string().min(1),
         description: z.string().optional(),
         category: studentWorkCategory.default("other"),
-        studentName: z.string().min(1),
+        studentNames: z.array(z.string()).optional(),
         studentGrade: z.string().optional(),
+        authorType: z.enum(["student", "faculty", "club", "org"]).default("student"),
         coverImage: z.string().optional(),
         contentUrl: z.string().optional(),
         tags: z.array(z.string()).optional(),
@@ -153,8 +156,9 @@ export const studentWorksRouter = {
           title: input.title,
           description: input.description ?? null,
           category: input.category,
-          studentName: input.studentName,
+          studentNames: input.studentNames ?? [],
           studentGrade: input.studentGrade ?? null,
+          authorType: input.authorType,
           coverImage: input.coverImage ?? null,
           contentUrl: input.contentUrl ?? null,
           tags: input.tags ?? [],
@@ -170,8 +174,9 @@ export const studentWorksRouter = {
         title: record.title,
         description: record.description,
         category: record.category,
-        studentName: record.studentName,
+        studentNames: record.studentNames,
         studentGrade: record.studentGrade,
+        authorType: record.authorType,
         coverImage: record.coverImage,
         contentUrl: record.contentUrl,
         tags: record.tags,
@@ -190,8 +195,9 @@ export const studentWorksRouter = {
         title: z.string().min(1).optional(),
         description: z.string().optional(),
         category: studentWorkCategory.optional(),
-        studentName: z.string().min(1).optional(),
+        studentNames: z.array(z.string()).optional().optional(),
         studentGrade: z.string().optional(),
+        authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
         coverImage: z.string().optional(),
         contentUrl: z.string().optional(),
         tags: z.array(z.string()).optional(),
@@ -223,8 +229,9 @@ export const studentWorksRouter = {
       if (input.title !== undefined) updateData.title = input.title;
       if (input.description !== undefined) updateData.description = input.description;
       if (input.category !== undefined) updateData.category = input.category;
-      if (input.studentName !== undefined) updateData.studentName = input.studentName;
+      if (input.studentNames !== undefined) updateData.studentNames = input.studentNames;
       if (input.studentGrade !== undefined) updateData.studentGrade = input.studentGrade;
+      if (input.authorType !== undefined) updateData.authorType = input.authorType;
       if (input.coverImage !== undefined) updateData.coverImage = input.coverImage;
       if (input.contentUrl !== undefined) updateData.contentUrl = input.contentUrl;
       if (input.tags !== undefined) updateData.tags = input.tags;
@@ -250,8 +257,9 @@ export const studentWorksRouter = {
         title: record.title,
         description: record.description,
         category: record.category,
-        studentName: record.studentName,
+        studentNames: record.studentNames,
         studentGrade: record.studentGrade,
+        authorType: record.authorType,
         coverImage: record.coverImage,
         contentUrl: record.contentUrl,
         tags: record.tags,

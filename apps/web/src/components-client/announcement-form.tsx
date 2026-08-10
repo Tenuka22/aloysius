@@ -21,6 +21,8 @@ import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
 const createAnnouncementSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
   excerpt: v.optional(v.string()),
+  authorName: v.optional(v.string()),
+  authorType: v.optional(v.string()),
   content: v.string(),
   coverImage: v.optional(v.string()),
   tags: v.array(v.string()),
@@ -34,6 +36,8 @@ type CreateAnnouncementValues = v.InferOutput<typeof createAnnouncementSchema>
 const updateAnnouncementSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
   excerpt: v.optional(v.string()),
+  authorName: v.optional(v.string()),
+  authorType: v.optional(v.string()),
   content: v.string(),
   coverImage: v.optional(v.string()),
   tags: v.array(v.string()),
@@ -47,6 +51,8 @@ type UpdateAnnouncementValues = v.InferOutput<typeof updateAnnouncementSchema>
 const fields: FieldEntry<CreateAnnouncementValues | UpdateAnnouncementValues>[] = [
   { name: "title", kind: "text", label: "Title", placeholder: "Enter announcement title", required: true },
   { name: "excerpt", kind: "textarea", label: "Excerpt", placeholder: "Brief summary for previews", required: false },
+  { name: "authorName", kind: "text", label: "Author Name", placeholder: "Who authored this?", required: false },
+  { name: "authorType", kind: "select", label: "Author Type", options: [{value:"student",label:"Student"},{value:"faculty",label:"Faculty"},{value:"club",label:"Club"},{value:"org",label:"Organization"}], required: false },
   { name: "content", kind: "text", label: "Content", hidden: true, required: true },
   { name: "coverImage", kind: "text", label: "Cover Image URL", hidden: true, required: false },
   { name: "tags", kind: "text", label: "Tags", hidden: true, required: false },
@@ -219,9 +225,16 @@ export function AnnouncementForm({ mode, id, onSuccess }: { mode: "create" | "ed
     layout: [
       { columns: [{ fields: ["title"] }] },
       { columns: [{ fields: ["excerpt"] }] },
+      { columns: [{ fields: ["authorName", "authorType"] }] },
       { columns: [{ fields: ["publishNow"] }] },
     ],
     submitLabel: mode === "create" ? "Create Announcement" : "Save Changes",
+    hooks: {
+      beforeSubmit: (values) => ({
+        ...values,
+        authorType: values.authorType || undefined,
+      }),
+    },
   }
 
   return (
@@ -229,8 +242,8 @@ export function AnnouncementForm({ mode, id, onSuccess }: { mode: "create" | "ed
       config={formConfig}
       defaultValues={
         mode === "edit" && announcement
-          ? { title: announcement.title, excerpt: announcement.excerpt ?? "", content: announcement.content, coverImage: announcement.coverImage ?? "", tags: announcement.tags ?? [], audience: announcement.audience ?? "all", addressedTo: announcement.addressedTo ?? "", publishNow: announcement.status === "published" }
-          : { title: "", excerpt: "", content: "", coverImage: "", tags: [], audience: "all", addressedTo: "", publishNow: false }
+          ? { title: announcement.title, excerpt: announcement.excerpt ?? "", authorName: announcement.authorName ?? "", authorType: announcement.authorType ?? "", content: announcement.content, coverImage: announcement.coverImage ?? "", tags: announcement.tags ?? [], audience: announcement.audience ?? "all", addressedTo: announcement.addressedTo ?? "", publishNow: announcement.status === "published" }
+          : { title: "", excerpt: "", authorName: "", authorType: "", content: "", coverImage: "", tags: [], audience: "all", addressedTo: "", publishNow: false }
       }
       valibotSchema={mode === "create" ? createAnnouncementSchema : updateAnnouncementSchema}
       onSubmit={handleSubmit}

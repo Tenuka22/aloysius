@@ -50,7 +50,7 @@ type StudentWorkItem = {
   title: string
   description: string | null
   category: string
-  studentName: string
+  studentNames: string[]
   studentGrade: string | null
   coverImage: string | null
   contentUrl: string | null
@@ -215,10 +215,10 @@ const columns: ColumnDef<StudentWorkItem, any>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Title" />,
   },
   {
-    accessorKey: "studentName",
+    accessorKey: "studentNames",
     header: "Student",
     cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.studentName}</span>
+      <span className="text-muted-foreground">{row.original.studentNames?.join(", ")}</span>
     ),
   },
   {

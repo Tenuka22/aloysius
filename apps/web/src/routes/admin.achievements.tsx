@@ -50,7 +50,7 @@ type AchievementItem = {
   title: string
   description: string | null
   category: string
-  recipientName: string | null
+  recipientNames: string[]
   recipientType: string
   year: number | null
   coverImage: string | null
@@ -226,14 +226,14 @@ const columns: ColumnDef<AchievementItem, any>[] = [
     },
   },
   {
-    accessorKey: "recipientName",
+    accessorKey: "recipientNames",
     header: "Recipient",
     cell: ({ row }) => {
-      const name = row.original.recipientName
-      if (!name) return <span className="text-muted-foreground">—</span>
+      const names = row.original.recipientNames
+      if (!names || names.length === 0) return <span className="text-muted-foreground">—</span>
       return (
         <span className="text-muted-foreground line-clamp-1">
-          {name}
+          {names.join(", ")}
           <span className="ml-1 text-xs capitalize opacity-60">({row.original.recipientType})</span>
         </span>
       )

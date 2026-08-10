@@ -2,23 +2,28 @@
 
 import { useCallback, useState } from "react"
 import { useStore } from "@tanstack/react-form"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@aloysius-web/ui/components/button"
 import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder"
-import { TagInput } from "@/components-client/tag-input"
 import { Dropzone } from "@/components/file-upload"
-import { IconX } from "@tabler/icons-react"
+import { IconX, IconChevronDown } from "@tabler/icons-react"
 import { cn } from "@aloysius-web/ui/lib/utils"
 import { client } from "@/utils/orpc"
 import { convertToWebp } from "@/utils/convert-to-webp"
 import { toast } from "sonner"
 import * as v from "valibot"
+import { Popover, PopoverTrigger, PopoverContent } from "@aloysius-web/ui/components/popover"
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@aloysius-web/ui/components/command"
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
 
 const createGallerySchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
   description: v.optional(v.string()),
   eventId: v.optional(v.string()),
+  studentWorkId: v.optional(v.string()),
+  achievementId: v.optional(v.string()),
+  authorName: v.optional(v.string()),
+  authorType: v.optional(v.string()),
   coverImage: v.optional(v.string()),
   tags: v.array(v.string()),
   publishNow: v.boolean(),
@@ -30,6 +35,10 @@ const updateGallerySchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
   description: v.optional(v.string()),
   eventId: v.optional(v.string()),
+  studentWorkId: v.optional(v.string()),
+  achievementId: v.optional(v.string()),
+  authorName: v.optional(v.string()),
+  authorType: v.optional(v.string()),
   coverImage: v.optional(v.string()),
   tags: v.array(v.string()),
   publishNow: v.boolean(),
@@ -38,13 +47,35 @@ const updateGallerySchema = v.object({
 type UpdateGalleryValues = v.InferOutput<typeof updateGallerySchema>
 
 const fields: FieldEntry<CreateGalleryValues | UpdateGalleryValues>[] = [
-  { name: "title", kind: "text", label: "Title", placeholder: "Enter album title", required: true },
+  { name: "title", kind: "text", label: "Title", placeholder: "Enter album title", required: true, hidden: true },
   { name: "description", kind: "textarea", label: "Description", placeholder: "Brief description of this album", required: false },
-  { name: "eventId", kind: "text", label: "Event ID", placeholder: "Optional event ID to link", required: false },
+  { name: "eventId", kind: "text", label: "Event", hidden: true, required: false },
+  { name: "studentWorkId", kind: "text", label: "Student Work", hidden: true, required: false },
+  { name: "achievementId", kind: "text", label: "Achievement", hidden: true, required: false },
+  { name: "authorName", kind: "text", label: "Author Name", placeholder: "Who created this?", required: false },
+  { name: "authorType", kind: "select", label: "Author Type", options: [{value:"student",label:"Student"},{value:"faculty",label:"Faculty"},{value:"club",label:"Club"},{value:"org",label:"Organization"}], required: false },
   { name: "coverImage", kind: "text", label: "Cover Image", hidden: true, required: false },
   { name: "tags", kind: "text", label: "Tags", hidden: true, required: false },
   { name: "publishNow", kind: "checkbox", label: "Publish immediately", required: false },
 ]
+
+function TitleField() {
+  const form = useBuildForm()
+  const value = useStore(form.store, (state: any) => state.values.title) as string
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Title <span className="text-destructive">*</span></label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => form.setFieldValue("title", e.target.value)}
+        placeholder="Enter album title"
+        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      />
+    </div>
+  )
+}
 
 function CoverImageField() {
   const form = useBuildForm()
@@ -112,11 +143,261 @@ function TagsField() {
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium leading-none">Tags</label>
-      <TagInput
-        value={tags}
-        onChange={(newTags) => form.setFieldValue("tags", newTags)}
-        placeholder="Add a tag"
+      <input
+        type="text"
+        value={tags.join(", ")}
+        onChange={(e) => {
+          const raw = e.target.value
+          const newTags = raw.split(",").map((t) => t.trim()).filter(Boolean)
+          form.setFieldValue("tags", newTags)
+        }}
+        placeholder="Add tags separated by commas"
+        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
       />
+    </div>
+  )
+}
+
+function EventField() {
+  const form = useBuildForm()
+  const value = useStore(form.store, (state: any) => state.values.eventId) as string
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState("")
+
+  const eventsQuery = useQuery({
+    queryKey: ["events", "combobox", search],
+    queryFn: () => client.events.list({ page: 1, pageSize: 50, search: search || undefined }),
+  })
+
+  const events = eventsQuery.data?.rows ?? []
+  const selectedEvent = events.find((e) => e.id === value)
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Event</label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <button
+              type="button"
+              className={cn(
+                "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+                !value && "text-muted-foreground"
+              )}
+            />
+          }
+        >
+          {selectedEvent ? (
+            <span className="flex items-center gap-2 truncate">
+              {selectedEvent.coverImage && (
+                <img src={selectedEvent.coverImage} alt="" className="size-6 rounded object-cover" />
+              )}
+              {selectedEvent.title}
+            </span>
+          ) : (
+            "Select an event..."
+          )}
+          <IconChevronDown className="ml-2 size-4 shrink-0 opacity-50" />
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+          <Command>
+            <CommandInput
+              placeholder="Search events..."
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList>
+              <CommandEmpty>No events found.</CommandEmpty>
+              <CommandGroup>
+                {events.map((event) => (
+                  <CommandItem
+                    key={event.id}
+                    value={event.id}
+                    onSelect={() => {
+                      form.setFieldValue("eventId", event.id === value ? "" : event.id)
+                      setOpen(false)
+                      setSearch("")
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      {event.coverImage && (
+                        <img src={event.coverImage} alt="" className="size-8 rounded object-cover" />
+                      )}
+                      <span className="flex flex-col">
+                        <span className="font-medium">{event.title}</span>
+                      </span>
+                    </span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
+}
+
+function StudentWorkField() {
+  const form = useBuildForm()
+  const value = useStore(form.store, (state: any) => state.values.studentWorkId) as string
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState("")
+
+  const worksQuery = useQuery({
+    queryKey: ["studentWorks", "combobox", search],
+    queryFn: () => client.studentWorks.list({ page: 1, pageSize: 50, search: search || undefined }),
+  })
+
+  const works = worksQuery.data?.rows ?? []
+  const selectedWork = works.find((w) => w.id === value)
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Student Work</label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <button
+              type="button"
+              className={cn(
+                "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+                !value && "text-muted-foreground"
+              )}
+            />
+          }
+        >
+          {selectedWork ? (
+            <span className="flex items-center gap-2 truncate">
+              {selectedWork.coverImage && (
+                <img src={selectedWork.coverImage} alt="" className="size-6 rounded object-cover" />
+              )}
+              {selectedWork.title}
+            </span>
+          ) : (
+            "Select a student work..."
+          )}
+          <IconChevronDown className="ml-2 size-4 shrink-0 opacity-50" />
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+          <Command>
+            <CommandInput
+              placeholder="Search student works..."
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList>
+              <CommandEmpty>No student works found.</CommandEmpty>
+              <CommandGroup>
+                {works.map((work) => (
+                  <CommandItem
+                    key={work.id}
+                    value={work.id}
+                    onSelect={() => {
+                      form.setFieldValue("studentWorkId", work.id === value ? "" : work.id)
+                      setOpen(false)
+                      setSearch("")
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      {work.coverImage && (
+                        <img src={work.coverImage} alt="" className="size-8 rounded object-cover" />
+                      )}
+                      <span className="flex flex-col">
+                        <span className="font-medium">{work.title}</span>
+                        <span className="text-xs text-muted-foreground">{work.studentNames?.join(", ")}</span>
+                      </span>
+                    </span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
+}
+
+function AchievementField() {
+  const form = useBuildForm()
+  const value = useStore(form.store, (state: any) => state.values.achievementId) as string
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState("")
+
+  const achievementsQuery = useQuery({
+    queryKey: ["achievements", "combobox", search],
+    queryFn: () => client.achievements.list({ page: 1, pageSize: 50, search: search || undefined }),
+  })
+
+  const achievements = achievementsQuery.data?.rows ?? []
+  const selectedAchievement = achievements.find((a) => a.id === value)
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Achievement</label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <button
+              type="button"
+              className={cn(
+                "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+                !value && "text-muted-foreground"
+              )}
+            />
+          }
+        >
+          {selectedAchievement ? (
+            <span className="flex items-center gap-2 truncate">
+              {selectedAchievement.coverImage && (
+                <img src={selectedAchievement.coverImage} alt="" className="size-6 rounded object-cover" />
+              )}
+              {selectedAchievement.title}
+            </span>
+          ) : (
+            "Select an achievement..."
+          )}
+          <IconChevronDown className="ml-2 size-4 shrink-0 opacity-50" />
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+          <Command>
+            <CommandInput
+              placeholder="Search achievements..."
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList>
+              <CommandEmpty>No achievements found.</CommandEmpty>
+              <CommandGroup>
+                {achievements.map((achievement) => (
+                  <CommandItem
+                    key={achievement.id}
+                    value={achievement.id}
+                    onSelect={() => {
+                      form.setFieldValue("achievementId", achievement.id === value ? "" : achievement.id)
+                      setOpen(false)
+                      setSearch("")
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      {achievement.coverImage && (
+                        <img src={achievement.coverImage} alt="" className="size-8 rounded object-cover" />
+                      )}
+                      <span className="flex flex-col">
+                        <span className="font-medium">{achievement.title}</span>
+                        {achievement.year && (
+                          <span className="text-xs text-muted-foreground">{achievement.year}</span>
+                        )}
+                      </span>
+                    </span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   )
 }
@@ -138,37 +419,47 @@ export function GalleryForm({
     enabled: mode === "edit" && !!id,
   })
 
-  const mutation = useMutation({
-    mutationFn: (values: CreateGalleryValues | UpdateGalleryValues) => {
-      if (mode === "create") {
-        return client.gallery.create(values as CreateGalleryValues)
-      }
-      return client.gallery.update({ id: id!, ...values })
-    },
-    onSuccess: () => {
-      toast.success(mode === "create" ? "Gallery album created" : "Gallery album updated")
-      queryClient.invalidateQueries({ queryKey: ["gallery"] })
-      onSuccess?.()
-    },
-    onError: (err) => {
-      toast.error(err.message)
-    },
-  })
-
   const gallery = existingGallery.data
 
   const config: FormConfig<CreateGalleryValues | UpdateGalleryValues> = {
     fields,
     layout: [
-      { columns: [{ fields: ["title"] }] },
+      { columns: [{ fields: ["authorName", "authorType"] }] },
       { columns: [{ fields: ["description"] }] },
-      { columns: [{ fields: ["eventId"] }] },
       { columns: [{ fields: ["publishNow"] }] },
     ],
     submitLabel: mode === "create" ? "Create Album" : "Save Changes",
     onCancel: () => onSuccess?.(),
-    renderAboveFields: () => <CoverImageField />,
-    renderBelowFields: () => <TagsField />,
+    hooks: {
+      beforeSubmit: (values) => ({
+        ...values,
+        authorType: values.authorType || undefined,
+      }),
+      onSuccess: () => {
+        toast.success(mode === "create" ? "Gallery album created" : "Gallery album updated")
+        queryClient.invalidateQueries({ queryKey: ["gallery"] })
+        onSuccess?.()
+      },
+      onError: (err) => {
+        toast.error(err.message)
+      },
+    },
+    renderAboveFields: () => (
+      <div className="flex gap-6">
+        <div className="w-[280px] shrink-0">
+          <CoverImageField />
+        </div>
+        <div className="flex-1 flex flex-col gap-4">
+          <TitleField />
+          <div className="grid grid-cols-3 gap-4">
+            <EventField />
+            <StudentWorkField />
+            <AchievementField />
+          </div>
+          <TagsField />
+        </div>
+      </div>
+    ),
   }
 
   if (mode === "edit" && existingGallery.isLoading) {
@@ -195,21 +486,32 @@ export function GalleryForm({
               title: gallery.title,
               description: gallery.description ?? "",
               eventId: gallery.eventId ?? "",
+              studentWorkId: (gallery as any).studentWorkId ?? "",
+              achievementId: (gallery as any).achievementId ?? "",
+              authorName: (gallery as any).authorName ?? "",
+              authorType: (gallery as any).authorType ?? "",
               coverImage: gallery.coverImage ?? "",
               tags: gallery.tags ?? [],
               publishNow: gallery.status === "published",
             }
-          : {
-              title: "",
-              description: "",
-              eventId: "",
-              coverImage: "",
-              tags: [],
-              publishNow: false,
-            }
+            : {
+                title: "",
+                description: "",
+                eventId: "",
+                studentWorkId: "",
+                achievementId: "",
+                authorName: "",
+                authorType: "student",
+                coverImage: "",
+                tags: [],
+                publishNow: false,
+              }
       }
-      mutationOptions={{
-        mutationFn: async ({ body }: { body: CreateGalleryValues | UpdateGalleryValues }) => mutation.mutateAsync(body),
+      onSubmit={async (values) => {
+        if (mode === "create") {
+          return client.gallery.create(values as CreateGalleryValues)
+        }
+        return client.gallery.update({ id: id!, ...values })
       }}
     />
   )

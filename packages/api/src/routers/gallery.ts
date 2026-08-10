@@ -70,7 +70,11 @@ export const galleryRouter = {
           title: row.title,
           description: row.description,
           eventId: row.eventId,
+          studentWorkId: row.studentWorkId,
+          achievementId: row.achievementId,
           coverImage: row.coverImage,
+          authorName: row.authorName,
+          authorType: row.authorType,
           tags: row.tags,
           status: row.status,
           publishedAt: row.publishedAt?.toISOString() ?? null,
@@ -111,7 +115,11 @@ export const galleryRouter = {
         title: row.title,
         description: row.description,
         eventId: row.eventId,
+        studentWorkId: row.studentWorkId,
+        achievementId: row.achievementId,
         coverImage: row.coverImage,
+        authorName: row.authorName,
+        authorType: row.authorType,
         tags: row.tags,
         status: row.status,
         publishedAt: row.publishedAt?.toISOString() ?? null,
@@ -135,7 +143,11 @@ export const galleryRouter = {
         title: z.string().min(1),
         description: z.string().optional(),
         eventId: z.string().optional(),
+        studentWorkId: z.string().optional(),
+        achievementId: z.string().optional(),
         coverImage: z.string().optional(),
+        authorName: z.string().optional(),
+        authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
         tags: z.array(z.string()).optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
       })
@@ -155,8 +167,12 @@ export const galleryRouter = {
           id,
           title: input.title,
           description: input.description ?? null,
-          eventId: input.eventId ?? null,
-          coverImage: input.coverImage ?? null,
+          eventId: input.eventId || null,
+          studentWorkId: input.studentWorkId || null,
+          achievementId: input.achievementId || null,
+          coverImage: input.coverImage || null,
+          authorName: input.authorName ?? null,
+          authorType: input.authorType ?? null,
           tags: input.tags ?? [],
           status: input.status ?? "draft",
           publishedAt: input.status === "published" ? now : null,
@@ -170,7 +186,11 @@ export const galleryRouter = {
         title: record.title,
         description: record.description,
         eventId: record.eventId,
+        studentWorkId: record.studentWorkId,
+        achievementId: record.achievementId,
         coverImage: record.coverImage,
+        authorName: record.authorName,
+        authorType: record.authorType,
         tags: record.tags,
         status: record.status,
         publishedAt: record.publishedAt?.toISOString() ?? null,
@@ -187,7 +207,11 @@ export const galleryRouter = {
         title: z.string().min(1).optional(),
         description: z.string().optional(),
         eventId: z.string().optional(),
+        studentWorkId: z.string().optional(),
+        achievementId: z.string().optional(),
         coverImage: z.string().optional(),
+        authorName: z.string().optional(),
+        authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
         tags: z.array(z.string()).optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
       })
@@ -214,9 +238,13 @@ export const galleryRouter = {
       };
 
       if (input.title !== undefined) updateData.title = input.title;
-      if (input.description !== undefined) updateData.description = input.description;
-      if (input.eventId !== undefined) updateData.eventId = input.eventId;
-      if (input.coverImage !== undefined) updateData.coverImage = input.coverImage;
+      if (input.description !== undefined) updateData.description = input.description || null;
+      if (input.eventId !== undefined) updateData.eventId = input.eventId || null;
+      if (input.studentWorkId !== undefined) updateData.studentWorkId = input.studentWorkId || null;
+      if (input.achievementId !== undefined) updateData.achievementId = input.achievementId || null;
+      if (input.coverImage !== undefined) updateData.coverImage = input.coverImage || null;
+      if (input.authorName !== undefined) updateData.authorName = input.authorName || null;
+      if (input.authorType !== undefined) updateData.authorType = input.authorType || null;
       if (input.tags !== undefined) updateData.tags = input.tags;
       if (input.status !== undefined) {
         updateData.status = input.status;
@@ -237,7 +265,11 @@ export const galleryRouter = {
         title: record.title,
         description: record.description,
         eventId: record.eventId,
+        studentWorkId: record.studentWorkId,
+        achievementId: record.achievementId,
         coverImage: record.coverImage,
+        authorName: record.authorName,
+        authorType: record.authorType,
         tags: record.tags,
         status: record.status,
         publishedAt: record.publishedAt?.toISOString() ?? null,
@@ -271,6 +303,50 @@ export const galleryRouter = {
         .run();
 
       return { success: true };
+    }),
+
+  listImages: publicProcedure
+    .input(
+      z.object({
+        galleryId: z.string(),
+        page: z.number().min(1).default(1),
+        pageSize: z.number().min(1).max(100).default(20),
+      })
+    )
+    .handler(async ({ input }) => {
+      const db = createDb();
+      const { galleryId, page, pageSize } = input;
+      const offset = (page - 1) * pageSize;
+
+      const [{ total }] = await db
+        .select({ total: count() })
+        .from(galleryImages)
+        .where(eq(galleryImages.galleryId, galleryId))
+        .all();
+
+      const rows = await db
+        .select()
+        .from(galleryImages)
+        .where(eq(galleryImages.galleryId, galleryId))
+        .orderBy(asc(galleryImages.sortOrder))
+        .limit(pageSize)
+        .offset(offset)
+        .all();
+
+      return {
+        rows: rows.map((row) => ({
+          id: row.id,
+          galleryId: row.galleryId,
+          url: row.url,
+          caption: row.caption,
+          sortOrder: row.sortOrder,
+          createdAt: row.createdAt.toISOString(),
+        })),
+        total,
+        pageCount: Math.ceil(total / pageSize),
+        page,
+        pageSize,
+      };
     }),
 
   addImage: protectedProcedure

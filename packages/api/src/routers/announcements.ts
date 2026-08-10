@@ -77,6 +77,8 @@ export const announcementsRouter = {
           publishedAt: row.publishedAt?.toISOString() ?? null,
           createdAt: row.createdAt.toISOString(),
           updatedAt: row.updatedAt.toISOString(),
+          authorName: row.authorName,
+          authorType: row.authorType,
         })),
         total,
         pageCount: Math.ceil(total / pageSize),
@@ -112,6 +114,8 @@ export const announcementsRouter = {
         publishedAt: row.publishedAt?.toISOString() ?? null,
         createdAt: row.createdAt.toISOString(),
         updatedAt: row.updatedAt.toISOString(),
+        authorName: row.authorName,
+        authorType: row.authorType,
       };
     }),
 
@@ -126,6 +130,8 @@ export const announcementsRouter = {
         audience: z.enum(["all", "students", "parents", "staff", "alumni"]).optional(),
         addressedTo: z.string().optional(),
         publishNow: z.boolean().optional(),
+        authorName: z.string().optional(),
+        authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
       })
     )
     .handler(async ({ input, context }) => {
@@ -150,6 +156,8 @@ export const announcementsRouter = {
           audience: input.audience ?? "all",
           addressedTo: input.addressedTo ?? null,
           publishedAt: input.publishNow ? now : null,
+          authorName: input.authorName ?? null,
+          authorType: input.authorType ?? null,
           userId: context.auth.userId,
         })
         .returning()
@@ -168,6 +176,8 @@ export const announcementsRouter = {
         publishedAt: record.publishedAt?.toISOString() ?? null,
         createdAt: record.createdAt.toISOString(),
         updatedAt: record.updatedAt.toISOString(),
+        authorName: record.authorName,
+        authorType: record.authorType,
       };
     }),
 
@@ -183,6 +193,8 @@ export const announcementsRouter = {
         audience: z.enum(["all", "students", "parents", "staff", "alumni"]).optional(),
         addressedTo: z.string().optional(),
         publishNow: z.boolean().optional(),
+        authorName: z.string().optional(),
+        authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
       })
     )
     .handler(async ({ input, context }) => {
@@ -213,6 +225,8 @@ export const announcementsRouter = {
       if (input.tags !== undefined) updateData.tags = input.tags;
       if (input.audience !== undefined) updateData.audience = input.audience;
       if (input.addressedTo !== undefined) updateData.addressedTo = input.addressedTo;
+      if (input.authorName !== undefined) updateData.authorName = input.authorName;
+      if (input.authorType !== undefined) updateData.authorType = input.authorType;
       if (input.publishNow === true && !existing.publishedAt) {
         updateData.publishedAt = now;
         updateData.status = "published";
@@ -238,6 +252,8 @@ export const announcementsRouter = {
         publishedAt: record.publishedAt?.toISOString() ?? null,
         createdAt: record.createdAt.toISOString(),
         updatedAt: record.updatedAt.toISOString(),
+        authorName: record.authorName,
+        authorType: record.authorType,
       };
     }),
 

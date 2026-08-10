@@ -69,6 +69,8 @@ export const newsRouter = {
           publishedAt: row.publishedAt?.toISOString() ?? null,
           createdAt: row.createdAt.toISOString(),
           updatedAt: row.updatedAt.toISOString(),
+          authorName: row.authorName,
+          authorType: row.authorType,
         })),
         total,
         pageCount: Math.ceil(total / pageSize),
@@ -102,6 +104,8 @@ export const newsRouter = {
         publishedAt: row.publishedAt?.toISOString() ?? null,
         createdAt: row.createdAt.toISOString(),
         updatedAt: row.updatedAt.toISOString(),
+        authorName: row.authorName,
+        authorType: row.authorType,
       };
     }),
 
@@ -114,6 +118,8 @@ export const newsRouter = {
         coverImage: z.string().optional(),
         tags: z.array(z.string()).optional(),
         publishNow: z.boolean().optional(),
+        authorName: z.string().optional(),
+        authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
       })
     )
     .handler(async ({ input, context }) => {
@@ -137,6 +143,8 @@ export const newsRouter = {
           status: input.publishNow ? "published" : "draft",
           publishedAt: input.publishNow ? now : null,
           userId: context.auth.userId,
+          authorName: input.authorName ?? null,
+          authorType: input.authorType ?? null,
         })
         .returning()
         .get();
@@ -152,6 +160,8 @@ export const newsRouter = {
         publishedAt: record.publishedAt?.toISOString() ?? null,
         createdAt: record.createdAt.toISOString(),
         updatedAt: record.updatedAt.toISOString(),
+        authorName: record.authorName,
+        authorType: record.authorType,
       };
     }),
 
@@ -165,6 +175,8 @@ export const newsRouter = {
         coverImage: z.string().optional(),
         tags: z.array(z.string()).optional(),
         publishNow: z.boolean().optional(),
+        authorName: z.string().optional(),
+        authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
       })
     )
     .handler(async ({ input, context }) => {
@@ -193,6 +205,8 @@ export const newsRouter = {
       if (input.excerpt !== undefined) updateData.excerpt = input.excerpt;
       if (input.coverImage !== undefined) updateData.coverImage = input.coverImage;
       if (input.tags !== undefined) updateData.tags = input.tags;
+      if (input.authorName !== undefined) updateData.authorName = input.authorName;
+      if (input.authorType !== undefined) updateData.authorType = input.authorType;
       if (input.publishNow === true && !existing.publishedAt) {
         updateData.publishedAt = now;
         updateData.status = "published";
@@ -216,6 +230,8 @@ export const newsRouter = {
         publishedAt: record.publishedAt?.toISOString() ?? null,
         createdAt: record.createdAt.toISOString(),
         updatedAt: record.updatedAt.toISOString(),
+        authorName: record.authorName,
+        authorType: record.authorType,
       };
     }),
 

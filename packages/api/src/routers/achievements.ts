@@ -76,7 +76,7 @@ export const achievementsRouter = {
           title: row.title,
           description: row.description,
           category: row.category,
-          recipientName: row.recipientName,
+          recipientNames: row.recipientNames,
           recipientType: row.recipientType,
           year: row.year,
           coverImage: row.coverImage,
@@ -113,7 +113,7 @@ export const achievementsRouter = {
         title: row.title,
         description: row.description,
         category: row.category,
-        recipientName: row.recipientName,
+        recipientNames: row.recipientNames,
         recipientType: row.recipientType,
         year: row.year,
         coverImage: row.coverImage,
@@ -132,8 +132,8 @@ export const achievementsRouter = {
         title: z.string().min(1),
         description: z.string().optional(),
         category: z.enum(["academic", "sports", "arts", "clubs", "community", "other"]).optional(),
-        recipientName: z.string().optional(),
-        recipientType: z.enum(["student", "faculty", "school"]).optional(),
+        recipientNames: z.array(z.string()).optional(),
+        recipientType: z.enum(["student", "faculty", "club", "org"]).optional(),
         year: z.number().optional(),
         coverImage: z.string().optional(),
         tags: z.array(z.string()).optional(),
@@ -156,7 +156,7 @@ export const achievementsRouter = {
           title: input.title,
           description: input.description ?? null,
           category: input.category ?? "other",
-          recipientName: input.recipientName ?? null,
+          recipientNames: input.recipientNames ?? [],
           recipientType: input.recipientType ?? "student",
           year: input.year ?? null,
           coverImage: input.coverImage ?? null,
@@ -173,7 +173,7 @@ export const achievementsRouter = {
         title: record.title,
         description: record.description,
         category: record.category,
-        recipientName: record.recipientName,
+        recipientNames: record.recipientNames,
         recipientType: record.recipientType,
         year: record.year,
         coverImage: record.coverImage,
@@ -193,8 +193,8 @@ export const achievementsRouter = {
         title: z.string().min(1).optional(),
         description: z.string().optional(),
         category: z.enum(["academic", "sports", "arts", "clubs", "community", "other"]).optional(),
-        recipientName: z.string().optional(),
-        recipientType: z.enum(["student", "faculty", "school"]).optional(),
+        recipientNames: z.array(z.string()).optional(),
+        recipientType: z.enum(["student", "faculty", "club", "org"]).optional(),
         year: z.number().optional(),
         coverImage: z.string().optional(),
         tags: z.array(z.string()).optional(),
@@ -226,7 +226,7 @@ export const achievementsRouter = {
       if (input.title !== undefined) updateData.title = input.title;
       if (input.description !== undefined) updateData.description = input.description;
       if (input.category !== undefined) updateData.category = input.category;
-      if (input.recipientName !== undefined) updateData.recipientName = input.recipientName;
+      if (input.recipientNames !== undefined) updateData.recipientNames = input.recipientNames;
       if (input.recipientType !== undefined) updateData.recipientType = input.recipientType;
       if (input.year !== undefined) updateData.year = input.year;
       if (input.coverImage !== undefined) updateData.coverImage = input.coverImage;
@@ -253,7 +253,7 @@ export const achievementsRouter = {
         title: record.title,
         description: record.description,
         category: record.category,
-        recipientName: record.recipientName,
+        recipientNames: record.recipientNames,
         recipientType: record.recipientType,
         year: record.year,
         coverImage: record.coverImage,
