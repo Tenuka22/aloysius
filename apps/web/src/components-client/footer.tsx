@@ -9,15 +9,14 @@ gsap.registerPlugin(ScrollTrigger)
 
 const quickLinks = [
   { label: "About Us", to: "/about" },
-  { label: "Academics", to: "/academics" },
-  { label: "Campus Life", to: "/campus-life" },
-  { label: "Admissions", to: "/admissions" },
+  { label: "Student Works", to: "/student-works" },
   { label: "Achievements", to: "/achievements" },
+  { label: "Gallery", to: "/gallery" },
+  { label: "News & Events", to: "/news-events" },
 ]
 const resources = [
-  { label: "Student Works", to: "/student-works" },
-  { label: "Gallery", to: "/gallery" },
-  { label: "News & Events", to: "/" },
+  { label: "News & Events", to: "/news-events" },
+  { label: "Admin", to: "/admin" },
 ]
 
 export function Footer() {

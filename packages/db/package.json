@@ -13,11 +13,13 @@
     }
   },
   "scripts": {
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "db:seed": "bun run src/seed.ts"
   },
   "dependencies": {
-    "@libsql/client": "0.17.4",
     "@aloysius-web/env": "workspace:*",
+    "@faker-js/faker": "^10.5.0",
+    "@libsql/client": "0.17.4",
     "dotenv": "catalog:",
     "drizzle-orm": "^0.45.2",
     "libsql": "0.5.29",

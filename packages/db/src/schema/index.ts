@@ -242,3 +242,48 @@ export const siteSettings = sqliteTable("site_settings", {
     .notNull()
     .$defaultFn(() => new Date()),
 });
+
+// --- Big Matches table (rivalry encounters for about page) ---
+
+export const bigMatches = sqliteTable("big_matches", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  opponent: text("opponent").notNull(),
+  type: text("type").notNull().default("Cricket"),
+  year: integer("year"),
+  eventId: text("event_id").references(() => events.id, { onDelete: "set null" }),
+  galleryId: text("gallery_id").references(() => gallery.id, { onDelete: "set null" }),
+  sortOrder: integer("sort_order").notNull().default(0),
+  status: text("status", { enum: ["draft", "published", "archived"] })
+    .notNull()
+    .default("draft"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+// --- Activities table (clubs, societies, sports for about page) ---
+
+export const activities = sqliteTable("activities", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  coverImage: text("cover_image"),
+  images: text("images", { mode: "json" }).default([]),
+  type: text("type", { enum: ["club", "sport", "other"] })
+    .notNull()
+    .default("club"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  status: text("status", { enum: ["draft", "published", "archived"] })
+    .notNull()
+    .default("draft"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});

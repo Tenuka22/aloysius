@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from "react"
 import gsap from "gsap"
+import { HeroCarousel } from "./hero-carousel"
 
 const DEFAULTS: Record<string, string> = {
   hero_title: "A place to shape\ncharacter. A stage to\nshowcase greatness.",
@@ -13,11 +14,21 @@ const DEFAULTS: Record<string, string> = {
   hero_cta2_url: "#",
 }
 
-export function Hero({ settings }: { settings?: Record<string, string> }) {
+type CarouselItem = {
+  id: string
+  title: string
+  excerpt?: string | null
+  coverImage?: string | null
+  category?: string
+  tags?: string[]
+  source: "news" | "events" | "student-works" | "achievements" | "gallery" | "announcements"
+}
+
+export function Hero({ settings, carouselItems }: { settings?: Record<string, string>; carouselItems?: CarouselItem[] }) {
   const sectionRef = useRef<HTMLElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const badgeRef = useRef<HTMLDivElement>(null)
-  const gridRef = useRef<HTMLDivElement>(null)
+  const carouselRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLParagraphElement>(null)
   const buttonsRef = useRef<HTMLDivElement>(null)
 
@@ -29,12 +40,7 @@ export function Hero({ settings }: { settings?: Record<string, string> }) {
 
       tl.fromTo(headingRef.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1 })
         .fromTo(badgeRef.current, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.5 }, "-=0.5")
-        .fromTo(
-          gridRef.current?.children ?? [],
-          { opacity: 0, y: 30, rotateX: 15 },
-          { opacity: 1, y: 0, rotateX: 0, duration: 0.6, stagger: 0.08 },
-          "-=0.3"
-        )
+        .fromTo(carouselRef.current, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 }, "-=0.3")
         .fromTo(textRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, "-=0.3")
         .fromTo(
           buttonsRef.current?.children ?? [],
@@ -70,19 +76,25 @@ export function Hero({ settings }: { settings?: Record<string, string> }) {
           </div>
         )}
 
-        <div ref={gridRef} className="grid grid-cols-3 sm:grid-cols-5 gap-3 max-w-3xl mx-auto mb-8 perspective-[1000px]">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-[3/4] rounded-xl bg-muted flex items-center justify-center overflow-hidden"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="size-8 text-muted-foreground/50">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <path d="M21 15l-5-5L5 21" />
-              </svg>
+        <div ref={carouselRef}>
+          {carouselItems && carouselItems.length > 0 ? (
+            <HeroCarousel items={carouselItems} />
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 max-w-3xl mx-auto mb-8 perspective-[1000px]">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="aspect-[3/4] rounded-xl bg-muted flex items-center justify-center overflow-hidden"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="size-8 text-muted-foreground/50">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <path d="M21 15l-5-5L5 21" />
+                  </svg>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
 
         <p ref={textRef} className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto mb-8">

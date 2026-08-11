@@ -5,57 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1786079429091,
-      "tag": "0000_tan_quentin_quire",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1786121568474,
-      "tag": "0001_sad_pretty_boy",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1786126441954,
-      "tag": "0002_bouncy_wraith",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1786202690843,
-      "tag": "0003_watery_sentinel",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1786206986417,
-      "tag": "0004_calm_ender_wiggin",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1786212481851,
-      "tag": "0005_tan_colleen_wing",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1786369644217,
-      "tag": "0006_minor_aqueduct",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "6",
-      "when": 1786371553534,
-      "tag": "0007_tricky_harpoon",
+      "when": 1786431707037,
+      "tag": "0000_steady_karma",
       "breakpoints": true
     }
   ]

@@ -50,12 +50,10 @@ export function Navbar() {
         <nav ref={linksRef} aria-label="Main navigation" className="hidden lg:flex items-center gap-1">
           {[
             { label: "About Us", to: "/about" },
-            { label: "Academics", to: "/academics" },
-            { label: "Campus Life", to: "/campus-life" },
-            { label: "Admissions", to: "/admissions" },
-            { label: "News & Events", to: "/" },
+            { label: "Student Works", to: "/student-works" },
             { label: "Achievements", to: "/achievements" },
             { label: "Gallery", to: "/gallery" },
+            { label: "News & Events", to: "/news-events" },
           ].map((item) => (
             <Link
               key={item.label}

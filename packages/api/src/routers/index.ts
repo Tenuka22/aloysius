@@ -11,6 +11,8 @@ import { studentWorksRouter } from "./student-works";
 import { statsRouter } from "./stats";
 import { tagsRouter } from "./tags";
 import { settingsRouter } from "./settings";
+import { activitiesRouter } from "./activities";
+import { bigMatchesRouter } from "./big-matches";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -32,6 +34,8 @@ export const appRouter = {
   stats: statsRouter,
   tags: tagsRouter,
   settings: settingsRouter,
+  activities: activitiesRouter,
+  bigMatches: bigMatchesRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

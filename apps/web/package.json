@@ -54,6 +54,8 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.4.0",
     "dotenv": "catalog:",
+    "embla-carousel-autoplay": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
     "gsap": "^3.15.0",
     "lexical": "^0.49.0",
     "lodash": "^4.18.1",

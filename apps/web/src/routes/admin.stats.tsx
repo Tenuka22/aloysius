@@ -51,7 +51,7 @@ function StatCard({ stat }: { stat: StatItem }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{stat.id}</CardTitle>
+        <CardTitle className="text-sm font-medium">{stat.label || "Untitled Stat"}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">

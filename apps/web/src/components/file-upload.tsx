@@ -281,6 +281,8 @@ export function Dropzone({
     [onFilesSelected]
   );
 
+  const aspectClass = aspect === 16 / 9 ? "aspect-video" : aspect === 4 / 3 ? "aspect-[4/3]" : aspect === 1 ? "aspect-square" : ""
+
   return (
     <>
       <div
@@ -289,11 +291,12 @@ export function Dropzone({
         onDrop={(e) => { e.preventDefault(); setIsDragOver(false); handleFiles(e.dataTransfer.files); }}
         onClick={() => !disabled && inputRef.current?.click()}
         className={cn(
-          "flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition-colors",
+          "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-4 text-center transition-colors",
           isDragOver
             ? "border-primary bg-primary/5"
             : "border-muted-foreground/25 hover:border-muted-foreground/50",
           disabled && "cursor-not-allowed opacity-50",
+          aspectClass,
           className
         )}
       >

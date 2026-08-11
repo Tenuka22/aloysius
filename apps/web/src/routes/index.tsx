@@ -47,6 +47,19 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { settings, stats, studentWorks, achievements, gallery, events, news, announcements } = Route.useLoaderData();
 
+  const carouselItems = [
+    ...news.slice(0, 3).map((n: any) => ({ ...n, source: "news" as const })),
+    ...events.slice(0, 3).map((e: any) => ({ ...e, source: "events" as const })),
+    ...studentWorks.slice(0, 3).map((sw: any) => ({ ...sw, source: "student-works" as const })),
+    ...achievements.slice(0, 3).map((a: any) => ({ ...a, source: "achievements" as const })),
+    ...gallery.slice(0, 2).map((g: any) => ({ ...g, source: "gallery" as const })),
+    ...announcements.slice(0, 2).map((a: any) => ({ ...a, source: "announcements" as const })),
+  ].sort((a, b) => {
+    const da = a.publishedAt ?? a.createdAt ?? ""
+    const db = b.publishedAt ?? b.createdAt ?? ""
+    return db.localeCompare(da)
+  })
+
   return (
     <div className="min-h-screen bg-background">
       <a
@@ -57,7 +70,7 @@ function Home() {
       </a>
       <Navbar />
       <main id="main-content">
-        <Hero settings={settings} />
+        <Hero settings={settings} carouselItems={carouselItems} />
         <Stats initialData={stats} />
         <StudentWorks initialData={studentWorks} />
         <Achievements initialData={achievements} />

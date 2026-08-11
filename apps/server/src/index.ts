@@ -5,6 +5,7 @@ import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { createContext } from "@aloysius-web/api/context";
 import { appRouter } from "@aloysius-web/api/routers/index";
+import { seed } from "@aloysius-web/db/seed";
 import { env } from "@aloysius-web/env/server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -103,6 +104,16 @@ app.get("/files/*", async (c) => {
 
 app.get("/", (c) => {
   return c.text("OK");
+});
+
+app.get("/seed", async (c) => {
+  try {
+    await seed();
+    return c.json({ message: "Database seeded successfully" });
+  } catch (error) {
+    console.error("Seed error:", error);
+    return c.json({ message: "Failed to seed database" }, 500);
+  }
 });
 
 export default app;
