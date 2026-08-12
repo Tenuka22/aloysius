@@ -98,7 +98,8 @@ export function DataTable<TData, TValue>({
   return (
     <div className="space-y-4">
       {toolbar?.(table)}
-      <div className="overflow-hidden rounded-md border">
+      <div className="size-full flex">
+      <div className="overflow-x-auto rounded-md border grow flex-1 w-0">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -139,6 +140,7 @@ export function DataTable<TData, TValue>({
             )}
           </TableBody>
         </Table>
+      </div>
       </div>
       {paginationBar?.(table)}
     </div>

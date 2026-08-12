@@ -1,6 +1,6 @@
 "use client"
 
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { Navbar } from "@/components-client/navbar"
 import { Footer } from "@/components-client/footer"
@@ -69,8 +69,10 @@ function StudentWorksPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {items.map((item) => (
-                  <div
+                  <Link
                     key={item.id}
+                    to="/student-works/$studentWorkId"
+                    params={{ studentWorkId: item.id }}
                     className="group block overflow-hidden rounded-xl border bg-card hover:shadow-md transition-shadow"
                   >
                     {item.coverImage ? (
@@ -111,7 +113,7 @@ function StudentWorksPage() {
                         </p>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

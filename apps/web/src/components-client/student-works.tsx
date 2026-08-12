@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useEffect } from "react"
+import { Link } from "@tanstack/react-router"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
@@ -93,7 +94,12 @@ export function StudentWorks({ initialData }: { initialData?: StudentWorkRow[] }
               No student works published yet.
             </div>
           ) : works.map((work) => (
-            <div key={work.id} className="group cursor-pointer">
+            <Link
+              key={work.id}
+              to="/student-works/$studentWorkId"
+              params={{ studentWorkId: work.id }}
+              className="group"
+            >
               <div className="aspect-[3/4] rounded-xl bg-muted flex items-center justify-center overflow-hidden mb-3">
                 {work.coverImage ? (
                   <img
@@ -130,7 +136,7 @@ export function StudentWorks({ initialData }: { initialData?: StudentWorkRow[] }
                   ))}
                 </div>
               )}
-            </div>
+            </Link>
           ))}
         </div>
       </div>

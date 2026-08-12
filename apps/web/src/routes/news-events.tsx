@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { Navbar } from "@/components-client/navbar"
 import { Footer } from "@/components-client/footer"
@@ -160,8 +160,10 @@ function NewsEventsPage() {
                         const time = eventDate.toLocaleTimeString("default", { hour: "2-digit", minute: "2-digit" })
 
                         return (
-                          <div
+                          <Link
                             key={event.id}
+                            to="/events/$eventId"
+                            params={{ eventId: event.id }}
                             className="flex items-start gap-4 p-5 rounded-xl border bg-card hover:shadow-md transition-shadow"
                           >
                             {event.coverImage ? (
@@ -207,10 +209,10 @@ function NewsEventsPage() {
                                     ))}
                                   </div>
                                 )}
-                              </div>
+                           </div>
                             </div>
-                          </div>
-                        )
+                         </Link>
+                         )
                       })
                     )}
                   </div>
@@ -223,9 +225,11 @@ function NewsEventsPage() {
                       <div className="text-center text-muted-foreground py-16">No announcements yet.</div>
                     ) : (
                       announcements.map((item) => (
-                        <div
+                        <Link
                           key={item.id}
-                          className="p-5 rounded-xl border bg-card hover:shadow-md transition-shadow"
+                          to="/announcements/$announcementId"
+                          params={{ announcementId: item.id }}
+                          className="block p-5 rounded-xl border bg-card hover:shadow-md transition-shadow"
                         >
                           {item.coverImage && (
                             <div className="mb-3 overflow-hidden rounded-lg">
@@ -264,7 +268,7 @@ function NewsEventsPage() {
                               </div>
                             )}
                           </div>
-                        </div>
+                        </Link>
                       ))
                     )}
                   </div>
@@ -277,8 +281,10 @@ function NewsEventsPage() {
                       <div className="col-span-full text-center text-muted-foreground py-16">No news yet.</div>
                     ) : (
                       news.map((item) => (
-                        <article
+                        <Link
                           key={item.id}
+                          to="/news/$newsId"
+                          params={{ newsId: item.id }}
                           className="group rounded-xl border bg-card overflow-hidden hover:shadow-md transition-shadow"
                         >
                           {item.coverImage ? (
@@ -319,8 +325,8 @@ function NewsEventsPage() {
                                 </div>
                               )}
                             </div>
-                          </div>
-                        </article>
+                           </div>
+                        </Link>
                       ))
                     )}
                   </div>

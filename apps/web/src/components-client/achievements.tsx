@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useEffect } from "react"
+import { Link } from "@tanstack/react-router"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
@@ -90,7 +91,12 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
               No achievements published yet.
             </div>
           ) : items.map((item) => (
-            <div key={item.id} className="group rounded-lg border overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+            <Link
+              key={item.id}
+              to="/achievements/$achievementId"
+              params={{ achievementId: item.id }}
+              className="group rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
+            >
               <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
                 {item.coverImage ? (
                   <img
@@ -137,8 +143,8 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
+                </div>
+              </Link>
           ))}
         </div>
       </div>

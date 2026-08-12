@@ -70,8 +70,8 @@ function AchievementsPage() {
                 {items.map((item) => (
                   <Link
                     key={item.id}
-                    to="/achievements"
-                    params={{}}
+                    to="/achievements/$achievementId"
+                    params={{ achievementId: item.id }}
                     className="group block overflow-hidden rounded-xl border bg-card hover:shadow-md transition-shadow"
                   >
                     {item.coverImage ? (

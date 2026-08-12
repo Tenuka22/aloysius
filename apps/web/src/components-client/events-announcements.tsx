@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useEffect } from "react"
+import { Link } from "@tanstack/react-router"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
@@ -74,7 +75,7 @@ export function EventsAnnouncements({ initialEvents = [], initialNews = [], init
         <div ref={eventsRef}>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold">Upcoming Events</h2>
-            <a href="#events" aria-label="View all upcoming events" className="text-sm font-medium hover:underline">
+            <a href="/news-events" aria-label="View all upcoming events" className="text-sm font-medium hover:underline">
               View All Events
             </a>
           </div>
@@ -91,8 +92,12 @@ export function EventsAnnouncements({ initialEvents = [], initialNews = [], init
                     key={event.id}
                     role="listitem"
                     data-animate
-                    className="flex items-start gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
                   >
+                    <Link
+                      to="/events/$eventId"
+                      params={{ eventId: event.id }}
+                      className="flex items-start gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
                     {event.coverImage ? (
                       <div className="shrink-0 w-12 h-12 rounded-md overflow-hidden">
                         <img src={event.coverImage} alt="" className="w-full h-full object-cover" />
@@ -144,6 +149,7 @@ export function EventsAnnouncements({ initialEvents = [], initialNews = [], init
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5 shrink-0 text-muted-foreground" aria-hidden="true">
                       <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
+                    </Link>
                   </li>
                 )
               })
@@ -159,7 +165,7 @@ export function EventsAnnouncements({ initialEvents = [], initialNews = [], init
         <div ref={announcementsRef}>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold">Latest Announcements</h2>
-            <a href="#announcements" aria-label="View all announcements" className="text-sm font-medium hover:underline">
+            <a href="/news-events" aria-label="View all announcements" className="text-sm font-medium hover:underline">
               View All
             </a>
           </div>
@@ -170,8 +176,12 @@ export function EventsAnnouncements({ initialEvents = [], initialNews = [], init
                   key={item.id}
                   role="listitem"
                   data-animate
-                  className="p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
                 >
+                  <Link
+                    to="/announcements/$announcementId"
+                    params={{ announcementId: item.id }}
+                    className="block p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
                   {item.coverImage && (
                     <div className="mb-3 overflow-hidden rounded-md">
                       <img
@@ -215,6 +225,7 @@ export function EventsAnnouncements({ initialEvents = [], initialNews = [], init
                       </div>
                     )}
                   </div>
+                  </Link>
                 </li>
               ))
             ) : (
@@ -231,15 +242,17 @@ export function EventsAnnouncements({ initialEvents = [], initialNews = [], init
         <div className="mx-auto max-w-6xl mt-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold">Latest News</h2>
-            <a href="#news" aria-label="View all news" className="text-sm font-medium hover:underline">
+            <a href="/news-events" aria-label="View all news" className="text-sm font-medium hover:underline">
               View All
             </a>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {publishedNews.map((item: any) => (
-              <article
+              <Link
                 key={item.id}
-                className="group rounded-lg border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                to="/news/$newsId"
+                params={{ newsId: item.id }}
+                className="group rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
               >
                 {item.coverImage ? (
                   <div className="aspect-video overflow-hidden">
@@ -280,7 +293,7 @@ export function EventsAnnouncements({ initialEvents = [], initialNews = [], init
                     )}
                   </div>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         </div>

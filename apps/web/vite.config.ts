@@ -21,7 +21,7 @@ const cloudflareWorkersAlias = shouldUseAlchemy
 
 export default defineConfig({
   server: {
-    port: 3001,
+    port: 4001,
   },
   resolve: {
     tsconfigPaths: true,

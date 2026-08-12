@@ -67,7 +67,7 @@ export const server = await Worker("server", {
     NODE_ENV: process.env.NODE_ENV ?? "development",
   },
   dev: {
-    port: 3000,
+    port: 4000,
   },
 });
 
@@ -80,7 +80,7 @@ export const web = await TanStackStart("web", {
     CLERK_SECRET_KEY: alchemy.secret.env.CLERK_SECRET_KEY!,
     CLERK_PUBLISHABLE_KEY: alchemy.env.CLERK_PUBLISHABLE_KEY!,
   },
-});
+})
 
 console.log(`Web    -> ${web.url}`);
 console.log(`Server -> ${server.url}`);
