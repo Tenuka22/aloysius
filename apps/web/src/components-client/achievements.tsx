@@ -29,12 +29,19 @@ interface AchievementRow {
   tags: string[] | null;
 }
 
-export function Achievements({ initialData }: { initialData?: AchievementRow[] }) {
+export function Achievements({
+  initialData,
+  settings,
+}: {
+  initialData?: AchievementRow[];
+  settings?: Record<string, string>;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
   const featuredRef = useRef<HTMLDivElement>(null);
 
   const items = initialData ?? [];
+  const heading = settings?.achievements_heading || "Achievements";
   const featured = items[0];
   const rest = items.slice(1, 5);
 
@@ -91,7 +98,7 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
             <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
               Recognition
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold">Achievements</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">{heading}</h2>
           </div>
           <a
             href="/achievements"

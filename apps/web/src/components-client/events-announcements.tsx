@@ -19,17 +19,20 @@ interface EventsAnnouncementsProps {
   initialEvents?: any[];
   initialNews?: any[];
   initialAnnouncements?: any[];
+  settings?: Record<string, string>;
 }
 
 export function EventsAnnouncements({
   initialEvents = [],
   initialNews = [],
   initialAnnouncements = [],
+  settings,
 }: EventsAnnouncementsProps) {
   const eventsRef = useRef<HTMLDivElement>(null);
   const announcementsRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
 
+  const heading = settings?.events_heading || "Events & Announcements";
   const publishedEvents = initialEvents.slice(0, 4);
   const publishedNews = initialNews.slice(0, 3);
   const publishedAnnouncements = initialAnnouncements.slice(0, 3);
@@ -85,7 +88,7 @@ export function EventsAnnouncements({
           <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
             Stay Updated
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">Events & Announcements</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">{heading}</h2>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">

@@ -17,17 +17,25 @@ export const Route = createFileRoute("/")({
 
     const serverClient = createRouterClient(appRouter);
 
-    const [settings, statsData, studentWorksData, achievementsData, galleryData, eventsData, newsData, announcementsData] =
-      await Promise.all([
-        serverClient.settings.getAll(),
-        serverClient.stats.list(),
-        serverClient.studentWorks.list({ page: 1, pageSize: 6, status: "published" }),
-        serverClient.achievements.list({ page: 1, pageSize: 6, status: "published" }),
-        serverClient.gallery.list({ page: 1, pageSize: 6, status: "published" }),
-        serverClient.events.list({ page: 1, pageSize: 10, status: "published" }),
-        serverClient.news.list({ page: 1, pageSize: 10, status: "published" }),
-        serverClient.announcements.list({ page: 1, pageSize: 10, status: "published" }),
-      ]);
+    const [
+      settings,
+      statsData,
+      studentWorksData,
+      achievementsData,
+      galleryData,
+      eventsData,
+      newsData,
+      announcementsData,
+    ] = await Promise.all([
+      serverClient.settings.getAll(),
+      serverClient.stats.list(),
+      serverClient.studentWorks.list({ page: 1, pageSize: 6, status: "published" }),
+      serverClient.achievements.list({ page: 1, pageSize: 6, status: "published" }),
+      serverClient.gallery.list({ page: 1, pageSize: 6, status: "published" }),
+      serverClient.events.list({ page: 1, pageSize: 10, status: "published" }),
+      serverClient.news.list({ page: 1, pageSize: 10, status: "published" }),
+      serverClient.announcements.list({ page: 1, pageSize: 10, status: "published" }),
+    ]);
 
     return {
       settings,
@@ -45,7 +53,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { settings, stats, studentWorks, achievements, gallery, events, news, announcements } = Route.useLoaderData();
+  const { settings, stats, studentWorks, achievements, gallery, events, news, announcements } =
+    Route.useLoaderData();
 
   const carouselItems = [
     ...news.slice(0, 3).map((n: any) => ({ ...n, source: "news" as const })),
@@ -55,10 +64,10 @@ function Home() {
     ...gallery.slice(0, 2).map((g: any) => ({ ...g, source: "gallery" as const })),
     ...announcements.slice(0, 2).map((a: any) => ({ ...a, source: "announcements" as const })),
   ].sort((a, b) => {
-    const da = a.publishedAt ?? a.createdAt ?? ""
-    const db = b.publishedAt ?? b.createdAt ?? ""
-    return db.localeCompare(da)
-  })
+    const da = a.publishedAt ?? a.createdAt ?? "";
+    const db = b.publishedAt ?? b.createdAt ?? "";
+    return db.localeCompare(da);
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -72,10 +81,15 @@ function Home() {
       <main id="main-content">
         <Hero settings={settings} carouselItems={carouselItems} />
         <Stats initialData={stats} />
-        <StudentWorks initialData={studentWorks} />
-        <Achievements initialData={achievements} />
-        <Gallery initialData={gallery} />
-        <EventsAnnouncements initialEvents={events} initialNews={news} initialAnnouncements={announcements} />
+        <StudentWorks initialData={studentWorks} settings={settings} />
+        <Achievements initialData={achievements} settings={settings} />
+        <Gallery initialData={gallery} settings={settings} />
+        <EventsAnnouncements
+          initialEvents={events}
+          initialNews={news}
+          initialAnnouncements={announcements}
+          settings={settings}
+        />
       </main>
       <Footer />
     </div>

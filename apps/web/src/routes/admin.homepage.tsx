@@ -15,6 +15,15 @@ const HOMEPAGE_KEYS = [
   "hero_cta1_url",
   "hero_cta2_text",
   "hero_cta2_url",
+  "stats_heading",
+  "student_works_heading",
+  "student_works_description",
+  "achievements_heading",
+  "achievements_description",
+  "gallery_heading",
+  "gallery_description",
+  "events_heading",
+  "events_description",
   "cta_title",
   "cta_subtitle",
   "cta_button_text",
@@ -30,6 +39,15 @@ const DEFAULTS: Record<string, string> = {
   hero_cta1_url: "/about",
   hero_cta2_text: "Student Works",
   hero_cta2_url: "/student-works",
+  stats_heading: "Our Legacy in Numbers",
+  student_works_heading: "Latest Student Works",
+  student_works_description: "Explore creative projects from our talented students",
+  achievements_heading: "Achievements",
+  achievements_description: "Celebrating excellence and accomplishment",
+  gallery_heading: "Gallery",
+  gallery_description: "Moments captured from campus life",
+  events_heading: "Events & Announcements",
+  events_description: "Stay updated with the latest from our community",
   cta_title: "Be part of a legacy.\nBuild your future.",
   cta_subtitle: "Join a community where values meet vision, and every student shines.",
   cta_button_text: "Apply Now",
@@ -136,7 +154,7 @@ function HomepageEditor() {
         <div>
           <h1 className="text-2xl font-bold">Homepage Content</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Customize the text content displayed on the homepage
+            Customize headings, descriptions, and call-to-action text
           </p>
         </div>
         <Button onClick={handleSave} disabled={mutation.isPending}>
@@ -199,6 +217,112 @@ function HomepageEditor() {
         </div>
       </section>
 
+      {/* Stats Section */}
+      <section className="border bg-card p-6 space-y-4">
+        <SectionHeader title="Stats Section" description="Statistics displayed below the hero" />
+        <Field
+          label="Section Heading"
+          value={getValue("stats_heading")}
+          onChange={(v) => setField("stats_heading", v)}
+          placeholder="e.g. Our Legacy in Numbers"
+        />
+        <p className="text-xs text-muted-foreground">
+          Stats are managed in the{" "}
+          <a href="/admin/stats" className="underline hover:text-foreground">
+            Stats admin page
+          </a>
+        </p>
+      </section>
+
+      {/* Student Works Section */}
+      <section className="border bg-card p-6 space-y-4">
+        <SectionHeader
+          title="Student Works Section"
+          description="Showcase of student creative projects"
+        />
+        <Field
+          label="Section Heading"
+          value={getValue("student_works_heading")}
+          onChange={(v) => setField("student_works_heading", v)}
+          placeholder="e.g. Latest Student Works"
+        />
+        <Field
+          label="Section Description"
+          value={getValue("student_works_description")}
+          onChange={(v) => setField("student_works_description", v)}
+          placeholder="e.g. Explore creative projects from our talented students"
+        />
+        <p className="text-xs text-muted-foreground">
+          Content is auto-populated from published student works
+        </p>
+      </section>
+
+      {/* Achievements Section */}
+      <section className="border bg-card p-6 space-y-4">
+        <SectionHeader
+          title="Achievements Section"
+          description="Highlights of awards and accomplishments"
+        />
+        <Field
+          label="Section Heading"
+          value={getValue("achievements_heading")}
+          onChange={(v) => setField("achievements_heading", v)}
+          placeholder="e.g. Achievements"
+        />
+        <Field
+          label="Section Description"
+          value={getValue("achievements_description")}
+          onChange={(v) => setField("achievements_description", v)}
+          placeholder="e.g. Celebrating excellence and accomplishment"
+        />
+        <p className="text-xs text-muted-foreground">
+          Content is auto-populated from published achievements
+        </p>
+      </section>
+
+      {/* Gallery Section */}
+      <section className="border bg-card p-6 space-y-4">
+        <SectionHeader title="Gallery Section" description="Photo gallery from campus life" />
+        <Field
+          label="Section Heading"
+          value={getValue("gallery_heading")}
+          onChange={(v) => setField("gallery_heading", v)}
+          placeholder="e.g. Gallery"
+        />
+        <Field
+          label="Section Description"
+          value={getValue("gallery_description")}
+          onChange={(v) => setField("gallery_description", v)}
+          placeholder="e.g. Moments captured from campus life"
+        />
+        <p className="text-xs text-muted-foreground">
+          Content is auto-populated from published gallery albums
+        </p>
+      </section>
+
+      {/* Events & Announcements Section */}
+      <section className="border bg-card p-6 space-y-4">
+        <SectionHeader
+          title="Events & Announcements"
+          description="Latest news and upcoming events"
+        />
+        <Field
+          label="Section Heading"
+          value={getValue("events_heading")}
+          onChange={(v) => setField("events_heading", v)}
+          placeholder="e.g. Events & Announcements"
+        />
+        <Field
+          label="Section Description"
+          value={getValue("events_description")}
+          onChange={(v) => setField("events_description", v)}
+          placeholder="e.g. Stay updated with the latest from our community"
+        />
+        <p className="text-xs text-muted-foreground">
+          Content is auto-populated from published events, news, and announcements
+        </p>
+      </section>
+
       {/* CTA Banner Section */}
       <section className="border bg-card p-6 space-y-4">
         <SectionHeader
@@ -234,16 +358,6 @@ function HomepageEditor() {
             placeholder="e.g. /apply"
           />
         </div>
-      </section>
-
-      {/* Info Section */}
-      <section className="border bg-muted/30 p-4">
-        <p className="text-sm text-muted-foreground">
-          <strong>Note:</strong> The Stats, Student Works, Achievements, Gallery, and Events
-          sections are automatically populated from their respective admin pages. Content carousel
-          items are pulled from published news, events, student works, achievements, gallery albums,
-          and announcements.
-        </p>
       </section>
     </div>
   );

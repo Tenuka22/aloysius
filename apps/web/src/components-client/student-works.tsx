@@ -32,11 +32,18 @@ interface StudentWorkRow {
   tags: string[] | null;
 }
 
-export function StudentWorks({ initialData }: { initialData?: StudentWorkRow[] }) {
+export function StudentWorks({
+  initialData,
+  settings,
+}: {
+  initialData?: StudentWorkRow[];
+  settings?: Record<string, string>;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
 
   const works = initialData ?? [];
+  const heading = settings?.student_works_heading || "Latest Student Works";
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -77,7 +84,7 @@ export function StudentWorks({ initialData }: { initialData?: StudentWorkRow[] }
             <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
               Showcase
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold">Latest Student Works</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">{heading}</h2>
           </div>
           <a
             href="/student-works"

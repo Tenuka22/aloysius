@@ -17,11 +17,18 @@ interface GalleryRow {
   tags: string[] | null;
 }
 
-export function Gallery({ initialData }: { initialData?: GalleryRow[] }) {
+export function Gallery({
+  initialData,
+  settings,
+}: {
+  initialData?: GalleryRow[];
+  settings?: Record<string, string>;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
 
   const items = initialData ?? [];
+  const heading = settings?.gallery_heading || "Gallery";
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -62,7 +69,7 @@ export function Gallery({ initialData }: { initialData?: GalleryRow[] }) {
             <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
               Moments
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold">Gallery</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">{heading}</h2>
           </div>
           <a
             href="/gallery"
