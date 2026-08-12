@@ -72,7 +72,10 @@ export function Hero({
 
   return (
     <section ref={sectionRef}>
-      <div className="relative bg-[#0a1f0a] text-white overflow-hidden">
+      <div
+        className="relative bg-[#0a1f0a] text-white overflow-hidden"
+        style={{ minHeight: "calc(100svh - 3.5rem)" }}
+      >
         {/* Subtle texture overlay */}
         <div
           className="absolute inset-0 opacity-[0.03]"
