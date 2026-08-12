@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
+import { client } from "@/utils/orpc";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -64,18 +65,11 @@ const DEFAULTS: Record<string, string> = {
 
 export const Route = createFileRoute("/about")({
   loader: async () => {
-    const [{ createRouterClient }, { appRouter }] = await Promise.all([
-      import("@orpc/server"),
-      import("@aloysius-web/api/routers/index"),
-    ]);
-
-    const serverClient = createRouterClient(appRouter);
-
     const [settings, statsData, activitiesData, bigMatchesData] = await Promise.all([
-      serverClient.settings.getAll(),
-      serverClient.stats.list(),
-      serverClient.activities.list({ status: "published" }),
-      serverClient.bigMatches.list({ status: "published" }),
+      client.settings.getAll(),
+      client.stats.list(),
+      client.activities.list({ status: "published" }),
+      client.bigMatches.list({ status: "published" }),
     ]);
 
     return {

@@ -141,7 +141,7 @@ const columns: ColumnDef<NewsItem, any>[] = [
     cell: ({ row }) => {
       const url = row.original.coverImage;
       if (!url) return <span className="text-muted-foreground">-</span>;
-      return <img src={url} alt="" className="h-10 w-16 rounded-md object-cover" />;
+      return <img src={url} alt="" className="h-10 w-16 rounded-md object-contain" />;
     },
     size: 80,
   },

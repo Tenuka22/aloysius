@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { HeroCarousel } from "./hero-carousel";
+import { AnnouncementsMarquee } from "./marquee";
 
 const DEFAULTS: Record<string, string> = {
   hero_badge: "Est. 1862",
@@ -25,12 +26,23 @@ type CarouselItem = {
   source: "news" | "events" | "student-works" | "achievements" | "gallery" | "announcements";
 };
 
+type Announcement = {
+  id: string;
+  title: string;
+  slug?: string;
+  excerpt?: string | null;
+  createdAt?: string;
+  audience?: string | null;
+};
+
 export function Hero({
   settings,
   carouselItems,
+  announcements,
 }: {
   settings?: Record<string, string>;
   carouselItems?: CarouselItem[];
+  announcements?: Announcement[];
 }) {
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -138,8 +150,10 @@ export function Hero({
         </div>
       </div>
 
+      <AnnouncementsMarquee announcements={announcements?.slice(0, 4) ?? []} />
+
       {/* Carousel section */}
-      <div ref={carouselRef} className="px-4 sm:px-6 lg:px-8 py-10 bg-background">
+      <div ref={carouselRef} className="px-4 sm:px-6 lg:px-8 py-16 bg-background">
         {carouselItems && carouselItems.length > 0 ? <HeroCarousel items={carouselItems} /> : null}
       </div>
     </section>

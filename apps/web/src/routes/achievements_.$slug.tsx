@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
+import { client } from "@/utils/orpc";
 
 type Achievement = {
   id: string;
@@ -42,13 +43,7 @@ const recipientTypeLabels: Record<string, string> = {
 
 export const Route = createFileRoute("/achievements_/$slug")({
   loader: async ({ params }) => {
-    const [{ createRouterClient }, { appRouter }] = await Promise.all([
-      import("@orpc/server"),
-      import("@aloysius-web/api/routers/index"),
-    ]);
-
-    const serverClient = createRouterClient(appRouter);
-    const achievement = await serverClient.achievements.get({ slug: params.slug });
+    const achievement = await client.achievements.get({ slug: params.slug });
     return { achievement };
   },
   staleTime: 5 * 60_000,

@@ -45,23 +45,17 @@ export function Footer() {
   }, []);
 
   return (
-    <footer ref={ref} role="contentinfo" className="border-t px-4 sm:px-6 lg:px-8 py-12">
+    <footer ref={ref} role="contentinfo" className="bg-muted/30 border-t border-border px-4 sm:px-6 lg:px-8 py-12">
       <div className="mx-auto max-w-6xl">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div data-animate>
             <div className="flex items-center gap-2 mb-4">
-              <div className="size-10 rounded-full bg-muted flex items-center justify-center">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="size-6 text-muted-foreground"
-                >
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
-              </div>
+              <img
+                src="/logo.png"
+                alt="Aloysius College"
+                className="size-10 object-contain"
+              />
               <div className="leading-none">
                 <div className="text-sm font-medium tracking-wide">ALOYSIUS COLLEGE</div>
                 <div className="text-[10px] tracking-widest text-muted-foreground">
@@ -75,26 +69,40 @@ export function Footer() {
             </p>
             <div className="flex gap-3" role="list" aria-label="Social media links">
               {[
-                { name: "facebook", label: "Facebook" },
-                { name: "instagram", label: "Instagram" },
-                { name: "youtube", label: "YouTube" },
+                {
+                  name: "facebook",
+                  label: "Facebook",
+                  path: "M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z",
+                },
+                {
+                  name: "instagram",
+                  label: "Instagram",
+                  path: "M16 4H8a4 4 0 00-4 4v8a4 4 0 004 4h8a4 4 0 004-4V8a4 4 0 00-4-4zm-4 11a3 3 0 110-6 3 3 0 010 6zm4.5-7.5a1 1 0 110-2 1 1 0 010 2z",
+                },
+                {
+                  name: "youtube",
+                  label: "YouTube",
+                  path: "M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 11.75a29 29 0 00.46 5.33A2.78 2.78 0 003.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 001.94-2 29 29 0 00.46-5.25 29 29 0 00-.46-5.43zM9.75 15.02V8.48l5.75 3.27-5.75 3.27z",
+                },
               ].map((social) => (
                 <a
                   key={social.name}
                   href={`https://${social.name}.com/aloysiuscollege`}
                   aria-label={social.label}
                   role="listitem"
-                  className="size-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 cursor-pointer transition-colors"
+                  className="size-8 border border-border flex items-center justify-center hover:bg-muted hover:border-foreground/20 cursor-pointer transition-colors"
                 >
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1.5"
-                    className="size-4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="size-4 text-muted-foreground"
                     aria-hidden="true"
                   >
-                    <circle cx="12" cy="12" r="10" />
+                    <path d={social.path} />
                   </svg>
                 </a>
               ))}
@@ -195,8 +203,8 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <div>&copy; 2025 Aloysius College. All rights reserved.</div>
+        <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+          <div>&copy; {new Date().getFullYear()} Aloysius College. All rights reserved.</div>
           <div className="flex gap-4">
             <a href="#" className="hover:text-foreground transition-colors">
               Privacy Policy

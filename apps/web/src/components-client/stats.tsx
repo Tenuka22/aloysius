@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
@@ -8,6 +8,10 @@ import {
   IconUsers,
   IconTrophy,
   IconWorld,
+  IconHeart,
+  IconStar,
+  IconAward,
+  IconBook,
 } from "@tabler/icons-react";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -28,14 +32,61 @@ const iconMap: Record<string, React.ComponentType<{ stroke?: number; size?: numb
   students: IconUsers,
   activities: IconTrophy,
   global: IconWorld,
+  heart: IconHeart,
+  star: IconStar,
+  award: IconAward,
+  book: IconBook,
+  school: IconSchool,
+  trophy: IconTrophy,
+  world: IconWorld,
 };
+
+function parseNumericValue(value: string): { num: number; suffix: string } | null {
+  const match = value.match(/^([\d,]+)/);
+  if (!match) return null;
+  const numStr = match[1].replace(/,/g, "");
+  const num = parseInt(numStr, 10);
+  if (isNaN(num)) return null;
+  const suffix = value.slice(match[1].length);
+  return { num, suffix };
+}
+
+function AnimatedValue({ value, shouldAnimate }: { value: string; shouldAnimate: boolean }) {
+  const [displayValue, setDisplayValue] = useState(shouldAnimate ? "0" : value);
+  const animated = useRef(false);
+
+  useEffect(() => {
+    if (!shouldAnimate || animated.current) return;
+
+    const parsed = parseNumericValue(value);
+    if (!parsed) {
+      setDisplayValue(value);
+      return;
+    }
+
+    animated.current = true;
+    const obj = { val: 0 };
+    gsap.to(obj, {
+      val: parsed.num,
+      duration: 2,
+      ease: "power2.out",
+      onUpdate: () => {
+        const current = Math.round(obj.val);
+        setDisplayValue(current.toLocaleString() + parsed.suffix);
+      },
+    });
+  }, [shouldAnimate, value]);
+
+  return <>{displayValue}</>;
+}
 
 export function Stats({
   initialData,
 }: {
   initialData?: { id: string; value: string; label: string; icon: string | null }[];
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
 
   const stats =
     initialData && initialData.length > 0
@@ -47,12 +98,12 @@ export function Stats({
       : defaultStats;
 
   useEffect(() => {
-    const el = ref.current;
+    const el = sectionRef.current;
     if (!el) return;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        el.children,
+        el.querySelectorAll("[data-stat]"),
         { opacity: 0, y: 20 },
         {
           opacity: 1,
@@ -60,7 +111,12 @@ export function Stats({
           duration: 0.5,
           stagger: 0.1,
           ease: "power3.out",
-          scrollTrigger: { trigger: el, start: "top 90%", once: true },
+          scrollTrigger: {
+            trigger: el,
+            start: "top 90%",
+            once: true,
+            onEnter: () => setHasAnimated(true),
+          },
         },
       );
     }, el);
@@ -69,33 +125,34 @@ export function Stats({
   }, []);
 
   return (
-    <section className="bg-[#0a1f0a] relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent" />
-      <div
-        ref={ref}
-        className="relative mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-0 py-16 px-4 sm:px-6 lg:px-8"
-      >
-        {stats.map((stat, i) => (
-          <div
-            key={stat.label}
-            className={`flex flex-col items-center justify-center text-center gap-4 py-6 px-4 ${
-              i < stats.length - 1 ? "lg:border-r border-white/10" : ""
-            } ${i < stats.length - 2 || (i < stats.length - 1 && stats.length <= 5) ? "border-b lg:border-b-0 border-white/10" : ""}`}
-          >
-            <div className="text-[#c9a227]">
-              {(() => {
-                const Icon = iconMap[stat.icon] ?? IconSchool;
-                return <Icon stroke={1.25} size={36} />;
-              })()}
-            </div>
-            <div>
-              <div className="text-3xl sm:text-4xl font-light text-[#c9a227] tracking-tight tabular-nums">
-                {stat.value}
+    <section ref={sectionRef} className="bg-muted/30 relative overflow-hidden border-y border-border">
+      <div className="relative mx-auto max-w-6xl grid grid-cols-2 lg:grid-cols-4 gap-0 py-16 px-4 sm:px-6 lg:px-8 justify-center">
+        {stats.map((stat, i) => {
+          const iconKey = stat.icon?.toLowerCase() ?? "school";
+          const Icon = iconMap[iconKey] ?? IconSchool;
+
+          return (
+            <div
+              key={stat.label}
+              data-stat
+              className={`flex flex-col items-center justify-center text-center gap-4 py-6 px-4 ${
+                i < 2 ? "border-b lg:border-b-0 border-border" : ""
+              } ${
+                i < stats.length - 1 ? "lg:border-r border-border" : ""
+              }`}
+            >
+              <div className="text-[#c9a227]">
+                <Icon stroke={1.25} size={36} />
               </div>
-              <div className="text-xs uppercase tracking-widest text-white/50 mt-2">{stat.label}</div>
+              <div>
+                <div className="text-3xl sm:text-4xl font-light text-[#c9a227] tracking-tight tabular-nums">
+                  <AnimatedValue value={stat.value} shouldAnimate={hasAnimated} />
+                </div>
+                <div className="text-xs uppercase tracking-widest text-muted-foreground mt-2">{stat.label}</div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

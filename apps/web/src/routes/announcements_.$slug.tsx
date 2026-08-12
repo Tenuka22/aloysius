@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
+import { client } from "@/utils/orpc";
 
 type Announcement = {
   id: string;
@@ -33,13 +34,7 @@ const audienceLabels: Record<string, string> = {
 
 export const Route = createFileRoute("/announcements_/$slug")({
   loader: async ({ params }) => {
-    const [{ createRouterClient }, { appRouter }] = await Promise.all([
-      import("@orpc/server"),
-      import("@aloysius-web/api/routers/index"),
-    ]);
-
-    const serverClient = createRouterClient(appRouter);
-    const announcement = await serverClient.announcements.get({ slug: params.slug });
+    const announcement = await client.announcements.get({ slug: params.slug });
     return { announcement };
   },
   staleTime: 5 * 60_000,

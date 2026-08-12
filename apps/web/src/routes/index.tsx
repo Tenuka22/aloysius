@@ -7,16 +7,10 @@ import { Achievements } from "@/components-client/achievements";
 import { Gallery } from "@/components-client/gallery";
 import { EventsAnnouncements } from "@/components-client/events-announcements";
 import { Footer } from "@/components-client/footer";
+import { client } from "@/utils/orpc";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const [{ createRouterClient }, { appRouter }] = await Promise.all([
-      import("@orpc/server"),
-      import("@aloysius-web/api/routers/index"),
-    ]);
-
-    const serverClient = createRouterClient(appRouter);
-
     const [
       settings,
       statsData,
@@ -27,14 +21,14 @@ export const Route = createFileRoute("/")({
       newsData,
       announcementsData,
     ] = await Promise.all([
-      serverClient.settings.getAll(),
-      serverClient.stats.list(),
-      serverClient.studentWorks.list({ page: 1, pageSize: 6, status: "published" }),
-      serverClient.achievements.list({ page: 1, pageSize: 6, status: "published" }),
-      serverClient.gallery.list({ page: 1, pageSize: 6, status: "published" }),
-      serverClient.events.list({ page: 1, pageSize: 10, status: "published" }),
-      serverClient.news.list({ page: 1, pageSize: 10, status: "published" }),
-      serverClient.announcements.list({ page: 1, pageSize: 10, status: "published" }),
+      client.settings.getAll(),
+      client.stats.list(),
+      client.studentWorks.list({ page: 1, pageSize: 6, status: "published" }),
+      client.achievements.list({ page: 1, pageSize: 6, status: "published" }),
+      client.gallery.list({ page: 1, pageSize: 6, status: "published" }),
+      client.events.list({ page: 1, pageSize: 10, status: "published" }),
+      client.news.list({ page: 1, pageSize: 10, status: "published" }),
+      client.announcements.list({ page: 1, pageSize: 10, status: "published" }),
     ]);
 
     return {
@@ -79,7 +73,7 @@ function Home() {
       </a>
       <Navbar />
       <main id="main-content">
-        <Hero settings={settings} carouselItems={carouselItems} />
+        <Hero settings={settings} carouselItems={carouselItems} announcements={announcements} />
         <Stats initialData={stats} />
         <StudentWorks initialData={studentWorks} settings={settings} />
         <Achievements initialData={achievements} settings={settings} />

@@ -82,23 +82,23 @@ export function EventsAnnouncements({
   }, [publishedEvents, publishedNews, publishedAnnouncements]);
 
   return (
-    <section className="py-16 sm:py-20 bg-[#0a1f0a]">
+    <section className="py-16 sm:py-20 bg-background">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div ref={headingRef} className="mb-10">
           <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
             Stay Updated
           </span>
-          <h2 className="text-2xl sm:text-3xl font-light text-white">{heading}</h2>
+          <h2 className="text-2xl sm:text-3xl font-light">{heading}</h2>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           {/* Upcoming Events */}
           <div ref={eventsRef}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-semibold text-white">Upcoming Events</h3>
+              <h3 className="text-lg font-semibold">Upcoming Events</h3>
               <a
                 href="/news-events"
-                className="text-xs font-medium text-white/50 hover:text-white transition-colors"
+                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
               >
                 View All →
               </a>
@@ -115,17 +115,17 @@ export function EventsAnnouncements({
                       key={event.id}
                       to="/events/$slug"
                       params={{ slug: event.slug }}
-                      className="group relative overflow-hidden bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                      className="group relative overflow-hidden bg-card border border-border hover:shadow-md transition-all"
                     >
                       <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
                       {event.coverImage && (
                         <div className="absolute inset-0">
                           <img
                             src={event.coverImage}
-                            alt=""
+                            alt={event.title || "Event cover"}
                             className="w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-r from-[#0a1f0a] via-[#0a1f0a]/90 to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent" />
                         </div>
                       )}
                       <div className="relative flex items-start gap-4 p-4">
@@ -135,16 +135,16 @@ export function EventsAnnouncements({
                           </div>
                           <time
                             dateTime={event.startDate}
-                            className="text-2xl font-light text-white group-hover:text-white transition-colors"
+                            className="text-2xl font-light text-foreground group-hover:text-primary transition-colors"
                           >
                             {day}
                           </time>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-white group-hover:text-white transition-colors mb-0.5">
+                          <div className="font-medium text-foreground group-hover:text-primary transition-colors mb-0.5">
                             {event.title}
                           </div>
-                          <div className="text-xs text-white/40 group-hover:text-white/60 transition-colors">
+                          <div className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
                             {event.isAllDay
                               ? "All day"
                               : eventDate.toLocaleTimeString("default", {
@@ -159,7 +159,7 @@ export function EventsAnnouncements({
                   );
                 })
               ) : (
-                <div className="p-6 bg-white/5 border border-white/10 text-center text-white/40 text-sm">
+                <div className="p-6 bg-muted/50 border border-border text-center text-muted-foreground text-sm">
                   No upcoming events
                 </div>
               )}
@@ -169,10 +169,10 @@ export function EventsAnnouncements({
           {/* Latest Announcements */}
           <div ref={announcementsRef}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-semibold text-white">Latest Announcements</h3>
+              <h3 className="text-lg font-semibold">Latest Announcements</h3>
               <a
                 href="/news-events"
-                className="text-xs font-medium text-white/50 hover:text-white transition-colors"
+                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
               >
                 View All →
               </a>
@@ -184,22 +184,22 @@ export function EventsAnnouncements({
                     key={item.id}
                     to="/announcements/$slug"
                     params={{ slug: item.slug }}
-                    className="group relative block p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                    className="group relative block p-4 bg-card border border-border hover:shadow-md transition-all"
                   >
                     <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
                     <div className="relative">
-                      <div className="font-medium text-white group-hover:text-white transition-colors mb-1">
+                      <div className="font-medium text-foreground group-hover:text-primary transition-colors mb-1">
                         {item.title}
                       </div>
                       {item.excerpt && (
-                        <div className="text-xs text-white/40 group-hover:text-white/60 transition-colors mb-2 line-clamp-2">{item.excerpt}</div>
+                        <div className="text-xs text-muted-foreground group-hover:text-foreground transition-colors mb-2 line-clamp-2">{item.excerpt}</div>
                       )}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <time dateTime={item.createdAt} className="text-xs text-white/30 group-hover:text-white/50 transition-colors">
+                        <time dateTime={item.createdAt} className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
                           {new Date(item.createdAt).toLocaleDateString()}
                         </time>
                         {item.audience && item.audience !== "all" && (
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c9a227] group-hover:text-white transition-colors">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c9a227]">
                             {audienceLabels[item.audience] ?? item.audience}
                           </span>
                         )}
@@ -208,7 +208,7 @@ export function EventsAnnouncements({
                   </Link>
                 ))
               ) : (
-                <div className="p-6 bg-white/5 border border-white/10 text-center text-white/40 text-sm">
+                <div className="p-6 bg-muted/50 border border-border text-center text-muted-foreground text-sm">
                   No announcements yet
                 </div>
               )}
@@ -220,10 +220,10 @@ export function EventsAnnouncements({
         {publishedNews.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-semibold text-white">Latest News</h3>
+              <h3 className="text-lg font-semibold">Latest News</h3>
               <a
                 href="/news-events"
-                className="text-xs font-medium text-white/50 hover:text-white transition-colors"
+                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
               >
                 View All →
               </a>
@@ -234,9 +234,9 @@ export function EventsAnnouncements({
                   key={item.id}
                   to="/news/$slug"
                   params={{ slug: item.slug }}
-                  className="group relative bg-white/5 border border-white/10 overflow-hidden hover:bg-white/10 transition-colors"
+                  className="group relative bg-card border border-border overflow-hidden hover:shadow-md transition-all"
                 >
-                  <span className="absolute inset-y-0 left-0 w-0 bg-[#c9a227] group-hover:w-full transition-all duration-700 ease-out -z-0" />
+                  <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
                   {item.coverImage ? (
                     <div className="relative z-10 aspect-video overflow-hidden">
                       <img
@@ -263,14 +263,14 @@ export function EventsAnnouncements({
                     </div>
                   )}
                   <div className="relative z-10 p-4">
-                    <time dateTime={item.createdAt} className="text-xs text-white/50 group-hover:text-primary transition-colors block mb-1.5">
+                    <time dateTime={item.createdAt} className="text-xs text-muted-foreground group-hover:text-primary transition-colors block mb-1.5">
                       {new Date(item.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
                     </time>
-                    <div className="font-medium text-white group-hover:text-primary transition-colors mb-1 line-clamp-2">
+                    <div className="font-medium text-foreground group-hover:text-primary transition-colors mb-1 line-clamp-2">
                       {item.title}
                     </div>
                     {item.excerpt && (
-                      <div className="text-xs text-white/50 group-hover:text-primary/80 transition-colors mb-2 line-clamp-2">{item.excerpt}</div>
+                      <div className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors mb-2 line-clamp-2">{item.excerpt}</div>
                     )}
                   </div>
                 </Link>

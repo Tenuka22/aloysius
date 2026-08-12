@@ -200,7 +200,7 @@ const columns: ColumnDef<EventItem, any>[] = [
     cell: ({ row }) => {
       const url = row.original.coverImage;
       if (!url) return <span className="text-muted-foreground">-</span>;
-      return <img src={url} alt="" className="h-10 w-10 rounded-md object-cover" />;
+      return <img src={url} alt="" className="h-10 w-10 rounded-md object-contain" />;
     },
     size: 60,
   },

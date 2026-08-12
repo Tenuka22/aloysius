@@ -54,7 +54,7 @@ export function Navbar() {
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-border"
     >
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
@@ -64,17 +64,11 @@ export function Navbar() {
           ref={logoRef}
           className="flex items-center gap-2 shrink-0"
         >
-          <div className="size-8 rounded-full bg-muted flex items-center justify-center">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              className="size-5 text-muted-foreground"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
-          </div>
+          <img
+            src="/logo.png"
+            alt="Aloysius College"
+            className="size-9 object-contain"
+          />
           <div className="leading-none">
             <div className="text-xs font-medium tracking-wide">ALOYSIUS COLLEGE</div>
             <div className="text-[9px] tracking-widest text-muted-foreground">NIL DESPERANDUM</div>
@@ -135,7 +129,7 @@ export function Navbar() {
       {/* Mobile Menu */}
       <div
         ref={mobileMenuRef}
-        className="lg:hidden overflow-hidden border-t bg-background/95 backdrop-blur"
+        className="lg:hidden overflow-hidden border-t border-border bg-white/95 backdrop-blur"
         style={{ height: 0, opacity: 0 }}
       >
         <nav className="flex flex-col px-4 py-3 gap-1">

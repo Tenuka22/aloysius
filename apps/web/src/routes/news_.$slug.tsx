@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
+import { client } from "@/utils/orpc";
 
 type NewsItem = {
   id: string;
@@ -23,13 +24,7 @@ const authorTypeLabels: Record<string, string> = {
 
 export const Route = createFileRoute("/news_/$slug")({
   loader: async ({ params }) => {
-    const [{ createRouterClient }, { appRouter }] = await Promise.all([
-      import("@orpc/server"),
-      import("@aloysius-web/api/routers/index"),
-    ]);
-
-    const serverClient = createRouterClient(appRouter);
-    const newsItem = await serverClient.news.get({ slug: params.slug });
+    const newsItem = await client.news.get({ slug: params.slug });
     return { newsItem };
   },
   staleTime: 5 * 60_000,
