@@ -69,7 +69,7 @@ export function Gallery({
             <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
               Moments
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold">{heading}</h2>
+            <h2 className="text-2xl sm:text-3xl font-light">{heading}</h2>
           </div>
           <a
             href="/gallery"

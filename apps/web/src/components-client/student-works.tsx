@@ -84,7 +84,7 @@ export function StudentWorks({
             <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
               Showcase
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold">{heading}</h2>
+            <h2 className="text-2xl sm:text-3xl font-light">{heading}</h2>
           </div>
           <a
             href="/student-works"
@@ -143,7 +143,7 @@ export function StudentWorks({
                   </div>
                 )}
                 <div className="absolute top-3 left-3">
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-black/50 backdrop-blur-sm text-white px-2 py-1">
+                  <span className="inline-block text-[10px] font-medium uppercase tracking-wider bg-black/50 backdrop-blur-sm text-white px-2 py-1">
                     {categoryLabels[work.category] ?? work.category}
                   </span>
                 </div>

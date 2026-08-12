@@ -88,7 +88,7 @@ export function EventsAnnouncements({
           <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
             Stay Updated
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">{heading}</h2>
+          <h2 className="text-2xl sm:text-3xl font-light text-white">{heading}</h2>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
@@ -118,10 +118,10 @@ export function EventsAnnouncements({
                       className="group flex items-start gap-4 p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
                     >
                       <div className="shrink-0 text-center w-12">
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-[#c9a227]">
+                        <div className="text-[10px] font-medium uppercase tracking-wider text-[#c9a227]">
                           {month}
                         </div>
-                        <time dateTime={event.startDate} className="text-2xl font-bold text-white">
+                        <time dateTime={event.startDate} className="text-2xl font-light text-white">
                           {day}
                         </time>
                       </div>

@@ -130,7 +130,7 @@ export function Stats({
               <StatIcon icon={stat.icon} />
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              <div className="text-2xl sm:text-3xl font-light text-white tracking-tight">
                 {stat.value}
               </div>
               <div className="text-sm text-white/40">{stat.label}</div>

@@ -98,7 +98,7 @@ export function Achievements({
             <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
               Recognition
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold">{heading}</h2>
+            <h2 className="text-2xl sm:text-3xl font-light">{heading}</h2>
           </div>
           <a
             href="/achievements"
@@ -154,7 +154,7 @@ export function Achievements({
                   {categoryLabels[featured.category] ?? featured.category}
                   {featured.year && ` · ${featured.year}`}
                 </span>
-                <h3 className="text-xl sm:text-2xl font-bold mb-3 group-hover:text-[#c9a227] transition-colors">
+                <h3 className="text-xl sm:text-2xl font-light mb-3 group-hover:text-[#c9a227] transition-colors">
                   {featured.title}
                 </h3>
                 {featured.description && (

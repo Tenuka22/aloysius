@@ -49,7 +49,7 @@ export function CTABanner({ settings }: { settings?: Record<string, string> }) {
         className="mx-auto max-w-5xl border bg-muted/30 p-8 sm:p-12 flex flex-col sm:flex-row items-center justify-between gap-6"
       >
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+          <h2 className="text-2xl sm:text-3xl font-light mb-2">
             {titleLines.map((line: string, i: number) => (
               <span key={i}>
                 {line}

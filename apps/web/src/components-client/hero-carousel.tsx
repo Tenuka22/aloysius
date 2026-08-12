@@ -92,7 +92,7 @@ export function HeroCarousel({ items }: { items: HeroCarouselItem[] }) {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-90" />
 
                   <div className="absolute inset-x-0 bottom-0 p-4">
-                    <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-white/80 mb-2">
+                    <span className="inline-block text-[10px] font-medium uppercase tracking-wider text-white/80 mb-2">
                       {config.label}
                     </span>
                     <h3 className="text-white text-sm font-semibold leading-snug line-clamp-2">
