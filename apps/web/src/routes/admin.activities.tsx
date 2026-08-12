@@ -41,7 +41,7 @@ import {
   SelectValue,
 } from "@aloysius-web/ui/components/select"
 import { Tabs, TabsList, TabsTrigger } from "@aloysius-web/ui/components/tabs"
-import { IconPlus, IconDotsVertical, IconPencil, IconTrash } from "@tabler/icons-react"
+import { IconPlus, IconDotsVertical, IconPencil, IconTrash, IconRefresh } from "@tabler/icons-react"
 import { client } from "@/utils/orpc"
 import { toast } from "sonner"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -233,6 +233,27 @@ function AdminActivitiesList() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const queryClient = useQueryClient()
+
+  const syncMutation = useMutation({
+    mutationFn: () => client.activities.syncAdminMetadata(),
+    onSuccess: (data) => {
+      const result = data as { updated: number; cleared: number; errors: number; errorsList: string[] }
+      const parts = []
+      if (result.updated > 0) parts.push(`${result.updated} user(s) updated`)
+      if (result.cleared > 0) parts.push(`${result.cleared} user(s) cleared`)
+      if (result.errors > 0) parts.push(`${result.errors} error(s)`)
+      toast.success(result.errors > 0 ? `Sync completed with issues: ${parts.join(", ")}` : `Sync completed: ${parts.join(", ") || "no changes"}`)
+      if (result.errorsList.length > 0) {
+        for (const err of result.errorsList) {
+          toast.error(err)
+        }
+      }
+    },
+    onError: (err) => {
+      toast.error(err.message)
+    },
+  })
 
   const sort = sorting[0]
   const rawSearch = columnFilters.find((f) => f.id === "name")?.value
@@ -258,7 +279,16 @@ function AdminActivitiesList() {
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <h1 className="text-lg font-semibold">Activities</h1>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
+          >
+            <IconRefresh className={`mr-1 size-4 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+            {syncMutation.isPending ? "Syncing..." : "Sync Admins"}
+          </Button>
           <Button size="sm" render={<Link to="/admin/activities/new" />} nativeButton={false}>
             <IconPlus className="mr-1 size-4" />
             New Activity

@@ -4,6 +4,13 @@ import { createDb } from "@aloysius-web/db";
 import { activities } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import { createClerkClient } from "@clerk/backend";
+import { env } from "@aloysius-web/env/server";
+
+const clerkClient = createClerkClient({
+  secretKey: env.CLERK_SECRET_KEY,
+  publishableKey: env.CLERK_PUBLISHABLE_KEY,
+});
 
 export const activitiesRouter = {
   list: publicProcedure
@@ -214,5 +221,95 @@ export const activitiesRouter = {
       await db.delete(activities).where(eq(activities.id, input.id)).run();
 
       return { success: true };
+    }),
+
+  syncAdminMetadata: protectedProcedure
+    .handler(async ({ context }) => {
+      if (!context.auth?.userId) {
+        throw new ORPCError("UNAUTHORIZED");
+      }
+
+      const db = createDb();
+      const allActivities = await db
+        .select()
+        .from(activities)
+        .orderBy(asc(activities.sortOrder))
+        .all();
+
+      const activitiesWithAdmin = allActivities.filter((a) => a.adminEmail);
+
+      const emailToActivityIds = new Map<string, string[]>();
+      for (const activity of activitiesWithAdmin) {
+        const email = activity.adminEmail!.toLowerCase();
+        const existing = emailToActivityIds.get(email) ?? [];
+        existing.push(activity.id);
+        emailToActivityIds.set(email, existing);
+      }
+
+      const results = { updated: 0, cleared: 0, errors: 0, errorsList: [] as string[] };
+
+      for (const [email, activityIds] of emailToActivityIds) {
+        try {
+          const users = await clerkClient.users.getUserList({ emailAddress: [email] });
+          const user = users.data[0];
+
+          if (!user) {
+            results.errorsList.push(`No Clerk user found for ${email}`);
+            results.errors++;
+            continue;
+          }
+
+          const currentMetadata = (user.publicMetadata ?? {}) as Record<string, unknown>;
+          const currentAdminActivities = (currentMetadata.adminActivities as string[]) ?? [];
+
+          const sortedNew = [...activityIds].sort();
+          const sortedOld = [...currentAdminActivities].sort();
+
+          if (JSON.stringify(sortedNew) !== JSON.stringify(sortedOld)) {
+            await clerkClient.users.updateUser(user.id, {
+              publicMetadata: {
+                ...currentMetadata,
+                adminActivities: activityIds,
+              },
+            });
+            results.updated++;
+          }
+        } catch (err) {
+          results.errorsList.push(`Error syncing ${email}: ${err instanceof Error ? err.message : String(err)}`);
+          results.errors++;
+        }
+      }
+
+      const allAdminEmails = new Set(emailToActivityIds.keys());
+
+      const usersWithAdminMeta = await clerkClient.users.getUserList({
+        pageSize: 500,
+      });
+
+      for (const user of usersWithAdminMeta.data) {
+        try {
+          const metadata = (user.publicMetadata ?? {}) as Record<string, unknown>;
+          const adminActivities = metadata.adminActivities as string[] | undefined;
+
+          if (adminActivities && adminActivities.length > 0) {
+            const userEmail = user.emailAddresses.find((e) => e.emailAddress.toLowerCase());
+
+            if (userEmail && !allAdminEmails.has(userEmail.emailAddress.toLowerCase())) {
+              await clerkClient.users.updateUser(user.id, {
+                publicMetadata: {
+                  ...metadata,
+                  adminActivities: [],
+                },
+              });
+              results.cleared++;
+            }
+          }
+        } catch (err) {
+          results.errorsList.push(`Error clearing ${user.id}: ${err instanceof Error ? err.message : String(err)}`);
+          results.errors++;
+        }
+      }
+
+      return results;
     }),
 };
