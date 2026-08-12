@@ -115,28 +115,43 @@ export function EventsAnnouncements({
                       key={event.id}
                       to="/events/$slug"
                       params={{ slug: event.slug }}
-                      className="group flex items-start gap-4 p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                      className="group relative overflow-hidden bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
                     >
-                      <div className="shrink-0 text-center w-12">
-                        <div className="text-[10px] font-medium uppercase tracking-wider text-[#c9a227]">
-                          {month}
+                      {event.coverImage && (
+                        <div className="absolute inset-0">
+                          <img
+                            src={event.coverImage}
+                            alt=""
+                            className="w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-r from-[#0a1f0a] via-[#0a1f0a]/90 to-transparent" />
                         </div>
-                        <time dateTime={event.startDate} className="text-2xl font-light text-white">
-                          {day}
-                        </time>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-white group-hover:text-[#c9a227] transition-colors mb-0.5">
-                          {event.title}
+                      )}
+                      <div className="relative flex items-start gap-4 p-4">
+                        <div className="shrink-0 text-center w-12">
+                          <div className="text-[10px] font-medium uppercase tracking-wider text-[#c9a227]">
+                            {month}
+                          </div>
+                          <time
+                            dateTime={event.startDate}
+                            className="text-2xl font-light text-white"
+                          >
+                            {day}
+                          </time>
                         </div>
-                        <div className="text-xs text-white/40">
-                          {event.isAllDay
-                            ? "All day"
-                            : eventDate.toLocaleTimeString("default", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                          {event.location && ` · ${event.location}`}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-white group-hover:text-[#c9a227] transition-colors mb-0.5">
+                            {event.title}
+                          </div>
+                          <div className="text-xs text-white/40">
+                            {event.isAllDay
+                              ? "All day"
+                              : eventDate.toLocaleTimeString("default", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                            {event.location && ` · ${event.location}`}
+                          </div>
                         </div>
                       </div>
                     </Link>
