@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useRef, useEffect } from "react"
-import { Link } from "@tanstack/react-router"
-import gsap from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useRef, useEffect } from "react";
+import { Link } from "@tanstack/react-router";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-gsap.registerPlugin(ScrollTrigger)
+gsap.registerPlugin(ScrollTrigger);
 
 const categoryLabels: Record<string, string> = {
   academic: "Academic",
@@ -14,36 +14,29 @@ const categoryLabels: Record<string, string> = {
   clubs: "Clubs",
   community: "Community",
   other: "Other",
-}
-
-const recipientTypeLabels: Record<string, string> = {
-  student: "Student",
-  faculty: "Faculty",
-  club: "Club",
-  org: "Organization",
-}
+};
 
 interface AchievementRow {
-  id: string
-  slug: string
-  title: string
-  description: string | null
-  category: string
-  recipientNames: string[] | null
-  recipientType: string | null
-  year: number | null
-  coverImage: string | null
-  tags: string[] | null
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  category: string;
+  recipientNames: string[] | null;
+  recipientType: string | null;
+  year: number | null;
+  coverImage: string | null;
+  tags: string[] | null;
 }
 
 export function Achievements({ initialData }: { initialData?: AchievementRow[] }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const headingRef = useRef<HTMLDivElement>(null)
-  const featuredRef = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLDivElement>(null);
+  const featuredRef = useRef<HTMLDivElement>(null);
 
-  const items = initialData ?? []
-  const featured = items[0]
-  const rest = items.slice(1, 5)
+  const items = initialData ?? [];
+  const featured = items[0];
+  const rest = items.slice(1, 5);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -56,8 +49,8 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
           duration: 0.6,
           ease: "power3.out",
           scrollTrigger: { trigger: headingRef.current, start: "top 90%", once: true },
-        }
-      )
+        },
+      );
 
       if (featuredRef.current) {
         gsap.fromTo(
@@ -69,8 +62,8 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
             duration: 0.6,
             ease: "power3.out",
             scrollTrigger: { trigger: featuredRef.current, start: "top 90%", once: true },
-          }
-        )
+          },
+        );
       }
 
       gsap.fromTo(
@@ -83,24 +76,35 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
           stagger: 0.08,
           ease: "power3.out",
           scrollTrigger: { trigger: ref.current, start: "top 90%", once: true },
-        }
-      )
-    })
+        },
+      );
+    });
 
-    return () => ctx.revert()
-  }, [])
+    return () => ctx.revert();
+  }, []);
 
   return (
     <section className="py-16 sm:py-20 bg-muted/30">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div ref={headingRef} className="flex items-end justify-between mb-10">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">Recognition</span>
+            <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
+              Recognition
+            </span>
             <h2 className="text-2xl sm:text-3xl font-bold">Achievements</h2>
           </div>
-          <a href="/achievements" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5">
+          <a
+            href="/achievements"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
+          >
             View All
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="size-4"
+            >
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </a>
@@ -122,8 +126,18 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#c9a227]/10 to-[#c9a227]/5">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-16 text-[#c9a227]/30">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.996.172-1.756.96-1.756 1.94v3.03c0 .621.504 1.125 1.125 1.125h3.03c.98 0 1.768-.788 1.94-1.756M5.25 4.236A2.25 2.25 0 017.5 2.25h9a2.25 2.25 0 012.25 2.25c.343 1.32.467 2.688.35 4.047" />
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="size-16 text-[#c9a227]/30"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.996.172-1.756.96-1.756 1.94v3.03c0 .621.504 1.125 1.125 1.125h3.03c.98 0 1.768-.788 1.94-1.756M5.25 4.236A2.25 2.25 0 017.5 2.25h9a2.25 2.25 0 012.25 2.25c.343 1.32.467 2.688.35 4.047"
+                      />
                     </svg>
                   </div>
                 )}
@@ -133,9 +147,13 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
                   {categoryLabels[featured.category] ?? featured.category}
                   {featured.year && ` · ${featured.year}`}
                 </span>
-                <h3 className="text-xl sm:text-2xl font-bold mb-3 group-hover:text-[#c9a227] transition-colors">{featured.title}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold mb-3 group-hover:text-[#c9a227] transition-colors">
+                  {featured.title}
+                </h3>
                 {featured.description && (
-                  <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 mb-4">{featured.description}</p>
+                  <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 mb-4">
+                    {featured.description}
+                  </p>
                 )}
                 {featured.recipientNames && featured.recipientNames.length > 0 && (
                   <div className="text-sm text-muted-foreground">
@@ -165,8 +183,18 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="size-8 text-muted-foreground/30">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.996.172-1.756.96-1.756 1.94v3.03c0 .621.504 1.125 1.125 1.125h3.03c.98 0 1.768-.788 1.94-1.756M5.25 4.236A2.25 2.25 0 017.5 2.25h9a2.25 2.25 0 012.25 2.25c.343 1.32.467 2.688.35 4.047" />
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                        className="size-8 text-muted-foreground/30"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.996.172-1.756.96-1.756 1.94v3.03c0 .621.504 1.125 1.125 1.125h3.03c.98 0 1.768-.788 1.94-1.756M5.25 4.236A2.25 2.25 0 017.5 2.25h9a2.25 2.25 0 012.25 2.25c.343 1.32.467 2.688.35 4.047"
+                        />
                       </svg>
                     </div>
                   )}
@@ -175,7 +203,9 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c9a227]">
                     {categoryLabels[item.category] ?? item.category}
                   </span>
-                  <div className="text-sm font-semibold mt-1 group-hover:text-[#c9a227] transition-colors line-clamp-2">{item.title}</div>
+                  <div className="text-sm font-semibold mt-1 group-hover:text-[#c9a227] transition-colors line-clamp-2">
+                    {item.title}
+                  </div>
                 </div>
               </Link>
             ))}
@@ -183,5 +213,5 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
         )}
       </div>
     </section>
-  )
+  );
 }
