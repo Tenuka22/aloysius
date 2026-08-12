@@ -61,10 +61,10 @@ export function StudentWorks({
 
       gsap.fromTo(
         ref.current?.children ?? [],
-        { opacity: 0, x: 30 },
+        { opacity: 0, y: 20 },
         {
           opacity: 1,
-          x: 0,
+          y: 0,
           duration: 0.5,
           stagger: 0.08,
           ease: "power3.out",
@@ -104,61 +104,61 @@ export function StudentWorks({
         </div>
       </div>
 
-      <div
-        ref={ref}
-        className="flex gap-5 overflow-x-auto px-4 sm:px-6 lg:px-8 pb-4 snap-x snap-mandatory scrollbar-hide"
-      >
+      <div ref={ref} className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {works.length === 0 ? (
           <div className="w-full text-center text-muted-foreground py-12">
             No student works published yet.
           </div>
         ) : (
-          works.map((work) => (
-            <Link
-              key={work.id}
-              to="/student-works/$slug"
-              params={{ slug: work.slug }}
-              className="group shrink-0 w-[260px] snap-start"
-            >
-              <div className="aspect-[3/4] bg-muted overflow-hidden mb-3 relative">
-                {work.coverImage ? (
-                  <img
-                    src={work.coverImage}
-                    alt={work.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1"
-                      className="size-10 text-muted-foreground/30"
-                    >
-                      <rect x="3" y="3" width="18" height="18" rx="2" />
-                      <circle cx="8.5" cy="8.5" r="1.5" />
-                      <path d="M21 15l-5-5L5 21" />
-                    </svg>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {works.map((work) => (
+              <Link
+                key={work.id}
+                to="/student-works/$slug"
+                params={{ slug: work.slug }}
+                className="group relative block pb-4"
+              >
+                <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
+                <div className="relative z-10 aspect-[3/4] bg-muted overflow-hidden mb-3">
+                  {work.coverImage ? (
+                    <img
+                      src={work.coverImage}
+                      alt={work.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                        className="size-10 text-primary/30"
+                      >
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="M21 15l-5-5L5 21" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="absolute top-3 left-3">
+                    <span className="inline-block text-[10px] font-medium uppercase tracking-wider bg-black/50 backdrop-blur-sm text-white px-2 py-1">
+                      {categoryLabels[work.category] ?? work.category}
+                    </span>
                   </div>
-                )}
-                <div className="absolute top-3 left-3">
-                  <span className="inline-block text-[10px] font-medium uppercase tracking-wider bg-black/50 backdrop-blur-sm text-white px-2 py-1">
-                    {categoryLabels[work.category] ?? work.category}
-                  </span>
                 </div>
-              </div>
-              <div className="text-sm font-semibold mb-0.5 group-hover:text-[#c9a227] transition-colors">
-                {work.title}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {work.studentNames && work.studentNames.length > 0
-                  ? work.studentNames.join(", ")
-                  : ""}
-                {work.studentGrade && ` · ${work.studentGrade}`}
-              </div>
-            </Link>
-          ))
+                <div className="relative z-10 px-4 text-sm font-semibold mb-0.5 text-primary group-hover:text-white transition-colors">
+                  {work.title}
+                </div>
+                <div className="relative z-10 px-4 text-xs text-primary/60 group-hover:text-white/70 transition-colors">
+                  {work.studentNames && work.studentNames.length > 0
+                    ? work.studentNames.join(", ")
+                    : ""}
+                  {work.studentGrade && ` · ${work.studentGrade}`}
+                </div>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
     </section>

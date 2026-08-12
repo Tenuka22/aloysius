@@ -1,11 +1,6 @@
 import { type JSX, useEffect, useRef, useState } from "react";
 
-import {
-  $isAutoLinkNode,
-  $isLinkNode,
-  type LinkNode,
-  TOGGLE_LINK_COMMAND,
-} from "@lexical/link";
+import { $isAutoLinkNode, $isLinkNode, type LinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { $wrapNodeInElement, mergeRegister } from "@lexical/utils";
 import {
   $createParagraphNode,
@@ -286,8 +281,7 @@ function $onDrop(event: DragEvent, editor: LexicalEditor): boolean {
   }
   const existingLink = $findMatchingParent(
     node,
-    (parent): parent is LinkNode =>
-      !$isAutoLinkNode(parent) && $isLinkNode(parent),
+    (parent): parent is LinkNode => !$isAutoLinkNode(parent) && $isLinkNode(parent),
   );
   event.preventDefault();
   if (canDropImage(event)) {

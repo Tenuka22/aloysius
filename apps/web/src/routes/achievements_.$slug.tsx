@@ -1,19 +1,19 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { Navbar } from "@/components-client/navbar"
-import { Footer } from "@/components-client/footer"
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Navbar } from "@/components-client/navbar";
+import { Footer } from "@/components-client/footer";
 
 type Achievement = {
-  id: string
-  title: string
-  description: string | null
-  category: string
-  recipientNames: string[] | null
-  recipientType: string | null
-  year: number | null
-  coverImage: string | null
-  tags: string[] | null
-  publishedAt: string | null
-}
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  recipientNames: string[] | null;
+  recipientType: string | null;
+  year: number | null;
+  coverImage: string | null;
+  tags: string[] | null;
+  publishedAt: string | null;
+};
 
 const categoryLabels: Record<string, string> = {
   academic: "Academic",
@@ -22,7 +22,7 @@ const categoryLabels: Record<string, string> = {
   clubs: "Clubs",
   community: "Community",
   other: "Other",
-}
+};
 
 const categoryColors: Record<string, string> = {
   academic: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
@@ -31,32 +31,32 @@ const categoryColors: Record<string, string> = {
   clubs: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
   community: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
   other: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
-}
+};
 
 const recipientTypeLabels: Record<string, string> = {
   student: "Student",
   faculty: "Faculty",
   club: "Club",
   org: "Organization",
-}
+};
 
 export const Route = createFileRoute("/achievements_/$slug")({
   loader: async ({ params }) => {
     const [{ createRouterClient }, { appRouter }] = await Promise.all([
       import("@orpc/server"),
       import("@aloysius-web/api/routers/index"),
-    ])
+    ]);
 
-    const serverClient = createRouterClient(appRouter)
-    const achievement = await serverClient.achievements.get({ slug: params.slug })
-    return { achievement }
+    const serverClient = createRouterClient(appRouter);
+    const achievement = await serverClient.achievements.get({ slug: params.slug });
+    return { achievement };
   },
   staleTime: 5 * 60_000,
   component: AchievementDetailPage,
-})
+});
 
 function AchievementDetailPage() {
-  const { achievement } = Route.useLoaderData() as { achievement: Achievement }
+  const { achievement } = Route.useLoaderData() as { achievement: Achievement };
 
   return (
     <div className="min-h-screen bg-background">
@@ -146,5 +146,5 @@ function AchievementDetailPage() {
       </main>
       <Footer />
     </div>
-  )
+  );
 }

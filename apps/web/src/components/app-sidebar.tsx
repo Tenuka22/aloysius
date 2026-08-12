@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Sidebar,
@@ -6,10 +6,21 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@aloysius-web/ui/components/sidebar"
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
-import { IconDashboard, IconCalendarEvent, IconSchool, IconNews, IconSpeakerphone, IconTrophy, IconPhoto, IconChartBar, IconHome, IconDevices } from "@tabler/icons-react"
+} from "@aloysius-web/ui/components/sidebar";
+import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
+import {
+  IconDashboard,
+  IconCalendarEvent,
+  IconSchool,
+  IconNews,
+  IconSpeakerphone,
+  IconTrophy,
+  IconPhoto,
+  IconChartBar,
+  IconHome,
+  IconDevices,
+} from "@tabler/icons-react";
 
 const overviewItems = [
   {
@@ -18,7 +29,7 @@ const overviewItems = [
     icon: <IconDashboard />,
     isActive: true,
   },
-]
+];
 
 const publishingItems = [
   {
@@ -39,7 +50,7 @@ const publishingItems = [
       { title: "New Announcement", url: "/admin/announcements/new" },
     ],
   },
-]
+];
 
 const contentItems = [
   {
@@ -70,7 +81,7 @@ const contentItems = [
       { title: "Submit Work", url: "/admin/student-works/new" },
     ],
   },
-]
+];
 
 const cmsItems = [
   {
@@ -98,7 +109,7 @@ const cmsItems = [
     url: "/admin/big-matches",
     icon: <IconTrophy />,
   },
-]
+];
 
 export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -106,7 +117,13 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
       <SidebarHeader>
         <a href="/" className="flex items-center gap-2 px-2 py-1.5">
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-5">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="size-5"
+            >
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
@@ -127,5 +144,5 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

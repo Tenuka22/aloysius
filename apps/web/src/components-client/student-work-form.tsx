@@ -1,24 +1,30 @@
-"use client"
+"use client";
 
-import { useCallback, useState } from "react"
-import { useStore } from "@tanstack/react-form"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button } from "@aloysius-web/ui/components/button"
-import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder"
-import { TagInput } from "@/components-client/tag-input"
-import { SlugFieldInline } from "@/components-client/slug-field"
-import { Dropzone } from "@/components/file-upload"
-import { IconX } from "@tabler/icons-react"
-import { cn } from "@aloysius-web/ui/lib/utils"
-import { client } from "@/utils/orpc"
-import { convertToWebp } from "@/utils/convert-to-webp"
-import { toast } from "sonner"
-import * as v from "valibot"
-import { Input } from "@aloysius-web/ui/components/input"
-import { NameListInput } from "@/components-client/name-list-input"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@aloysius-web/ui/components/select"
-import { Field, FieldLabel, FieldContent } from "@aloysius-web/ui/components/field"
-import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
+import { useCallback, useState } from "react";
+import { useStore } from "@tanstack/react-form";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@aloysius-web/ui/components/button";
+import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
+import { TagInput } from "@/components-client/tag-input";
+import { SlugFieldInline } from "@/components-client/slug-field";
+import { Dropzone } from "@/components/file-upload";
+import { IconX } from "@tabler/icons-react";
+import { cn } from "@aloysius-web/ui/lib/utils";
+import { client } from "@/utils/orpc";
+import { convertToWebp } from "@/utils/convert-to-webp";
+import { toast } from "sonner";
+import * as v from "valibot";
+import { Input } from "@aloysius-web/ui/components/input";
+import { NameListInput } from "@/components-client/name-list-input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@aloysius-web/ui/components/select";
+import { Field, FieldLabel, FieldContent } from "@aloysius-web/ui/components/field";
+import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
 
 const categoryOptions = [
   { value: "film", label: "Film" },
@@ -29,13 +35,22 @@ const categoryOptions = [
   { value: "photography", label: "Photography" },
   { value: "code", label: "Code" },
   { value: "other", label: "Other" },
-]
+];
 
 const createSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
   slug: v.optional(v.string()),
   description: v.optional(v.string()),
-  category: v.picklist(["film", "art", "music", "writing", "design", "photography", "code", "other"]),
+  category: v.picklist([
+    "film",
+    "art",
+    "music",
+    "writing",
+    "design",
+    "photography",
+    "code",
+    "other",
+  ]),
   studentNames: v.array(v.string()),
   authorType: v.optional(v.string()),
   studentGrade: v.optional(v.string()),
@@ -43,15 +58,24 @@ const createSchema = v.object({
   contentUrl: v.optional(v.string()),
   tags: v.array(v.string()),
   publishNow: v.boolean(),
-})
+});
 
-type CreateValues = v.InferOutput<typeof createSchema>
+type CreateValues = v.InferOutput<typeof createSchema>;
 
 const updateSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
   slug: v.optional(v.string()),
   description: v.optional(v.string()),
-  category: v.picklist(["film", "art", "music", "writing", "design", "photography", "code", "other"]),
+  category: v.picklist([
+    "film",
+    "art",
+    "music",
+    "writing",
+    "design",
+    "photography",
+    "code",
+    "other",
+  ]),
   studentNames: v.array(v.string()),
   authorType: v.optional(v.string()),
   studentGrade: v.optional(v.string()),
@@ -59,31 +83,89 @@ const updateSchema = v.object({
   contentUrl: v.optional(v.string()),
   tags: v.array(v.string()),
   publishNow: v.boolean(),
-})
+});
 
-type UpdateValues = v.InferOutput<typeof updateSchema>
+type UpdateValues = v.InferOutput<typeof updateSchema>;
 
 const fields: FieldEntry<CreateValues | UpdateValues>[] = [
-  { name: "title", kind: "text", label: "Title", placeholder: "Enter work title", required: true, hidden: true },
-  { name: "slug", kind: "custom", label: "Slug", required: false, customRenderer: () => null, renderField: (name, value, onChange) => <SlugFieldInline routerName="studentWorks" value={(value as string) ?? ""} onChange={(v) => onChange(v)} /> },
-  { name: "description", kind: "textarea", label: "Description", placeholder: "Brief description of the work", required: false },
-  { name: "category", kind: "select", label: "Category", options: categoryOptions, required: true, hidden: true },
+  {
+    name: "title",
+    kind: "text",
+    label: "Title",
+    placeholder: "Enter work title",
+    required: true,
+    hidden: true,
+  },
+  {
+    name: "slug",
+    kind: "custom",
+    label: "Slug",
+    required: false,
+    customRenderer: () => null,
+    renderField: (name, value, onChange) => (
+      <SlugFieldInline
+        routerName="studentWorks"
+        value={(value as string) ?? ""}
+        onChange={(v) => onChange(v)}
+      />
+    ),
+  },
+  {
+    name: "description",
+    kind: "textarea",
+    label: "Description",
+    placeholder: "Brief description of the work",
+    required: false,
+  },
+  {
+    name: "category",
+    kind: "select",
+    label: "Category",
+    options: categoryOptions,
+    required: true,
+    hidden: true,
+  },
   { name: "studentNames", kind: "text", label: "Student Names", hidden: true, required: true },
-  { name: "authorType", kind: "select", label: "Author Type", options: [{value:"student",label:"Student"},{value:"faculty",label:"Faculty"},{value:"club",label:"Club"},{value:"org",label:"Organization"}], required: false },
-  { name: "studentGrade", kind: "text", label: "Student Grade", placeholder: "e.g. Grade 10", required: false },
+  {
+    name: "authorType",
+    kind: "select",
+    label: "Author Type",
+    options: [
+      { value: "student", label: "Student" },
+      { value: "faculty", label: "Faculty" },
+      { value: "club", label: "Club" },
+      { value: "org", label: "Organization" },
+    ],
+    required: false,
+  },
+  {
+    name: "studentGrade",
+    kind: "text",
+    label: "Student Grade",
+    placeholder: "e.g. Grade 10",
+    required: false,
+  },
   { name: "coverImage", kind: "text", label: "Cover Image", hidden: true, required: false },
-  { name: "contentUrl", kind: "text", label: "Content URL", placeholder: "Link to the work (optional)", required: false },
+  {
+    name: "contentUrl",
+    kind: "text",
+    label: "Content URL",
+    placeholder: "Link to the work (optional)",
+    required: false,
+  },
   { name: "tags", kind: "text", label: "Tags", hidden: true, required: false },
   { name: "publishNow", kind: "checkbox", label: "Publish immediately", required: false },
-]
+];
 
 function TitleField() {
-  const form = useBuildForm()
-  const value = useStore(form.store, (state: any) => state.values.title) as string
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.title) as string;
 
   return (
     <Field>
-      <FieldLabel>Title <span className="text-destructive">*</span></FieldLabel>
+      <FieldLabel>
+        Title <span className="text-destructive">*</span>
+      </FieldLabel>
       <FieldContent>
         <Input
           value={value}
@@ -92,16 +174,18 @@ function TitleField() {
         />
       </FieldContent>
     </Field>
-  )
+  );
 }
 
 function CategoryField() {
-  const form = useBuildForm()
-  const value = useStore(form.store, (state: any) => state.values.category) as string
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.category) as string;
 
   return (
     <Field>
-      <FieldLabel>Category <span className="text-destructive">*</span></FieldLabel>
+      <FieldLabel>
+        Category <span className="text-destructive">*</span>
+      </FieldLabel>
       <FieldContent>
         <Select
           value={value}
@@ -121,57 +205,71 @@ function CategoryField() {
         </Select>
       </FieldContent>
     </Field>
-  )
+  );
 }
 
 function StudentNameField() {
-  const form = useBuildForm()
-  const value = useStore(form.store, (state: any) => state.values.studentNames) as string[]
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.studentNames) as string[];
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Student Names <span className="text-destructive">*</span></label>
+      <label className="text-sm font-medium leading-none">
+        Student Names <span className="text-destructive">*</span>
+      </label>
       <NameListInput
         value={value}
         onChange={(names) => form.setFieldValue("studentNames", names)}
         placeholder="Add student name"
       />
     </div>
-  )
+  );
 }
 
 function CoverImageField() {
-  const form = useBuildForm()
-  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as string | undefined
-  const [uploading, setUploading] = useState(false)
+  const form = useBuildForm();
+  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as
+    | string
+    | undefined;
+  const [uploading, setUploading] = useState(false);
 
-  const handleFilesSelected = useCallback(async (files: File[]) => {
-    const file = files[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      const webp = await convertToWebp(file)
-      const result = await client.files.uploadFile(webp)
-      form.setFieldValue("coverImage", result.url)
-    } catch {
-      toast.error("Failed to upload image")
-    } finally {
-      setUploading(false)
-    }
-  }, [form])
+  const handleFilesSelected = useCallback(
+    async (files: File[]) => {
+      const file = files[0];
+      if (!file) return;
+      setUploading(true);
+      try {
+        const webp = await convertToWebp(file);
+        const result = await client.files.uploadFile(webp);
+        form.setFieldValue("coverImage", result.url);
+      } catch {
+        toast.error("Failed to upload image");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [form],
+  );
 
-  const handleRemove = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    form.setFieldValue("coverImage", "")
-  }, [form])
+  const handleRemove = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      form.setFieldValue("coverImage", "");
+    },
+    [form],
+  );
 
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium leading-none">Cover Image (1:1)</label>
       {coverImage ? (
         <div className="relative overflow-hidden rounded-xl border">
-          <img src={coverImage} alt="Cover" className="w-full aspect-square object-cover pointer-events-none" />
+          <img
+            src={coverImage}
+            alt="Cover"
+            className="w-full aspect-square object-cover pointer-events-none"
+          />
           <Button
             variant="destructive"
             size="sm"
@@ -192,16 +290,19 @@ function CoverImageField() {
           crop
           aspect={1}
           cropTitle="Crop Cover Image"
-          className={cn("aspect-square justify-center", uploading && "opacity-50 pointer-events-none")}
+          className={cn(
+            "aspect-square justify-center",
+            uploading && "opacity-50 pointer-events-none",
+          )}
         />
       )}
     </div>
-  )
+  );
 }
 
 function TagsField() {
-  const form = useBuildForm()
-  const tags = (form.state.values.tags as string[]) ?? []
+  const form = useBuildForm();
+  const tags = (form.state.values.tags as string[]) ?? [];
 
   return (
     <Field>
@@ -214,7 +315,7 @@ function TagsField() {
         />
       </FieldContent>
     </Field>
-  )
+  );
 }
 
 export function StudentWorkForm({
@@ -222,19 +323,19 @@ export function StudentWorkForm({
   id,
   onSuccess,
 }: {
-  mode: "create" | "edit"
-  id?: string
-  onSuccess?: () => void
+  mode: "create" | "edit";
+  id?: string;
+  onSuccess?: () => void;
 }) {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const existingWork = useQuery({
     queryKey: ["studentWorks", id],
     queryFn: () => client.studentWorks.get({ id: id! }),
     enabled: mode === "edit" && !!id,
-  })
+  });
 
-  const work = existingWork.data
+  const work = existingWork.data;
 
   const config: FormConfig<CreateValues | UpdateValues> = {
     fields,
@@ -255,12 +356,12 @@ export function StudentWorkForm({
         category: values.category || undefined,
       }),
       onSuccess: () => {
-        toast.success(mode === "create" ? "Student work created" : "Student work updated")
-        queryClient.invalidateQueries({ queryKey: ["studentWorks"] })
-        onSuccess?.()
+        toast.success(mode === "create" ? "Student work created" : "Student work updated");
+        queryClient.invalidateQueries({ queryKey: ["studentWorks"] });
+        onSuccess?.();
       },
       onError: (err) => {
-        toast.error(err.message)
+        toast.error(err.message);
       },
     },
     renderAboveFields: () => (
@@ -276,7 +377,7 @@ export function StudentWorkForm({
         </div>
       </div>
     ),
-  }
+  };
 
   if (mode === "edit" && existingWork.isLoading) {
     return (
@@ -285,11 +386,11 @@ export function StudentWorkForm({
         <div className="h-20 rounded bg-muted animate-pulse" />
         <div className="h-[300px] rounded bg-muted animate-pulse" />
       </div>
-    )
+    );
   }
 
   if (mode === "edit" && !existingWork.data) {
-    return <div className="p-4 text-center text-muted-foreground">Student work not found.</div>
+    return <div className="p-4 text-center text-muted-foreground">Student work not found.</div>;
   }
 
   return (
@@ -327,10 +428,10 @@ export function StudentWorkForm({
       }
       onSubmit={async (values) => {
         if (mode === "create") {
-          return client.studentWorks.create(values as CreateValues)
+          return client.studentWorks.create(values as CreateValues);
         }
-        return client.studentWorks.update({ id: id!, ...values })
+        return client.studentWorks.update({ id: id!, ...values });
       }}
     />
-  )
+  );
 }

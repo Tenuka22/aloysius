@@ -8,11 +8,7 @@ import { protectedProcedure, publicProcedure } from "../index";
 export const statsRouter = {
   list: publicProcedure.handler(async () => {
     const db = createDb();
-    let rows = await db
-      .select()
-      .from(stats)
-      .orderBy(asc(stats.sortOrder))
-      .all();
+    let rows = await db.select().from(stats).orderBy(asc(stats.sortOrder)).all();
 
     if (rows.length === 0) {
       const defaults = [
@@ -34,8 +30,8 @@ export const statsRouter = {
               sortOrder: stat.sortOrder,
             })
             .returning()
-            .get()
-        )
+            .get(),
+        ),
       );
 
       rows = inserted;
@@ -60,7 +56,7 @@ export const statsRouter = {
         value: z.string().min(1).optional(),
         icon: z.string().optional(),
         sortOrder: z.number().optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -68,11 +64,7 @@ export const statsRouter = {
       }
 
       const db = createDb();
-      const existing = await db
-        .select()
-        .from(stats)
-        .where(eq(stats.id, input.id))
-        .get();
+      const existing = await db.select().from(stats).where(eq(stats.id, input.id)).get();
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Stat not found" });
@@ -147,8 +139,8 @@ export const statsRouter = {
             sortOrder: stat.sortOrder,
           })
           .returning()
-          .get()
-      )
+          .get(),
+      ),
     );
 
     return inserted.map((row) => ({

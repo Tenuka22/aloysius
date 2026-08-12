@@ -45,8 +45,6 @@ export function $createSpecialTextNode(text: string = ""): SpecialTextNode {
   return $applyNodeReplacement(new SpecialTextNode(text));
 }
 
-export function $isSpecialTextNode(
-  node: LexicalNode | null | undefined,
-): node is SpecialTextNode {
+export function $isSpecialTextNode(node: LexicalNode | null | undefined): node is SpecialTextNode {
   return node instanceof SpecialTextNode;
 }

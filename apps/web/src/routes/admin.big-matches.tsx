@@ -1,40 +1,40 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar"
-import { Separator } from "@aloysius-web/ui/components/separator"
-import { Button } from "@aloysius-web/ui/components/button"
-import { Input } from "@aloysius-web/ui/components/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@aloysius-web/ui/components/card"
-import { client } from "@/utils/orpc"
-import { toast } from "sonner"
+import { useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
+import { Separator } from "@aloysius-web/ui/components/separator";
+import { Button } from "@aloysius-web/ui/components/button";
+import { Input } from "@aloysius-web/ui/components/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@aloysius-web/ui/components/card";
+import { client } from "@/utils/orpc";
+import { toast } from "sonner";
 
 type BigMatch = {
-  id: string
-  name: string
-  opponent: string
-  type: string
-  year: number | null
-  eventId: string | null
-  galleryId: string | null
-  sortOrder: number
-  status: string
-}
+  id: string;
+  name: string;
+  opponent: string;
+  type: string;
+  year: number | null;
+  eventId: string | null;
+  galleryId: string | null;
+  sortOrder: number;
+  status: string;
+};
 
 export const Route = createFileRoute("/admin/big-matches")({
   component: AdminBigMatches,
-})
+});
 
 function BigMatchCard({ match }: { match: BigMatch }) {
-  const queryClient = useQueryClient()
-  const [name, setName] = useState(match.name)
-  const [opponent, setOpponent] = useState(match.opponent)
-  const [type, setType] = useState(match.type)
-  const [year, setYear] = useState(match.year?.toString() ?? "")
-  const [sortOrder, setSortOrder] = useState(match.sortOrder)
-  const [status, setStatus] = useState(match.status)
+  const queryClient = useQueryClient();
+  const [name, setName] = useState(match.name);
+  const [opponent, setOpponent] = useState(match.opponent);
+  const [type, setType] = useState(match.type);
+  const [year, setYear] = useState(match.year?.toString() ?? "");
+  const [sortOrder, setSortOrder] = useState(match.sortOrder);
+  const [status, setStatus] = useState(match.status);
 
   const updateMutation = useMutation({
     mutationFn: () =>
@@ -48,24 +48,24 @@ function BigMatchCard({ match }: { match: BigMatch }) {
         status: status as "draft" | "published" | "archived",
       }),
     onSuccess: () => {
-      toast.success("Big match updated")
-      queryClient.invalidateQueries({ queryKey: ["bigMatches"] })
+      toast.success("Big match updated");
+      queryClient.invalidateQueries({ queryKey: ["bigMatches"] });
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   const deleteMutation = useMutation({
     mutationFn: () => client.bigMatches.delete({ id: match.id }),
     onSuccess: () => {
-      toast.success("Big match deleted")
-      queryClient.invalidateQueries({ queryKey: ["bigMatches"] })
+      toast.success("Big match deleted");
+      queryClient.invalidateQueries({ queryKey: ["bigMatches"] });
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   return (
     <Card>
@@ -148,21 +148,21 @@ function BigMatchCard({ match }: { match: BigMatch }) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function AdminBigMatches() {
-  const queryClient = useQueryClient()
-  const [showNew, setShowNew] = useState(false)
-  const [newName, setNewName] = useState("")
-  const [newOpponent, setNewOpponent] = useState("")
-  const [newType, setNewType] = useState("Cricket")
-  const [newYear, setNewYear] = useState("")
+  const queryClient = useQueryClient();
+  const [showNew, setShowNew] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newOpponent, setNewOpponent] = useState("");
+  const [newType, setNewType] = useState("Cricket");
+  const [newYear, setNewYear] = useState("");
 
   const { data: bigMatches, isLoading } = useQuery({
     queryKey: ["bigMatches"],
     queryFn: () => client.bigMatches.list(),
-  })
+  });
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -174,18 +174,18 @@ function AdminBigMatches() {
         status: "published",
       }),
     onSuccess: () => {
-      toast.success("Big match created")
-      queryClient.invalidateQueries({ queryKey: ["bigMatches"] })
-      setShowNew(false)
-      setNewName("")
-      setNewOpponent("")
-      setNewType("Cricket")
-      setNewYear("")
+      toast.success("Big match created");
+      queryClient.invalidateQueries({ queryKey: ["bigMatches"] });
+      setShowNew(false);
+      setNewName("");
+      setNewOpponent("");
+      setNewType("Cricket");
+      setNewYear("");
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   return (
     <div className="flex flex-col">
@@ -261,7 +261,9 @@ function AdminBigMatches() {
             ))}
           </div>
         ) : !bigMatches || bigMatches.length === 0 ? (
-          <div className="text-center text-muted-foreground py-12">No big matches found. Add one to get started.</div>
+          <div className="text-center text-muted-foreground py-12">
+            No big matches found. Add one to get started.
+          </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {bigMatches.map((match) => (
@@ -271,5 +273,5 @@ function AdminBigMatches() {
         )}
       </div>
     </div>
-  )
+  );
 }

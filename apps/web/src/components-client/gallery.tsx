@@ -97,12 +97,13 @@ export function Gallery({
             items.map((item, i) => (
               <div
                 key={item.id}
-                className={`group overflow-hidden bg-muted cursor-pointer hover:shadow-lg transition-all duration-300 ${
+                className={`group relative overflow-hidden bg-card hover:shadow-lg transition-all duration-300 ${
                   i === 0 ? "md:col-span-2 md:row-span-2" : ""
                 }`}
               >
+                <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
                 <div
-                  className={`bg-muted overflow-hidden ${i === 0 ? "aspect-[4/3]" : "aspect-video"}`}
+                  className={`relative z-10 bg-muted overflow-hidden ${i === 0 ? "aspect-[4/3]" : "aspect-video"}`}
                 >
                   {item.coverImage ? (
                     <img
@@ -117,7 +118,7 @@ export function Gallery({
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="1"
-                        className="size-10 text-muted-foreground/30"
+                        className="size-10 text-primary/30"
                       >
                         <rect x="3" y="3" width="18" height="18" rx="2" />
                         <circle cx="8.5" cy="8.5" r="1.5" />
@@ -126,19 +127,19 @@ export function Gallery({
                     </div>
                   )}
                 </div>
-                <div className={`${i === 0 ? "p-5" : "p-3"}`}>
+                <div className={`relative z-10 ${i === 0 ? "p-5" : "p-3"}`}>
                   <div
-                    className={`font-semibold group-hover:text-[#c9a227] transition-colors ${i === 0 ? "text-lg" : "text-sm"}`}
+                    className={`font-semibold text-primary group-hover:text-white transition-colors ${i === 0 ? "text-lg" : "text-sm"}`}
                   >
                     {item.title}
                   </div>
                   {i === 0 && item.description && (
-                    <div className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                    <div className="text-sm text-primary/60 group-hover:text-white/70 transition-colors mt-1 line-clamp-2">
                       {item.description}
                     </div>
                   )}
                   {item.authorName && (
-                    <div className="text-xs text-muted-foreground mt-1">by {item.authorName}</div>
+                    <div className="text-xs text-primary/60 group-hover:text-white/70 transition-colors mt-1">by {item.authorName}</div>
                   )}
                 </div>
               </div>

@@ -1,34 +1,34 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar"
-import { Separator } from "@aloysius-web/ui/components/separator"
-import { Button } from "@aloysius-web/ui/components/button"
-import { Input } from "@aloysius-web/ui/components/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@aloysius-web/ui/components/card"
-import { client } from "@/utils/orpc"
-import { toast } from "sonner"
+import { useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
+import { Separator } from "@aloysius-web/ui/components/separator";
+import { Button } from "@aloysius-web/ui/components/button";
+import { Input } from "@aloysius-web/ui/components/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@aloysius-web/ui/components/card";
+import { client } from "@/utils/orpc";
+import { toast } from "sonner";
 
 type StatItem = {
-  id: string
-  label: string
-  value: string
-  icon: string
-  sortOrder: number
-}
+  id: string;
+  label: string;
+  value: string;
+  icon: string;
+  sortOrder: number;
+};
 
 export const Route = createFileRoute("/admin/stats")({
   component: AdminStats,
-})
+});
 
 function StatCard({ stat }: { stat: StatItem }) {
-  const queryClient = useQueryClient()
-  const [label, setLabel] = useState(stat.label)
-  const [value, setValue] = useState(stat.value)
-  const [icon, setIcon] = useState(stat.icon)
-  const [sortOrder, setSortOrder] = useState(stat.sortOrder)
+  const queryClient = useQueryClient();
+  const [label, setLabel] = useState(stat.label);
+  const [value, setValue] = useState(stat.value);
+  const [icon, setIcon] = useState(stat.icon);
+  const [sortOrder, setSortOrder] = useState(stat.sortOrder);
 
   const updateMutation = useMutation({
     mutationFn: () =>
@@ -40,13 +40,13 @@ function StatCard({ stat }: { stat: StatItem }) {
         sortOrder,
       }),
     onSuccess: () => {
-      toast.success("Stat updated")
-      queryClient.invalidateQueries({ queryKey: ["stats"] })
+      toast.success("Stat updated");
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   return (
     <Card>
@@ -57,27 +57,15 @@ function StatCard({ stat }: { stat: StatItem }) {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium">Label</label>
-            <Input
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="Label"
-            />
+            <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label" />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium">Value</label>
-            <Input
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="Value"
-            />
+            <Input value={value} onChange={(e) => setValue(e.target.value)} placeholder="Value" />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium">Icon</label>
-            <Input
-              value={icon}
-              onChange={(e) => setIcon(e.target.value)}
-              placeholder="Icon name"
-            />
+            <Input value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="Icon name" />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium">Sort Order</label>
@@ -100,14 +88,14 @@ function StatCard({ stat }: { stat: StatItem }) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function AdminStats() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["stats"],
     queryFn: () => client.stats.list(),
-  })
+  });
 
   return (
     <div className="flex flex-col">
@@ -134,5 +122,5 @@ function AdminStats() {
         )}
       </div>
     </div>
-  )
+  );
 }

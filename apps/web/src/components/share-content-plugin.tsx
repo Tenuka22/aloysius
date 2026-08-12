@@ -11,16 +11,9 @@ import { CLEAR_HISTORY_COMMAND } from "lexical";
 import { SendIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import {
-  docFromHash,
-  docToHash,
-} from "@/components/doc-serialization";
+import { docFromHash, docToHash } from "@/components/doc-serialization";
 import { Button } from "@aloysius-web/ui/components/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@aloysius-web/ui/components/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@aloysius-web/ui/components/tooltip";
 
 export function ShareContentPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -42,16 +35,29 @@ export function ShareContentPlugin() {
 
   return (
     <Tooltip>
-      <TooltipTrigger render={<Button variant={"ghost"} onClick={() =>
-                      shareDoc(
-                        serializedDocumentFromEditorState(editor.getEditorState(), {
-                          source: "editor",
-                        }),
-                      ).then(
-                        () => toast.success("URL copied to clipboard"),
-                        () => toast.error("URL could not be copied to clipboard"),
-                      )
-                    } title="Share" aria-label="Share Playground link to current editor state" size={"sm"} className="p-2" />}><SendIcon className="size-4" /></TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button
+            variant={"ghost"}
+            onClick={() =>
+              shareDoc(
+                serializedDocumentFromEditorState(editor.getEditorState(), {
+                  source: "editor",
+                }),
+              ).then(
+                () => toast.success("URL copied to clipboard"),
+                () => toast.error("URL could not be copied to clipboard"),
+              )
+            }
+            title="Share"
+            aria-label="Share Playground link to current editor state"
+            size={"sm"}
+            className="p-2"
+          />
+        }
+      >
+        <SendIcon className="size-4" />
+      </TooltipTrigger>
       <TooltipContent>Share Content</TooltipContent>
     </Tooltip>
   );

@@ -31,12 +31,7 @@ export const KeywordsExtension = defineExtension({
   nodes: () => [KeywordNode],
   register(editor) {
     return mergeRegister(
-      ...registerLexicalTextEntity(
-        editor,
-        getKeywordMatch,
-        KeywordNode,
-        $convertToKeywordNode,
-      ),
+      ...registerLexicalTextEntity(editor, getKeywordMatch, KeywordNode, $convertToKeywordNode),
     );
   },
 });

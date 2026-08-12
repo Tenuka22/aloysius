@@ -64,10 +64,7 @@ export const TABLE: ElementTransformer = {
         // It's TableCellNode so it's just to make flow happy
         if ($isTableCellNode(cell)) {
           rowOutput.push(
-            $convertToMarkdownString(OTHER_MARKDOWN_TRANSFORMERS, cell).replace(
-              /\n/g,
-              "\\n",
-            ),
+            $convertToMarkdownString(OTHER_MARKDOWN_TRANSFORMERS, cell).replace(/\n/g, "\\n"),
           );
           if (cell.__headerState === TableCellHeaderStates.ROW) {
             isHeaderRow = true;
@@ -103,10 +100,7 @@ export const TABLE: ElementTransformer = {
         if (!$isTableCellNode(cell)) {
           return;
         }
-        cell.setHeaderStyles(
-          TableCellHeaderStates.ROW,
-          TableCellHeaderStates.ROW,
-        );
+        cell.setHeaderStyles(TableCellHeaderStates.ROW, TableCellHeaderStates.ROW);
       });
 
       // Remove line
@@ -164,10 +158,7 @@ export const TABLE: ElementTransformer = {
     }
 
     const previousSibling = parentNode.getPreviousSibling();
-    if (
-      $isTableNode(previousSibling) &&
-      getTableColumnsSize(previousSibling) === maxCells
-    ) {
+    if ($isTableNode(previousSibling) && getTableColumnsSize(previousSibling) === maxCells) {
       previousSibling.append(...table.getChildren());
       parentNode.remove();
     } else {

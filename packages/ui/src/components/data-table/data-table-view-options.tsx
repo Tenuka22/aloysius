@@ -1,6 +1,6 @@
-import { type Table } from "@tanstack/react-table"
-import { Settings2Icon } from "lucide-react"
-import { Button } from "@aloysius-web/ui/components/button"
+import { type Table } from "@tanstack/react-table";
+import { Settings2Icon } from "lucide-react";
+import { Button } from "@aloysius-web/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -9,10 +9,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@aloysius-web/ui/components/dropdown-menu"
+} from "@aloysius-web/ui/components/dropdown-menu";
 
 interface DataTableViewOptionsProps<TData> {
-  table: Table<TData>
+  table: Table<TData>;
 }
 
 export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps<TData>) {
@@ -30,10 +30,7 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
           <DropdownMenuSeparator />
           {table
             .getAllColumns()
-            .filter(
-              (column) =>
-                typeof column.accessorFn !== "undefined" && column.getCanHide()
-            )
+            .filter((column) => typeof column.accessorFn !== "undefined" && column.getCanHide())
             .map((column) => (
               <DropdownMenuCheckboxItem
                 key={column.id}
@@ -47,5 +44,5 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

@@ -27,18 +27,9 @@ type YouTubeComponentProps = Readonly<{
   videoID: string;
 }>;
 
-function YouTubeComponent({
-  className,
-  format,
-  nodeKey,
-  videoID,
-}: YouTubeComponentProps) {
+function YouTubeComponent({ className, format, nodeKey, videoID }: YouTubeComponentProps) {
   return (
-    <BlockWithAlignableContents
-      className={className}
-      format={format}
-      nodeKey={nodeKey}
-    >
+    <BlockWithAlignableContents className={className} format={format} nodeKey={nodeKey}>
       <iframe
         width="560"
         height="315"
@@ -59,9 +50,7 @@ export type SerializedYouTubeNode = Spread<
   SerializedDecoratorBlockNode
 >;
 
-function $convertYoutubeElement(
-  domNode: HTMLElement,
-): null | DOMConversionOutput {
+function $convertYoutubeElement(domNode: HTMLElement): null | DOMConversionOutput {
   const videoID = domNode.getAttribute("data-lexical-youtube");
   if (videoID) {
     const node = $createYouTubeNode(videoID);
@@ -106,10 +95,7 @@ export class YouTubeNode extends DecoratorBlockNode {
     element.setAttribute("data-lexical-youtube", this.__id);
     element.setAttribute("width", "560");
     element.setAttribute("height", "315");
-    element.setAttribute(
-      "src",
-      `https://www.youtube-nocookie.com/embed/${this.__id}`,
-    );
+    element.setAttribute("src", `https://www.youtube-nocookie.com/embed/${this.__id}`);
     element.setAttribute("frameborder", "0");
     element.setAttribute(
       "allow",

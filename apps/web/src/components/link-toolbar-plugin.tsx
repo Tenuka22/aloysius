@@ -66,10 +66,7 @@ export function LinkToolbarPlugin({
   const insertLink = useCallback(() => {
     if (!isLink) {
       setIsLinkEditMode(true);
-      activeEditor.dispatchCommand(
-        TOGGLE_LINK_COMMAND,
-        sanitizeUrl("https://"),
-      );
+      activeEditor.dispatchCommand(TOGGLE_LINK_COMMAND, sanitizeUrl("https://"));
     } else {
       setIsLinkEditMode(false);
       activeEditor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
@@ -77,12 +74,7 @@ export function LinkToolbarPlugin({
   }, [activeEditor, isLink, setIsLinkEditMode]);
 
   return (
-    <Toggle
-      variant={"outline"}
-      size="sm"
-      aria-label="Toggle link"
-      onClick={insertLink}
-    >
+    <Toggle variant={"outline"} size="sm" aria-label="Toggle link" onClick={insertLink}>
       <LinkIcon className="size-4" />
     </Toggle>
   );

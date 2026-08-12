@@ -122,9 +122,10 @@ export function Achievements({
             <Link
               to="/achievements/$slug"
               params={{ slug: featured.slug }}
-              className="group grid md:grid-cols-2 gap-6 border bg-background overflow-hidden hover:shadow-lg transition-shadow"
+              className="group relative grid md:grid-cols-2 gap-6 border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow"
             >
-              <div className="aspect-video md:aspect-auto bg-muted overflow-hidden">
+              <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
+              <div className="relative z-10 aspect-video md:aspect-auto bg-muted overflow-hidden">
                 {featured.coverImage ? (
                   <img
                     src={featured.coverImage}
@@ -132,13 +133,13 @@ export function Achievements({
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#c9a227]/10 to-[#c9a227]/5">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
                     <svg
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="1.5"
-                      className="size-16 text-[#c9a227]/30"
+                      className="size-16 text-primary/30"
                     >
                       <path
                         strokeLinecap="round"
@@ -149,21 +150,21 @@ export function Achievements({
                   </div>
                 )}
               </div>
-              <div className="p-6 md:p-8 flex flex-col justify-center">
-                <span className="inline-flex items-center bg-[#c9a227]/10 text-[#c9a227] px-3 py-1 text-xs font-semibold mb-3 w-fit">
+              <div className="relative z-10 p-6 md:p-8 flex flex-col justify-center">
+                <span className="inline-flex items-center bg-primary/10 text-primary px-3 py-1 text-xs font-semibold mb-3 w-fit relative z-10 group-hover:bg-secondary/20 group-hover:text-secondary transition-colors">
                   {categoryLabels[featured.category] ?? featured.category}
                   {featured.year && ` · ${featured.year}`}
                 </span>
-                <h3 className="text-xl sm:text-2xl font-light mb-3 group-hover:text-[#c9a227] transition-colors">
+                <h3 className="text-xl sm:text-2xl font-light mb-3 text-primary group-hover:text-secondary transition-colors">
                   {featured.title}
                 </h3>
                 {featured.description && (
-                  <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 mb-4">
+                  <p className="text-primary/60 text-sm leading-relaxed line-clamp-3 mb-4 group-hover:text-secondary/70 transition-colors">
                     {featured.description}
                   </p>
                 )}
                 {featured.recipientNames && featured.recipientNames.length > 0 && (
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-primary/70 group-hover:text-secondary/80 transition-colors">
                     {featured.recipientNames.join(", ")}
                   </div>
                 )}
@@ -179,9 +180,10 @@ export function Achievements({
                 key={item.id}
                 to="/achievements/$slug"
                 params={{ slug: item.slug }}
-                className="group border bg-background overflow-hidden hover:shadow-md transition-shadow"
+                className="group relative border bg-background overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="aspect-video bg-muted overflow-hidden">
+                <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
+                <div className="relative z-10 aspect-video bg-muted overflow-hidden">
                   {item.coverImage ? (
                     <img
                       src={item.coverImage}
@@ -200,17 +202,17 @@ export function Achievements({
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.996.172-1.756.96-1.756 1.94v3.03c0 .621.504 1.125 1.125 1.125h3.03c.98 0 1.768-.788 1.94-1.756M5.25 4.236A2.25 2.25 0 017.5 2.25h9a2.25 2.25 0 012.25 2.25c.343 1.32.467 2.688.35 4.047"
+                          d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.996.172-1.756.96-1.756 1.94v3.03c0 .621.504 1.125 1.125h3.03c.98 0 1.768-.788 1.94-1.756M5.25 4.236A2.25 2.25 0 017.2 2.25h9a2.25 2.25 0 012.25 2.25c.343 1.32.467 2.688.35 4.047"
                         />
                       </svg>
                     </div>
                   )}
                 </div>
-                <div className="p-3">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c9a227]">
+                <div className="relative z-10 p-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-primary group-hover:text-white transition-colors">
                     {categoryLabels[item.category] ?? item.category}
                   </span>
-                  <div className="text-sm font-semibold mt-1 group-hover:text-[#c9a227] transition-colors line-clamp-2">
+                  <div className="text-sm font-semibold mt-1 text-primary group-hover:text-white transition-colors line-clamp-2">
                     {item.title}
                   </div>
                 </div>

@@ -18,13 +18,9 @@ export type SerializedLayoutContainerNode = Spread<
   SerializedElementNode
 >;
 
-function $convertLayoutContainerElement(
-  domNode: HTMLElement,
-): DOMConversionOutput | null {
+function $convertLayoutContainerElement(domNode: HTMLElement): DOMConversionOutput | null {
   const styleAttributes = window.getComputedStyle(domNode);
-  const templateColumns = styleAttributes.getPropertyValue(
-    "grid-template-columns",
-  );
+  const templateColumns = styleAttributes.getPropertyValue("grid-template-columns");
   if (templateColumns) {
     const node = $createLayoutContainerNode(templateColumns);
     return { node };
@@ -115,9 +111,7 @@ export class LayoutContainerNode extends ElementNode {
   }
 }
 
-export function $createLayoutContainerNode(
-  templateColumns: string,
-): LayoutContainerNode {
+export function $createLayoutContainerNode(templateColumns: string): LayoutContainerNode {
   return new LayoutContainerNode(templateColumns);
 }
 

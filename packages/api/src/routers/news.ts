@@ -18,7 +18,7 @@ export const newsRouter = {
         sortDir: sortDirection.default("desc"),
         search: z.string().optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
-      })
+      }),
     )
     .handler(async ({ input }) => {
       const db = createDb();
@@ -44,11 +44,7 @@ export const newsRouter = {
               : news.createdAt;
       const orderFn = sortDir === "asc" ? asc : desc;
 
-      const [{ total }] = await db
-        .select({ total: count() })
-        .from(news)
-        .where(where)
-        .all();
+      const [{ total }] = await db.select({ total: count() }).from(news).where(where).all();
 
       const rows = await db
         .select()
@@ -85,9 +81,10 @@ export const newsRouter = {
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = "id" in input
-        ? await db.select().from(news).where(eq(news.id, input.id)).get()
-        : await db.select().from(news).where(eq(news.slug, input.slug)).get();
+      const row =
+        "id" in input
+          ? await db.select().from(news).where(eq(news.id, input.id)).get()
+          : await db.select().from(news).where(eq(news.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "News not found" });
@@ -122,7 +119,7 @@ export const newsRouter = {
         publishNow: z.boolean().optional(),
         authorName: z.string().optional(),
         authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -185,7 +182,7 @@ export const newsRouter = {
         publishNow: z.boolean().optional(),
         authorName: z.string().optional(),
         authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -193,11 +190,7 @@ export const newsRouter = {
       }
 
       const db = createDb();
-      const existing = await db
-        .select()
-        .from(news)
-        .where(eq(news.id, input.id))
-        .get();
+      const existing = await db.select().from(news).where(eq(news.id, input.id)).get();
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "News not found" });
@@ -257,20 +250,13 @@ export const newsRouter = {
       }
 
       const db = createDb();
-      const existing = await db
-        .select()
-        .from(news)
-        .where(eq(news.id, input.id))
-        .get();
+      const existing = await db.select().from(news).where(eq(news.id, input.id)).get();
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "News not found" });
       }
 
-      await db
-        .delete(news)
-        .where(eq(news.id, input.id))
-        .run();
+      await db.delete(news).where(eq(news.id, input.id)).run();
 
       return { success: true };
     }),

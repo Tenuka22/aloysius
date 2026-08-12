@@ -1,56 +1,56 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { useQuery } from "@tanstack/react-query"
-import { Navbar } from "@/components-client/navbar"
-import { Footer } from "@/components-client/footer"
-import { client } from "@/utils/orpc"
+import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Navbar } from "@/components-client/navbar";
+import { Footer } from "@/components-client/footer";
+import { client } from "@/utils/orpc";
 
 type AlbumImage = {
-  id: string
-  url: string
-  caption: string | null
-}
+  id: string;
+  url: string;
+  caption: string | null;
+};
 
 type Album = {
-  id: string
-  title: string
-  description: string | null
-  eventId: string | null
-  coverImage: string | null
-  images: AlbumImage[]
-}
+  id: string;
+  title: string;
+  description: string | null;
+  eventId: string | null;
+  coverImage: string | null;
+  images: AlbumImage[];
+};
 
 export const Route = createFileRoute("/gallery_/$slug")({
   component: AlbumDetailPage,
-})
+});
 
 function AlbumDetailPage() {
-  const { slug } = Route.useParams()
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const { slug } = Route.useParams();
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const { data: album, isLoading } = useQuery({
     queryKey: ["gallery", slug],
     queryFn: () => client.gallery.get({ slug }),
-  })
+  });
 
-  const images = (album as Album | undefined)?.images ?? []
+  const images = (album as Album | undefined)?.images ?? [];
 
-  const openLightbox = (index: number) => setLightboxIndex(index)
-  const closeLightbox = () => setLightboxIndex(null)
+  const openLightbox = (index: number) => setLightboxIndex(index);
+  const closeLightbox = () => setLightboxIndex(null);
 
   const showPrev = () => {
     if (lightboxIndex !== null && lightboxIndex > 0) {
-      setLightboxIndex(lightboxIndex - 1)
+      setLightboxIndex(lightboxIndex - 1);
     }
-  }
+  };
 
   const showNext = () => {
     if (lightboxIndex !== null && lightboxIndex < images.length - 1) {
-      setLightboxIndex(lightboxIndex + 1)
+      setLightboxIndex(lightboxIndex + 1);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,7 +77,9 @@ function AlbumDetailPage() {
             ) : !(album as Album | undefined) ? (
               <div className="text-center py-16">
                 <h1 className="text-2xl font-bold mb-2">Album not found</h1>
-                <p className="text-muted-foreground">This album may not exist or has not been published.</p>
+                <p className="text-muted-foreground">
+                  This album may not exist or has not been published.
+                </p>
               </div>
             ) : (
               <>
@@ -115,7 +117,9 @@ function AlbumDetailPage() {
                     </div>
                     {image.caption && (
                       <div className="p-3">
-                        <p className="text-sm text-muted-foreground line-clamp-2">{image.caption}</p>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {image.caption}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -144,18 +148,33 @@ function AlbumDetailPage() {
             className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors z-10"
             aria-label="Close lightbox"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-8">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="size-8"
+            >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
 
           {lightboxIndex > 0 && (
             <button
-              onClick={(e) => { e.stopPropagation(); showPrev() }}
+              onClick={(e) => {
+                e.stopPropagation();
+                showPrev();
+              }}
               className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors z-10"
               aria-label="Previous image"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-10">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="size-10"
+              >
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </button>
@@ -163,11 +182,20 @@ function AlbumDetailPage() {
 
           {lightboxIndex < images.length - 1 && (
             <button
-              onClick={(e) => { e.stopPropagation(); showNext() }}
+              onClick={(e) => {
+                e.stopPropagation();
+                showNext();
+              }}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors z-10"
               aria-label="Next image"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-10">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="size-10"
+              >
                 <path d="M9 18l6-6-6-6" />
               </svg>
             </button>
@@ -191,5 +219,5 @@ function AlbumDetailPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

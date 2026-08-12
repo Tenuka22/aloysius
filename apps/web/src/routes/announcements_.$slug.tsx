@@ -1,27 +1,27 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { Navbar } from "@/components-client/navbar"
-import { Footer } from "@/components-client/footer"
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Navbar } from "@/components-client/navbar";
+import { Footer } from "@/components-client/footer";
 
 type Announcement = {
-  id: string
-  title: string
-  content: string | null
-  excerpt: string | null
-  coverImage: string | null
-  tags: string[] | null
-  audience: string
-  addressedTo: string | null
-  authorName: string | null
-  authorType: string | null
-  publishedAt: string | null
-}
+  id: string;
+  title: string;
+  content: string | null;
+  excerpt: string | null;
+  coverImage: string | null;
+  tags: string[] | null;
+  audience: string;
+  addressedTo: string | null;
+  authorName: string | null;
+  authorType: string | null;
+  publishedAt: string | null;
+};
 
 const authorTypeLabels: Record<string, string> = {
   student: "Student",
   faculty: "Faculty",
   club: "Club",
   org: "Organization",
-}
+};
 
 const audienceLabels: Record<string, string> = {
   all: "Everyone",
@@ -29,25 +29,25 @@ const audienceLabels: Record<string, string> = {
   parents: "Parents",
   staff: "Staff",
   alumni: "Alumni",
-}
+};
 
 export const Route = createFileRoute("/announcements_/$slug")({
   loader: async ({ params }) => {
     const [{ createRouterClient }, { appRouter }] = await Promise.all([
       import("@orpc/server"),
       import("@aloysius-web/api/routers/index"),
-    ])
+    ]);
 
-    const serverClient = createRouterClient(appRouter)
-    const announcement = await serverClient.announcements.get({ slug: params.slug })
-    return { announcement }
+    const serverClient = createRouterClient(appRouter);
+    const announcement = await serverClient.announcements.get({ slug: params.slug });
+    return { announcement };
   },
   staleTime: 5 * 60_000,
   component: AnnouncementDetailPage,
-})
+});
 
 function AnnouncementDetailPage() {
-  const { announcement } = Route.useLoaderData() as { announcement: Announcement }
+  const { announcement } = Route.useLoaderData() as { announcement: Announcement };
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,7 +101,8 @@ function AnnouncementDetailPage() {
               {announcement.authorName && (
                 <span>
                   by {announcement.authorName}
-                  {announcement.authorType && ` (${authorTypeLabels[announcement.authorType] ?? announcement.authorType})`}
+                  {announcement.authorType &&
+                    ` (${authorTypeLabels[announcement.authorType] ?? announcement.authorType})`}
                 </span>
               )}
               {announcement.publishedAt && (
@@ -112,9 +113,7 @@ function AnnouncementDetailPage() {
             </div>
 
             {announcement.excerpt && (
-              <p className="text-lg text-muted-foreground mb-6 italic">
-                {announcement.excerpt}
-              </p>
+              <p className="text-lg text-muted-foreground mb-6 italic">{announcement.excerpt}</p>
             )}
 
             {announcement.content && (
@@ -142,5 +141,5 @@ function AnnouncementDetailPage() {
       </main>
       <Footer />
     </div>
-  )
+  );
 }

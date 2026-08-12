@@ -3,6 +3,12 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  IconSchool,
+  IconUsers,
+  IconTrophy,
+  IconWorld,
+} from "@tabler/icons-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -17,68 +23,12 @@ const defaultStats = [
   { value: "20+", label: "Global Partnerships", icon: "global" },
 ];
 
-function StatIcon({ icon }: { icon: string }) {
-  if (icon === "heritage") {
-    return (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="size-6"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
-        />
-      </svg>
-    );
-  }
-  if (icon === "students") {
-    return (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="size-6"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
-        />
-      </svg>
-    );
-  }
-  if (icon === "activities") {
-    return (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="size-6"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
-        />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-6">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"
-      />
-    </svg>
-  );
-}
+const iconMap: Record<string, React.ComponentType<{ stroke?: number; size?: number | string; className?: string }>> = {
+  heritage: IconSchool,
+  students: IconUsers,
+  activities: IconTrophy,
+  global: IconWorld,
+};
 
 export function Stats({
   initialData,
@@ -119,24 +69,30 @@ export function Stats({
   }, []);
 
   return (
-    <section className="border-y border-border/50 bg-[#0a1f0a]">
+    <section className="bg-[#0a1f0a] relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent" />
       <div
         ref={ref}
-        className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 py-12 px-4 sm:px-6 lg:px-8"
+        className="relative mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-0 py-16 px-4 sm:px-6 lg:px-8"
       >
-        {stats.map((stat) => (
+        {stats.map((stat, i) => (
           <div
             key={stat.label}
-            className="flex flex-col items-center justify-center text-center gap-3"
+            className={`flex flex-col items-center justify-center text-center gap-4 py-6 px-4 ${
+              i < stats.length - 1 ? "lg:border-r border-white/10" : ""
+            } ${i < stats.length - 2 || (i < stats.length - 1 && stats.length <= 5) ? "border-b lg:border-b-0 border-white/10" : ""}`}
           >
-            <div className="size-11 bg-white/10 border border-white/20 flex items-center justify-center text-[#c9a227]">
-              <StatIcon icon={stat.icon} />
+            <div className="text-[#c9a227]">
+              {(() => {
+                const Icon = iconMap[stat.icon] ?? IconSchool;
+                return <Icon stroke={1.25} size={36} />;
+              })()}
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-light text-white tracking-tight">
+              <div className="text-3xl sm:text-4xl font-light text-[#c9a227] tracking-tight tabular-nums">
                 {stat.value}
               </div>
-              <div className="text-sm text-white/70">{stat.label}</div>
+              <div className="text-xs uppercase tracking-widest text-white/50 mt-2">{stat.label}</div>
             </div>
           </div>
         ))}

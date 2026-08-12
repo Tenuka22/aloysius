@@ -1,45 +1,45 @@
-import { Input } from "@aloysius-web/ui/components/input"
-import { Textarea } from "@aloysius-web/ui/components/textarea"
+import { Input } from "@aloysius-web/ui/components/input";
+import { Textarea } from "@aloysius-web/ui/components/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@aloysius-web/ui/components/select"
-import { Checkbox } from "@aloysius-web/ui/components/checkbox"
-import { Slider } from "@aloysius-web/ui/components/slider"
+} from "@aloysius-web/ui/components/select";
+import { Checkbox } from "@aloysius-web/ui/components/checkbox";
+import { Slider } from "@aloysius-web/ui/components/slider";
 import {
   Field,
   FieldContent,
   FieldDescription,
   FieldError,
   FieldLabel,
-} from "@aloysius-web/ui/components/field"
-import type { FieldKind, SelectOption } from "./types"
+} from "@aloysius-web/ui/components/field";
+import type { FieldKind, SelectOption } from "./types";
 
 export type RenderFieldArgs = {
-  kind: FieldKind
-  name: string
-  value: unknown
-  label: string
-  description?: string
-  placeholder?: string
-  disabled?: boolean
-  required?: boolean
-  options?: SelectOption[] | (() => SelectOption[] | Promise<SelectOption[]>)
-  isInvalid: boolean
-  onValueChange: (val: unknown) => void
-  onBlur: () => void
-  errors: Array<{ message?: string } | undefined>
-  inputProps?: Record<string, unknown>
-  children?: React.ReactNode
-  renderLabel?: (label: string) => React.ReactNode
-}
+  kind: FieldKind;
+  name: string;
+  value: unknown;
+  label: string;
+  description?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+  options?: SelectOption[] | (() => SelectOption[] | Promise<SelectOption[]>);
+  isInvalid: boolean;
+  onValueChange: (val: unknown) => void;
+  onBlur: () => void;
+  errors: Array<{ message?: string } | undefined>;
+  inputProps?: Record<string, unknown>;
+  children?: React.ReactNode;
+  renderLabel?: (label: string) => React.ReactNode;
+};
 
-export type FieldRenderer = (args: RenderFieldArgs) => React.ReactNode
+export type FieldRenderer = (args: RenderFieldArgs) => React.ReactNode;
 
-type Registry = Record<string, FieldRenderer | undefined>
+type Registry = Record<string, FieldRenderer | undefined>;
 
 function renderText(args: RenderFieldArgs) {
   return (
@@ -55,7 +55,7 @@ function renderText(args: RenderFieldArgs) {
       required={args.required}
       {...args.inputProps}
     />
-  )
+  );
 }
 
 function renderNumber(args: RenderFieldArgs) {
@@ -66,8 +66,8 @@ function renderNumber(args: RenderFieldArgs) {
       type="number"
       value={args.value != null ? String(args.value) : ""}
       onChange={(e) => {
-        const v = e.target.value
-        args.onValueChange(v === "" ? "" : Number(v))
+        const v = e.target.value;
+        args.onValueChange(v === "" ? "" : Number(v));
       }}
       onBlur={args.onBlur}
       aria-invalid={args.isInvalid}
@@ -76,7 +76,7 @@ function renderNumber(args: RenderFieldArgs) {
       required={args.required}
       {...args.inputProps}
     />
-  )
+  );
 }
 
 function renderTextarea(args: RenderFieldArgs) {
@@ -93,18 +93,18 @@ function renderTextarea(args: RenderFieldArgs) {
       required={args.required}
       {...args.inputProps}
     />
-  )
+  );
 }
 
 function renderSelect(args: RenderFieldArgs) {
-  const resolvedOptions = resolveOptions(args.options)
-  const value = (args.value as string) ?? ""
+  const resolvedOptions = resolveOptions(args.options);
+  const value = (args.value as string) ?? "";
   return (
     <Select
       name={args.name}
       value={value}
       onValueChange={(val) => {
-        if (val !== undefined) args.onValueChange(val)
+        if (val !== undefined) args.onValueChange(val);
       }}
       disabled={args.disabled}
       required={args.required}
@@ -121,7 +121,7 @@ function renderSelect(args: RenderFieldArgs) {
         ))}
       </SelectContent>
     </Select>
-  )
+  );
 }
 
 function renderCheckbox(args: RenderFieldArgs) {
@@ -136,14 +136,14 @@ function renderCheckbox(args: RenderFieldArgs) {
       required={args.required}
       {...args.inputProps}
     />
-  )
+  );
 }
 
 function renderSlider(args: RenderFieldArgs) {
-  const val = (args.value as number) ?? 0
-  const min = (args.inputProps?.min as number) ?? 0
-  const max = (args.inputProps?.max as number) ?? 100
-  const step = (args.inputProps?.step as number) ?? 1
+  const val = (args.value as number) ?? 0;
+  const min = (args.inputProps?.min as number) ?? 0;
+  const max = (args.inputProps?.max as number) ?? 100;
+  const step = (args.inputProps?.step as number) ?? 1;
   return (
     <Slider
       id={args.name}
@@ -155,29 +155,29 @@ function renderSlider(args: RenderFieldArgs) {
       disabled={args.disabled}
       {...args.inputProps}
     />
-  )
+  );
 }
 
 function renderDisplay(args: RenderFieldArgs) {
   const displayVal =
-    args.value != null && args.value !== "" ? String(args.value) : args.placeholder || "\u2014"
+    args.value != null && args.value !== "" ? String(args.value) : args.placeholder || "\u2014";
   return (
     <div className="flex h-8 items-center rounded-lg border border-transparent px-2.5 py-1 text-sm text-foreground">
       {displayVal}
     </div>
-  )
+  );
 }
 
 function renderCustom(_args: RenderFieldArgs) {
-  return null
+  return null;
 }
 
 function resolveOptions(
-  options?: SelectOption[] | (() => SelectOption[] | Promise<SelectOption[]>)
+  options?: SelectOption[] | (() => SelectOption[] | Promise<SelectOption[]>),
 ): SelectOption[] {
-  if (!options) return []
-  if (Array.isArray(options)) return options
-  return []
+  if (!options) return [];
+  if (Array.isArray(options)) return options;
+  return [];
 }
 
 export const registry: Registry = {
@@ -189,21 +189,21 @@ export const registry: Registry = {
   slider: renderSlider,
   display: renderDisplay,
   custom: renderCustom,
-}
+};
 
 export function registerFieldRenderer(kind: string, renderer: FieldRenderer) {
-  registry[kind as FieldKind] = renderer
+  registry[kind as FieldKind] = renderer;
 }
 
 export function getFieldRenderer(kind: FieldKind): FieldRenderer {
-  const renderer = registry[kind]
-  if (!renderer) return renderText
-  return renderer
+  const renderer = registry[kind];
+  if (!renderer) return renderText;
+  return renderer;
 }
 
 export function renderField(args: RenderFieldArgs): React.ReactNode {
-  const renderer = getFieldRenderer(args.kind)
-  return renderer(args)
+  const renderer = getFieldRenderer(args.kind);
+  return renderer(args);
 }
 
 export function FieldControl(args: RenderFieldArgs): React.ReactNode {
@@ -212,7 +212,7 @@ export function FieldControl(args: RenderFieldArgs): React.ReactNode {
       {args.label}
       {args.required && <span className="text-destructive ml-0.5">*</span>}
     </>
-  )
+  );
 
   return (
     <Field data-invalid={args.isInvalid}>
@@ -249,5 +249,5 @@ export function FieldControl(args: RenderFieldArgs): React.ReactNode {
         </>
       )}
     </Field>
-  )
+  );
 }

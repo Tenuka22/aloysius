@@ -1,17 +1,13 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cn } from "@aloysius-web/ui/lib/utils"
-import { Toggle } from "@aloysius-web/ui/components/toggle"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@aloysius-web/ui/components/tooltip"
+import * as React from "react";
+import { cn } from "@aloysius-web/ui/lib/utils";
+import { Toggle } from "@aloysius-web/ui/components/toggle";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@aloysius-web/ui/components/tooltip";
 
 interface ToolbarButtonProps extends React.ComponentProps<typeof Toggle> {
-  isActive?: boolean
-  tooltip?: string
+  isActive?: boolean;
+  tooltip?: string;
 }
 
 export const ToolbarButton = ({
@@ -29,9 +25,9 @@ export const ToolbarButton = ({
     >
       {children}
     </Toggle>
-  )
+  );
 
-  if (!tooltip) return toggleButton
+  if (!tooltip) return toggleButton;
 
   return (
     <Tooltip>
@@ -40,7 +36,7 @@ export const ToolbarButton = ({
         <p>{tooltip}</p>
       </TooltipContent>
     </Tooltip>
-  )
-}
+  );
+};
 
-ToolbarButton.displayName = "ToolbarButton"
+ToolbarButton.displayName = "ToolbarButton";

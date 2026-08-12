@@ -1,2 +1,2 @@
-export { MinimalTiptapEditor } from "./minimal-tiptap"
-export type { MinimalTiptapProps } from "./minimal-tiptap"
+export { MinimalTiptapEditor } from "./minimal-tiptap";
+export type { MinimalTiptapProps } from "./minimal-tiptap";

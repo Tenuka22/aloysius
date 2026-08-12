@@ -19,7 +19,9 @@ export function TreeViewPlugin(): JSX.Element {
   const [editor] = useLexicalComposerContext();
   return (
     <Dialog>
-      <DialogTrigger render={<Button size={"sm"} variant={"ghost"} className="p-2" />}><NotebookPenIcon className="size-4" /></DialogTrigger>
+      <DialogTrigger render={<Button size={"sm"} variant={"ghost"} className="p-2" />}>
+        <NotebookPenIcon className="size-4" />
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Tree View</DialogTitle>

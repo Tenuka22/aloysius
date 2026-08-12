@@ -16,21 +16,13 @@ import { MicIcon } from "lucide-react";
 import { useReport } from "@/components/use-report";
 import { CAN_USE_DOM } from "@/components/can-use-dom";
 import { Button } from "@aloysius-web/ui/components/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@aloysius-web/ui/components/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@aloysius-web/ui/components/tooltip";
 
-export const SPEECH_TO_TEXT_COMMAND: LexicalCommand<boolean> = createCommand(
-  "SPEECH_TO_TEXT_COMMAND",
-);
+export const SPEECH_TO_TEXT_COMMAND: LexicalCommand<boolean> =
+  createCommand("SPEECH_TO_TEXT_COMMAND");
 
 const VOICE_COMMANDS: Readonly<
-  Record<
-    string,
-    (arg0: { editor: LexicalEditor; selection: RangeSelection }) => void
-  >
+  Record<string, (arg0: { editor: LexicalEditor; selection: RangeSelection }) => void>
 > = {
   "\n": ({ selection }) => {
     selection.insertParagraph();
@@ -44,8 +36,7 @@ const VOICE_COMMANDS: Readonly<
 };
 
 export const SUPPORT_SPEECH_RECOGNITION: boolean =
-  CAN_USE_DOM &&
-  ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+  CAN_USE_DOM && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
 function SpeechToTextPluginImpl() {
   const [editor] = useLexicalComposerContext();
@@ -62,37 +53,34 @@ function SpeechToTextPluginImpl() {
       recognition.current = new SpeechRecognition();
       recognition.current.continuous = true;
       recognition.current.interimResults = true;
-      recognition.current.addEventListener(
-        "result",
-        (event: typeof SpeechRecognition) => {
-          const resultItem = event.results.item(event.resultIndex);
-          const { transcript } = resultItem.item(0);
-          report(transcript);
+      recognition.current.addEventListener("result", (event: typeof SpeechRecognition) => {
+        const resultItem = event.results.item(event.resultIndex);
+        const { transcript } = resultItem.item(0);
+        report(transcript);
 
-          if (!resultItem.isFinal) {
-            return;
-          }
+        if (!resultItem.isFinal) {
+          return;
+        }
 
-          editor.update(() => {
-            const selection = $getSelection();
+        editor.update(() => {
+          const selection = $getSelection();
 
-            if ($isRangeSelection(selection)) {
-              const command = VOICE_COMMANDS[transcript.toLowerCase().trim()];
+          if ($isRangeSelection(selection)) {
+            const command = VOICE_COMMANDS[transcript.toLowerCase().trim()];
 
-              if (command) {
-                command({
-                  editor,
-                  selection,
-                });
-              } else if (transcript.match(/\s*\n\s*/)) {
-                selection.insertParagraph();
-              } else {
-                selection.insertText(transcript);
-              }
+            if (command) {
+              command({
+                editor,
+                selection,
+              });
+            } else if (transcript.match(/\s*\n\s*/)) {
+              selection.insertParagraph();
+            } else {
+              selection.insertText(transcript);
             }
-          });
-        },
-      );
+          }
+        });
+      });
     }
 
     if (recognition.current) {
@@ -122,15 +110,26 @@ function SpeechToTextPluginImpl() {
 
   return (
     <Tooltip>
-      <TooltipTrigger render={<Button onClick={() => {
-                      editor.dispatchCommand(SPEECH_TO_TEXT_COMMAND, !isSpeechToText);
-                      setIsSpeechToText(!isSpeechToText);
-                    }} variant={isSpeechToText ? "secondary" : "ghost"} title="Speech To Text" aria-label={`${isSpeechToText ? "Enable" : "Disable"} speech to text`} className="p-2" size={"sm"} />}><MicIcon className="size-4" /></TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button
+            onClick={() => {
+              editor.dispatchCommand(SPEECH_TO_TEXT_COMMAND, !isSpeechToText);
+              setIsSpeechToText(!isSpeechToText);
+            }}
+            variant={isSpeechToText ? "secondary" : "ghost"}
+            title="Speech To Text"
+            aria-label={`${isSpeechToText ? "Enable" : "Disable"} speech to text`}
+            className="p-2"
+            size={"sm"}
+          />
+        }
+      >
+        <MicIcon className="size-4" />
+      </TooltipTrigger>
       <TooltipContent>Speech To Text</TooltipContent>
     </Tooltip>
   );
 }
 
-export const SpeechToTextPlugin = SUPPORT_SPEECH_RECOGNITION
-  ? SpeechToTextPluginImpl
-  : () => null;
+export const SpeechToTextPlugin = SUPPORT_SPEECH_RECOGNITION ? SpeechToTextPluginImpl : () => null;

@@ -10,10 +10,7 @@ import {
   TextIcon,
 } from "lucide-react";
 
-export const blockTypeToBlockName: Record<
-  string,
-  { label: string; icon: React.ReactNode }
-> = {
+export const blockTypeToBlockName: Record<string, { label: string; icon: React.ReactNode }> = {
   paragraph: {
     label: "Paragraph",
     icon: <TextIcon className="size-4" />,

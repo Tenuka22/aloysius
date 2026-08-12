@@ -33,12 +33,15 @@ const db = await D1Database("database", {
 const publicAssetsBucket = await R2Bucket("public-assets", {
   name: "public-assets",
   devDomain: true,
-  domains: stage === "prod" ? [
-    {
-      domain: `assets.${DOMAIN}`,
-      zone: "YOUR_ZONE_ID",
-    },
-  ] : undefined,
+  domains:
+    stage === "prod"
+      ? [
+          {
+            domain: `assets.${DOMAIN}`,
+            zone: "YOUR_ZONE_ID",
+          },
+        ]
+      : undefined,
 });
 
 const r2PublicUrl = (() => {
@@ -50,7 +53,6 @@ const r2PublicUrl = (() => {
   }
   return undefined;
 })();
-
 
 export const server = await Worker("server", {
   cwd: "../../apps/server",
@@ -80,7 +82,7 @@ export const web = await TanStackStart("web", {
     CLERK_SECRET_KEY: alchemy.secret.env.CLERK_SECRET_KEY!,
     CLERK_PUBLISHABLE_KEY: alchemy.env.CLERK_PUBLISHABLE_KEY!,
   },
-})
+});
 
 console.log(`Web    -> ${web.url}`);
 console.log(`Server -> ${server.url}`);

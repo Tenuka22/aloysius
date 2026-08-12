@@ -1,21 +1,28 @@
-"use client"
+"use client";
 
-import { useCallback, useState } from "react"
-import { useStore } from "@tanstack/react-form"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button } from "@aloysius-web/ui/components/button"
-import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder"
-import { Dropzone } from "@/components/file-upload"
-import { IconX, IconChevronDown } from "@tabler/icons-react"
-import { cn } from "@aloysius-web/ui/lib/utils"
-import { client } from "@/utils/orpc"
-import { convertToWebp } from "@/utils/convert-to-webp"
-import { toast } from "sonner"
-import * as v from "valibot"
-import { Popover, PopoverTrigger, PopoverContent } from "@aloysius-web/ui/components/popover"
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@aloysius-web/ui/components/command"
-import { SlugFieldInline } from "@/components-client/slug-field"
-import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
+import { useCallback, useState } from "react";
+import { useStore } from "@tanstack/react-form";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@aloysius-web/ui/components/button";
+import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
+import { Dropzone } from "@/components/file-upload";
+import { IconX, IconChevronDown } from "@tabler/icons-react";
+import { cn } from "@aloysius-web/ui/lib/utils";
+import { client } from "@/utils/orpc";
+import { convertToWebp } from "@/utils/convert-to-webp";
+import { toast } from "sonner";
+import * as v from "valibot";
+import { Popover, PopoverTrigger, PopoverContent } from "@aloysius-web/ui/components/popover";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@aloysius-web/ui/components/command";
+import { SlugFieldInline } from "@/components-client/slug-field";
+import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
 
 const createGallerySchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
@@ -29,9 +36,9 @@ const createGallerySchema = v.object({
   coverImage: v.optional(v.string()),
   tags: v.array(v.string()),
   publishNow: v.boolean(),
-})
+});
 
-type CreateGalleryValues = v.InferOutput<typeof createGallerySchema>
+type CreateGalleryValues = v.InferOutput<typeof createGallerySchema>;
 
 const updateGallerySchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
@@ -45,31 +52,76 @@ const updateGallerySchema = v.object({
   coverImage: v.optional(v.string()),
   tags: v.array(v.string()),
   publishNow: v.boolean(),
-})
+});
 
-type UpdateGalleryValues = v.InferOutput<typeof updateGallerySchema>
+type UpdateGalleryValues = v.InferOutput<typeof updateGallerySchema>;
 
 const fields: FieldEntry<CreateGalleryValues | UpdateGalleryValues>[] = [
-  { name: "title", kind: "text", label: "Title", placeholder: "Enter album title", required: true, hidden: true },
-  { name: "slug", kind: "custom", label: "Slug", required: false, customRenderer: () => null, renderField: (name, value, onChange) => <SlugFieldInline routerName="gallery" value={(value as string) ?? ""} onChange={(v) => onChange(v)} /> },
-  { name: "description", kind: "textarea", label: "Description", placeholder: "Brief description of this album", required: false },
+  {
+    name: "title",
+    kind: "text",
+    label: "Title",
+    placeholder: "Enter album title",
+    required: true,
+    hidden: true,
+  },
+  {
+    name: "slug",
+    kind: "custom",
+    label: "Slug",
+    required: false,
+    customRenderer: () => null,
+    renderField: (name, value, onChange) => (
+      <SlugFieldInline
+        routerName="gallery"
+        value={(value as string) ?? ""}
+        onChange={(v) => onChange(v)}
+      />
+    ),
+  },
+  {
+    name: "description",
+    kind: "textarea",
+    label: "Description",
+    placeholder: "Brief description of this album",
+    required: false,
+  },
   { name: "eventId", kind: "text", label: "Event", hidden: true, required: false },
   { name: "studentWorkId", kind: "text", label: "Student Work", hidden: true, required: false },
   { name: "achievementId", kind: "text", label: "Achievement", hidden: true, required: false },
-  { name: "authorName", kind: "text", label: "Author Name", placeholder: "Who created this?", required: false },
-  { name: "authorType", kind: "select", label: "Author Type", options: [{value:"student",label:"Student"},{value:"faculty",label:"Faculty"},{value:"club",label:"Club"},{value:"org",label:"Organization"}], required: false },
+  {
+    name: "authorName",
+    kind: "text",
+    label: "Author Name",
+    placeholder: "Who created this?",
+    required: false,
+  },
+  {
+    name: "authorType",
+    kind: "select",
+    label: "Author Type",
+    options: [
+      { value: "student", label: "Student" },
+      { value: "faculty", label: "Faculty" },
+      { value: "club", label: "Club" },
+      { value: "org", label: "Organization" },
+    ],
+    required: false,
+  },
   { name: "coverImage", kind: "text", label: "Cover Image", hidden: true, required: false },
   { name: "tags", kind: "text", label: "Tags", hidden: true, required: false },
   { name: "publishNow", kind: "checkbox", label: "Publish immediately", required: false },
-]
+];
 
 function TitleField() {
-  const form = useBuildForm()
-  const value = useStore(form.store, (state: any) => state.values.title) as string
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.title) as string;
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Title <span className="text-destructive">*</span></label>
+      <label className="text-sm font-medium leading-none">
+        Title <span className="text-destructive">*</span>
+      </label>
       <input
         type="text"
         value={value}
@@ -78,41 +130,53 @@ function TitleField() {
         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
       />
     </div>
-  )
+  );
 }
 
 function CoverImageField() {
-  const form = useBuildForm()
-  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as string | undefined
-  const [uploading, setUploading] = useState(false)
+  const form = useBuildForm();
+  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as
+    | string
+    | undefined;
+  const [uploading, setUploading] = useState(false);
 
-  const handleFilesSelected = useCallback(async (files: File[]) => {
-    const file = files[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      const webp = await convertToWebp(file)
-      const result = await client.files.uploadFile(webp)
-      form.setFieldValue("coverImage", result.url)
-    } catch {
-      toast.error("Failed to upload image")
-    } finally {
-      setUploading(false)
-    }
-  }, [form])
+  const handleFilesSelected = useCallback(
+    async (files: File[]) => {
+      const file = files[0];
+      if (!file) return;
+      setUploading(true);
+      try {
+        const webp = await convertToWebp(file);
+        const result = await client.files.uploadFile(webp);
+        form.setFieldValue("coverImage", result.url);
+      } catch {
+        toast.error("Failed to upload image");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [form],
+  );
 
-  const handleRemove = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    form.setFieldValue("coverImage", "")
-  }, [form])
+  const handleRemove = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      form.setFieldValue("coverImage", "");
+    },
+    [form],
+  );
 
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium leading-none">Cover Image (16:9)</label>
       {coverImage ? (
         <div className="relative overflow-hidden rounded-xl border">
-          <img src={coverImage} alt="Cover" className="w-full aspect-[16/9] object-cover pointer-events-none" />
+          <img
+            src={coverImage}
+            alt="Cover"
+            className="w-full aspect-[16/9] object-cover pointer-events-none"
+          />
           <Button
             variant="destructive"
             size="sm"
@@ -133,16 +197,19 @@ function CoverImageField() {
           crop
           aspect={16 / 9}
           cropTitle="Crop Cover Image"
-          className={cn("aspect-[16/9] justify-center", uploading && "opacity-50 pointer-events-none")}
+          className={cn(
+            "aspect-[16/9] justify-center",
+            uploading && "opacity-50 pointer-events-none",
+          )}
         />
       )}
     </div>
-  )
+  );
 }
 
 function TagsField() {
-  const form = useBuildForm()
-  const tags = (form.state.values.tags as string[]) ?? []
+  const form = useBuildForm();
+  const tags = (form.state.values.tags as string[]) ?? [];
 
   return (
     <div className="space-y-1.5">
@@ -151,30 +218,33 @@ function TagsField() {
         type="text"
         value={tags.join(", ")}
         onChange={(e) => {
-          const raw = e.target.value
-          const newTags = raw.split(",").map((t) => t.trim()).filter(Boolean)
-          form.setFieldValue("tags", newTags)
+          const raw = e.target.value;
+          const newTags = raw
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean);
+          form.setFieldValue("tags", newTags);
         }}
         placeholder="Add tags separated by commas"
         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
       />
     </div>
-  )
+  );
 }
 
 function EventField() {
-  const form = useBuildForm()
-  const value = useStore(form.store, (state: any) => state.values.eventId) as string
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState("")
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.eventId) as string;
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const eventsQuery = useQuery({
     queryKey: ["events", "combobox", search],
     queryFn: () => client.events.list({ page: 1, pageSize: 50, search: search || undefined }),
-  })
+  });
 
-  const events = eventsQuery.data?.rows ?? []
-  const selectedEvent = events.find((e) => e.id === value)
+  const events = eventsQuery.data?.rows ?? [];
+  const selectedEvent = events.find((e) => e.id === value);
 
   return (
     <div className="space-y-1.5">
@@ -186,7 +256,7 @@ function EventField() {
               type="button"
               className={cn(
                 "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-                !value && "text-muted-foreground"
+                !value && "text-muted-foreground",
               )}
             />
           }
@@ -194,7 +264,11 @@ function EventField() {
           {selectedEvent ? (
             <span className="flex items-center gap-2 truncate">
               {selectedEvent.coverImage && (
-                <img src={selectedEvent.coverImage} alt="" className="size-6 rounded object-cover" />
+                <img
+                  src={selectedEvent.coverImage}
+                  alt=""
+                  className="size-6 rounded object-cover"
+                />
               )}
               {selectedEvent.title}
             </span>
@@ -205,11 +279,7 @@ function EventField() {
         </PopoverTrigger>
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
           <Command>
-            <CommandInput
-              placeholder="Search events..."
-              value={search}
-              onValueChange={setSearch}
-            />
+            <CommandInput placeholder="Search events..." value={search} onValueChange={setSearch} />
             <CommandList>
               <CommandEmpty>No events found.</CommandEmpty>
               <CommandGroup>
@@ -218,14 +288,18 @@ function EventField() {
                     key={event.id}
                     value={event.id}
                     onSelect={() => {
-                      form.setFieldValue("eventId", event.id === value ? "" : event.id)
-                      setOpen(false)
-                      setSearch("")
+                      form.setFieldValue("eventId", event.id === value ? "" : event.id);
+                      setOpen(false);
+                      setSearch("");
                     }}
                   >
                     <span className="flex items-center gap-2">
                       {event.coverImage && (
-                        <img src={event.coverImage} alt="" className="size-8 rounded object-cover" />
+                        <img
+                          src={event.coverImage}
+                          alt=""
+                          className="size-8 rounded object-cover"
+                        />
                       )}
                       <span className="flex flex-col">
                         <span className="font-medium">{event.title}</span>
@@ -239,22 +313,22 @@ function EventField() {
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }
 
 function StudentWorkField() {
-  const form = useBuildForm()
-  const value = useStore(form.store, (state: any) => state.values.studentWorkId) as string
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState("")
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.studentWorkId) as string;
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const worksQuery = useQuery({
     queryKey: ["studentWorks", "combobox", search],
     queryFn: () => client.studentWorks.list({ page: 1, pageSize: 50, search: search || undefined }),
-  })
+  });
 
-  const works = worksQuery.data?.rows ?? []
-  const selectedWork = works.find((w) => w.id === value)
+  const works = worksQuery.data?.rows ?? [];
+  const selectedWork = works.find((w) => w.id === value);
 
   return (
     <div className="space-y-1.5">
@@ -266,7 +340,7 @@ function StudentWorkField() {
               type="button"
               className={cn(
                 "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-                !value && "text-muted-foreground"
+                !value && "text-muted-foreground",
               )}
             />
           }
@@ -298,9 +372,9 @@ function StudentWorkField() {
                     key={work.id}
                     value={work.id}
                     onSelect={() => {
-                      form.setFieldValue("studentWorkId", work.id === value ? "" : work.id)
-                      setOpen(false)
-                      setSearch("")
+                      form.setFieldValue("studentWorkId", work.id === value ? "" : work.id);
+                      setOpen(false);
+                      setSearch("");
                     }}
                   >
                     <span className="flex items-center gap-2">
@@ -309,7 +383,9 @@ function StudentWorkField() {
                       )}
                       <span className="flex flex-col">
                         <span className="font-medium">{work.title}</span>
-                        <span className="text-xs text-muted-foreground">{work.studentNames?.join(", ")}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {work.studentNames?.join(", ")}
+                        </span>
                       </span>
                     </span>
                   </CommandItem>
@@ -320,22 +396,22 @@ function StudentWorkField() {
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }
 
 function AchievementField() {
-  const form = useBuildForm()
-  const value = useStore(form.store, (state: any) => state.values.achievementId) as string
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState("")
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.achievementId) as string;
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const achievementsQuery = useQuery({
     queryKey: ["achievements", "combobox", search],
     queryFn: () => client.achievements.list({ page: 1, pageSize: 50, search: search || undefined }),
-  })
+  });
 
-  const achievements = achievementsQuery.data?.rows ?? []
-  const selectedAchievement = achievements.find((a) => a.id === value)
+  const achievements = achievementsQuery.data?.rows ?? [];
+  const selectedAchievement = achievements.find((a) => a.id === value);
 
   return (
     <div className="space-y-1.5">
@@ -347,7 +423,7 @@ function AchievementField() {
               type="button"
               className={cn(
                 "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-                !value && "text-muted-foreground"
+                !value && "text-muted-foreground",
               )}
             />
           }
@@ -355,7 +431,11 @@ function AchievementField() {
           {selectedAchievement ? (
             <span className="flex items-center gap-2 truncate">
               {selectedAchievement.coverImage && (
-                <img src={selectedAchievement.coverImage} alt="" className="size-6 rounded object-cover" />
+                <img
+                  src={selectedAchievement.coverImage}
+                  alt=""
+                  className="size-6 rounded object-cover"
+                />
               )}
               {selectedAchievement.title}
             </span>
@@ -379,14 +459,21 @@ function AchievementField() {
                     key={achievement.id}
                     value={achievement.id}
                     onSelect={() => {
-                      form.setFieldValue("achievementId", achievement.id === value ? "" : achievement.id)
-                      setOpen(false)
-                      setSearch("")
+                      form.setFieldValue(
+                        "achievementId",
+                        achievement.id === value ? "" : achievement.id,
+                      );
+                      setOpen(false);
+                      setSearch("");
                     }}
                   >
                     <span className="flex items-center gap-2">
                       {achievement.coverImage && (
-                        <img src={achievement.coverImage} alt="" className="size-8 rounded object-cover" />
+                        <img
+                          src={achievement.coverImage}
+                          alt=""
+                          className="size-8 rounded object-cover"
+                        />
                       )}
                       <span className="flex flex-col">
                         <span className="font-medium">{achievement.title}</span>
@@ -403,7 +490,7 @@ function AchievementField() {
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }
 
 export function GalleryForm({
@@ -411,19 +498,19 @@ export function GalleryForm({
   id,
   onSuccess,
 }: {
-  mode: "create" | "edit"
-  id?: string
-  onSuccess?: () => void
+  mode: "create" | "edit";
+  id?: string;
+  onSuccess?: () => void;
 }) {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const existingGallery = useQuery({
     queryKey: ["gallery", id],
     queryFn: () => client.gallery.get({ id: id! }),
     enabled: mode === "edit" && !!id,
-  })
+  });
 
-  const gallery = existingGallery.data
+  const gallery = existingGallery.data;
 
   const config: FormConfig<CreateGalleryValues | UpdateGalleryValues> = {
     fields,
@@ -441,12 +528,12 @@ export function GalleryForm({
         authorType: values.authorType || undefined,
       }),
       onSuccess: () => {
-        toast.success(mode === "create" ? "Gallery album created" : "Gallery album updated")
-        queryClient.invalidateQueries({ queryKey: ["gallery"] })
-        onSuccess?.()
+        toast.success(mode === "create" ? "Gallery album created" : "Gallery album updated");
+        queryClient.invalidateQueries({ queryKey: ["gallery"] });
+        onSuccess?.();
       },
       onError: (err) => {
-        toast.error(err.message)
+        toast.error(err.message);
       },
     },
     renderAboveFields: () => (
@@ -465,7 +552,7 @@ export function GalleryForm({
         </div>
       </div>
     ),
-  }
+  };
 
   if (mode === "edit" && existingGallery.isLoading) {
     return (
@@ -474,11 +561,11 @@ export function GalleryForm({
         <div className="h-20 rounded bg-muted animate-pulse" />
         <div className="h-40 rounded bg-muted animate-pulse" />
       </div>
-    )
+    );
   }
 
   if (mode === "edit" && !existingGallery.data) {
-    return <div className="p-4 text-center text-muted-foreground">Gallery album not found.</div>
+    return <div className="p-4 text-center text-muted-foreground">Gallery album not found.</div>;
   }
 
   return (
@@ -500,26 +587,26 @@ export function GalleryForm({
               tags: gallery.tags ?? [],
               publishNow: gallery.status === "published",
             }
-            : {
-                title: "",
-                slug: "",
-                description: "",
-                eventId: "",
-                studentWorkId: "",
-                achievementId: "",
-                authorName: "",
-                authorType: "student",
-                coverImage: "",
-                tags: [],
-                publishNow: false,
-              }
+          : {
+              title: "",
+              slug: "",
+              description: "",
+              eventId: "",
+              studentWorkId: "",
+              achievementId: "",
+              authorName: "",
+              authorType: "student",
+              coverImage: "",
+              tags: [],
+              publishNow: false,
+            }
       }
       onSubmit={async (values) => {
         if (mode === "create") {
-          return client.gallery.create(values as CreateGalleryValues)
+          return client.gallery.create(values as CreateGalleryValues);
         }
-        return client.gallery.update({ id: id!, ...values })
+        return client.gallery.update({ id: id!, ...values });
       }}
     />
-  )
+  );
 }

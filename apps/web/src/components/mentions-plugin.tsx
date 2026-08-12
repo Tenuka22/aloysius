@@ -29,8 +29,7 @@ import {
 //   { ssr: false }
 // )
 
-const PUNCTUATION =
-  "\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;";
+const PUNCTUATION = "\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;";
 const NAME = "\\b[A-Z][^\\s" + PUNCTUATION + "]";
 
 const DocumentMentionsRegex = {
@@ -539,10 +538,7 @@ function useMentionLookupService(mentionString: string | null) {
   return results;
 }
 
-function checkForAtSignMentions(
-  text: string,
-  minMatchLength: number,
-): MenuTextMatch | null {
+function checkForAtSignMentions(text: string, minMatchLength: number): MenuTextMatch | null {
   let match = AtSignMentionsRegex.exec(text);
 
   if (match === null) {
@@ -597,10 +593,7 @@ export function MentionsPlugin(): JSX.Element | null {
       results
         .map(
           (result) =>
-            new MentionTypeaheadOption(
-              result,
-              <CircleUserRoundIcon className="size-4" />,
-            ),
+            new MentionTypeaheadOption(result, <CircleUserRoundIcon className="size-4" />),
         )
         .slice(0, SUGGESTION_LIST_LENGTH_LIMIT),
     [results],
@@ -654,16 +647,13 @@ export function MentionsPlugin(): JSX.Element | null {
                       e.preventDefault();
                       setHighlightedIndex(
                         selectedIndex !== null
-                          ? (selectedIndex - 1 + options.length) %
-                              options.length
+                          ? (selectedIndex - 1 + options.length) % options.length
                           : options.length - 1,
                       );
                     } else if (e.key === "ArrowDown") {
                       e.preventDefault();
                       setHighlightedIndex(
-                        selectedIndex !== null
-                          ? (selectedIndex + 1) % options.length
-                          : 0,
+                        selectedIndex !== null ? (selectedIndex + 1) % options.length : 0,
                       );
                     }
                   }}
@@ -678,9 +668,7 @@ export function MentionsPlugin(): JSX.Element | null {
                             selectOptionAndCleanUp(option);
                           }}
                           className={`flex items-center gap-2 ${
-                            selectedIndex === index
-                              ? "bg-accent"
-                              : "!bg-transparent"
+                            selectedIndex === index ? "bg-accent" : "!bg-transparent"
                           }`}
                         >
                           {option.picture}

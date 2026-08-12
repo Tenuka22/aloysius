@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { useCallback, useState } from "react"
-import { useStore } from "@tanstack/react-form"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button } from "@aloysius-web/ui/components/button"
-import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder"
-import { MinimalTiptapEditor } from "@aloysius-web/ui/components/minimal-tiptap"
-import { Dropzone } from "@/components/file-upload"
-import { IconX, IconGripVertical } from "@tabler/icons-react"
-import { cn } from "@aloysius-web/ui/lib/utils"
-import { client } from "@/utils/orpc"
-import { convertToWebp } from "@/utils/convert-to-webp"
-import { toast } from "sonner"
-import { SlugFieldInline } from "@/components-client/slug-field"
-import * as v from "valibot"
-import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
+import { useCallback, useState } from "react";
+import { useStore } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@aloysius-web/ui/components/button";
+import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
+import { MinimalTiptapEditor } from "@aloysius-web/ui/components/minimal-tiptap";
+import { Dropzone } from "@/components/file-upload";
+import { IconX, IconGripVertical } from "@tabler/icons-react";
+import { cn } from "@aloysius-web/ui/lib/utils";
+import { client } from "@/utils/orpc";
+import { convertToWebp } from "@/utils/convert-to-webp";
+import { toast } from "sonner";
+import { SlugFieldInline } from "@/components-client/slug-field";
+import * as v from "valibot";
+import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
 
 const createActivitySchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, "Name is required")),
@@ -27,9 +27,9 @@ const createActivitySchema = v.object({
   adminEmail: v.optional(v.string()),
   sortOrder: v.number(),
   status: v.string(),
-})
+});
 
-type CreateActivityValues = v.InferOutput<typeof createActivitySchema>
+type CreateActivityValues = v.InferOutput<typeof createActivitySchema>;
 
 const updateActivitySchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, "Name is required")),
@@ -42,9 +42,9 @@ const updateActivitySchema = v.object({
   adminEmail: v.optional(v.string()),
   sortOrder: v.number(),
   status: v.string(),
-})
+});
 
-type UpdateActivityValues = v.InferOutput<typeof updateActivitySchema>
+type UpdateActivityValues = v.InferOutput<typeof updateActivitySchema>;
 
 const fields: FieldEntry<CreateActivityValues | UpdateActivityValues>[] = [
   {
@@ -55,7 +55,21 @@ const fields: FieldEntry<CreateActivityValues | UpdateActivityValues>[] = [
     required: true,
     hidden: true,
   },
-  { name: "slug", kind: "custom", label: "Slug", required: false, customRenderer: () => null, renderField: (name, value, onChange) => <SlugFieldInline routerName="activities" sourceField="name" value={(value as string) ?? ""} onChange={(v) => onChange(v)} /> },
+  {
+    name: "slug",
+    kind: "custom",
+    label: "Slug",
+    required: false,
+    customRenderer: () => null,
+    renderField: (name, value, onChange) => (
+      <SlugFieldInline
+        routerName="activities"
+        sourceField="name"
+        value={(value as string) ?? ""}
+        onChange={(v) => onChange(v)}
+      />
+    ),
+  },
   {
     name: "content",
     kind: "text",
@@ -115,40 +129,52 @@ const fields: FieldEntry<CreateActivityValues | UpdateActivityValues>[] = [
     required: true,
     hidden: true,
   },
-]
+];
 
 function CoverImageField() {
-  const form = useBuildForm()
-  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as string | undefined
-  const [uploading, setUploading] = useState(false)
+  const form = useBuildForm();
+  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as
+    | string
+    | undefined;
+  const [uploading, setUploading] = useState(false);
 
-  const handleFilesSelected = useCallback(async (files: File[]) => {
-    const file = files[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      const webp = await convertToWebp(file)
-      const result = await client.files.uploadFile(webp)
-      form.setFieldValue("coverImage", result.url)
-    } catch {
-      toast.error("Failed to upload image")
-    } finally {
-      setUploading(false)
-    }
-  }, [form])
+  const handleFilesSelected = useCallback(
+    async (files: File[]) => {
+      const file = files[0];
+      if (!file) return;
+      setUploading(true);
+      try {
+        const webp = await convertToWebp(file);
+        const result = await client.files.uploadFile(webp);
+        form.setFieldValue("coverImage", result.url);
+      } catch {
+        toast.error("Failed to upload image");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [form],
+  );
 
-  const handleRemove = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    form.setFieldValue("coverImage", "")
-  }, [form])
+  const handleRemove = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      form.setFieldValue("coverImage", "");
+    },
+    [form],
+  );
 
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium leading-none">Cover Image</label>
       {coverImage ? (
         <div className="relative overflow-hidden rounded-xl border">
-          <img src={coverImage} alt="Cover" className="w-full aspect-[16/9] object-cover pointer-events-none" />
+          <img
+            src={coverImage}
+            alt="Cover"
+            className="w-full aspect-[16/9] object-cover pointer-events-none"
+          />
           <Button
             variant="destructive"
             size="sm"
@@ -173,16 +199,18 @@ function CoverImageField() {
         />
       )}
     </div>
-  )
+  );
 }
 
 function NameField() {
-  const form = useBuildForm()
-  const value = useStore(form.store, (state: any) => state.values.name) as string
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.name) as string;
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Name <span className="text-destructive">*</span></label>
+      <label className="text-sm font-medium leading-none">
+        Name <span className="text-destructive">*</span>
+      </label>
       <input
         type="text"
         value={value}
@@ -191,16 +219,18 @@ function NameField() {
         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       />
     </div>
-  )
+  );
 }
 
 function TypeField() {
-  const form = useBuildForm()
-  const value = useStore(form.store, (state: any) => state.values.type) as string
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.type) as string;
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Type <span className="text-destructive">*</span></label>
+      <label className="text-sm font-medium leading-none">
+        Type <span className="text-destructive">*</span>
+      </label>
       <select
         value={value}
         onChange={(e) => form.setFieldValue("type", e.target.value)}
@@ -211,20 +241,22 @@ function TypeField() {
         <option value="other">Other</option>
       </select>
     </div>
-  )
+  );
 }
 
 function AdminEmailField() {
-  const form = useBuildForm()
-  const value = useStore(form.store, (state: any) => state.values.adminEmail) as string ?? ""
-  const type = useStore(form.store, (state: any) => state.values.type) as string
+  const form = useBuildForm();
+  const value = (useStore(form.store, (state: any) => state.values.adminEmail) as string) ?? "";
+  const type = useStore(form.store, (state: any) => state.values.type) as string;
 
-  if (type === "academic") return null
+  if (type === "academic") return null;
 
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium leading-none">Administrator Email</label>
-      <p className="text-xs text-muted-foreground">The administrator responsible for managing this {type}.</p>
+      <p className="text-xs text-muted-foreground">
+        The administrator responsible for managing this {type}.
+      </p>
       <input
         type="email"
         value={value}
@@ -233,16 +265,18 @@ function AdminEmailField() {
         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       />
     </div>
-  )
+  );
 }
 
 function StatusField() {
-  const form = useBuildForm()
-  const value = useStore(form.store, (state: any) => state.values.status) as string
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.status) as string;
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Status <span className="text-destructive">*</span></label>
+      <label className="text-sm font-medium leading-none">
+        Status <span className="text-destructive">*</span>
+      </label>
       <select
         value={value}
         onChange={(e) => form.setFieldValue("status", e.target.value)}
@@ -253,12 +287,12 @@ function StatusField() {
         <option value="archived">Archived</option>
       </select>
     </div>
-  )
+  );
 }
 
 function SortOrderField() {
-  const form = useBuildForm()
-  const value = useStore(form.store, (state: any) => state.values.sortOrder) as number
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.sortOrder) as number;
 
   return (
     <div className="space-y-1.5">
@@ -271,58 +305,67 @@ function SortOrderField() {
         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       />
     </div>
-  )
+  );
 }
 
 function ImagesField() {
-  const form = useBuildForm()
-  const images = useStore(form.store, (state: any) => state.values.images) as string[] ?? []
-  const [uploading, setUploading] = useState(false)
-  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const form = useBuildForm();
+  const images = (useStore(form.store, (state: any) => state.values.images) as string[]) ?? [];
+  const [uploading, setUploading] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
-  const handleFilesSelected = useCallback(async (files: File[]) => {
-    setUploading(true)
-    try {
-      const uploaded: string[] = []
-      for (const file of files) {
-        const webp = await convertToWebp(file)
-        const result = await client.files.uploadFile(webp)
-        uploaded.push(result.url)
+  const handleFilesSelected = useCallback(
+    async (files: File[]) => {
+      setUploading(true);
+      try {
+        const uploaded: string[] = [];
+        for (const file of files) {
+          const webp = await convertToWebp(file);
+          const result = await client.files.uploadFile(webp);
+          uploaded.push(result.url);
+        }
+        form.setFieldValue("images", [...images, ...uploaded]);
+      } catch {
+        toast.error("Failed to upload images");
+      } finally {
+        setUploading(false);
       }
-      form.setFieldValue("images", [...images, ...uploaded])
-    } catch {
-      toast.error("Failed to upload images")
-    } finally {
-      setUploading(false)
-    }
-  }, [form, images])
+    },
+    [form, images],
+  );
 
-  const handleRemove = useCallback((index: number, e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const next = images.filter((_: string, i: number) => i !== index)
-    form.setFieldValue("images", next)
-  }, [form, images])
+  const handleRemove = useCallback(
+    (index: number, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const next = images.filter((_: string, i: number) => i !== index);
+      form.setFieldValue("images", next);
+    },
+    [form, images],
+  );
 
   const handleDragStart = useCallback((index: number, e: React.DragEvent) => {
-    setDragIndex(index)
-    e.dataTransfer.effectAllowed = "move"
-  }, [])
+    setDragIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+  }, []);
 
   const handleDragOver = useCallback((_index: number, e: React.DragEvent) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = "move"
-  }, [])
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  }, []);
 
-  const handleDrop = useCallback((index: number, e: React.DragEvent) => {
-    e.preventDefault()
-    if (dragIndex === null || dragIndex === index) return
-    const next = [...images]
-    const [moved] = next.splice(dragIndex, 1)
-    next.splice(index, 0, moved)
-    form.setFieldValue("images", next)
-    setDragIndex(null)
-  }, [form, images, dragIndex])
+  const handleDrop = useCallback(
+    (index: number, e: React.DragEvent) => {
+      e.preventDefault();
+      if (dragIndex === null || dragIndex === index) return;
+      const next = [...images];
+      const [moved] = next.splice(dragIndex, 1);
+      next.splice(index, 0, moved);
+      form.setFieldValue("images", next);
+      setDragIndex(null);
+    },
+    [form, images, dragIndex],
+  );
 
   return (
     <div className="space-y-1.5">
@@ -342,7 +385,11 @@ function ImagesField() {
                     onDragOver={(e) => handleDragOver(index, e)}
                     onDrop={(e) => handleDrop(index, e)}
                   >
-                    <img src={url} alt={`Image ${index + 1}`} className="w-full aspect-video object-cover pointer-events-none" />
+                    <img
+                      src={url}
+                      alt={`Image ${index + 1}`}
+                      className="w-full aspect-video object-cover pointer-events-none"
+                    />
                     <div className="absolute top-0.5 left-0.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="bg-background/80 backdrop-blur-sm rounded p-0.5 cursor-grab active:cursor-grabbing">
                         <IconGripVertical className="size-3 text-muted-foreground" />
@@ -381,68 +428,93 @@ function ImagesField() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function DescriptionEditorField() {
-  const form = useBuildForm()
+  const form = useBuildForm();
   const handleImageUpload = useCallback(async (file: File) => {
-    const webp = await convertToWebp(file)
-    const result = await client.files.uploadFile(webp)
-    return result.url
-  }, [])
+    const webp = await convertToWebp(file);
+    const result = await client.files.uploadFile(webp);
+    return result.url;
+  }, []);
 
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium leading-none">Description</label>
       <MinimalTiptapEditor
         value={form.state.values.content as string}
-        onChange={(value) => form.setFieldValue("content", typeof value === "string" ? value : JSON.stringify(value))}
+        onChange={(value) =>
+          form.setFieldValue("content", typeof value === "string" ? value : JSON.stringify(value))
+        }
         onImageUpload={handleImageUpload}
         placeholder="Describe this activity..."
       />
     </div>
-  )
+  );
 }
 
-export function ActivitiesForm({ mode, id, onSuccess }: { mode: "create" | "edit"; id?: string; onSuccess: () => void }) {
-  const queryClient = useQueryClient()
+export function ActivitiesForm({
+  mode,
+  id,
+  onSuccess,
+}: {
+  mode: "create" | "edit";
+  id?: string;
+  onSuccess: () => void;
+}) {
+  const queryClient = useQueryClient();
 
   const { data: activity, isLoading: isLoadingItem } = useQuery({
     queryKey: ["activities", id],
     queryFn: () => client.activities.get({ id: id! }),
     enabled: mode === "edit" && !!id,
-  })
+  });
 
   const createMutation = useMutation({
     mutationFn: (body: any) => client.activities.create(body),
-    onSuccess: () => { toast.success("Activity created"); queryClient.invalidateQueries({ queryKey: ["activities"] }); onSuccess() },
+    onSuccess: () => {
+      toast.success("Activity created");
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      onSuccess();
+    },
     onError: (err) => toast.error(err.message),
-  })
+  });
 
   const updateMutation = useMutation({
     mutationFn: (body: any) => client.activities.update(body),
-    onSuccess: () => { toast.success("Activity updated"); queryClient.invalidateQueries({ queryKey: ["activities"] }); onSuccess() },
+    onSuccess: () => {
+      toast.success("Activity updated");
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      onSuccess();
+    },
     onError: (err) => toast.error(err.message),
-  })
+  });
 
-  const handleSubmit = useCallback(async (values: CreateActivityValues | UpdateActivityValues) => {
-    if (mode === "edit" && id) await updateMutation.mutateAsync({ ...values, id })
-    else await createMutation.mutateAsync(values)
-  }, [mode, id, createMutation, updateMutation])
+  const handleSubmit = useCallback(
+    async (values: CreateActivityValues | UpdateActivityValues) => {
+      if (mode === "edit" && id) await updateMutation.mutateAsync({ ...values, id });
+      else await createMutation.mutateAsync(values);
+    },
+    [mode, id, createMutation, updateMutation],
+  );
 
   if (mode === "edit" && isLoadingItem) {
-    return <div className="space-y-6 p-1"><div className="h-10 rounded bg-muted animate-pulse" /><div className="h-20 rounded bg-muted animate-pulse" /><div className="h-[300px] rounded bg-muted animate-pulse" /></div>
+    return (
+      <div className="space-y-6 p-1">
+        <div className="h-10 rounded bg-muted animate-pulse" />
+        <div className="h-20 rounded bg-muted animate-pulse" />
+        <div className="h-[300px] rounded bg-muted animate-pulse" />
+      </div>
+    );
   }
 
-  if (mode === "edit" && !activity) return <div className="p-4 text-center text-muted-foreground">Activity not found.</div>
+  if (mode === "edit" && !activity)
+    return <div className="p-4 text-center text-muted-foreground">Activity not found.</div>;
 
   const formConfig: FormConfig<CreateActivityValues | UpdateActivityValues> = {
     fields,
-    layout: [
-      { columns: [{ fields: ["slug"] }] },
-      { columns: [{ fields: ["publishNow"] }] },
-    ],
+    layout: [{ columns: [{ fields: ["slug"] }] }, { columns: [{ fields: ["publishNow"] }] }],
     submitLabel: mode === "create" ? "Create Activity" : "Save Changes",
     hooks: {
       beforeSubmit: (values) => ({
@@ -472,19 +544,41 @@ export function ActivitiesForm({ mode, id, onSuccess }: { mode: "create" | "edit
         <DescriptionEditorField />
       </div>
     ),
-  }
+  };
 
   return (
     <FormBuilder<CreateActivityValues | UpdateActivityValues>
       config={formConfig}
       defaultValues={
         mode === "edit" && activity
-          ? { name: activity.name, slug: activity.slug ?? "", description: activity.description ?? "", content: "", coverImage: activity.coverImage ?? "", images: (activity.images as string[]) ?? [], type: activity.type, adminEmail: activity.adminEmail ?? "", sortOrder: activity.sortOrder, status: activity.status }
-          : { name: "", slug: "", description: "", content: "", coverImage: "", images: [] as string[], type: "club", adminEmail: "", sortOrder: 0, status: "draft" }
+          ? {
+              name: activity.name,
+              slug: activity.slug ?? "",
+              description: activity.description ?? "",
+              content: "",
+              coverImage: activity.coverImage ?? "",
+              images: (activity.images as string[]) ?? [],
+              type: activity.type,
+              adminEmail: activity.adminEmail ?? "",
+              sortOrder: activity.sortOrder,
+              status: activity.status,
+            }
+          : {
+              name: "",
+              slug: "",
+              description: "",
+              content: "",
+              coverImage: "",
+              images: [] as string[],
+              type: "club",
+              adminEmail: "",
+              sortOrder: 0,
+              status: "draft",
+            }
       }
       valibotSchema={mode === "create" ? createActivitySchema : updateActivitySchema}
       onSubmit={handleSubmit}
       submitting={createMutation.isPending || updateMutation.isPending}
     />
-  )
+  );
 }

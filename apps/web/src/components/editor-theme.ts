@@ -55,8 +55,7 @@ export const editorTheme: EditorThemeClasses = {
     underlineStrikethrough: "[text-decoration:underline_line-through]",
   },
   image: "relative inline-block user-select-none cursor-default editor-image",
-  inlineImage:
-    "relative inline-block user-select-none cursor-default inline-editor-image",
+  inlineImage: "relative inline-block user-select-none cursor-default inline-editor-image",
   keyword: "text-accent-foreground bg-accent rounded-sm px-1 font-semibold",
   code: "EditorTheme__code",
   codeHighlight: {
@@ -111,8 +110,7 @@ export const editorTheme: EditorThemeClasses = {
     "EditorTheme__tableCellSortedIndicator block opacity-50 bsolute bottom-0 left-0 w-full h-1 bg-muted",
   tableResizeRuler:
     "EditorTheme__tableCellResizeRuler block absolute w-[1px] h-full bg-primary top-0",
-  tableRowStriping:
-    "EditorTheme__tableRowStriping m-0 border-t p-0 even:bg-muted",
+  tableRowStriping: "EditorTheme__tableRowStriping m-0 border-t p-0 even:bg-muted",
   tableSelected: "EditorTheme__tableSelected ring-2 ring-primary ring-offset-2",
   tableSelection: "EditorTheme__tableSelection bg-transparent",
   layoutItem: "border border-dashed px-4 py-2",

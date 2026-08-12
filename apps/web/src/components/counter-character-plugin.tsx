@@ -45,9 +45,7 @@ const countWords = (text: string) => {
   return text.split(/\s+/).filter((word) => word.length > 0).length;
 };
 
-export function CounterCharacterPlugin({
-  charset = "UTF-16",
-}: CounterCharacterPluginProps) {
+export function CounterCharacterPlugin({ charset = "UTF-16" }: CounterCharacterPluginProps) {
   const [editor] = useLexicalComposerContext();
   const [stats, setStats] = useState(() => {
     const initialText = editor.getEditorState().read($rootTextContent);

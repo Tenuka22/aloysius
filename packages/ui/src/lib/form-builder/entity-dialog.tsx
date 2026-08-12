@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Dialog,
@@ -6,25 +6,25 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@aloysius-web/ui/components/dialog"
-import { FormBuilder } from "./form-builder"
+} from "@aloysius-web/ui/components/dialog";
+import { FormBuilder } from "./form-builder";
 
-import type { FormConfig, FormBuilderProps } from "./types"
+import type { FormConfig, FormBuilderProps } from "./types";
 
 export type EntityDialogProps<TData extends Record<string, unknown>> = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title: string
-  description?: string
-  config: FormConfig<TData>
-  defaultValues: TData
-  valibotSchema?: FormBuilderProps<TData>["valibotSchema"]
-  queryKeysToInvalidate?: FormBuilderProps<TData>["queryKeysToInvalidate"]
-  onSubmit: (values: TData) => Promise<void>
-  actionLabel?: string
-  size?: "sm" | "md" | "lg" | "xl" | "full"
-  submitting?: boolean
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description?: string;
+  config: FormConfig<TData>;
+  defaultValues: TData;
+  valibotSchema?: FormBuilderProps<TData>["valibotSchema"];
+  queryKeysToInvalidate?: FormBuilderProps<TData>["queryKeysToInvalidate"];
+  onSubmit: (values: TData) => Promise<void>;
+  actionLabel?: string;
+  size?: "sm" | "md" | "lg" | "xl" | "full";
+  submitting?: boolean;
+};
 
 const sizeClasses: Record<string, string> = {
   sm: "max-w-sm",
@@ -32,7 +32,7 @@ const sizeClasses: Record<string, string> = {
   lg: "max-w-lg",
   xl: "max-w-xl",
   full: "max-w-2xl",
-}
+};
 
 export function EntityDialog<TData extends Record<string, unknown>>({
   open,
@@ -72,5 +72,5 @@ export function EntityDialog<TData extends Record<string, unknown>>({
         />
       </DialogContent>
     </Dialog>
-  )
+  );
 }

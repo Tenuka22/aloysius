@@ -34,7 +34,7 @@ const DEFAULTS: Record<string, string> = {
   hero_badge: "Est. 1862",
   hero_title: "Where Excellence\nIs Made",
   hero_subtitle:
-    "St. Aloysius' College, Galle — nurturing minds, building character, and inspiring generations of leaders since 1862.",
+    "St. Aloysius' College, Galle - nurturing minds, building character, and inspiring generations of leaders since 1862.",
   hero_cta1_text: "Explore Our College",
   hero_cta1_url: "/about",
   hero_cta2_text: "Student Works",

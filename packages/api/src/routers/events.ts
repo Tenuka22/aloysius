@@ -18,7 +18,7 @@ export const eventsRouter = {
         sortDir: sortDirection.default("desc"),
         search: z.string().optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
-      })
+      }),
     )
     .handler(async ({ input }) => {
       const db = createDb();
@@ -46,11 +46,7 @@ export const eventsRouter = {
                 : events.createdAt;
       const orderFn = sortDir === "asc" ? asc : desc;
 
-      const [{ total }] = await db
-        .select({ total: count() })
-        .from(events)
-        .where(where)
-        .all();
+      const [{ total }] = await db.select({ total: count() }).from(events).where(where).all();
 
       const rows = await db
         .select()
@@ -96,9 +92,10 @@ export const eventsRouter = {
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = "id" in input
-        ? await db.select().from(events).where(eq(events.id, input.id)).get()
-        : await db.select().from(events).where(eq(events.slug, input.slug)).get();
+      const row =
+        "id" in input
+          ? await db.select().from(events).where(eq(events.id, input.id)).get()
+          : await db.select().from(events).where(eq(events.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Event not found" });
@@ -151,7 +148,7 @@ export const eventsRouter = {
         recurrenceRule: z.string().optional(),
         tags: z.array(z.string()).optional(),
         publishNow: z.boolean().optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -160,7 +157,9 @@ export const eventsRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
-      const slug = input.slug ? await generateUniqueSlug(events, input.slug) : await generateUniqueSlug(events, input.title);
+      const slug = input.slug
+        ? await generateUniqueSlug(events, input.slug)
+        : await generateUniqueSlug(events, input.title);
 
       const db = createDb();
       const record = await db
@@ -240,7 +239,7 @@ export const eventsRouter = {
         tags: z.array(z.string()).optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
         publishNow: z.boolean().optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -248,11 +247,7 @@ export const eventsRouter = {
       }
 
       const db = createDb();
-      const existing = await db
-        .select()
-        .from(events)
-        .where(eq(events.id, input.id))
-        .get();
+      const existing = await db.select().from(events).where(eq(events.id, input.id)).get();
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Event not found" });
@@ -282,7 +277,8 @@ export const eventsRouter = {
       if (input.organizerType !== undefined) updateData.organizerType = input.organizerType || null;
       if (input.location !== undefined) updateData.location = input.location;
       if (input.startDate !== undefined) updateData.startDate = new Date(input.startDate);
-      if (input.endDate !== undefined) updateData.endDate = input.endDate ? new Date(input.endDate) : null;
+      if (input.endDate !== undefined)
+        updateData.endDate = input.endDate ? new Date(input.endDate) : null;
       if (input.isRecurring !== undefined) updateData.isRecurring = input.isRecurring;
       if (input.isAllDay !== undefined) updateData.isAllDay = input.isAllDay;
       if (input.recurrenceRule !== undefined) updateData.recurrenceRule = input.recurrenceRule;
@@ -338,20 +334,13 @@ export const eventsRouter = {
       }
 
       const db = createDb();
-      const existing = await db
-        .select()
-        .from(events)
-        .where(eq(events.id, input.id))
-        .get();
+      const existing = await db.select().from(events).where(eq(events.id, input.id)).get();
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Event not found" });
       }
 
-      await db
-        .delete(events)
-        .where(eq(events.id, input.id))
-        .run();
+      await db.delete(events).where(eq(events.id, input.id)).run();
 
       return { success: true };
     }),
@@ -385,7 +374,7 @@ export const eventsRouter = {
         outcome: z.enum(["success", "postponed", "failed"]),
         reason: z.string().optional(),
         notes: z.string().optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -393,11 +382,7 @@ export const eventsRouter = {
       }
 
       const db = createDb();
-      const event = await db
-        .select()
-        .from(events)
-        .where(eq(events.id, input.eventId))
-        .get();
+      const event = await db.select().from(events).where(eq(events.id, input.eventId)).get();
 
       if (!event) {
         throw new ORPCError("NOT_FOUND", { message: "Event not found" });
@@ -436,10 +421,7 @@ export const eventsRouter = {
       }
 
       const db = createDb();
-      await db
-        .delete(eventRecords)
-        .where(eq(eventRecords.id, input.id))
-        .run();
+      await db.delete(eventRecords).where(eq(eventRecords.id, input.id)).run();
 
       return { success: true };
     }),

@@ -1,15 +1,15 @@
-import { type Table } from "@tanstack/react-table"
-import { XIcon } from "lucide-react"
-import type { RefObject } from "react"
-import { Button } from "@aloysius-web/ui/components/button"
-import { Input } from "@aloysius-web/ui/components/input"
-import { DataTableViewOptions } from "./data-table-view-options"
+import { type Table } from "@tanstack/react-table";
+import { XIcon } from "lucide-react";
+import type { RefObject } from "react";
+import { Button } from "@aloysius-web/ui/components/button";
+import { Input } from "@aloysius-web/ui/components/input";
+import { DataTableViewOptions } from "./data-table-view-options";
 
 interface DataTableToolbarProps<TData> {
-  table: Table<TData>
-  filterColumn?: string
-  filterPlaceholder?: string
-  inputRef?: RefObject<HTMLInputElement | null>
+  table: Table<TData>;
+  filterColumn?: string;
+  filterPlaceholder?: string;
+  inputRef?: RefObject<HTMLInputElement | null>;
 }
 
 export function DataTableToolbar<TData>({
@@ -18,7 +18,7 @@ export function DataTableToolbar<TData>({
   filterPlaceholder = "Filter...",
   inputRef,
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0
+  const isFiltered = table.getState().columnFilters.length > 0;
 
   return (
     <div className="flex items-center justify-between">
@@ -28,9 +28,7 @@ export function DataTableToolbar<TData>({
             ref={inputRef}
             placeholder={filterPlaceholder}
             value={(table.getColumn(filterColumn)?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn(filterColumn)?.setFilterValue(event.target.value)
-            }
+            onChange={(event) => table.getColumn(filterColumn)?.setFilterValue(event.target.value)}
             className="h-8 w-[150px] lg:w-[250px]"
           />
         )}
@@ -47,5 +45,5 @@ export function DataTableToolbar<TData>({
       </div>
       <DataTableViewOptions table={table} />
     </div>
-  )
+  );
 }

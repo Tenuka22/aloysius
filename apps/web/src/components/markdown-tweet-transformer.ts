@@ -1,10 +1,6 @@
 import { type ElementTransformer } from "@lexical/markdown";
 
-import {
-  $createTweetNode,
-  $isTweetNode,
-  TweetNode,
-} from "@/components/tweet-node";
+import { $createTweetNode, $isTweetNode, TweetNode } from "@/components/tweet-node";
 
 export const TWEET: ElementTransformer = {
   dependencies: [TweetNode],

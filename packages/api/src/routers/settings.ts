@@ -5,17 +5,11 @@ import { siteSettings } from "@aloysius-web/db/schema";
 import { protectedProcedure, publicProcedure } from "../index";
 
 export const settingsRouter = {
-  get: publicProcedure
-    .input(z.object({ key: z.string() }))
-    .handler(async ({ input }) => {
-      const db = createDb();
-      const row = await db
-        .select()
-        .from(siteSettings)
-        .where(eq(siteSettings.key, input.key))
-        .get();
-      return { key: input.key, value: row?.value ?? "" };
-    }),
+  get: publicProcedure.input(z.object({ key: z.string() })).handler(async ({ input }) => {
+    const db = createDb();
+    const row = await db.select().from(siteSettings).where(eq(siteSettings.key, input.key)).get();
+    return { key: input.key, value: row?.value ?? "" };
+  }),
 
   getMany: publicProcedure
     .input(z.object({ keys: z.array(z.string()) }))

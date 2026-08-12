@@ -9,9 +9,7 @@ import {
 
 import { useToolbarContext } from "@/components/toolbar-context";
 
-export function useUpdateToolbarHandler(
-  callback: (selection: BaseSelection) => void,
-) {
+export function useUpdateToolbarHandler(callback: (selection: BaseSelection) => void) {
   const { activeEditor } = useToolbarContext();
   const callbackRef = useRef(callback);
   callbackRef.current = callback;

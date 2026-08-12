@@ -1,9 +1,6 @@
 import { TextNode, defineExtension } from "lexical";
 
-import {
-  $createEmojiNode,
-  EmojiNode,
-} from "@/components/emoji-node";
+import { $createEmojiNode, EmojiNode } from "@/components/emoji-node";
 
 const emojis: Map<string, [string, string]> = new Map([
   [":)", ["emoji happysmile", "🙂"]],
@@ -52,6 +49,5 @@ function $textNodeTransform(node: TextNode): void {
 export const EmojisExtension = defineExtension({
   name: "@shadcn-editor/Emojis",
   nodes: [EmojiNode],
-  register: (editor) =>
-    editor.registerNodeTransform(TextNode, $textNodeTransform),
+  register: (editor) => editor.registerNodeTransform(TextNode, $textNodeTransform),
 });

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "appRoot": "C:\\Users\\tenuk\\projects\\aloysius-web\\apps\\web",
+  "repoRoot": "C:\\Users\\tenuk\\projects\\aloysius-web",
+  "contextRoot": "C:\\Users\\tenuk\\projects\\aloysius-web\\apps\\web",
+  "sessionRoot": "C:\\Users\\tenuk\\projects\\aloysius-web\\apps\\web\\.impeccable\\live",
+  "productPath": "C:\\Users\\tenuk\\projects\\aloysius-web\\apps\\web\\PRODUCT.md",
+  "designPath": "C:\\Users\\tenuk\\projects\\aloysius-web\\apps\\web\\DESIGN.md",
+  "resolvedFrom": "target:apps\\web"
+}

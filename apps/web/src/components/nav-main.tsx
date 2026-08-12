@@ -2,7 +2,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@aloysius-web/ui/components/collapsible"
+} from "@aloysius-web/ui/components/collapsible";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -12,24 +12,24 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@aloysius-web/ui/components/sidebar"
-import { IconChevronRight } from "@tabler/icons-react"
+} from "@aloysius-web/ui/components/sidebar";
+import { IconChevronRight } from "@tabler/icons-react";
 
 export function NavMain({
   items,
   label = "Platform",
 }: {
   items: {
-    title: string
-    url: string
-    icon?: React.ReactNode
-    isActive?: boolean
+    title: string;
+    url: string;
+    icon?: React.ReactNode;
+    isActive?: boolean;
     items?: {
-      title: string
-      url: string
-    }[]
-  }[]
-  label?: string
+      title: string;
+      url: string;
+    }[];
+  }[];
+  label?: string;
 }) {
   return (
     <SidebarGroup>
@@ -43,9 +43,7 @@ export function NavMain({
               className="group/collapsible"
               render={<SidebarMenuItem />}
             >
-              <CollapsibleTrigger
-                render={<SidebarMenuButton tooltip={item.title} />}
-              >
+              <CollapsibleTrigger render={<SidebarMenuButton tooltip={item.title} />}>
                 {item.icon}
                 <span>{item.title}</span>
                 <IconChevronRight className="ml-auto transition-transform duration-200 group-data-open/collapsible:rotate-90" />
@@ -69,9 +67,9 @@ export function NavMain({
                 <span>{item.title}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          )
+          ),
         )}
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }

@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import type { Editor } from "@tiptap/react"
+import * as React from "react";
+import type { Editor } from "@tiptap/react";
 import {
   IconBold,
   IconItalic,
@@ -26,28 +26,28 @@ import {
   IconCodeDots,
   IconClearFormatting,
   IconPhoto,
-} from "@tabler/icons-react"
-import { ToolbarButton } from "./toolbar-button"
-import { Separator } from "@aloysius-web/ui/components/separator"
+} from "@tabler/icons-react";
+import { ToolbarButton } from "./toolbar-button";
+import { Separator } from "@aloysius-web/ui/components/separator";
 
 interface ToolbarProps {
-  editor: Editor | null
-  onImageUpload?: (file: File) => Promise<string>
+  editor: Editor | null;
+  onImageUpload?: (file: File) => Promise<string>;
 }
 
 function LinkButton({ editor }: { editor: Editor }) {
-  const [showInput, setShowInput] = React.useState(false)
-  const [url, setUrl] = React.useState("")
+  const [showInput, setShowInput] = React.useState(false);
+  const [url, setUrl] = React.useState("");
 
   const handleSetLink = () => {
     if (url) {
-      editor.chain().focus().setLink({ href: url }).run()
+      editor.chain().focus().setLink({ href: url }).run();
     } else {
-      editor.chain().focus().unsetLink().run()
+      editor.chain().focus().unsetLink().run();
     }
-    setShowInput(false)
-    setUrl("")
-  }
+    setShowInput(false);
+    setUrl("");
+  };
 
   if (showInput) {
     return (
@@ -59,8 +59,8 @@ function LinkButton({ editor }: { editor: Editor }) {
           placeholder="https://..."
           className="h-7 w-32 rounded border border-input bg-background px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
           onKeyDown={(e) => {
-            if (e.key === "Enter") handleSetLink()
-            if (e.key === "Escape") setShowInput(false)
+            if (e.key === "Enter") handleSetLink();
+            if (e.key === "Escape") setShowInput(false);
           }}
           autoFocus
         />
@@ -68,7 +68,7 @@ function LinkButton({ editor }: { editor: Editor }) {
           <span className="text-xs">OK</span>
         </ToolbarButton>
       </div>
-    )
+    );
   }
 
   return (
@@ -76,35 +76,41 @@ function LinkButton({ editor }: { editor: Editor }) {
       isActive={editor.isActive("link")}
       tooltip="Link"
       onClick={() => {
-        const href = editor.getAttributes("link").href as string
-        setUrl(href ?? "")
-        setShowInput(true)
+        const href = editor.getAttributes("link").href as string;
+        setUrl(href ?? "");
+        setShowInput(true);
       }}
     >
       <IconLink className="size-4" />
     </ToolbarButton>
-  )
+  );
 }
 
-function ImageButton({ editor, onImageUpload }: { editor: Editor; onImageUpload?: (file: File) => Promise<string> }) {
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
-  const [uploading, setUploading] = React.useState(false)
+function ImageButton({
+  editor,
+  onImageUpload,
+}: {
+  editor: Editor;
+  onImageUpload?: (file: File) => Promise<string>;
+}) {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = React.useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !onImageUpload) return
+    const file = e.target.files?.[0];
+    if (!file || !onImageUpload) return;
 
-    setUploading(true)
+    setUploading(true);
     try {
-      const url = await onImageUpload(file)
-      editor.chain().focus().setImage({ src: url }).run()
+      const url = await onImageUpload(file);
+      editor.chain().focus().setImage({ src: url }).run();
     } catch (err) {
-      console.error("Image upload failed:", err)
+      console.error("Image upload failed:", err);
     } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ""
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
-  }
+  };
 
   return (
     <>
@@ -123,11 +129,11 @@ function ImageButton({ editor, onImageUpload }: { editor: Editor; onImageUpload?
         <IconPhoto className="size-4" />
       </ToolbarButton>
     </>
-  )
+  );
 }
 
 export function Toolbar({ editor, onImageUpload }: ToolbarProps) {
-  if (!editor) return null
+  if (!editor) return null;
 
   return (
     <div className="border-border flex h-10 shrink-0 flex-wrap items-center gap-0.5 overflow-x-auto border-b px-2 py-1">
@@ -303,5 +309,5 @@ export function Toolbar({ editor, onImageUpload }: ToolbarProps) {
         <IconArrowForwardUp className="size-4" />
       </ToolbarButton>
     </div>
-  )
+  );
 }

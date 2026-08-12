@@ -7,7 +7,16 @@ import { protectedProcedure, publicProcedure } from "../index";
 import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 
 const sortDirection = z.enum(["asc", "desc"]);
-const studentWorkCategory = z.enum(["film", "art", "music", "writing", "design", "photography", "code", "other"]);
+const studentWorkCategory = z.enum([
+  "film",
+  "art",
+  "music",
+  "writing",
+  "design",
+  "photography",
+  "code",
+  "other",
+]);
 
 export const studentWorksRouter = {
   list: publicProcedure
@@ -20,7 +29,7 @@ export const studentWorksRouter = {
         search: z.string().optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
         category: studentWorkCategory.optional(),
-      })
+      }),
     )
     .handler(async ({ input }) => {
       const db = createDb();
@@ -53,11 +62,7 @@ export const studentWorksRouter = {
                   : studentWorks.createdAt;
       const orderFn = sortDir === "asc" ? asc : desc;
 
-      const [{ total }] = await db
-        .select({ total: count() })
-        .from(studentWorks)
-        .where(where)
-        .all();
+      const [{ total }] = await db.select({ total: count() }).from(studentWorks).where(where).all();
 
       const rows = await db
         .select()
@@ -98,9 +103,10 @@ export const studentWorksRouter = {
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = "id" in input
-        ? await db.select().from(studentWorks).where(eq(studentWorks.id, input.id)).get()
-        : await db.select().from(studentWorks).where(eq(studentWorks.slug, input.slug)).get();
+      const row =
+        "id" in input
+          ? await db.select().from(studentWorks).where(eq(studentWorks.id, input.id)).get()
+          : await db.select().from(studentWorks).where(eq(studentWorks.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Student work not found" });
@@ -140,7 +146,7 @@ export const studentWorksRouter = {
         contentUrl: z.string().optional(),
         tags: z.array(z.string()).optional(),
         publishNow: z.boolean().optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -149,7 +155,9 @@ export const studentWorksRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
-      const slug = input.slug ? await generateUniqueSlug(studentWorks, input.slug) : await generateUniqueSlug(studentWorks, input.title);
+      const slug = input.slug
+        ? await generateUniqueSlug(studentWorks, input.slug)
+        : await generateUniqueSlug(studentWorks, input.title);
 
       const db = createDb();
       const record = await db
@@ -209,7 +217,7 @@ export const studentWorksRouter = {
         tags: z.array(z.string()).optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
         publishNow: z.boolean().optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -304,10 +312,7 @@ export const studentWorksRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Student work not found" });
       }
 
-      await db
-        .delete(studentWorks)
-        .where(eq(studentWorks.id, input.id))
-        .run();
+      await db.delete(studentWorks).where(eq(studentWorks.id, input.id)).run();
 
       return { success: true };
     }),

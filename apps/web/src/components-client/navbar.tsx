@@ -10,6 +10,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const navLinks = [
   { label: "About Us", to: "/about" },
+  { label: "Admissions", to: "/admissions" },
   { label: "Student Works", to: "/student-works" },
   { label: "Achievements", to: "/achievements" },
   { label: "Gallery", to: "/gallery" },

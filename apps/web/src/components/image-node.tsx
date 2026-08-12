@@ -141,10 +141,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     };
   }
 
-  setWidthAndHeight(
-    width: "inherit" | number,
-    height: "inherit" | number,
-  ): this {
+  setWidthAndHeight(width: "inherit" | number, height: "inherit" | number): this {
     const writable = this.getWritable();
     writable.__width = width;
     writable.__height = height;
@@ -197,13 +194,9 @@ export function $createImageNode({
   width,
   key,
 }: ImagePayload): ImageNode {
-  return $applyNodeReplacement(
-    new ImageNode(src, altText, maxWidth, width, height, key),
-  );
+  return $applyNodeReplacement(new ImageNode(src, altText, maxWidth, width, height, key));
 }
 
-export function $isImageNode(
-  node: LexicalNode | null | undefined,
-): node is ImageNode {
+export function $isImageNode(node: LexicalNode | null | undefined): node is ImageNode {
   return node instanceof ImageNode;
 }

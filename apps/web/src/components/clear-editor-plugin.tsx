@@ -14,11 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@aloysius-web/ui/components/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@aloysius-web/ui/components/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@aloysius-web/ui/components/tooltip";
 
 export function ClearEditorActionPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -26,24 +22,36 @@ export function ClearEditorActionPlugin() {
   return (
     <Dialog>
       <Tooltip disableHoverableContent>
-        <TooltipTrigger render={<DialogTrigger render={<Button size={"sm"} variant={"ghost"} className="p-2" />} />}><Trash2Icon className="size-4" /></TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <DialogTrigger render={<Button size={"sm"} variant={"ghost"} className="p-2" />} />
+          }
+        >
+          <Trash2Icon className="size-4" />
+        </TooltipTrigger>
         <TooltipContent>Clear Editor</TooltipContent>
       </Tooltip>
 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Clear Editor</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to clear the editor?
-          </DialogDescription>
+          <DialogDescription>Are you sure you want to clear the editor?</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
 
-          <DialogClose render={<Button variant="destructive" onClick={() => {
-                                  editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
-                                }} />}>Clear
-                              </DialogClose>
+          <DialogClose
+            render={
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+                }}
+              />
+            }
+          >
+            Clear
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>

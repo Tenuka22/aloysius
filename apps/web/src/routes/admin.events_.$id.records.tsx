@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar"
-import { Separator } from "@aloysius-web/ui/components/separator"
-import { Button } from "@aloysius-web/ui/components/button"
+import { useState } from "react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
+import { Separator } from "@aloysius-web/ui/components/separator";
+import { Button } from "@aloysius-web/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -13,78 +13,89 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@aloysius-web/ui/components/dialog"
+} from "@aloysius-web/ui/components/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@aloysius-web/ui/components/select"
-import { Input } from "@aloysius-web/ui/components/input"
-import { Textarea } from "@aloysius-web/ui/components/textarea"
-import { IconPlus, IconTrash, IconCheck, IconClock, IconX } from "@tabler/icons-react"
-import { client } from "@/utils/orpc"
-import { toast } from "sonner"
+} from "@aloysius-web/ui/components/select";
+import { Input } from "@aloysius-web/ui/components/input";
+import { Textarea } from "@aloysius-web/ui/components/textarea";
+import { IconPlus, IconTrash, IconCheck, IconClock, IconX } from "@tabler/icons-react";
+import { client } from "@/utils/orpc";
+import { toast } from "sonner";
 
 type EventRecord = {
-  id: string
-  eventId: string
-  outcome: "success" | "postponed" | "failed"
-  reason: string | null
-  notes: string | null
-  recordedAt: string
-  createdAt: string
-}
+  id: string;
+  eventId: string;
+  outcome: "success" | "postponed" | "failed";
+  reason: string | null;
+  notes: string | null;
+  recordedAt: string;
+  createdAt: string;
+};
 
 const outcomeConfig = {
-  success: { label: "Success", icon: IconCheck, color: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-  postponed: { label: "Postponed", icon: IconClock, color: "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
-  failed: { label: "Failed", icon: IconX, color: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
-}
+  success: {
+    label: "Success",
+    icon: IconCheck,
+    color: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  },
+  postponed: {
+    label: "Postponed",
+    icon: IconClock,
+    color: "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  },
+  failed: {
+    label: "Failed",
+    icon: IconX,
+    color: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  },
+};
 
 function AddRecordDialog({
   open,
   onOpenChange,
   eventId,
 }: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  eventId: string
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  eventId: string;
 }) {
-  const queryClient = useQueryClient()
-  const [outcome, setOutcome] = useState<"success" | "postponed" | "failed">("success")
-  const [reason, setReason] = useState("")
-  const [notes, setNotes] = useState("")
+  const queryClient = useQueryClient();
+  const [outcome, setOutcome] = useState<"success" | "postponed" | "failed">("success");
+  const [reason, setReason] = useState("");
+  const [notes, setNotes] = useState("");
 
   const addRecord = useMutation({
-    mutationFn: () => client.events.addRecord({
-      eventId,
-      outcome,
-      reason: reason || undefined,
-      notes: notes || undefined,
-    }),
+    mutationFn: () =>
+      client.events.addRecord({
+        eventId,
+        outcome,
+        reason: reason || undefined,
+        notes: notes || undefined,
+      }),
     onSuccess: () => {
-      toast.success("Record added")
-      queryClient.invalidateQueries({ queryKey: ["events", eventId, "records"] })
-      onOpenChange(false)
-      setOutcome("success")
-      setReason("")
-      setNotes("")
+      toast.success("Record added");
+      queryClient.invalidateQueries({ queryKey: ["events", eventId, "records"] });
+      onOpenChange(false);
+      setOutcome("success");
+      setReason("");
+      setNotes("");
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Event Record</DialogTitle>
-          <DialogDescription>
-            Record the outcome of this event.
-          </DialogDescription>
+          <DialogDescription>Record the outcome of this event.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -102,7 +113,9 @@ function AddRecordDialog({
           </div>
           {(outcome === "failed" || outcome === "postponed") && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">Reason {outcome === "failed" ? "(required)" : ""}</label>
+              <label className="text-sm font-medium">
+                Reason {outcome === "failed" ? "(required)" : ""}
+              </label>
               <Input
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
@@ -133,39 +146,39 @@ function AddRecordDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 export const Route = createFileRoute("/admin/events_/$id/records")({
   component: EventRecordsPage,
-})
+});
 
 function EventRecordsPage() {
-  const { id } = Route.useParams()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const [addOpen, setAddOpen] = useState(false)
+  const { id } = Route.useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [addOpen, setAddOpen] = useState(false);
 
   const { data: event } = useQuery({
     queryKey: ["events", id],
     queryFn: () => client.events.get({ id }),
-  })
+  });
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["events", id, "records"],
     queryFn: () => client.events.listRecords({ eventId: id }),
-  })
+  });
 
   const deleteRecord = useMutation({
     mutationFn: (recordId: string) => client.events.deleteRecord({ id: recordId }),
     onSuccess: () => {
-      toast.success("Record deleted")
-      queryClient.invalidateQueries({ queryKey: ["events", id, "records"] })
+      toast.success("Record deleted");
+      queryClient.invalidateQueries({ queryKey: ["events", id, "records"] });
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   return (
     <div className="flex flex-col">
@@ -200,19 +213,18 @@ function EventRecordsPage() {
         ) : (
           <div className="space-y-3">
             {records.map((record: EventRecord) => {
-              const config = outcomeConfig[record.outcome]
-              const Icon = config.icon
+              const config = outcomeConfig[record.outcome];
+              const Icon = config.icon;
               return (
-                <div
-                  key={record.id}
-                  className="flex items-start gap-4 p-4 rounded-lg border"
-                >
+                <div key={record.id} className="flex items-start gap-4 p-4 rounded-lg border">
                   <div className={`shrink-0 p-2 rounded-full ${config.color}`}>
                     <Icon className="size-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${config.color}`}>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${config.color}`}
+                      >
                         {config.label}
                       </span>
                       <time className="text-xs text-muted-foreground">
@@ -236,12 +248,12 @@ function EventRecordsPage() {
                     <IconTrash className="size-3" />
                   </Button>
                 </div>
-              )
+              );
             })}
           </div>
         )}
       </div>
       <AddRecordDialog open={addOpen} onOpenChange={setAddOpen} eventId={id} />
     </div>
-  )
+  );
 }

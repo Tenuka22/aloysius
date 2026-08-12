@@ -32,9 +32,7 @@ type TweetComponentProps = Readonly<{
   tweetID: string;
 }>;
 
-function $convertTweetElement(
-  domNode: HTMLDivElement,
-): DOMConversionOutput | null {
+function $convertTweetElement(domNode: HTMLDivElement): DOMConversionOutput | null {
   const id = domNode.getAttribute("data-lexical-tweet-id");
   if (id) {
     const node = $createTweetNode(id);
@@ -101,16 +99,9 @@ function TweetComponent({
   }, [createTweet, onError, tweetID]);
 
   return (
-    <BlockWithAlignableContents
-      className={className}
-      format={format}
-      nodeKey={nodeKey}
-    >
+    <BlockWithAlignableContents className={className} format={format} nodeKey={nodeKey}>
       {isTweetLoading ? loadingComponent : null}
-      <div
-        style={{ display: "inline-block", width: "550px" }}
-        ref={containerRef}
-      />
+      <div style={{ display: "inline-block", width: "550px" }} ref={containerRef} />
     </BlockWithAlignableContents>
   );
 }
@@ -209,8 +200,6 @@ export function $createTweetNode(tweetID: string): TweetNode {
   return new TweetNode(tweetID);
 }
 
-export function $isTweetNode(
-  node: TweetNode | LexicalNode | null | undefined,
-): node is TweetNode {
+export function $isTweetNode(node: TweetNode | LexicalNode | null | undefined): node is TweetNode {
   return node instanceof TweetNode;
 }

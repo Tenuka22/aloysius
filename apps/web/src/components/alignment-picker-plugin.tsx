@@ -1,11 +1,6 @@
 import { FORMAT_ELEMENT_COMMAND } from "lexical";
 
-import {
-  AlignCenterIcon,
-  AlignJustifyIcon,
-  AlignLeftIcon,
-  AlignRightIcon,
-} from "lucide-react";
+import { AlignCenterIcon, AlignJustifyIcon, AlignLeftIcon, AlignRightIcon } from "lucide-react";
 
 import { ComponentPickerOption } from "@/components/component-picker-option";
 
@@ -17,16 +12,11 @@ export function AlignmentPickerPlugin({
   return new ComponentPickerOption(`Align ${alignment}`, {
     icon: <AlignIcons alignment={alignment} />,
     keywords: ["align", "justify", alignment],
-    onSelect: (_, editor) =>
-      editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, alignment),
+    onSelect: (_, editor) => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, alignment),
   });
 }
 
-function AlignIcons({
-  alignment,
-}: {
-  alignment: "left" | "center" | "right" | "justify";
-}) {
+function AlignIcons({ alignment }: { alignment: "left" | "center" | "right" | "justify" }) {
   switch (alignment) {
     case "left":
       return <AlignLeftIcon className="size-4" />;

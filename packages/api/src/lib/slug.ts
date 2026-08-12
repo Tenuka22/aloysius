@@ -12,15 +12,15 @@ function toSlug(text: string): string {
 }
 
 type TableWithSlug = {
-  slug: any
-  id: any
-  [key: string]: any
-}
+  slug: any;
+  id: any;
+  [key: string]: any;
+};
 
 export async function generateUniqueSlug(
   table: TableWithSlug,
   title: string,
-  excludeId?: string
+  excludeId?: string,
 ): Promise<string> {
   const db = createDb();
   const base = toSlug(title);
@@ -47,7 +47,7 @@ export async function generateUniqueSlug(
 export async function checkSlugUnique(
   table: TableWithSlug,
   slug: string,
-  excludeId?: string
+  excludeId?: string,
 ): Promise<{ unique: boolean; suggestion?: string }> {
   const db = createDb();
   const existing = await db

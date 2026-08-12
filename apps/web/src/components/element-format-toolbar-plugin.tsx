@@ -56,11 +56,7 @@ const ELEMENT_FORMAT_OPTIONS: {
   },
 } as const;
 
-export function ElementFormatToolbarPlugin({
-  separator = true,
-}: {
-  separator?: boolean;
-}) {
+export function ElementFormatToolbarPlugin({ separator = true }: { separator?: boolean }) {
   const { activeEditor } = useToolbarContext();
   const [elementFormat, setElementFormat] = useState<ElementFormatType>("left");
 
@@ -99,10 +95,7 @@ export function ElementFormatToolbarPlugin({
     } else if (value === "outdent") {
       activeEditor.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined);
     } else {
-      activeEditor.dispatchCommand(
-        FORMAT_ELEMENT_COMMAND,
-        value as ElementFormatType,
-      );
+      activeEditor.dispatchCommand(FORMAT_ELEMENT_COMMAND, value as ElementFormatType);
     }
   };
 
@@ -135,21 +128,11 @@ export function ElementFormatToolbarPlugin({
         defaultValue={elementFormat}
         onValueChange={handleValueChange}
       >
-        <ToggleGroupItem
-          value="outdent"
-          aria-label="Outdent"
-          variant={"outline"}
-          size="sm"
-        >
+        <ToggleGroupItem value="outdent" aria-label="Outdent" variant={"outline"} size="sm">
           <IndentDecreaseIcon className="size-4" />
         </ToggleGroupItem>
 
-        <ToggleGroupItem
-          value="indent"
-          variant={"outline"}
-          aria-label="Indent"
-          size="sm"
-        >
+        <ToggleGroupItem value="indent" variant={"outline"} aria-label="Indent" size="sm">
           <IndentIncreaseIcon className="size-4" />
         </ToggleGroupItem>
       </ToggleGroup>

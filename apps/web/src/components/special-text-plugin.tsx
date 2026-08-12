@@ -5,10 +5,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import type { LexicalEditor } from "lexical";
 import { TextNode } from "lexical";
 
-import {
-  $createSpecialTextNode,
-  SpecialTextNode,
-} from "@/components/special-text-node";
+import { $createSpecialTextNode, SpecialTextNode } from "@/components/special-text-node";
 
 const BRACKETED_TEXT_REGEX = /\[([^\[\]]+)\]/; // eslint-disable-line
 
@@ -50,9 +47,7 @@ function $textNodeTransform(node: TextNode): void {
 function useTextTransformation(editor: LexicalEditor): void {
   useEffect(() => {
     if (!editor.hasNodes([SpecialTextNode])) {
-      throw new Error(
-        "SpecialTextPlugin: SpecialTextNode not registered on editor",
-      );
+      throw new Error("SpecialTextPlugin: SpecialTextNode not registered on editor");
     }
 
     return editor.registerNodeTransform(TextNode, $textNodeTransform);

@@ -1,11 +1,4 @@
-import {
-  type JSX,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import * as ReactDOM from "react-dom";
 
@@ -54,20 +47,14 @@ export function DraggableBlockPlugin({
 }: {
   anchorElem: HTMLElement | null;
   baseOptions?: Array<ComponentPickerOption>;
-  dynamicOptionsFn?: ({
-    queryString,
-  }: {
-    queryString: string;
-  }) => Array<ComponentPickerOption>;
+  dynamicOptionsFn?: ({ queryString }: { queryString: string }) => Array<ComponentPickerOption>;
 }): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
   const [modal, showModal] = useEditorModal();
   const menuRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const targetLineRef = useRef<HTMLDivElement>(null);
-  const [draggableElement, setDraggableElement] = useState<HTMLElement | null>(
-    null,
-  );
+  const [draggableElement, setDraggableElement] = useState<HTMLElement | null>(null);
   const [pickerState, setPickerState] = useState<PickerState | null>(null);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [queryString, setQueryString] = useState("");
@@ -86,17 +73,14 @@ export function DraggableBlockPlugin({
       ...(dynamicOptionsFn?.({ queryString }) ?? []),
       ...baseOptions.filter(
         (option) =>
-          regex.test(option.title) ||
-          option.keywords.some((keyword) => regex.test(keyword)),
+          regex.test(option.title) || option.keywords.some((keyword) => regex.test(keyword)),
       ),
     ];
   }, [baseOptions, dynamicOptionsFn, queryString]);
 
   useEffect(() => {
     if (!isPickerOpen) return;
-    setHighlightedIndex((current) =>
-      Math.min(current, Math.max(options.length - 1, 0)),
-    );
+    setHighlightedIndex((current) => Math.min(current, Math.max(options.length - 1, 0)));
   }, [isPickerOpen, options.length]);
 
   useEffect(() => {
@@ -239,9 +223,7 @@ export function DraggableBlockPlugin({
                         }}
                         onMouseEnter={() => setHighlightedIndex(i)}
                         className={`flex items-center gap-2 ${
-                          highlightedIndex === i
-                            ? "bg-accent"
-                            : "!bg-transparent"
+                          highlightedIndex === i ? "bg-accent" : "!bg-transparent"
                         }`}
                       >
                         {option.icon}

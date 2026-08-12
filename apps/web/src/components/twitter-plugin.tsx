@@ -2,20 +2,11 @@ import { type JSX, useEffect } from "react";
 
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $insertNodeToNearestRoot } from "@lexical/utils";
-import {
-  COMMAND_PRIORITY_EDITOR,
-  type LexicalCommand,
-  createCommand,
-} from "lexical";
+import { COMMAND_PRIORITY_EDITOR, type LexicalCommand, createCommand } from "lexical";
 
-import {
-  $createTweetNode,
-  TweetNode,
-} from "@/components/tweet-node";
+import { $createTweetNode, TweetNode } from "@/components/tweet-node";
 
-export const INSERT_TWEET_COMMAND: LexicalCommand<string> = createCommand(
-  "INSERT_TWEET_COMMAND",
-);
+export const INSERT_TWEET_COMMAND: LexicalCommand<string> = createCommand("INSERT_TWEET_COMMAND");
 
 export function TwitterPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();

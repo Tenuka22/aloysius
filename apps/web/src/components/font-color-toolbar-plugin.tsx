@@ -2,15 +2,10 @@ import { useCallback, useState } from "react";
 
 const getThemeForegroundColor = () => {
   if (typeof window === "undefined") return "#000";
-  return (
-    getComputedStyle(document.documentElement).color || "#000"
-  );
+  return getComputedStyle(document.documentElement).color || "#000";
 };
 
-import {
-  $getSelectionStyleValueForProperty,
-  $patchStyleText,
-} from "@lexical/selection";
+import { $getSelectionStyleValueForProperty, $patchStyleText } from "@lexical/selection";
 import { $getSelection, $isRangeSelection, type BaseSelection } from "lexical";
 
 import { BaselineIcon } from "lucide-react";
@@ -38,11 +33,7 @@ export function FontColorToolbarPlugin() {
   const $updateToolbar = (selection: BaseSelection) => {
     if ($isRangeSelection(selection)) {
       setFontColor(
-        $getSelectionStyleValueForProperty(
-          selection,
-          "color",
-          getThemeForegroundColor(),
-        ),
+        $getSelectionStyleValueForProperty(selection, "color", getThemeForegroundColor()),
       );
     }
   };
@@ -82,7 +73,9 @@ export function FontColorToolbarPlugin() {
         }
       }}
     >
-      <ColorPickerTrigger render={<Button variant="outline" size="icon-sm" />}><BaselineIcon className="size-4" /></ColorPickerTrigger>
+      <ColorPickerTrigger render={<Button variant="outline" size="icon-sm" />}>
+        <BaselineIcon className="size-4" />
+      </ColorPickerTrigger>
       <ColorPickerContent>
         <ColorPickerArea />
         <div className="flex items-center gap-2">

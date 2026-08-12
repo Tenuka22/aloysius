@@ -8,7 +8,7 @@ const DEFAULTS: Record<string, string> = {
   hero_badge: "Est. 1862",
   hero_title: "Where Excellence\nIs Made",
   hero_subtitle:
-    "St. Aloysius' College, Galle — nurturing minds, building character, and inspiring generations of leaders since 1862.",
+    "St. Aloysius' College, Galle - nurturing minds, building character, and inspiring generations of leaders since 1862.",
   hero_cta1_text: "Explore Our College",
   hero_cta1_url: "/about",
   hero_cta2_text: "Student Works",
@@ -73,7 +73,7 @@ export function Hero({
   return (
     <section ref={sectionRef}>
       <div
-        className="relative bg-[#0a1f0a] text-white overflow-hidden"
+        className="relative bg-[#0a1f0a] text-white size-full flex items-center justify-center"
         style={{ minHeight: "calc(100svh - 3.5rem)" }}
       >
         {/* Subtle texture overlay */}
@@ -85,7 +85,7 @@ export function Hero({
           }}
         />
 
-        <div className="relative py-20 sm:py-28 lg:py-36 px-4 sm:px-6 lg:px-8">
+        <div className="py-20 sm:py-28 lg:py-36 px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
             {/* Eyebrow */}
             <div className="inline-flex items-center gap-2 text-[#c9a227]/80 text-xs sm:text-sm font-medium tracking-widest uppercase mb-6">

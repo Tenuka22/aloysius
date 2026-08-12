@@ -17,17 +17,12 @@ interface Position {
   right: string;
 }
 
-function CodeActionMenuContainer({
-  anchorElem,
-}: {
-  anchorElem: HTMLElement;
-}): JSX.Element {
+function CodeActionMenuContainer({ anchorElem }: { anchorElem: HTMLElement }): JSX.Element {
   const [editor] = useLexicalComposerContext();
 
   const [lang, setLang] = useState("");
   const [isShown, setShown] = useState<boolean>(false);
-  const [shouldListenMouseMove, setShouldListenMouseMove] =
-    useState<boolean>(false);
+  const [shouldListenMouseMove, setShouldListenMouseMove] = useState<boolean>(false);
   const [position, setPosition] = useState<Position>({
     right: "0",
     top: "0",
@@ -66,8 +61,7 @@ function CodeActionMenuContainer({
       });
 
       if (codeNode) {
-        const { y: editorElemY, right: editorElemRight } =
-          anchorElem.getBoundingClientRect();
+        const { y: editorElemY, right: editorElemRight } = anchorElem.getBoundingClientRect();
         const { y, right } = codeDOMNode.getBoundingClientRect();
         setLang(_lang);
         setShown(true);
@@ -121,9 +115,7 @@ function CodeActionMenuContainer({
     );
   }, [editor]);
 
-  const codeFriendlyName = getCodeLanguageOptions().find(
-    ([key]) => key === lang,
-  )?.[1];
+  const codeFriendlyName = getCodeLanguageOptions().find(([key]) => key === lang)?.[1];
 
   return (
     <>
@@ -144,12 +136,9 @@ function getMouseInfo(event: MouseEvent): {
   const target = event.target;
 
   if (isHTMLElement(target)) {
-    const codeDOMNode = target.closest<HTMLElement>(
-      "code.PlaygroundEditorTheme__code",
-    );
+    const codeDOMNode = target.closest<HTMLElement>("code.PlaygroundEditorTheme__code");
     const isOutside = !(
-      codeDOMNode ||
-      target.closest<HTMLElement>("div.code-action-menu-container")
+      codeDOMNode || target.closest<HTMLElement>("div.code-action-menu-container")
     );
 
     return { codeDOMNode, isOutside };
@@ -167,8 +156,5 @@ export function CodeActionMenuPlugin({
     return null;
   }
 
-  return createPortal(
-    <CodeActionMenuContainer anchorElem={anchorElem} />,
-    anchorElem,
-  );
+  return createPortal(<CodeActionMenuContainer anchorElem={anchorElem} />, anchorElem);
 }

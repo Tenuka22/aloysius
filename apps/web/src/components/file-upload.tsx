@@ -1,13 +1,6 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  UploadIcon,
-  FileTextIcon,
-  ImageIcon,
-  FilmIcon,
-  MusicIcon,
-  FileIcon,
-} from "lucide-react";
+import { UploadIcon, FileTextIcon, ImageIcon, FilmIcon, MusicIcon, FileIcon } from "lucide-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
 import {
   Attachment,
@@ -114,42 +107,41 @@ export function FileUpload({
     },
   });
 
-  const uploadFile = useCallback(
-    async (entry: PendingFile) => {
+  const uploadFile = useCallback(async (entry: PendingFile) => {
+    setPendingFiles((prev) =>
+      prev.map((f) => (f.id === entry.id ? { ...f, state: "uploading" as const, progress: 0 } : f)),
+    );
+
+    try {
+      const result = await client.files.uploadFile(entry.file);
+
+      setPendingFiles((prev) => prev.filter((f) => f.id !== entry.id));
+
+      setUploadedFiles((prev) => [
+        ...prev,
+        {
+          id: result.id,
+          name: result.name,
+          size: result.size,
+          type: result.type,
+          url: result.url,
+          createdAt: result.createdAt,
+        },
+      ]);
+    } catch (err) {
       setPendingFiles((prev) =>
-        prev.map((f) => (f.id === entry.id ? { ...f, state: "uploading" as const, progress: 0 } : f))
+        prev.map((f) =>
+          f.id === entry.id
+            ? {
+                ...f,
+                state: "error" as const,
+                error: err instanceof Error ? err.message : "Upload failed",
+              }
+            : f,
+        ),
       );
-
-      try {
-        const result = await client.files.uploadFile(entry.file);
-
-        setPendingFiles((prev) =>
-          prev.filter((f) => f.id !== entry.id)
-        );
-
-        setUploadedFiles((prev) => [
-          ...prev,
-          {
-            id: result.id,
-            name: result.name,
-            size: result.size,
-            type: result.type,
-            url: result.url,
-            createdAt: result.createdAt,
-          },
-        ]);
-      } catch (err) {
-        setPendingFiles((prev) =>
-          prev.map((f) =>
-            f.id === entry.id
-              ? { ...f, state: "error" as const, error: err instanceof Error ? err.message : "Upload failed" }
-              : f
-          )
-        );
-      }
-    },
-    []
-  );
+    }
+  }, []);
 
   const handleFilesSelected = useCallback(
     (files: File[]) => {
@@ -166,16 +158,14 @@ export function FileUpload({
           const reader = new FileReader();
           reader.onload = (e) => {
             const preview = e.target?.result as string;
-            setPendingFiles((prev) =>
-              prev.map((f) => (f.id === entry.id ? { ...f, preview } : f))
-            );
+            setPendingFiles((prev) => prev.map((f) => (f.id === entry.id ? { ...f, preview } : f)));
           };
           reader.readAsDataURL(entry.file);
         }
         uploadFile(entry);
       }
     },
-    [uploadFile]
+    [uploadFile],
   );
 
   const handleRemove = useCallback(
@@ -192,7 +182,7 @@ export function FileUpload({
         deleteMutation.mutate(id);
       }
     },
-    [pendingFiles, allFiles, removeUploadedFile, deleteMutation]
+    [pendingFiles, allFiles, removeUploadedFile, deleteMutation],
   );
 
   const handleInfo = useCallback((file: PendingFile | UploadedFile) => {
@@ -210,11 +200,7 @@ export function FileUpload({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <Dropzone
-        onFilesSelected={handleFilesSelected}
-        maxFiles={maxFiles}
-        maxSize={maxSize}
-      />
+      <Dropzone onFilesSelected={handleFilesSelected} maxFiles={maxFiles} maxSize={maxSize} />
 
       <PreviewList
         files={pendingFiles}
@@ -223,11 +209,7 @@ export function FileUpload({
         onInfo={handleInfo}
       />
 
-      <InfoDialog
-        file={infoFile}
-        open={infoOpen}
-        onOpenChange={setInfoOpen}
-      />
+      <InfoDialog file={infoFile} open={infoOpen} onOpenChange={setInfoOpen} />
     </div>
   );
 }
@@ -269,7 +251,7 @@ export function Dropzone({
         onFilesSelected(valid);
       }
     },
-    [maxFiles, maxSize, crop, onFilesSelected]
+    [maxFiles, maxSize, crop, onFilesSelected],
   );
 
   const handleCropComplete = useCallback(
@@ -278,17 +260,34 @@ export function Dropzone({
       setCropOpen(false);
       onFilesSelected([file]);
     },
-    [onFilesSelected]
+    [onFilesSelected],
   );
 
-  const aspectClass = aspect === 16 / 9 ? "aspect-video" : aspect === 4 / 3 ? "aspect-[4/3]" : aspect === 1 ? "aspect-square" : ""
+  const aspectClass =
+    aspect === 16 / 9
+      ? "aspect-video"
+      : aspect === 4 / 3
+        ? "aspect-[4/3]"
+        : aspect === 1
+          ? "aspect-square"
+          : "";
 
   return (
     <>
       <div
-        onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-        onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
-        onDrop={(e) => { e.preventDefault(); setIsDragOver(false); handleFiles(e.dataTransfer.files); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          setIsDragOver(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragOver(false);
+          handleFiles(e.dataTransfer.files);
+        }}
         onClick={() => !disabled && inputRef.current?.click()}
         className={cn(
           "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-4 text-center transition-colors",
@@ -297,7 +296,7 @@ export function Dropzone({
             : "border-muted-foreground/25 hover:border-muted-foreground/50",
           disabled && "cursor-not-allowed opacity-50",
           aspectClass,
-          className
+          className,
         )}
       >
         <input
@@ -310,8 +309,7 @@ export function Dropzone({
         />
         <UploadIcon className="size-8 text-muted-foreground" />
         <div className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">Click to upload</span>{" "}
-          or drag and drop
+          <span className="font-medium text-foreground">Click to upload</span> or drag and drop
         </div>
         <div className="text-xs text-muted-foreground">
           Max {formatFileSize(maxSize)} per file, up to {maxFiles} files
@@ -345,12 +343,7 @@ function PreviewList({
   return (
     <div className="flex flex-wrap gap-3">
       {files.map((f) => (
-        <Attachment
-          key={f.id}
-          state={f.state}
-          orientation="vertical"
-          className="w-24"
-        >
+        <Attachment key={f.id} state={f.state} orientation="vertical" className="w-24">
           <AttachmentMedia variant={f.preview && isImageFile(f.file.type) ? "image" : "icon"}>
             {f.preview && isImageFile(f.file.type) ? (
               <img src={f.preview} alt={f.file.name} />
@@ -364,7 +357,7 @@ function PreviewList({
               {f.state === "uploading"
                 ? `Uploading ${f.progress ?? 0}%`
                 : f.state === "error"
-                  ? f.error ?? "Failed"
+                  ? (f.error ?? "Failed")
                   : f.state === "done"
                     ? "Uploaded"
                     : `${getExtension(f.file.name)} · ${formatFileSize(f.file.size)}`}
@@ -374,7 +367,10 @@ function PreviewList({
             {f.state === "done" && f.url && (
               <AttachmentAction
                 aria-label={`Info ${f.file.name}`}
-                onClick={(e) => { e.stopPropagation(); onInfo(f); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onInfo(f);
+                }}
                 className="bg-background/80 backdrop-blur hover:bg-background"
               >
                 <FileTextIcon />
@@ -382,7 +378,10 @@ function PreviewList({
             )}
             <AttachmentAction
               aria-label={`Remove ${f.file.name}`}
-              onClick={(e) => { e.stopPropagation(); onRemove(f.id); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(f.id);
+              }}
               className="bg-background/80 backdrop-blur hover:bg-destructive/20 hover:text-destructive"
             >
               <span className="sr-only">Remove</span>×
@@ -394,11 +393,7 @@ function PreviewList({
       {uploadedFiles.map((f) => (
         <Attachment key={f.id} state="done" orientation="vertical" className="w-24">
           <AttachmentMedia variant={isImageFile(f.type) ? "image" : "icon"}>
-            {isImageFile(f.type) ? (
-              <img src={f.url} alt={f.name} />
-            ) : (
-              getFileIcon(f.type)
-            )}
+            {isImageFile(f.type) ? <img src={f.url} alt={f.name} /> : getFileIcon(f.type)}
           </AttachmentMedia>
           <AttachmentContent>
             <AttachmentTitle>{f.name}</AttachmentTitle>
@@ -409,14 +404,20 @@ function PreviewList({
           <AttachmentActions>
             <AttachmentAction
               aria-label={`Info ${f.name}`}
-              onClick={(e) => { e.stopPropagation(); onInfo(f); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo(f);
+              }}
               className="bg-background/80 backdrop-blur hover:bg-background"
             >
               <FileTextIcon />
             </AttachmentAction>
             <AttachmentAction
               aria-label={`Remove ${f.name}`}
-              onClick={(e) => { e.stopPropagation(); onRemove(f.id); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(f.id);
+              }}
               className="bg-background/80 backdrop-blur hover:bg-destructive/20 hover:text-destructive"
             >
               <span className="sr-only">Remove</span>×
@@ -477,9 +478,7 @@ function InfoDialog({
             {createdAt && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Uploaded</span>
-                <span className="font-medium">
-                  {new Date(createdAt).toLocaleDateString()}
-                </span>
+                <span className="font-medium">{new Date(createdAt).toLocaleDateString()}</span>
               </div>
             )}
           </div>

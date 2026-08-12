@@ -23,11 +23,7 @@ import { Calendar } from "@aloysius-web/ui/components/calendar";
 import { Checkbox } from "@aloysius-web/ui/components/checkbox";
 import { Input } from "@aloysius-web/ui/components/input";
 import { Label } from "@aloysius-web/ui/components/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@aloysius-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@aloysius-web/ui/components/popover";
 import { cn } from "@aloysius-web/ui/lib/utils";
 
 import { $isDateTimeNode, type DateTimeNode } from "../nodes/date-time-node";
@@ -105,35 +101,38 @@ export default function DateTimeComponent({
         return;
       }
       const [hours, minutes] = timeValue.split(":").map((s) => parseInt(s, 10));
-      const newDate = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        hours,
-        minutes,
-      );
+      const newDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes);
       node.setDateTime(newDate);
       setSelected(newDate);
     });
   };
 
-  const displayLabel = dateTime
-    ? format(dateTime, includeTime ? "PPP p" : "PPP")
-    : null;
+  const displayLabel = dateTime ? format(dateTime, includeTime ? "PPP p" : "PPP") : null;
 
   return (
     <Popover>
-      <PopoverTrigger render={<Button variant="outline" data-empty={!dateTime} data-selected={isNodeSelected} className={cn(
-                      "inline-flex h-auto gap-1.5 px-2 py-0.5 text-sm font-normal",
-                      "data-[empty=true]:text-muted-foreground",
-                      "data-[selected=true]:ring-2 data-[selected=true]:ring-primary",
-                      textFormat & IS_BOLD && "font-bold",
-                      textFormat & IS_ITALIC && "italic",
-                      textFormat & IS_UNDERLINE && "underline",
-                      textFormat & IS_STRIKETHROUGH && "line-through",
-                      textFormat & IS_HIGHLIGHT &&
-                        "bg-accent text-accent-foreground hover:bg-accent/80",
-                    )} />}><CalendarIcon className="size-3.5" />{displayLabel ?? <span>Pick a date</span>}</PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            data-empty={!dateTime}
+            data-selected={isNodeSelected}
+            className={cn(
+              "inline-flex h-auto gap-1.5 px-2 py-0.5 text-sm font-normal",
+              "data-[empty=true]:text-muted-foreground",
+              "data-[selected=true]:ring-2 data-[selected=true]:ring-primary",
+              textFormat & IS_BOLD && "font-bold",
+              textFormat & IS_ITALIC && "italic",
+              textFormat & IS_UNDERLINE && "underline",
+              textFormat & IS_STRIKETHROUGH && "line-through",
+              textFormat & IS_HIGHLIGHT && "bg-accent text-accent-foreground hover:bg-accent/80",
+            )}
+          />
+        }
+      >
+        <CalendarIcon className="size-3.5" />
+        {displayLabel ?? <span>Pick a date</span>}
+      </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           captionLayout="dropdown"
@@ -153,10 +152,7 @@ export default function DateTimeComponent({
                 handleCheckedChange(checked === true)
               }
             />
-            <Label
-              htmlFor={`include-time-${nodeKey}`}
-              className="flex items-center gap-2"
-            >
+            <Label htmlFor={`include-time-${nodeKey}`} className="flex items-center gap-2">
               <Input
                 type="time"
                 value={timeValue}
@@ -164,9 +160,7 @@ export default function DateTimeComponent({
                 disabled={!includeTime}
                 className="h-7 w-28 px-1.5 text-xs"
               />
-              <span className="text-xs text-muted-foreground">
-                {userTimeZone}
-              </span>
+              <span className="text-xs text-muted-foreground">{userTimeZone}</span>
             </Label>
           </div>
         </div>

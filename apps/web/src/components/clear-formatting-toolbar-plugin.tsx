@@ -4,12 +4,7 @@ import { $isDecoratorBlockNode } from "@lexical/react/LexicalDecoratorBlockNode"
 import { $isHeadingNode, $isQuoteNode } from "@lexical/rich-text";
 import { $isTableSelection } from "@lexical/table";
 import { $getNearestBlockElementAncestorOrThrow } from "@lexical/utils";
-import {
-  $createParagraphNode,
-  $getSelection,
-  $isRangeSelection,
-  $isTextNode,
-} from "lexical";
+import { $createParagraphNode, $getSelection, $isRangeSelection, $isTextNode } from "lexical";
 
 import { EraserIcon } from "lucide-react";
 

@@ -1,11 +1,4 @@
-import {
-  type JSX,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { createPortal } from "react-dom";
 
@@ -67,9 +60,7 @@ function ComponentPickerMenu({
             );
           } else if (e.key === "ArrowDown") {
             e.preventDefault();
-            setHighlightedIndex(
-              selectedIndex !== null ? (selectedIndex + 1) % options.length : 0,
-            );
+            setHighlightedIndex(selectedIndex !== null ? (selectedIndex + 1) % options.length : 0);
           }
         }}
       >
@@ -87,9 +78,7 @@ function ComponentPickerMenu({
                 }}
                 className={cn(
                   "flex items-center gap-2",
-                  selectedIndex === index
-                    ? "bg-accent text-accent-foreground"
-                    : "bg-transparent!",
+                  selectedIndex === index ? "bg-accent text-accent-foreground" : "bg-transparent!",
                 )}
               >
                 {option.icon}
@@ -108,11 +97,7 @@ export function ComponentPickerMenuPlugin({
   dynamicOptionsFn,
 }: {
   baseOptions?: Array<ComponentPickerOption>;
-  dynamicOptionsFn?: ({
-    queryString,
-  }: {
-    queryString: string;
-  }) => Array<ComponentPickerOption>;
+  dynamicOptionsFn?: ({ queryString }: { queryString: string }) => Array<ComponentPickerOption>;
 }): JSX.Element {
   const [editor] = useLexicalComposerContext();
   const [modal, showModal] = useEditorModal();
@@ -133,8 +118,7 @@ export function ComponentPickerMenuPlugin({
       ...(dynamicOptionsFn?.({ queryString }) || []),
       ...baseOptions.filter(
         (option) =>
-          regex.test(option.title) ||
-          option.keywords.some((keyword) => regex.test(keyword)),
+          regex.test(option.title) || option.keywords.some((keyword) => regex.test(keyword)),
       ),
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps

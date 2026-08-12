@@ -10,7 +10,9 @@ type ClerkRequestContext = {
   r2PublicUrl: string;
 };
 
-function toClerkContextAuth(auth: { userId: string | null; sessionClaims?: Record<string, unknown> } | null): ClerkContextAuth | null {
+function toClerkContextAuth(
+  auth: { userId: string | null; sessionClaims?: Record<string, unknown> } | null,
+): ClerkContextAuth | null {
   if (!auth) return null;
   const role = (auth.sessionClaims as any)?.metadata?.role;
   return {

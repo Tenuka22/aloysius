@@ -8,20 +8,20 @@
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server"
   },
   "dependencies": {
-    "@orpc/openapi": "catalog:",
-    "@orpc/server": "catalog:",
-    "@orpc/zod": "catalog:",
     "@aloysius-web/api": "workspace:*",
     "@aloysius-web/db": "workspace:*",
     "@aloysius-web/env": "workspace:*",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
     "dotenv": "catalog:",
     "hono": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@aloysius-web/config": "workspace:*",
     "@cloudflare/workers-types": "catalog:",
     "@types/node": "catalog:",
-    "@aloysius-web/config": "workspace:*",
     "alchemy": "catalog:",
     "tsdown": "^0.22.3",
     "typescript": "catalog:",

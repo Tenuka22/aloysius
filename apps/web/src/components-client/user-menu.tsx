@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { Show, SignInButton, SignUpButton, UserButton, useAuth } from "@clerk/tanstack-react-start"
+import { Show, SignInButton, SignUpButton, UserButton, useAuth } from "@clerk/tanstack-react-start";
 
 function AdminLink() {
-  const { sessionClaims } = useAuth()
-  const role = (sessionClaims)?.metadata?.role
+  const { sessionClaims } = useAuth();
+  const role = sessionClaims?.metadata?.role;
 
-  if (role !== "admin") return null
+  if (role !== "admin") return null;
 
   return (
     <a
@@ -15,7 +15,7 @@ function AdminLink() {
     >
       Admin
     </a>
-  )
+  );
 }
 
 export function UserMenu() {
@@ -24,10 +24,7 @@ export function UserMenu() {
       <Show when="signed-in">
         <div className="flex items-center gap-2">
           <AdminLink />
-          <UserButton
-            afterSignOutUrl="/"
-            appearance={{ elements: { avatarBox: "size-8" } }}
-          />
+          <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "size-8" } }} />
         </div>
       </Show>
       <Show when="signed-out">
@@ -45,5 +42,5 @@ export function UserMenu() {
         </div>
       </Show>
     </>
-  )
+  );
 }

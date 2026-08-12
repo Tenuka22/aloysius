@@ -19,14 +19,7 @@ import {
   PASTE_COMMAND,
 } from "lexical";
 
-import {
-  Clipboard,
-  ClipboardType,
-  Copy,
-  Link2Off,
-  Scissors,
-  Trash2,
-} from "lucide-react";
+import { Clipboard, ClipboardType, Copy, Link2Off, Scissors, Trash2 } from "lucide-react";
 
 export function ContextMenuPlugin(): JSX.Element {
   const [editor] = useLexicalComposerContext();
@@ -122,9 +115,7 @@ export function ContextMenuPlugin(): JSX.Element {
           const selection = $getSelection();
           if ($isRangeSelection(selection)) {
             const currentNode = selection.anchor.getNode();
-            const ancestorNodeWithRootAsParent = currentNode
-              .getParents()
-              .at(-2);
+            const ancestorNodeWithRootAsParent = currentNode.getParents().at(-2);
 
             ancestorNodeWithRootAsParent?.remove();
           } else if ($isNodeSelection(selection)) {

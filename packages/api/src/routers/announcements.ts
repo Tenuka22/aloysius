@@ -19,7 +19,7 @@ export const announcementsRouter = {
         search: z.string().optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
         audience: z.enum(["all", "students", "parents", "staff", "alumni"]).optional(),
-      })
+      }),
     )
     .handler(async ({ input }) => {
       const db = createDb();
@@ -93,9 +93,10 @@ export const announcementsRouter = {
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = "id" in input
-        ? await db.select().from(announcements).where(eq(announcements.id, input.id)).get()
-        : await db.select().from(announcements).where(eq(announcements.slug, input.slug)).get();
+      const row =
+        "id" in input
+          ? await db.select().from(announcements).where(eq(announcements.id, input.id)).get()
+          : await db.select().from(announcements).where(eq(announcements.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
@@ -134,7 +135,7 @@ export const announcementsRouter = {
         publishNow: z.boolean().optional(),
         authorName: z.string().optional(),
         authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -143,7 +144,9 @@ export const announcementsRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
-      const slug = input.slug ? await generateUniqueSlug(announcements, input.slug) : await generateUniqueSlug(announcements, input.title);
+      const slug = input.slug
+        ? await generateUniqueSlug(announcements, input.slug)
+        : await generateUniqueSlug(announcements, input.title);
 
       const db = createDb();
       const record = await db
@@ -201,7 +204,7 @@ export const announcementsRouter = {
         publishNow: z.boolean().optional(),
         authorName: z.string().optional(),
         authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -290,10 +293,7 @@ export const announcementsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
       }
 
-      await db
-        .delete(announcements)
-        .where(eq(announcements.id, input.id))
-        .run();
+      await db.delete(announcements).where(eq(announcements.id, input.id)).run();
 
       return { success: true };
     }),

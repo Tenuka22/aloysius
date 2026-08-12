@@ -1,30 +1,30 @@
-"use client"
+"use client";
 
-import { useState, useRef } from "react"
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useState, useRef } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnFiltersState,
   type PaginationState,
   type SortingState,
-} from "@tanstack/react-table"
-import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar"
-import { Separator } from "@aloysius-web/ui/components/separator"
-import { Button } from "@aloysius-web/ui/components/button"
-import { Input } from "@aloysius-web/ui/components/input"
+} from "@tanstack/react-table";
+import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
+import { Separator } from "@aloysius-web/ui/components/separator";
+import { Button } from "@aloysius-web/ui/components/button";
+import { Input } from "@aloysius-web/ui/components/input";
 import {
   DataTable,
   DataTableColumnHeader,
   DataTablePagination,
   DataTableViewOptions,
-} from "@aloysius-web/ui/components/data-table"
+} from "@aloysius-web/ui/components/data-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@aloysius-web/ui/components/dropdown-menu"
+} from "@aloysius-web/ui/components/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -32,30 +32,39 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@aloysius-web/ui/components/dialog"
+} from "@aloysius-web/ui/components/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@aloysius-web/ui/components/select"
-import { IconPlus, IconDotsVertical, IconPencil, IconTrash, IconPhoto, IconSend, IconArchive, IconRotate } from "@tabler/icons-react"
-import { client } from "@/utils/orpc"
-import { toast } from "sonner"
-import type { ColumnDef } from "@tanstack/react-table"
+} from "@aloysius-web/ui/components/select";
+import {
+  IconPlus,
+  IconDotsVertical,
+  IconPencil,
+  IconTrash,
+  IconPhoto,
+  IconSend,
+  IconArchive,
+  IconRotate,
+} from "@tabler/icons-react";
+import { client } from "@/utils/orpc";
+import { toast } from "sonner";
+import type { ColumnDef } from "@tanstack/react-table";
 
 type GalleryItem = {
-  id: string
-  title: string
-  description: string | null
-  eventId: string | null
-  coverImage: string | null
-  tags: string[] | null
-  status: string
-  publishedAt: string | null
-  createdAt: string
-}
+  id: string;
+  title: string;
+  description: string | null;
+  eventId: string | null;
+  coverImage: string | null;
+  tags: string[] | null;
+  status: string;
+  publishedAt: string | null;
+  createdAt: string;
+};
 
 function DeleteDialog({
   open,
@@ -63,10 +72,10 @@ function DeleteDialog({
   onConfirm,
   title,
 }: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onConfirm: () => void
-  title: string
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  title: string;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,45 +96,41 @@ function DeleteDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 function ActionsMenu({ item }: { item: GalleryItem }) {
-  const queryClient = useQueryClient()
-  const [deleteOpen, setDeleteOpen] = useState(false)
+  const queryClient = useQueryClient();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: () => client.gallery.delete({ id: item.id }),
     onSuccess: () => {
-      toast.success("Gallery deleted")
-      queryClient.invalidateQueries({ queryKey: ["gallery"] })
-      setDeleteOpen(false)
+      toast.success("Gallery deleted");
+      queryClient.invalidateQueries({ queryKey: ["gallery"] });
+      setDeleteOpen(false);
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   const statusMutation = useMutation({
     mutationFn: (status: "draft" | "published" | "archived") =>
       client.gallery.update({ id: item.id, status, publishNow: status === "published" }),
     onSuccess: () => {
-      toast.success("Status updated")
-      queryClient.invalidateQueries({ queryKey: ["gallery"] })
+      toast.success("Status updated");
+      queryClient.invalidateQueries({ queryKey: ["gallery"] });
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button variant="ghost" size="icon-sm" />
-          }
-        >
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
           <IconDotsVertical className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -133,7 +138,9 @@ function ActionsMenu({ item }: { item: GalleryItem }) {
             <IconPencil className="size-4" />
             Edit
           </DropdownMenuItem>
-          <DropdownMenuItem render={<Link to="/admin/gallery/$id/images" params={{ id: item.id }} />}>
+          <DropdownMenuItem
+            render={<Link to="/admin/gallery/$id/images" params={{ id: item.id }} />}
+          >
             <IconPhoto className="size-4" />
             Manage Images
           </DropdownMenuItem>
@@ -163,10 +170,7 @@ function ActionsMenu({ item }: { item: GalleryItem }) {
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => setDeleteOpen(true)}
-          >
+          <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
             <IconTrash className="size-4" />
             Delete
           </DropdownMenuItem>
@@ -180,7 +184,7 @@ function ActionsMenu({ item }: { item: GalleryItem }) {
         title={item.title}
       />
     </>
-  )
+  );
 }
 
 const columns: ColumnDef<GalleryItem, any>[] = [
@@ -188,15 +192,9 @@ const columns: ColumnDef<GalleryItem, any>[] = [
     accessorKey: "coverImage",
     header: "Cover",
     cell: ({ row }) => {
-      const url = row.original.coverImage
-      if (!url) return <span className="text-muted-foreground">—</span>
-      return (
-        <img
-          src={url}
-          alt=""
-          className="h-10 w-16 rounded-md object-cover"
-        />
-      )
+      const url = row.original.coverImage;
+      if (!url) return <span className="text-muted-foreground">-</span>;
+      return <img src={url} alt="" className="h-10 w-16 rounded-md object-cover" />;
     },
     size: 80,
   },
@@ -208,19 +206,22 @@ const columns: ColumnDef<GalleryItem, any>[] = [
     accessorKey: "eventId",
     header: "Event",
     cell: ({ row }) => (
-      <span className="text-muted-foreground line-clamp-1">{row.original.eventId ?? "—"}</span>
+      <span className="text-muted-foreground line-clamp-1">{row.original.eventId ?? "-"}</span>
     ),
   },
   {
     accessorKey: "tags",
     header: "Tags",
     cell: ({ row }) => {
-      const tags = row.original.tags
-      if (!tags || tags.length === 0) return <span className="text-muted-foreground">—</span>
+      const tags = row.original.tags;
+      if (!tags || tags.length === 0) return <span className="text-muted-foreground">-</span>;
       return (
         <div className="flex flex-wrap gap-1">
           {tags.slice(0, 3).map((tag) => (
-            <span key={tag} className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+            <span
+              key={tag}
+              className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+            >
               {tag}
             </span>
           ))}
@@ -228,7 +229,7 @@ const columns: ColumnDef<GalleryItem, any>[] = [
             <span className="text-xs text-muted-foreground">+{tags.length - 3}</span>
           )}
         </div>
-      )
+      );
     },
   },
   {
@@ -244,7 +245,11 @@ const columns: ColumnDef<GalleryItem, any>[] = [
               : "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
         }`}
       >
-        {row.original.status === "published" ? "Published" : row.original.status === "archived" ? "Archived" : "Draft"}
+        {row.original.status === "published"
+          ? "Published"
+          : row.original.status === "archived"
+            ? "Archived"
+            : "Draft"}
       </span>
     ),
   },
@@ -262,41 +267,53 @@ const columns: ColumnDef<GalleryItem, any>[] = [
     header: "Actions",
     cell: ({ row }) => <ActionsMenu item={row.original} />,
   },
-]
+];
 
 export const Route = createFileRoute("/admin/gallery")({
   component: AdminGalleryList,
-})
+});
 
 function AdminGalleryList() {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
-  })
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const searchInputRef = useRef<HTMLInputElement>(null)
+  });
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const sort = sorting[0]
-  const rawSearch = columnFilters.find((f) => f.id === "title")?.value
-  const search = typeof rawSearch === "string" && rawSearch.length > 0 ? rawSearch : undefined
-  const rawStatus = columnFilters.find((f) => f.id === "status")?.value
-  const status = typeof rawStatus === "string" && rawStatus.length > 0 ? (rawStatus as "draft" | "published" | "archived") : undefined
+  const sort = sorting[0];
+  const rawSearch = columnFilters.find((f) => f.id === "title")?.value;
+  const search = typeof rawSearch === "string" && rawSearch.length > 0 ? rawSearch : undefined;
+  const rawStatus = columnFilters.find((f) => f.id === "status")?.value;
+  const status =
+    typeof rawStatus === "string" && rawStatus.length > 0
+      ? (rawStatus as "draft" | "published" | "archived")
+      : undefined;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["gallery", pagination.pageIndex, pagination.pageSize, sort?.id, sort?.desc, search, status],
-    queryFn: () => client.gallery.list({
-      page: pagination.pageIndex + 1,
-      pageSize: pagination.pageSize,
-      sort: sort?.id,
-      sortDir: sort?.desc ? "desc" : "asc",
+    queryKey: [
+      "gallery",
+      pagination.pageIndex,
+      pagination.pageSize,
+      sort?.id,
+      sort?.desc,
       search,
       status,
-    }),
-  })
+    ],
+    queryFn: () =>
+      client.gallery.list({
+        page: pagination.pageIndex + 1,
+        pageSize: pagination.pageSize,
+        sort: sort?.id,
+        sortDir: sort?.desc ? "desc" : "asc",
+        search,
+        status,
+      }),
+  });
 
-  const items = data?.rows ?? []
-  const pageCount = data?.pageCount ?? 0
+  const items = data?.rows ?? [];
+  const pageCount = data?.pageCount ?? 0;
 
   return (
     <div className="flex flex-col">
@@ -324,13 +341,13 @@ function AdminGalleryList() {
           onSortingChange={setSorting}
           onColumnFiltersChange={setColumnFilters}
           toolbar={(table) => {
-            const filters = table.getState().columnFilters
-            const isFiltered = filters.length > 0
+            const filters = table.getState().columnFilters;
+            const isFiltered = filters.length > 0;
             const setFilter = (id: string, value: string) => {
-              const next = filters.filter((f) => f.id !== id)
-              if (value) next.push({ id, value })
-              table.setColumnFilters(next)
-            }
+              const next = filters.filter((f) => f.id !== id);
+              if (value) next.push({ id, value });
+              table.setColumnFilters(next);
+            };
             return (
               <div className="flex items-center justify-between">
                 <div className="flex flex-1 items-center gap-2">
@@ -366,11 +383,11 @@ function AdminGalleryList() {
                 </div>
                 <DataTableViewOptions table={table} />
               </div>
-            )
+            );
           }}
           paginationBar={(table) => <DataTablePagination table={table} />}
         />
       </div>
     </div>
-  )
+  );
 }

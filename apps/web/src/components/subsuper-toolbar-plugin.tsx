@@ -1,11 +1,7 @@
 import { useState } from "react";
 
 import { $isTableSelection } from "@lexical/table";
-import {
-  $isRangeSelection,
-  type BaseSelection,
-  FORMAT_TEXT_COMMAND,
-} from "lexical";
+import { $isRangeSelection, type BaseSelection, FORMAT_TEXT_COMMAND } from "lexical";
 
 import { SubscriptIcon, SuperscriptIcon } from "lucide-react";
 
@@ -32,9 +28,7 @@ export function SubSuperToolbarPlugin() {
   return (
     <ToggleGroup
       type="single"
-      defaultValue={
-        isSubscript ? "subscript" : isSuperscript ? "superscript" : ""
-      }
+      defaultValue={isSubscript ? "subscript" : isSuperscript ? "superscript" : ""}
     >
       <ToggleGroupItem
         value="subscript"

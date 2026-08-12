@@ -33,9 +33,7 @@ export const MaxLengthExtension = defineExtension({
           return;
         }
         const prevEditorState = editor.getEditorState();
-        const prevTextContentSize = prevEditorState.read(() =>
-          rootNode.getTextContentSize(),
-        );
+        const prevTextContentSize = prevEditorState.read(() => rootNode.getTextContentSize());
         const textContentSize = rootNode.getTextContentSize();
         if (prevTextContentSize !== textContentSize) {
           const delCount = textContentSize - maxLength;
@@ -44,10 +42,7 @@ export const MaxLengthExtension = defineExtension({
           if (delCount > 0) {
             // Restore the old editor state instead if the last
             // text content was already at the limit.
-            if (
-              prevTextContentSize === maxLength &&
-              lastRestoredEditorState !== prevEditorState
-            ) {
+            if (prevTextContentSize === maxLength && lastRestoredEditorState !== prevEditorState) {
               lastRestoredEditorState = prevEditorState;
               $restoreEditorState(editor, prevEditorState);
             } else {

@@ -8,12 +8,7 @@ import {
   useBasicTypeaheadTriggerMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { LexicalTypeaheadMenuPlugin } from "@lexical/react/LexicalTypeaheadMenuPlugin";
-import {
-  $createTextNode,
-  $getSelection,
-  $isRangeSelection,
-  TextNode,
-} from "lexical";
+import { $createTextNode, $getSelection, $isRangeSelection, TextNode } from "lexical";
 
 import {
   Command,
@@ -92,11 +87,8 @@ export function EmojiPickerPlugin() {
     return emojiOptions
       .filter((option: EmojiOption) => {
         return queryString != null
-          ? new RegExp(queryString, "gi").exec(option.title) ||
-            option.keywords != null
-            ? option.keywords.some((keyword: string) =>
-                new RegExp(queryString, "gi").exec(keyword),
-              )
+          ? new RegExp(queryString, "gi").exec(option.title) || option.keywords != null
+            ? option.keywords.some((keyword: string) => new RegExp(queryString, "gi").exec(keyword))
             : false
           : emojiOptions;
       })
@@ -104,11 +96,7 @@ export function EmojiPickerPlugin() {
   }, [emojiOptions, queryString]);
 
   const onSelectOption = useCallback(
-    (
-      selectedOption: EmojiOption,
-      nodeToRemove: TextNode | null,
-      closeMenu: () => void,
-    ) => {
+    (selectedOption: EmojiOption, nodeToRemove: TextNode | null, closeMenu: () => void) => {
       editor.update(() => {
         const selection = $getSelection();
 
@@ -147,16 +135,13 @@ export function EmojiPickerPlugin() {
                       e.preventDefault();
                       setHighlightedIndex(
                         selectedIndex !== null
-                          ? (selectedIndex - 1 + options.length) %
-                              options.length
+                          ? (selectedIndex - 1 + options.length) % options.length
                           : options.length - 1,
                       );
                     } else if (e.key === "ArrowDown") {
                       e.preventDefault();
                       setHighlightedIndex(
-                        selectedIndex !== null
-                          ? (selectedIndex + 1) % options.length
-                          : 0,
+                        selectedIndex !== null ? (selectedIndex + 1) % options.length : 0,
                       );
                     }
                   }}

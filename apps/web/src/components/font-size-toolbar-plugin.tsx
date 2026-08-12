@@ -1,9 +1,6 @@
 import { useCallback, useState } from "react";
 
-import {
-  $getSelectionStyleValueForProperty,
-  $patchStyleText,
-} from "@lexical/selection";
+import { $getSelectionStyleValueForProperty, $patchStyleText } from "@lexical/selection";
 import { $getSelection, $isRangeSelection, type BaseSelection } from "lexical";
 
 import { Minus, Plus } from "lucide-react";
@@ -65,9 +62,7 @@ export function FontSizeToolbarPlugin() {
       </Button>
       <Input
         value={fontSize}
-        onChange={(e) =>
-          updateFontSize(parseInt(e.target.value) || DEFAULT_FONT_SIZE)
-        }
+        onChange={(e) => updateFontSize(parseInt(e.target.value) || DEFAULT_FONT_SIZE)}
         className="w-12 text-center h-8"
         min={MIN_FONT_SIZE}
         max={MAX_FONT_SIZE}

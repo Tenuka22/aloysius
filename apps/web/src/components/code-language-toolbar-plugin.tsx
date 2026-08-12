@@ -8,12 +8,7 @@ import {
 } from "@lexical/code-prism";
 import { $isListNode } from "@lexical/list";
 import { $findMatchingParent } from "@lexical/utils";
-import {
-  $getNodeByKey,
-  $isRangeSelection,
-  $isRootOrShadowRoot,
-  type BaseSelection,
-} from "lexical";
+import { $getNodeByKey, $isRangeSelection, $isRootOrShadowRoot, type BaseSelection } from "lexical";
 
 import { useToolbarContext } from "@/components/toolbar-context";
 import { useUpdateToolbarHandler } from "@/components/use-update-toolbar";
@@ -28,9 +23,7 @@ import {
 function getCodeLanguageOptions(): [string, string][] {
   const options: [string, string][] = [];
 
-  for (const [lang, friendlyName] of Object.entries(
-    CODE_LANGUAGE_FRIENDLY_NAME_MAP,
-  )) {
+  for (const [lang, friendlyName] of Object.entries(CODE_LANGUAGE_FRIENDLY_NAME_MAP)) {
     options.push([lang, friendlyName]);
   }
 
@@ -42,9 +35,7 @@ const CODE_LANGUAGE_OPTIONS = getCodeLanguageOptions();
 export function CodeLanguageToolbarPlugin() {
   const { activeEditor } = useToolbarContext();
   const [codeLanguage, setCodeLanguage] = useState<string>("");
-  const [selectedElementKey, setSelectedElementKey] = useState<string | null>(
-    null,
-  );
+  const [selectedElementKey, setSelectedElementKey] = useState<string | null>(null);
 
   const $updateToolbar = (selection: BaseSelection) => {
     if ($isRangeSelection(selection)) {
@@ -68,11 +59,8 @@ export function CodeLanguageToolbarPlugin() {
         setSelectedElementKey(elementKey);
 
         if (!$isListNode(element) && $isCodeNode(element)) {
-          const language =
-            element.getLanguage() as keyof typeof CODE_LANGUAGE_MAP;
-          setCodeLanguage(
-            language ? CODE_LANGUAGE_MAP[language] || language : "",
-          );
+          const language = element.getLanguage() as keyof typeof CODE_LANGUAGE_MAP;
+          setCodeLanguage(language ? CODE_LANGUAGE_MAP[language] || language : "");
           return;
         }
       }

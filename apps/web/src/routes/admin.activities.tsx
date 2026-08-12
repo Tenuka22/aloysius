@@ -1,30 +1,30 @@
-"use client"
+"use client";
 
-import { useState, useRef } from "react"
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useState, useRef } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnFiltersState,
   type PaginationState,
   type SortingState,
-} from "@tanstack/react-table"
-import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar"
-import { Separator } from "@aloysius-web/ui/components/separator"
-import { Button } from "@aloysius-web/ui/components/button"
-import { Input } from "@aloysius-web/ui/components/input"
+} from "@tanstack/react-table";
+import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
+import { Separator } from "@aloysius-web/ui/components/separator";
+import { Button } from "@aloysius-web/ui/components/button";
+import { Input } from "@aloysius-web/ui/components/input";
 import {
   DataTable,
   DataTableColumnHeader,
   DataTablePagination,
   DataTableViewOptions,
-} from "@aloysius-web/ui/components/data-table"
+} from "@aloysius-web/ui/components/data-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@aloysius-web/ui/components/dropdown-menu"
+} from "@aloysius-web/ui/components/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -32,33 +32,39 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@aloysius-web/ui/components/dialog"
+} from "@aloysius-web/ui/components/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@aloysius-web/ui/components/select"
-import { Tabs, TabsList, TabsTrigger } from "@aloysius-web/ui/components/tabs"
-import { IconPlus, IconDotsVertical, IconPencil, IconTrash, IconRefresh } from "@tabler/icons-react"
-import { client } from "@/utils/orpc"
-import { toast } from "sonner"
-import type { ColumnDef } from "@tanstack/react-table"
+} from "@aloysius-web/ui/components/select";
+import { Tabs, TabsList, TabsTrigger } from "@aloysius-web/ui/components/tabs";
+import {
+  IconPlus,
+  IconDotsVertical,
+  IconPencil,
+  IconTrash,
+  IconRefresh,
+} from "@tabler/icons-react";
+import { client } from "@/utils/orpc";
+import { toast } from "sonner";
+import type { ColumnDef } from "@tanstack/react-table";
 
 type ActivityItem = {
-  id: string
-  name: string
-  description: string | null
-  coverImage: string | null
-  images: string[]
-  type: string
-  adminEmail: string | null
-  sortOrder: number
-  status: string
-  createdAt: string
-  updatedAt: string
-}
+  id: string;
+  name: string;
+  description: string | null;
+  coverImage: string | null;
+  images: string[];
+  type: string;
+  adminEmail: string | null;
+  sortOrder: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+};
 
 function DeleteDialog({
   open,
@@ -66,10 +72,10 @@ function DeleteDialog({
   onConfirm,
   title,
 }: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onConfirm: () => void
-  title: string
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  title: string;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -90,45 +96,40 @@ function DeleteDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 function ActionsMenu({ item }: { item: ActivityItem }) {
-  const queryClient = useQueryClient()
-  const [deleteOpen, setDeleteOpen] = useState(false)
+  const queryClient = useQueryClient();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: () => client.activities.delete({ id: item.id }),
     onSuccess: () => {
-      toast.success("Activity deleted")
-      queryClient.invalidateQueries({ queryKey: ["activities"] })
-      setDeleteOpen(false)
+      toast.success("Activity deleted");
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      setDeleteOpen(false);
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button variant="ghost" size="icon-sm" />
-          }
-        >
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
           <IconDotsVertical className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem render={<Link to="/admin/activities/$id/edit" params={{ id: item.id }} />}>
+          <DropdownMenuItem
+            render={<Link to="/admin/activities/$id/edit" params={{ id: item.id }} />}
+          >
             <IconPencil className="size-4" />
             Edit
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => setDeleteOpen(true)}
-          >
+          <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
             <IconTrash className="size-4" />
             Delete
           </DropdownMenuItem>
@@ -142,29 +143,23 @@ function ActionsMenu({ item }: { item: ActivityItem }) {
         title={item.name}
       />
     </>
-  )
+  );
 }
 
 const typeLabels: Record<string, string> = {
   club: "Club",
   sport: "Sport",
   other: "Other",
-}
+};
 
 const columns: ColumnDef<ActivityItem, any>[] = [
   {
     accessorKey: "coverImage",
     header: "Cover",
     cell: ({ row }) => {
-      const url = row.original.coverImage
-      if (!url) return <span className="text-muted-foreground">—</span>
-      return (
-        <img
-          src={url}
-          alt=""
-          className="h-10 w-16 rounded-md object-cover"
-        />
-      )
+      const url = row.original.coverImage;
+      if (!url) return <span className="text-muted-foreground">-</span>;
+      return <img src={url} alt="" className="h-10 w-16 rounded-md object-cover" />;
     },
     size: 80,
   },
@@ -176,15 +171,17 @@ const columns: ColumnDef<ActivityItem, any>[] = [
     accessorKey: "type",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Type" />,
     cell: ({ row }) => (
-      <span className="text-muted-foreground">{typeLabels[row.original.type] ?? row.original.type}</span>
+      <span className="text-muted-foreground">
+        {typeLabels[row.original.type] ?? row.original.type}
+      </span>
     ),
   },
   {
     accessorKey: "images",
     header: "Images",
     cell: ({ row }) => {
-      const count = row.original.images?.length ?? 0
-      return <span className="text-muted-foreground">{count}</span>
+      const count = row.original.images?.length ?? 0;
+      return <span className="text-muted-foreground">{count}</span>;
     },
   },
   {
@@ -200,7 +197,11 @@ const columns: ColumnDef<ActivityItem, any>[] = [
               : "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
         }`}
       >
-        {row.original.status === "published" ? "Published" : row.original.status === "archived" ? "Archived" : "Draft"}
+        {row.original.status === "published"
+          ? "Published"
+          : row.original.status === "archived"
+            ? "Archived"
+            : "Draft"}
       </span>
     ),
   },
@@ -218,60 +219,85 @@ const columns: ColumnDef<ActivityItem, any>[] = [
     header: "Actions",
     cell: ({ row }) => <ActionsMenu item={row.original} />,
   },
-]
+];
 
 export const Route = createFileRoute("/admin/activities")({
   component: AdminActivitiesList,
-})
+});
 
 function AdminActivitiesList() {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
-  })
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [typeFilter, setTypeFilter] = useState<string>("all")
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const queryClient = useQueryClient()
+  });
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   const syncMutation = useMutation({
     mutationFn: () => client.activities.syncAdminMetadata(),
     onSuccess: (data) => {
-      const result = data as { updated: number; cleared: number; errors: number; errorsList: string[] }
-      const parts = []
-      if (result.updated > 0) parts.push(`${result.updated} user(s) updated`)
-      if (result.cleared > 0) parts.push(`${result.cleared} user(s) cleared`)
-      if (result.errors > 0) parts.push(`${result.errors} error(s)`)
-      toast.success(result.errors > 0 ? `Sync completed with issues: ${parts.join(", ")}` : `Sync completed: ${parts.join(", ") || "no changes"}`)
+      const result = data as {
+        updated: number;
+        cleared: number;
+        errors: number;
+        errorsList: string[];
+      };
+      const parts = [];
+      if (result.updated > 0) parts.push(`${result.updated} user(s) updated`);
+      if (result.cleared > 0) parts.push(`${result.cleared} user(s) cleared`);
+      if (result.errors > 0) parts.push(`${result.errors} error(s)`);
+      toast.success(
+        result.errors > 0
+          ? `Sync completed with issues: ${parts.join(", ")}`
+          : `Sync completed: ${parts.join(", ") || "no changes"}`,
+      );
       if (result.errorsList.length > 0) {
         for (const err of result.errorsList) {
-          toast.error(err)
+          toast.error(err);
         }
       }
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
-  const sort = sorting[0]
-  const rawSearch = columnFilters.find((f) => f.id === "name")?.value
-  const search = typeof rawSearch === "string" && rawSearch.length > 0 ? rawSearch : undefined
-  const rawStatus = columnFilters.find((f) => f.id === "status")?.value
-  const status = typeof rawStatus === "string" && rawStatus.length > 0 ? (rawStatus as "draft" | "published" | "archived") : undefined
+  const sort = sorting[0];
+  const rawSearch = columnFilters.find((f) => f.id === "name")?.value;
+  const search = typeof rawSearch === "string" && rawSearch.length > 0 ? rawSearch : undefined;
+  const rawStatus = columnFilters.find((f) => f.id === "status")?.value;
+  const status =
+    typeof rawStatus === "string" && rawStatus.length > 0
+      ? (rawStatus as "draft" | "published" | "archived")
+      : undefined;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["activities", pagination.pageIndex, pagination.pageSize, sort?.id, sort?.desc, search, status],
-    queryFn: () => client.activities.list({
+    queryKey: [
+      "activities",
+      pagination.pageIndex,
+      pagination.pageSize,
+      sort?.id,
+      sort?.desc,
+      search,
       status,
-    }),
-  })
+    ],
+    queryFn: () =>
+      client.activities.list({
+        status,
+      }),
+  });
 
-  const allItems = (data ?? []) as ActivityItem[]
-  const filteredItems = typeFilter === "all" ? allItems : allItems.filter((item) => item.type === typeFilter)
-  const items = filteredItems.slice(pagination.pageIndex * pagination.pageSize, (pagination.pageIndex + 1) * pagination.pageSize)
-  const pageCount = Math.ceil(filteredItems.length / pagination.pageSize)
+  const allItems = (data ?? []) as ActivityItem[];
+  const filteredItems =
+    typeFilter === "all" ? allItems : allItems.filter((item) => item.type === typeFilter);
+  const items = filteredItems.slice(
+    pagination.pageIndex * pagination.pageSize,
+    (pagination.pageIndex + 1) * pagination.pageSize,
+  );
+  const pageCount = Math.ceil(filteredItems.length / pagination.pageSize);
 
   return (
     <div className="flex flex-col">
@@ -286,7 +312,9 @@ function AdminActivitiesList() {
             onClick={() => syncMutation.mutate()}
             disabled={syncMutation.isPending}
           >
-            <IconRefresh className={`mr-1 size-4 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+            <IconRefresh
+              className={`mr-1 size-4 ${syncMutation.isPending ? "animate-spin" : ""}`}
+            />
             {syncMutation.isPending ? "Syncing..." : "Sync Admins"}
           </Button>
           <Button size="sm" render={<Link to="/admin/activities/new" />} nativeButton={false}>
@@ -296,7 +324,13 @@ function AdminActivitiesList() {
         </div>
       </header>
       <div className="flex-1 p-6">
-        <Tabs value={typeFilter} onValueChange={(val) => { setTypeFilter(val); setPagination((p) => ({ ...p, pageIndex: 0 })) }}>
+        <Tabs
+          value={typeFilter}
+          onValueChange={(val) => {
+            setTypeFilter(val);
+            setPagination((p) => ({ ...p, pageIndex: 0 }));
+          }}
+        >
           <TabsList variant="line">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="club">Clubs</TabsTrigger>
@@ -317,13 +351,13 @@ function AdminActivitiesList() {
             onSortingChange={setSorting}
             onColumnFiltersChange={setColumnFilters}
             toolbar={(table) => {
-              const filters = table.getState().columnFilters
-              const isFiltered = filters.length > 0
+              const filters = table.getState().columnFilters;
+              const isFiltered = filters.length > 0;
               const setFilter = (id: string, value: string) => {
-                const next = filters.filter((f) => f.id !== id)
-                if (value) next.push({ id, value })
-                table.setColumnFilters(next)
-              }
+                const next = filters.filter((f) => f.id !== id);
+                if (value) next.push({ id, value });
+                table.setColumnFilters(next);
+              };
               return (
                 <div className="flex items-center justify-between">
                   <div className="flex flex-1 items-center gap-2">
@@ -359,12 +393,12 @@ function AdminActivitiesList() {
                   </div>
                   <DataTableViewOptions table={table} />
                 </div>
-              )
+              );
             }}
             paginationBar={(table) => <DataTablePagination table={table} />}
           />
         </div>
       </div>
     </div>
-  )
+  );
 }

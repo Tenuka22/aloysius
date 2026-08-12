@@ -1,43 +1,43 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { Navbar } from "@/components-client/navbar"
-import { Footer } from "@/components-client/footer"
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Navbar } from "@/components-client/navbar";
+import { Footer } from "@/components-client/footer";
 
 type NewsItem = {
-  id: string
-  title: string
-  content: string | null
-  excerpt: string | null
-  coverImage: string | null
-  tags: string[] | null
-  authorName: string | null
-  authorType: string | null
-  publishedAt: string | null
-}
+  id: string;
+  title: string;
+  content: string | null;
+  excerpt: string | null;
+  coverImage: string | null;
+  tags: string[] | null;
+  authorName: string | null;
+  authorType: string | null;
+  publishedAt: string | null;
+};
 
 const authorTypeLabels: Record<string, string> = {
   student: "Student",
   faculty: "Faculty",
   club: "Club",
   org: "Organization",
-}
+};
 
 export const Route = createFileRoute("/news_/$slug")({
   loader: async ({ params }) => {
     const [{ createRouterClient }, { appRouter }] = await Promise.all([
       import("@orpc/server"),
       import("@aloysius-web/api/routers/index"),
-    ])
+    ]);
 
-    const serverClient = createRouterClient(appRouter)
-    const newsItem = await serverClient.news.get({ slug: params.slug })
-    return { newsItem }
+    const serverClient = createRouterClient(appRouter);
+    const newsItem = await serverClient.news.get({ slug: params.slug });
+    return { newsItem };
   },
   staleTime: 5 * 60_000,
   component: NewsDetailPage,
-})
+});
 
 function NewsDetailPage() {
-  const { newsItem } = Route.useLoaderData() as { newsItem: NewsItem }
+  const { newsItem } = Route.useLoaderData() as { newsItem: NewsItem };
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,15 +70,14 @@ function NewsDetailPage() {
               </div>
             )}
 
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-              {newsItem.title}
-            </h1>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">{newsItem.title}</h1>
 
             <div className="flex items-center gap-4 flex-wrap mb-6 text-sm text-muted-foreground">
               {newsItem.authorName && (
                 <span>
                   by {newsItem.authorName}
-                  {newsItem.authorType && ` (${authorTypeLabels[newsItem.authorType] ?? newsItem.authorType})`}
+                  {newsItem.authorType &&
+                    ` (${authorTypeLabels[newsItem.authorType] ?? newsItem.authorType})`}
                 </span>
               )}
               {newsItem.publishedAt && (
@@ -89,9 +88,7 @@ function NewsDetailPage() {
             </div>
 
             {newsItem.excerpt && (
-              <p className="text-lg text-muted-foreground mb-6 italic">
-                {newsItem.excerpt}
-              </p>
+              <p className="text-lg text-muted-foreground mb-6 italic">{newsItem.excerpt}</p>
             )}
 
             {newsItem.content && (
@@ -119,5 +116,5 @@ function NewsDetailPage() {
       </main>
       <Footer />
     </div>
-  )
+  );
 }

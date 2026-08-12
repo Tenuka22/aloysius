@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { useCallback, useState } from "react"
-import { useStore } from "@tanstack/react-form"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button } from "@aloysius-web/ui/components/button"
-import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder"
-import { MinimalTiptapEditor } from "@aloysius-web/ui/components/minimal-tiptap"
-import { TagInput } from "@/components-client/tag-input"
-import { Dropzone } from "@/components/file-upload"
-import { IconX } from "@tabler/icons-react"
-import { cn } from "@aloysius-web/ui/lib/utils"
-import { client } from "@/utils/orpc"
-import { convertToWebp } from "@/utils/convert-to-webp"
-import { toast } from "sonner"
-import * as v from "valibot"
-import { SlugField } from "@/components-client/slug-field"
-import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
+import { useCallback, useState } from "react";
+import { useStore } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@aloysius-web/ui/components/button";
+import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
+import { MinimalTiptapEditor } from "@aloysius-web/ui/components/minimal-tiptap";
+import { TagInput } from "@/components-client/tag-input";
+import { Dropzone } from "@/components/file-upload";
+import { IconX } from "@tabler/icons-react";
+import { cn } from "@aloysius-web/ui/lib/utils";
+import { client } from "@/utils/orpc";
+import { convertToWebp } from "@/utils/convert-to-webp";
+import { toast } from "sonner";
+import * as v from "valibot";
+import { SlugField } from "@/components-client/slug-field";
+import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
 
 const createNewsSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
@@ -27,9 +27,9 @@ const createNewsSchema = v.object({
   publishNow: v.boolean(),
   authorName: v.optional(v.string()),
   authorType: v.optional(v.string()),
-})
+});
 
-type CreateNewsValues = v.InferOutput<typeof createNewsSchema>
+type CreateNewsValues = v.InferOutput<typeof createNewsSchema>;
 
 const updateNewsSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
@@ -41,9 +41,9 @@ const updateNewsSchema = v.object({
   publishNow: v.boolean(),
   authorName: v.optional(v.string()),
   authorType: v.optional(v.string()),
-})
+});
 
-type UpdateNewsValues = v.InferOutput<typeof updateNewsSchema>
+type UpdateNewsValues = v.InferOutput<typeof updateNewsSchema>;
 
 const fields: FieldEntry<CreateNewsValues | UpdateNewsValues>[] = [
   {
@@ -59,7 +59,14 @@ const fields: FieldEntry<CreateNewsValues | UpdateNewsValues>[] = [
     label: "Slug",
     required: false,
     customRenderer: ({ value, onChange, name, formValues }) => {
-      return <SlugFieldInline sourceField="title" routerName="news" value={value as string ?? ""} onChange={onChange} />
+      return (
+        <SlugFieldInline
+          sourceField="title"
+          routerName="news"
+          value={(value as string) ?? ""}
+          onChange={onChange}
+        />
+      );
     },
   },
   {
@@ -80,7 +87,12 @@ const fields: FieldEntry<CreateNewsValues | UpdateNewsValues>[] = [
     name: "authorType",
     kind: "select",
     label: "Author Type",
-    options: [{value:"student",label:"Student"},{value:"faculty",label:"Faculty"},{value:"club",label:"Club"},{value:"org",label:"Organization"}],
+    options: [
+      { value: "student", label: "Student" },
+      { value: "faculty", label: "Faculty" },
+      { value: "club", label: "Club" },
+      { value: "org", label: "Organization" },
+    ],
     required: false,
   },
   {
@@ -110,39 +122,49 @@ const fields: FieldEntry<CreateNewsValues | UpdateNewsValues>[] = [
     label: "Publish immediately",
     required: false,
   },
-]
+];
 
 function CoverImageField() {
-  const form = useBuildForm()
-  const coverImage = useStore(form.store, (state) => state.values.coverImage) as string | undefined
-  const [uploading, setUploading] = useState(false)
+  const form = useBuildForm();
+  const coverImage = useStore(form.store, (state) => state.values.coverImage) as string | undefined;
+  const [uploading, setUploading] = useState(false);
 
-  const handleFilesSelected = useCallback(async (files: File[]) => {
-    const file = files[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      const result = await client.files.uploadFile(file)
-      form.setFieldValue("coverImage", result.url)
-    } catch {
-      toast.error("Failed to upload image")
-    } finally {
-      setUploading(false)
-    }
-  }, [form])
+  const handleFilesSelected = useCallback(
+    async (files: File[]) => {
+      const file = files[0];
+      if (!file) return;
+      setUploading(true);
+      try {
+        const result = await client.files.uploadFile(file);
+        form.setFieldValue("coverImage", result.url);
+      } catch {
+        toast.error("Failed to upload image");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [form],
+  );
 
-  const handleRemove = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    form.setFieldValue("coverImage", "")
-  }, [form])
+  const handleRemove = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      form.setFieldValue("coverImage", "");
+    },
+    [form],
+  );
 
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium leading-none">Cover Image</label>
       {coverImage ? (
         <div className="relative overflow-hidden rounded-xl border">
-          <img src={coverImage} alt="Cover" className="w-full aspect-video object-cover pointer-events-none" />
+          <img
+            src={coverImage}
+            alt="Cover"
+            className="w-full aspect-video object-cover pointer-events-none"
+          />
           <Button
             variant="destructive"
             size="sm"
@@ -167,12 +189,12 @@ function CoverImageField() {
         />
       )}
     </div>
-  )
+  );
 }
 
 function TagsField() {
-  const form = useBuildForm()
-  const tags = (form.state.values.tags as string[]) ?? []
+  const form = useBuildForm();
+  const tags = (form.state.values.tags as string[]) ?? [];
 
   return (
     <div className="space-y-1.5">
@@ -183,61 +205,92 @@ function TagsField() {
         placeholder="Add tags..."
       />
     </div>
-  )
+  );
 }
 
 function ContentEditorField() {
-  const form = useBuildForm()
+  const form = useBuildForm();
   const handleImageUpload = useCallback(async (file: File) => {
-    const webp = await convertToWebp(file)
-    const result = await client.files.uploadFile(webp)
-    return result.url
-  }, [])
+    const webp = await convertToWebp(file);
+    const result = await client.files.uploadFile(webp);
+    return result.url;
+  }, []);
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Content<span className="text-destructive ml-0.5">*</span></label>
+      <label className="text-sm font-medium leading-none">
+        Content<span className="text-destructive ml-0.5">*</span>
+      </label>
       <MinimalTiptapEditor
         value={form.state.values.content as string}
-        onChange={(value) => form.setFieldValue("content", typeof value === "string" ? value : JSON.stringify(value))}
+        onChange={(value) =>
+          form.setFieldValue("content", typeof value === "string" ? value : JSON.stringify(value))
+        }
         onImageUpload={handleImageUpload}
         placeholder="Write your news article..."
       />
     </div>
-  )
+  );
 }
 
-export function NewsForm({ mode, id, onSuccess }: { mode: "create" | "edit"; id?: string; onSuccess: () => void }) {
-  const queryClient = useQueryClient()
+export function NewsForm({
+  mode,
+  id,
+  onSuccess,
+}: {
+  mode: "create" | "edit";
+  id?: string;
+  onSuccess: () => void;
+}) {
+  const queryClient = useQueryClient();
 
   const { data: newsItem, isLoading: isLoadingItem } = useQuery({
     queryKey: ["news", id],
     queryFn: () => client.news.get({ id: id! }),
     enabled: mode === "edit" && !!id,
-  })
+  });
 
   const createMutation = useMutation({
     mutationFn: (body: CreateNewsValues) => client.news.create(body),
-    onSuccess: () => { toast.success("News article created"); queryClient.invalidateQueries({ queryKey: ["news"] }); onSuccess() },
+    onSuccess: () => {
+      toast.success("News article created");
+      queryClient.invalidateQueries({ queryKey: ["news"] });
+      onSuccess();
+    },
     onError: (err) => toast.error(err.message),
-  })
+  });
 
   const updateMutation = useMutation({
     mutationFn: (body: UpdateNewsValues & { id: string }) => client.news.update(body),
-    onSuccess: () => { toast.success("News updated"); queryClient.invalidateQueries({ queryKey: ["news"] }); onSuccess() },
+    onSuccess: () => {
+      toast.success("News updated");
+      queryClient.invalidateQueries({ queryKey: ["news"] });
+      onSuccess();
+    },
     onError: (err) => toast.error(err.message),
-  })
+  });
 
-  const handleSubmit = useCallback(async (values: CreateNewsValues | UpdateNewsValues) => {
-    if (mode === "edit" && id) await updateMutation.mutateAsync({ ...values, id } as UpdateNewsValues & { id: string })
-    else await createMutation.mutateAsync(values as CreateNewsValues)
-  }, [mode, id, createMutation, updateMutation])
+  const handleSubmit = useCallback(
+    async (values: CreateNewsValues | UpdateNewsValues) => {
+      if (mode === "edit" && id)
+        await updateMutation.mutateAsync({ ...values, id } as UpdateNewsValues & { id: string });
+      else await createMutation.mutateAsync(values as CreateNewsValues);
+    },
+    [mode, id, createMutation, updateMutation],
+  );
 
   if (mode === "edit" && isLoadingItem) {
-    return <div className="space-y-6 p-1"><div className="h-10 rounded bg-muted animate-pulse" /><div className="h-20 rounded bg-muted animate-pulse" /><div className="h-[300px] rounded bg-muted animate-pulse" /></div>
+    return (
+      <div className="space-y-6 p-1">
+        <div className="h-10 rounded bg-muted animate-pulse" />
+        <div className="h-20 rounded bg-muted animate-pulse" />
+        <div className="h-[300px] rounded bg-muted animate-pulse" />
+      </div>
+    );
   }
 
-  if (mode === "edit" && !newsItem) return <div className="p-4 text-center text-muted-foreground">News article not found.</div>
+  if (mode === "edit" && !newsItem)
+    return <div className="p-4 text-center text-muted-foreground">News article not found.</div>;
 
   const formConfig: FormConfig<CreateNewsValues | UpdateNewsValues> = {
     fields,
@@ -256,15 +309,35 @@ export function NewsForm({ mode, id, onSuccess }: { mode: "create" | "edit"; id?
       }),
     },
     renderBelowFields: () => null,
-  }
+  };
 
   return (
     <FormBuilder<CreateNewsValues | UpdateNewsValues>
       config={formConfig}
       defaultValues={
         mode === "edit" && newsItem
-          ? { title: newsItem.title, slug: newsItem.slug ?? "", excerpt: newsItem.excerpt ?? "", content: newsItem.content, coverImage: newsItem.coverImage ?? "", tags: newsItem.tags ?? [], publishNow: newsItem.status === "published", authorName: (newsItem as any).authorName ?? "", authorType: (newsItem as any).authorType ?? "" }
-          : { title: "", slug: "", excerpt: "", content: "", coverImage: "", tags: [], publishNow: false, authorName: "", authorType: "" }
+          ? {
+              title: newsItem.title,
+              slug: newsItem.slug ?? "",
+              excerpt: newsItem.excerpt ?? "",
+              content: newsItem.content,
+              coverImage: newsItem.coverImage ?? "",
+              tags: newsItem.tags ?? [],
+              publishNow: newsItem.status === "published",
+              authorName: (newsItem as any).authorName ?? "",
+              authorType: (newsItem as any).authorType ?? "",
+            }
+          : {
+              title: "",
+              slug: "",
+              excerpt: "",
+              content: "",
+              coverImage: "",
+              tags: [],
+              publishNow: false,
+              authorName: "",
+              authorType: "",
+            }
       }
       valibotSchema={mode === "create" ? createNewsSchema : updateNewsSchema}
       onSubmit={handleSubmit}
@@ -274,5 +347,5 @@ export function NewsForm({ mode, id, onSuccess }: { mode: "create" | "edit"; id?
       <TagsField />
       <ContentEditorField />
     </FormBuilder>
-  )
+  );
 }

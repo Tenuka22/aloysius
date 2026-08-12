@@ -15,7 +15,10 @@ export function BlockInsertPlugin({ children }: { children: React.ReactNode }) {
     <>
       {modal}
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="gap-1 px-2" />}><PlusIcon className="size-4" /><span className="text-sm">Insert</span></DropdownMenuTrigger>
+        <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="gap-1 px-2" />}>
+          <PlusIcon className="size-4" />
+          <span className="text-sm">Insert</span>
+        </DropdownMenuTrigger>
         <DropdownMenuContent className="w-fit">{children}</DropdownMenuContent>
       </DropdownMenu>
     </>

@@ -1,20 +1,8 @@
-import {
-  type Dispatch,
-  type JSX,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type Dispatch, type JSX, useCallback, useEffect, useRef, useState } from "react";
 
 import { createPortal } from "react-dom";
 
-import {
-  $createLinkNode,
-  $isAutoLinkNode,
-  $isLinkNode,
-  TOGGLE_LINK_COMMAND,
-} from "@lexical/link";
+import { $createLinkNode, $isAutoLinkNode, $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $findMatchingParent, mergeRegister } from "@lexical/utils";
 import {
@@ -59,9 +47,7 @@ function FloatingLinkEditor({
   const inputRef = useRef<HTMLInputElement>(null);
   const [linkUrl, setLinkUrl] = useState("");
   const [editedLinkUrl, setEditedLinkUrl] = useState("https://");
-  const [lastSelection, setLastSelection] = useState<BaseSelection | null>(
-    null,
-  );
+  const [lastSelection, setLastSelection] = useState<BaseSelection | null>(null);
 
   const $updateLinkEditor = useCallback(() => {
     const selection = $getSelection();
@@ -183,9 +169,7 @@ function FloatingLinkEditor({
     }
   }, [isLinkEditMode, isLink]);
 
-  const monitorInputInteraction = (
-    event: React.KeyboardEvent<HTMLInputElement>,
-  ) => {
+  const monitorInputInteraction = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       event.preventDefault();
       handleLinkSubmission();
@@ -219,10 +203,7 @@ function FloatingLinkEditor({
     }
   };
   return (
-    <div
-      ref={editorRef}
-      className="absolute top-0 left-0 w-full max-w-sm opacity-0"
-    >
+    <div ref={editorRef} className="absolute top-0 left-0 w-full max-w-sm opacity-0">
       {!isLink ? null : isLinkEditMode ? (
         <div className="bg-popover text-popover-foreground flex items-center gap-2 rounded-md border p-1 pl-2 shadow-md">
           <Input
@@ -308,10 +289,7 @@ function useFloatingLinkEditorToolbar(
       if ($isRangeSelection(selection)) {
         const focusNode = getSelectedNode(selection);
         const focusLinkNode = $findMatchingParent(focusNode, $isLinkNode);
-        const focusAutoLinkNode = $findMatchingParent(
-          focusNode,
-          $isAutoLinkNode,
-        );
+        const focusAutoLinkNode = $findMatchingParent(focusNode, $isAutoLinkNode);
         if (!(focusLinkNode || focusAutoLinkNode)) {
           setIsLink(false);
           return;
@@ -327,8 +305,7 @@ function useFloatingLinkEditorToolbar(
               (linkNode && !linkNode.is(focusLinkNode)) ||
               (focusAutoLinkNode && !focusAutoLinkNode.is(autoLinkNode)) ||
               (autoLinkNode &&
-                (!autoLinkNode.is(focusAutoLinkNode) ||
-                  autoLinkNode.getIsUnlinked()))
+                (!autoLinkNode.is(focusAutoLinkNode) || autoLinkNode.getIsUnlinked()))
             );
           });
         if (!badNode) {
@@ -413,10 +390,5 @@ export function FloatingLinkEditorPlugin({
 }): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
 
-  return useFloatingLinkEditorToolbar(
-    editor,
-    anchorElem,
-    isLinkEditMode,
-    setIsLinkEditMode,
-  );
+  return useFloatingLinkEditorToolbar(editor, anchorElem, isLinkEditMode, setIsLinkEditMode);
 }

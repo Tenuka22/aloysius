@@ -19,7 +19,7 @@ export const galleryRouter = {
         search: z.string().optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
         eventId: z.string().optional(),
-      })
+      }),
     )
     .handler(async ({ input }) => {
       const db = createDb();
@@ -50,11 +50,7 @@ export const galleryRouter = {
                 : gallery.createdAt;
       const orderFn = sortDir === "asc" ? asc : desc;
 
-      const [{ total }] = await db
-        .select({ total: count() })
-        .from(gallery)
-        .where(where)
-        .all();
+      const [{ total }] = await db.select({ total: count() }).from(gallery).where(where).all();
 
       const rows = await db
         .select()
@@ -95,9 +91,10 @@ export const galleryRouter = {
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = "id" in input
-        ? await db.select().from(gallery).where(eq(gallery.id, input.id)).get()
-        : await db.select().from(gallery).where(eq(gallery.slug, input.slug)).get();
+      const row =
+        "id" in input
+          ? await db.select().from(gallery).where(eq(gallery.id, input.id)).get()
+          : await db.select().from(gallery).where(eq(gallery.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
@@ -152,7 +149,7 @@ export const galleryRouter = {
         authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
         tags: z.array(z.string()).optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -161,7 +158,9 @@ export const galleryRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
-      const slug = input.slug ? await generateUniqueSlug(gallery, input.slug) : await generateUniqueSlug(gallery, input.title);
+      const slug = input.slug
+        ? await generateUniqueSlug(gallery, input.slug)
+        : await generateUniqueSlug(gallery, input.title);
 
       const db = createDb();
       const record = await db
@@ -220,7 +219,7 @@ export const galleryRouter = {
         authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
         tags: z.array(z.string()).optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -228,11 +227,7 @@ export const galleryRouter = {
       }
 
       const db = createDb();
-      const existing = await db
-        .select()
-        .from(gallery)
-        .where(eq(gallery.id, input.id))
-        .get();
+      const existing = await db.select().from(gallery).where(eq(gallery.id, input.id)).get();
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
@@ -302,20 +297,13 @@ export const galleryRouter = {
       }
 
       const db = createDb();
-      const existing = await db
-        .select()
-        .from(gallery)
-        .where(eq(gallery.id, input.id))
-        .get();
+      const existing = await db.select().from(gallery).where(eq(gallery.id, input.id)).get();
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
       }
 
-      await db
-        .delete(gallery)
-        .where(eq(gallery.id, input.id))
-        .run();
+      await db.delete(gallery).where(eq(gallery.id, input.id)).run();
 
       return { success: true };
     }),
@@ -326,7 +314,7 @@ export const galleryRouter = {
         galleryId: z.string(),
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).max(100).default(20),
-      })
+      }),
     )
     .handler(async ({ input }) => {
       const db = createDb();
@@ -371,7 +359,7 @@ export const galleryRouter = {
         url: z.string().min(1),
         caption: z.string().optional(),
         sortOrder: z.number().optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -430,10 +418,7 @@ export const galleryRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Gallery image not found" });
       }
 
-      await db
-        .delete(galleryImages)
-        .where(eq(galleryImages.id, input.id))
-        .run();
+      await db.delete(galleryImages).where(eq(galleryImages.id, input.id)).run();
 
       return { success: true };
     }),
@@ -444,7 +429,7 @@ export const galleryRouter = {
         id: z.string(),
         caption: z.string().optional(),
         sortOrder: z.number().optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {

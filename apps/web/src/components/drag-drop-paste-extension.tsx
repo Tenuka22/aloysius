@@ -4,13 +4,7 @@ import { COMMAND_PRIORITY_LOW, defineExtension } from "lexical";
 
 import { INSERT_IMAGE_COMMAND } from "@/components/images-extension";
 
-const ACCEPTABLE_IMAGE_TYPES = [
-  "image/",
-  "image/heic",
-  "image/heif",
-  "image/gif",
-  "image/webp",
-];
+const ACCEPTABLE_IMAGE_TYPES = ["image/", "image/heic", "image/heif", "image/gif", "image/webp"];
 
 export const DragDropPasteExtension = defineExtension({
   name: "@shadcn-editor/DragDropPaste",

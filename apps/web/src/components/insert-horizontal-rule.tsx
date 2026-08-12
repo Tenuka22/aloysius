@@ -10,9 +10,7 @@ export function InsertHorizontalRule() {
 
   return (
     <DropdownMenuItem
-      onClick={() =>
-        activeEditor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined)
-      }
+      onClick={() => activeEditor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined)}
     >
       <div className="flex items-center gap-1">
         <ScissorsIcon className="size-4" />

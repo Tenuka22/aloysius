@@ -26,11 +26,7 @@ import {
 } from "@aloysius-web/ui/components/command";
 import { DialogFooter } from "@aloysius-web/ui/components/dialog";
 import { Input } from "@aloysius-web/ui/components/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@aloysius-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@aloysius-web/ui/components/popover";
 
 const YoutubeIcon = (
   <svg
@@ -100,8 +96,7 @@ export const YoutubeEmbedConfig: CustomEmbedConfig = {
 
   // Determine if a given URL is a match and return url data.
   parseUrl: async (url: string) => {
-    const match =
-      /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/.exec(url);
+    const match = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/.exec(url);
 
     const id = match ? (match?.[2].length === 11 ? match[2] : null) : null;
 
@@ -137,10 +132,7 @@ export const TwitterEmbedConfig: CustomEmbedConfig = {
 
   // Determine if a given URL is a match and return url data.
   parseUrl: (text: string) => {
-    const match =
-      /^https:\/\/(twitter|x)\.com\/(#!\/)?(\w+)\/status(es)*\/(\d+)/.exec(
-        text,
-      );
+    const match = /^https:\/\/(twitter|x)\.com\/(#!\/)?(\w+)\/status(es)*\/(\d+)/.exec(text);
 
     if (match != null) {
       return {
@@ -183,11 +175,9 @@ export function AutoEmbedDialog({
       debounce((inputText: string) => {
         const urlMatch = URL_MATCHER.exec(inputText);
         if (embedConfig != null && inputText != null && urlMatch != null) {
-          Promise.resolve(embedConfig.parseUrl(inputText)).then(
-            (parseResult) => {
-              setEmbedResult(parseResult);
-            },
-          );
+          Promise.resolve(embedConfig.parseUrl(inputText)).then((parseResult) => {
+            setEmbedResult(parseResult);
+          });
         } else if (embedResult != null) {
           setEmbedResult(null);
         }
@@ -275,11 +265,7 @@ export function AutoEmbedPlugin(): JSX.Element {
               <PopoverPrimitive.Portal container={anchorElementRef.current}>
                 <div className="-translate-y-full transform">
                   <PopoverTrigger />
-                  <PopoverContent
-                    className="min-w-36 p-0"
-                    align="start"
-                    side="right"
-                  >
+                  <PopoverContent className="min-w-36 p-0" align="start" side="right">
                     <Command>
                       <CommandList>
                         <CommandGroup>

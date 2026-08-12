@@ -8,12 +8,7 @@ import {
   type TextFormatType,
 } from "lexical";
 
-import {
-  BoldIcon,
-  ItalicIcon,
-  StrikethroughIcon,
-  UnderlineIcon,
-} from "lucide-react";
+import { BoldIcon, ItalicIcon, StrikethroughIcon, UnderlineIcon } from "lucide-react";
 
 import { useToolbarContext } from "@/components/toolbar-context";
 import { useUpdateToolbarHandler } from "@/components/use-update-toolbar";
@@ -40,10 +35,7 @@ export function FontFormatToolbarPlugin() {
       });
       setActiveFormats((prev) => {
         // Only update if formats have changed
-        if (
-          prev.length !== formats.length ||
-          !formats.every((f) => prev.includes(f))
-        ) {
+        if (prev.length !== formats.length || !formats.every((f) => prev.includes(f))) {
           return formats;
         }
         return prev;
@@ -67,10 +59,7 @@ export function FontFormatToolbarPlugin() {
           value={format}
           aria-label={label}
           onClick={() => {
-            activeEditor.dispatchCommand(
-              FORMAT_TEXT_COMMAND,
-              format as TextFormatType,
-            );
+            activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, format as TextFormatType);
           }}
         >
           <Icon className="size-4" />

@@ -1,12 +1,5 @@
 import type { JSX } from "react";
-import {
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
@@ -27,14 +20,13 @@ import {
   createCommand,
 } from "lexical";
 
-type ImageStatus =
-  | { error: true }
-  | { error: false; width: number; height: number };
+type ImageStatus = { error: true } | { error: false; width: number; height: number };
 
 const imageCache = new Map<string, Promise<ImageStatus> | ImageStatus>();
 
-export const RIGHT_CLICK_IMAGE_COMMAND: LexicalCommand<MouseEvent> =
-  createCommand("RIGHT_CLICK_IMAGE_COMMAND");
+export const RIGHT_CLICK_IMAGE_COMMAND: LexicalCommand<MouseEvent> = createCommand(
+  "RIGHT_CLICK_IMAGE_COMMAND",
+);
 
 function useSuspenseImage(src: string): ImageStatus {
   let cached = imageCache.get(src);
@@ -63,10 +55,7 @@ function useSuspenseImage(src: string): ImageStatus {
 
 function isSVG(src: string): boolean {
   const lowerCaseSrc = src.toLowerCase();
-  return (
-    lowerCaseSrc.endsWith(".svg") ||
-    lowerCaseSrc.startsWith("data:image/svg+xml")
-  );
+  return lowerCaseSrc.endsWith(".svg") || lowerCaseSrc.startsWith("data:image/svg+xml");
 }
 
 function LazyImage({
@@ -198,8 +187,7 @@ export default function ImageComponent({
 }): JSX.Element {
   const imageRef = useRef<null | HTMLImageElement>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const [isSelected, setSelected, clearSelection] =
-    useLexicalNodeSelection(nodeKey);
+  const [isSelected, setSelected, clearSelection] = useLexicalNodeSelection(nodeKey);
   const [editor] = useLexicalComposerContext();
   const activeEditorRef = useRef<LexicalEditor | null>(null);
   const [isLoadError, setIsLoadError] = useState<boolean>(false);
@@ -315,27 +303,14 @@ export default function ImageComponent({
   }, [editor]);
   useEffect(() => {
     return mergeRegister(
-      editor.registerCommand<MouseEvent>(
-        CLICK_COMMAND,
-        onClick,
-        COMMAND_PRIORITY_LOW,
-      ),
-      editor.registerCommand<MouseEvent>(
-        RIGHT_CLICK_IMAGE_COMMAND,
-        onClick,
-        COMMAND_PRIORITY_LOW,
-      ),
+      editor.registerCommand<MouseEvent>(CLICK_COMMAND, onClick, COMMAND_PRIORITY_LOW),
+      editor.registerCommand<MouseEvent>(RIGHT_CLICK_IMAGE_COMMAND, onClick, COMMAND_PRIORITY_LOW),
       editor.registerCommand(KEY_ENTER_COMMAND, $onEnter, COMMAND_PRIORITY_LOW),
-      editor.registerCommand(
-        KEY_ESCAPE_COMMAND,
-        $onEscape,
-        COMMAND_PRIORITY_LOW,
-      ),
+      editor.registerCommand(KEY_ESCAPE_COMMAND, $onEscape, COMMAND_PRIORITY_LOW),
       editor.registerRootListener((rootElement) => {
         if (rootElement) {
           rootElement.addEventListener("contextmenu", onRightClick);
-          return () =>
-            rootElement.removeEventListener("contextmenu", onRightClick);
+          return () => rootElement.removeEventListener("contextmenu", onRightClick);
         }
       }),
     );
@@ -351,11 +326,7 @@ export default function ImageComponent({
             <BrokenImage />
           ) : (
             <LazyImage
-              className={
-                isFocused
-                  ? `focused ${isInNodeSelection ? "draggable" : ""}`
-                  : null
-              }
+              className={isFocused ? `focused ${isInNodeSelection ? "draggable" : ""}` : null}
               src={src}
               altText={altText}
               imageRef={imageRef}

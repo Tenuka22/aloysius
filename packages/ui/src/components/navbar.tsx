@@ -1,43 +1,48 @@
-"use client"
+"use client";
 
-import { useCallback, useEffect, useState } from "react"
-import { cn } from "@aloysius-web/ui/lib/utils"
+import { useCallback, useEffect, useState } from "react";
+import { cn } from "@aloysius-web/ui/lib/utils";
 import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
   navigationMenuTriggerStyle,
-} from "@aloysius-web/ui/components/navigation-menu"
-import { Button } from "@aloysius-web/ui/components/button"
+} from "@aloysius-web/ui/components/navigation-menu";
+import { Button } from "@aloysius-web/ui/components/button";
 
 export interface NavItem {
-  label: string
-  href: string
+  label: string;
+  href: string;
 }
 
 export interface NavbarProps {
-  logo?: React.ReactNode
-  items: NavItem[]
-  actions?: React.ReactNode
-  className?: string
-  onApplyNow?: () => void
+  logo?: React.ReactNode;
+  items: NavItem[];
+  actions?: React.ReactNode;
+  className?: string;
+  onApplyNow?: () => void;
 }
 
 export function Navbar({ logo, items, actions, className, onApplyNow }: NavbarProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleResize = useCallback(() => {
-    if (window.innerWidth >= 768) setIsOpen(false)
-  }, [])
+    if (window.innerWidth >= 768) setIsOpen(false);
+  }, []);
 
   useEffect(() => {
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [handleResize])
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [handleResize]);
 
   return (
-    <header className={cn("sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", className)}>
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        className,
+      )}
+    >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {logo && <div className="shrink-0">{logo}</div>}
 
@@ -45,10 +50,7 @@ export function Navbar({ logo, items, actions, className, onApplyNow }: NavbarPr
           <NavigationMenuList>
             {items.map((item) => (
               <NavigationMenuItem key={item.href}>
-                <NavigationMenuLink
-                  href={item.href}
-                  className={navigationMenuTriggerStyle()}
-                >
+                <NavigationMenuLink href={item.href} className={navigationMenuTriggerStyle()}>
                   {item.label}
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -96,11 +98,7 @@ export function Navbar({ logo, items, actions, className, onApplyNow }: NavbarPr
               strokeWidth="2"
               className="size-5"
             >
-              {isOpen ? (
-                <path d="M18 6L6 18M6 6l12 12" />
-              ) : (
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              )}
+              {isOpen ? <path d="M18 6L6 18M6 6l12 12" /> : <path d="M4 6h16M4 12h16M4 18h16" />}
             </svg>
           </button>
         </div>
@@ -124,8 +122,8 @@ export function Navbar({ logo, items, actions, className, onApplyNow }: NavbarPr
                 size="sm"
                 className="w-full mt-2 bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={() => {
-                  onApplyNow()
-                  setIsOpen(false)
+                  onApplyNow();
+                  setIsOpen(false);
                 }}
               >
                 Apply Now
@@ -135,5 +133,5 @@ export function Navbar({ logo, items, actions, className, onApplyNow }: NavbarPr
         </div>
       )}
     </header>
-  )
+  );
 }

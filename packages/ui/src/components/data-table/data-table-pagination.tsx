@@ -1,21 +1,21 @@
-import { type Table } from "@tanstack/react-table"
+import { type Table } from "@tanstack/react-table";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
-} from "lucide-react"
-import { Button } from "@aloysius-web/ui/components/button"
+} from "lucide-react";
+import { Button } from "@aloysius-web/ui/components/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@aloysius-web/ui/components/select"
+} from "@aloysius-web/ui/components/select";
 
 interface DataTablePaginationProps<TData> {
-  table: Table<TData>
+  table: Table<TData>;
 }
 
 export function DataTablePagination<TData>({ table }: DataTablePaginationProps<TData>) {
@@ -31,7 +31,7 @@ export function DataTablePagination<TData>({ table }: DataTablePaginationProps<T
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
-              table.setPageSize(Number(value))
+              table.setPageSize(Number(value));
             }}
           >
             <SelectTrigger className="h-8 w-[70px]">
@@ -93,5 +93,5 @@ export function DataTablePagination<TData>({ table }: DataTablePaginationProps<T
         </div>
       </div>
     </div>
-  )
+  );
 }

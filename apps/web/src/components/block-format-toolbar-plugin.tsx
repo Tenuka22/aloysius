@@ -1,11 +1,7 @@
 import { $isListNode, ListNode } from "@lexical/list";
 import { $isHeadingNode } from "@lexical/rich-text";
 import { $findMatchingParent, $getNearestNodeOfType } from "@lexical/utils";
-import {
-  $isRangeSelection,
-  $isRootOrShadowRoot,
-  type BaseSelection,
-} from "lexical";
+import { $isRangeSelection, $isRootOrShadowRoot, type BaseSelection } from "lexical";
 
 import { ChevronDownIcon } from "lucide-react";
 
@@ -19,11 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@aloysius-web/ui/components/dropdown-menu";
 
-export function BlockFormatDropDown({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function BlockFormatDropDown({ children }: { children: React.ReactNode }) {
   const { activeEditor, blockType, setBlockType } = useToolbarContext();
 
   function $updateToolbar(selection: BaseSelection) {
@@ -46,18 +38,11 @@ export function BlockFormatDropDown({
 
       if (elementDOM !== null) {
         if ($isListNode(element)) {
-          const parentList = $getNearestNodeOfType<ListNode>(
-            anchorNode,
-            ListNode,
-          );
-          const type = parentList
-            ? parentList.getListType()
-            : element.getListType();
+          const parentList = $getNearestNodeOfType<ListNode>(anchorNode, ListNode);
+          const type = parentList ? parentList.getListType() : element.getListType();
           setBlockType(type);
         } else {
-          const type = $isHeadingNode(element)
-            ? element.getTag()
-            : element.getType();
+          const type = $isHeadingNode(element) ? element.getTag() : element.getType();
           if (type in blockTypeToBlockName) {
             setBlockType(type as keyof typeof blockTypeToBlockName);
           }
@@ -68,12 +53,15 @@ export function BlockFormatDropDown({
 
   useUpdateToolbarHandler($updateToolbar);
 
-  const { label, icon } =
-    blockTypeToBlockName[blockType] ?? blockTypeToBlockName.paragraph;
+  const { label, icon } = blockTypeToBlockName[blockType] ?? blockTypeToBlockName.paragraph;
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" className="gap-1 px-2" size="sm" />}>{icon}<span className="text-sm">{label}</span><ChevronDownIcon className="size-3" /></DropdownMenuTrigger>
+      <DropdownMenuTrigger render={<Button variant="outline" className="gap-1 px-2" size="sm" />}>
+        {icon}
+        <span className="text-sm">{label}</span>
+        <ChevronDownIcon className="size-3" />
+      </DropdownMenuTrigger>
       <DropdownMenuContent>{children}</DropdownMenuContent>
     </DropdownMenu>
   );

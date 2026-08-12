@@ -16,11 +16,7 @@ export function TablePickerPlugin() {
   });
 }
 
-export function DynamicTablePickerPlugin({
-  queryString,
-}: {
-  queryString: string;
-}) {
+export function DynamicTablePickerPlugin({ queryString }: { queryString: string }) {
   const options: Array<ComponentPickerOption> = [];
 
   if (queryString == null) {

@@ -2,15 +2,10 @@ import { useCallback, useState } from "react";
 
 const getThemeBackgroundColor = () => {
   if (typeof window === "undefined") return "#fff";
-  return (
-    getComputedStyle(document.documentElement).backgroundColor || "#fff"
-  );
+  return getComputedStyle(document.documentElement).backgroundColor || "#fff";
 };
 
-import {
-  $getSelectionStyleValueForProperty,
-  $patchStyleText,
-} from "@lexical/selection";
+import { $getSelectionStyleValueForProperty, $patchStyleText } from "@lexical/selection";
 import { $getSelection, $isRangeSelection, type BaseSelection } from "lexical";
 
 import { PaintBucketIcon } from "lucide-react";
@@ -85,7 +80,9 @@ export function FontBackgroundToolbarPlugin() {
         }
       }}
     >
-      <ColorPickerTrigger render={<Button variant={"outline"} size={"icon-sm"} />}><PaintBucketIcon className="size-4" /></ColorPickerTrigger>
+      <ColorPickerTrigger render={<Button variant={"outline"} size={"icon-sm"} />}>
+        <PaintBucketIcon className="size-4" />
+      </ColorPickerTrigger>
       <ColorPickerContent>
         <ColorPickerArea />
         <div className="flex items-center gap-2">

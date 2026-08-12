@@ -1,11 +1,4 @@
-import {
-  type Dispatch,
-  type JSX,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type Dispatch, type JSX, useCallback, useEffect, useRef, useState } from "react";
 
 import { createPortal } from "react-dom";
 
@@ -79,10 +72,7 @@ function TextFormatFloatingToolbar({
   }, [editor, isLink, setIsLinkEditMode]);
 
   function mouseMoveListener(e: MouseEvent) {
-    if (
-      popupCharStylesEditorRef?.current &&
-      (e.buttons === 1 || e.buttons === 3)
-    ) {
+    if (popupCharStylesEditorRef?.current && (e.buttons === 1 || e.buttons === 3)) {
       if (popupCharStylesEditorRef.current.style.pointerEvents !== "none") {
         const x = e.clientX;
         const y = e.clientY;
@@ -135,12 +125,7 @@ function TextFormatFloatingToolbar({
     ) {
       const rangeRect = getDOMRangeRect(nativeSelection, rootElement);
 
-      setFloatingElemPosition(
-        rangeRect,
-        popupCharStylesEditorElem,
-        anchorElem,
-        isLink,
-      );
+      setFloatingElemPosition(rangeRect, popupCharStylesEditorElem, anchorElem, isLink);
     }
   }, [editor, anchorElem, isLink]);
 
@@ -259,21 +244,14 @@ function TextFormatFloatingToolbar({
             >
               <CodeIcon className="size-4" />
             </ToggleGroupItem>
-            <ToggleGroupItem
-              value="link"
-              aria-label="Toggle link"
-              onClick={insertLink}
-              size="sm"
-            >
+            <ToggleGroupItem value="link" aria-label="Toggle link" onClick={insertLink} size="sm">
               <LinkIcon className="size-4" />
             </ToggleGroupItem>
             <Separator orientation="vertical" />
           </ToggleGroup>
           <ToggleGroup
             type="single"
-            defaultValue={
-              isSubscript ? "subscript" : isSuperscript ? "superscript" : ""
-            }
+            defaultValue={isSubscript ? "subscript" : isSuperscript ? "superscript" : ""}
           >
             <ToggleGroupItem
               value="subscript"
@@ -360,10 +338,7 @@ function useFloatingTextFormatToolbar(
         setIsLink(false);
       }
 
-      if (
-        !$isCodeHighlightNode(selection.anchor.getNode()) &&
-        selection.getTextContent() !== ""
-      ) {
+      if (!$isCodeHighlightNode(selection.anchor.getNode()) && selection.getTextContent() !== "") {
         setIsText($isTextNode(node) || $isParagraphNode(node));
       } else {
         setIsText(false);

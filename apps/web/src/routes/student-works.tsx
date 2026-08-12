@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { useQuery } from "@tanstack/react-query"
-import { Navbar } from "@/components-client/navbar"
-import { Footer } from "@/components-client/footer"
-import { client } from "@/utils/orpc"
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Navbar } from "@/components-client/navbar";
+import { Footer } from "@/components-client/footer";
+import { client } from "@/utils/orpc";
 
 const categoryColors: Record<string, string> = {
   film: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
@@ -15,29 +15,29 @@ const categoryColors: Record<string, string> = {
   photography: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
   code: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
   other: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
-}
+};
 
 type StudentWork = {
-  id: string
-  title: string
-  description: string | null
-  category: string
-  studentNames: string[]
-  studentGrade: string | null
-  coverImage: string | null
-}
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  studentNames: string[];
+  studentGrade: string | null;
+  coverImage: string | null;
+};
 
 export const Route = createFileRoute("/student-works")({
   component: StudentWorksPage,
-})
+});
 
 function StudentWorksPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["studentWorks", "public"],
     queryFn: () => client.studentWorks.list({ page: 1, pageSize: 50, status: "published" }),
-  })
+  });
 
-  const items = (data?.rows ?? []) as StudentWork[]
+  const items = (data?.rows ?? []) as StudentWork[];
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,11 +51,10 @@ function StudentWorksPage() {
       <main id="main-content">
         <section className="px-4 sm:px-6 lg:px-8 pt-16 pb-8">
           <div className="mx-auto max-w-5xl text-center">
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-              Student Works
-            </h1>
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">Student Works</h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Discover the creativity and talent of our students across film, art, music, writing, and more.
+              Discover the creativity and talent of our students across film, art, music, writing,
+              and more.
             </p>
           </div>
         </section>
@@ -63,7 +62,9 @@ function StudentWorksPage() {
         <section className="px-4 sm:px-6 lg:px-8 pb-16">
           <div className="mx-auto max-w-6xl">
             {isLoading ? (
-              <div className="text-center text-muted-foreground py-16">Loading student works...</div>
+              <div className="text-center text-muted-foreground py-16">
+                Loading student works...
+              </div>
             ) : items.length === 0 ? (
               <div className="text-center text-muted-foreground py-16">No student works yet.</div>
             ) : (
@@ -85,7 +86,13 @@ function StudentWorksPage() {
                       </div>
                     ) : (
                       <div className="aspect-[16/10] bg-muted flex items-center justify-center">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="size-10 text-muted-foreground/40">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1"
+                          className="size-10 text-muted-foreground/40"
+                        >
                           <rect x="3" y="3" width="18" height="18" rx="2" />
                           <circle cx="8.5" cy="8.5" r="1.5" />
                           <path d="M21 15l-5-5L5 21" />
@@ -122,5 +129,5 @@ function StudentWorksPage() {
       </main>
       <Footer />
     </div>
-  )
+  );
 }

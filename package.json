@@ -51,9 +51,9 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@aloysius-web/config": "workspace:*",
     "@cloudflare/workers-types": "catalog:",
     "@types/node": "catalog:",
-    "@aloysius-web/config": "workspace:*",
     "rolldown": "1.1.4",
     "typescript": "catalog:",
     "vite-plus": "0.2.2"

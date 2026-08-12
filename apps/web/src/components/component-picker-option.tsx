@@ -16,10 +16,7 @@ export class ComponentPickerOption extends MenuOption {
   onSelect: (
     queryString: string,
     editor: LexicalEditor,
-    showModal: (
-      title: string,
-      showModal: (onClose: () => void) => JSX.Element,
-    ) => void,
+    showModal: (title: string, showModal: (onClose: () => void) => JSX.Element) => void,
   ) => void;
 
   constructor(
@@ -31,10 +28,7 @@ export class ComponentPickerOption extends MenuOption {
       onSelect: (
         queryString: string,
         editor: LexicalEditor,
-        showModal: (
-          title: string,
-          showModal: (onClose: () => void) => JSX.Element,
-        ) => void,
+        showModal: (title: string, showModal: (onClose: () => void) => JSX.Element) => void,
       ) => void;
     },
   ) {

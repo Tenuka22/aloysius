@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useState, useCallback, useRef, useEffect } from "react"
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
-import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
-import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar"
-import { Separator } from "@aloysius-web/ui/components/separator"
-import { Button } from "@aloysius-web/ui/components/button"
-import { Input } from "@aloysius-web/ui/components/input"
+import { useState, useCallback, useRef, useEffect } from "react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
+import { Separator } from "@aloysius-web/ui/components/separator";
+import { Button } from "@aloysius-web/ui/components/button";
+import { Input } from "@aloysius-web/ui/components/input";
 import {
   Dialog,
   DialogContent,
@@ -14,127 +14,127 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@aloysius-web/ui/components/dialog"
-import { IconTrash } from "@tabler/icons-react"
-import { Dropzone } from "@/components/file-upload"
-import { cn } from "@aloysius-web/ui/lib/utils"
-import { client } from "@/utils/orpc"
-import { convertToWebp } from "@/utils/convert-to-webp"
-import { toast } from "sonner"
+} from "@aloysius-web/ui/components/dialog";
+import { IconTrash } from "@tabler/icons-react";
+import { Dropzone } from "@/components/file-upload";
+import { cn } from "@aloysius-web/ui/lib/utils";
+import { client } from "@/utils/orpc";
+import { convertToWebp } from "@/utils/convert-to-webp";
+import { toast } from "sonner";
 
 type GalleryImage = {
-  id: string
-  galleryId: string
-  url: string
-  caption: string | null
-  sortOrder: number
-  createdAt: string
-}
+  id: string;
+  galleryId: string;
+  url: string;
+  caption: string | null;
+  sortOrder: number;
+  createdAt: string;
+};
 
 export const Route = createFileRoute("/admin/gallery_/$id/images")({
   component: GalleryImagesPage,
-})
+});
 
 function GalleryImagesPage() {
-  const { id } = Route.useParams()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const [uploading, setUploading] = useState(false)
-  const [deleteImageId, setDeleteImageId] = useState<string | null>(null)
-  const loadMoreRef = useRef<HTMLDivElement>(null)
+  const { id } = Route.useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [uploading, setUploading] = useState(false);
+  const [deleteImageId, setDeleteImageId] = useState<string | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const { data: gallery } = useQuery({
     queryKey: ["gallery", id],
     queryFn: () => client.gallery.get({ id }),
-  })
+  });
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["gallery", id, "images"],
     queryFn: ({ pageParam = 1 }) =>
       client.gallery.listImages({ galleryId: id, page: pageParam, pageSize: 20 }),
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.pageCount ? lastPage.page + 1 : undefined,
     initialPageParam: 1,
-  })
+  });
 
-  const images = data?.pages.flatMap((page) => page.rows) ?? []
+  const images = data?.pages.flatMap((page) => page.rows) ?? [];
 
   useEffect(() => {
-    const el = loadMoreRef.current
-    if (!el) return
+    const el = loadMoreRef.current;
+    if (!el) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage()
+          fetchNextPage();
         }
       },
-      { threshold: 0.1 }
-    )
+      { threshold: 0.1 },
+    );
 
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const addImage = useMutation({
     mutationFn: (body: { galleryId: string; url: string; caption?: string }) =>
       client.gallery.addImage(body),
     onSuccess: () => {
-      toast.success("Image added")
-      queryClient.invalidateQueries({ queryKey: ["gallery", id, "images"] })
+      toast.success("Image added");
+      queryClient.invalidateQueries({ queryKey: ["gallery", id, "images"] });
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   const removeImage = useMutation({
     mutationFn: (imageId: string) => client.gallery.removeImage({ id: imageId }),
     onSuccess: () => {
-      toast.success("Image removed")
-      queryClient.invalidateQueries({ queryKey: ["gallery", id, "images"] })
-      setDeleteImageId(null)
+      toast.success("Image removed");
+      queryClient.invalidateQueries({ queryKey: ["gallery", id, "images"] });
+      setDeleteImageId(null);
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   const updateImage = useMutation({
     mutationFn: (body: { id: string; caption?: string; sortOrder?: number }) =>
       client.gallery.updateImage(body),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["gallery", id, "images"] })
+      queryClient.invalidateQueries({ queryKey: ["gallery", id, "images"] });
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
-  const handleFilesSelected = useCallback(async (files: File[]) => {
-    setUploading(true)
-    try {
-      for (const file of files) {
-        const webp = await convertToWebp(file)
-        const result = await client.files.uploadFile(webp)
-        await addImage.mutateAsync({ galleryId: id, url: result.url })
+  const handleFilesSelected = useCallback(
+    async (files: File[]) => {
+      setUploading(true);
+      try {
+        for (const file of files) {
+          const webp = await convertToWebp(file);
+          const result = await client.files.uploadFile(webp);
+          await addImage.mutateAsync({ galleryId: id, url: result.url });
+        }
+      } catch {
+        toast.error("Failed to upload image");
+      } finally {
+        setUploading(false);
       }
-    } catch {
-      toast.error("Failed to upload image")
-    } finally {
-      setUploading(false)
-    }
-  }, [id, addImage])
+    },
+    [id, addImage],
+  );
 
-  const handleCaptionChange = useCallback((imageId: string, caption: string) => {
-    updateImage.mutate({ id: imageId, caption })
-  }, [updateImage])
+  const handleCaptionChange = useCallback(
+    (imageId: string, caption: string) => {
+      updateImage.mutate({ id: imageId, caption });
+    },
+    [updateImage],
+  );
 
   return (
     <div className="flex flex-col">
@@ -154,7 +154,11 @@ function GalleryImagesPage() {
           <label className="text-sm font-medium">Cover Image (16:9)</label>
           {gallery?.coverImage ? (
             <div className="relative overflow-hidden rounded-xl border max-w-md">
-              <img src={gallery.coverImage} alt="Cover" className="w-full aspect-video object-cover pointer-events-none" />
+              <img
+                src={gallery.coverImage}
+                alt="Cover"
+                className="w-full aspect-video object-cover pointer-events-none"
+              />
             </div>
           ) : (
             <div className="text-sm text-muted-foreground">No cover image set.</div>
@@ -187,14 +191,21 @@ function GalleryImagesPage() {
               </div>
               <div ref={loadMoreRef} className="h-4" />
               {isFetchingNextPage && (
-                <div className="text-muted-foreground py-4 text-center text-sm">Loading more...</div>
+                <div className="text-muted-foreground py-4 text-center text-sm">
+                  Loading more...
+                </div>
               )}
             </>
           )}
         </div>
       </div>
 
-      <Dialog open={!!deleteImageId} onOpenChange={(open) => { if (!open) setDeleteImageId(null) }}>
+      <Dialog
+        open={!!deleteImageId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteImageId(null);
+        }}
+      >
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Delete Image</DialogTitle>
@@ -208,7 +219,9 @@ function GalleryImagesPage() {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => { if (deleteImageId) removeImage.mutate(deleteImageId) }}
+              onClick={() => {
+                if (deleteImageId) removeImage.mutate(deleteImageId);
+              }}
               disabled={removeImage.isPending}
             >
               Delete
@@ -217,7 +230,7 @@ function GalleryImagesPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
 
 function ImageCard({
@@ -225,17 +238,17 @@ function ImageCard({
   onCaptionChange,
   onDelete,
 }: {
-  image: GalleryImage
-  onCaptionChange: (id: string, caption: string) => void
-  onDelete: () => void
+  image: GalleryImage;
+  onCaptionChange: (id: string, caption: string) => void;
+  onDelete: () => void;
 }) {
-  const [caption, setCaption] = useState(image.caption ?? "")
+  const [caption, setCaption] = useState(image.caption ?? "");
 
   const handleBlur = useCallback(() => {
     if (caption !== (image.caption ?? "")) {
-      onCaptionChange(image.id, caption)
+      onCaptionChange(image.id, caption);
     }
-  }, [caption, image.id, image.caption, onCaptionChange])
+  }, [caption, image.id, image.caption, onCaptionChange]);
 
   return (
     <div className="group relative overflow-hidden rounded-lg border">
@@ -246,12 +259,7 @@ function ImageCard({
           className="aspect-video w-full object-cover"
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors opacity-0 group-hover:opacity-100 flex items-start justify-end p-2 pointer-events-none group-hover:pointer-events-auto">
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={onDelete}
-            className="shadow-lg"
-          >
+          <Button variant="destructive" size="sm" onClick={onDelete} className="shadow-lg">
             <IconTrash className="size-4 mr-1" />
             Delete
           </Button>
@@ -267,5 +275,5 @@ function ImageCard({
         />
       </div>
     </div>
-  )
+  );
 }

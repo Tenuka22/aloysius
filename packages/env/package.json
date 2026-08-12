@@ -13,9 +13,9 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
     "@aloysius-web/config": "workspace:*",
     "@aloysius-web/infra": "workspace:*",
+    "@types/node": "catalog:",
     "typescript": "catalog:"
   }
 }

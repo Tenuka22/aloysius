@@ -9,72 +9,70 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"];
 
 export const filesRouter = {
-  uploadFile: protectedProcedure
-    .input(z.file())
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
+  uploadFile: protectedProcedure.input(z.file()).handler(async ({ input, context }) => {
+    if (!context.auth?.userId) {
+      throw new ORPCError("UNAUTHORIZED");
+    }
 
-      if (input.size > MAX_FILE_SIZE) {
-        throw new ORPCError("BAD_REQUEST", {
-          message: "File size exceeds 10MB limit",
-        });
-      }
-
-      const id = crypto.randomUUID();
-      const file = input as File;
-      const isImage = IMAGE_TYPES.includes(file.type);
-
-      let uploadBuffer: Buffer;
-      let ext: string;
-      let contentType: string;
-
-      if (isImage) {
-        uploadBuffer = Buffer.from(await file.arrayBuffer());
-        ext = "webp";
-        contentType = "image/webp";
-      } else {
-        uploadBuffer = Buffer.from(await file.arrayBuffer());
-        ext = file.name.split(".").pop() ?? "";
-        contentType = file.type;
-      }
-
-      const key = `${context.auth.userId}/${id}.${ext}`;
-
-      if (!context.bucket) {
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: "Storage not available",
-        });
-      }
-
-      await context.bucket.put(key, uploadBuffer, {
-        httpMetadata: { contentType },
+    if (input.size > MAX_FILE_SIZE) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: "File size exceeds 10MB limit",
       });
+    }
 
-      const db = createDb();
-      const record = await db
-        .insert(files)
-        .values({
-          id,
-          name: file.name,
-          size: uploadBuffer.length,
-          type: contentType,
-          key,
-          userId: context.auth.userId,
-        })
-        .returning()
-        .get();
+    const id = crypto.randomUUID();
+    const file = input as File;
+    const isImage = IMAGE_TYPES.includes(file.type);
 
-      return {
-        id: record.id,
-        name: record.name,
-        size: record.size,
-        type: record.type,
-        url: `${context.r2PublicUrl}/${record.key}`,
-        createdAt: record.createdAt.toISOString(),
-      };
-    }),
+    let uploadBuffer: Buffer;
+    let ext: string;
+    let contentType: string;
+
+    if (isImage) {
+      uploadBuffer = Buffer.from(await file.arrayBuffer());
+      ext = "webp";
+      contentType = "image/webp";
+    } else {
+      uploadBuffer = Buffer.from(await file.arrayBuffer());
+      ext = file.name.split(".").pop() ?? "";
+      contentType = file.type;
+    }
+
+    const key = `${context.auth.userId}/${id}.${ext}`;
+
+    if (!context.bucket) {
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Storage not available",
+      });
+    }
+
+    await context.bucket.put(key, uploadBuffer, {
+      httpMetadata: { contentType },
+    });
+
+    const db = createDb();
+    const record = await db
+      .insert(files)
+      .values({
+        id,
+        name: file.name,
+        size: uploadBuffer.length,
+        type: contentType,
+        key,
+        userId: context.auth.userId,
+      })
+      .returning()
+      .get();
+
+    return {
+      id: record.id,
+      name: record.name,
+      size: record.size,
+      type: record.type,
+      url: `${context.r2PublicUrl}/${record.key}`,
+      createdAt: record.createdAt.toISOString(),
+    };
+  }),
 
   listFiles: protectedProcedure.handler(async ({ context }) => {
     if (!context.auth?.userId) {
@@ -82,11 +80,7 @@ export const filesRouter = {
     }
 
     const db = createDb();
-    const rows = await db
-      .select()
-      .from(files)
-      .where(eq(files.userId, context.auth.userId))
-      .all();
+    const rows = await db.select().from(files).where(eq(files.userId, context.auth.userId)).all();
 
     return rows.map((row) => ({
       id: row.id,

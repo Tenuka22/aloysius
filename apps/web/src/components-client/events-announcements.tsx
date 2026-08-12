@@ -117,6 +117,7 @@ export function EventsAnnouncements({
                       params={{ slug: event.slug }}
                       className="group relative overflow-hidden bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
                     >
+                      <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
                       {event.coverImage && (
                         <div className="absolute inset-0">
                           <img
@@ -134,16 +135,16 @@ export function EventsAnnouncements({
                           </div>
                           <time
                             dateTime={event.startDate}
-                            className="text-2xl font-light text-white"
+                            className="text-2xl font-light text-white group-hover:text-white transition-colors"
                           >
                             {day}
                           </time>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-white group-hover:text-[#c9a227] transition-colors mb-0.5">
+                          <div className="font-medium text-white group-hover:text-white transition-colors mb-0.5">
                             {event.title}
                           </div>
-                          <div className="text-xs text-white/40">
+                          <div className="text-xs text-white/40 group-hover:text-white/60 transition-colors">
                             {event.isAllDay
                               ? "All day"
                               : eventDate.toLocaleTimeString("default", {
@@ -183,23 +184,26 @@ export function EventsAnnouncements({
                     key={item.id}
                     to="/announcements/$slug"
                     params={{ slug: item.slug }}
-                    className="group block p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                    className="group relative block p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
                   >
-                    <div className="font-medium text-white group-hover:text-[#c9a227] transition-colors mb-1">
-                      {item.title}
-                    </div>
-                    {item.excerpt && (
-                      <div className="text-xs text-white/40 mb-2 line-clamp-2">{item.excerpt}</div>
-                    )}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <time dateTime={item.createdAt} className="text-xs text-white/30">
-                        {new Date(item.createdAt).toLocaleDateString()}
-                      </time>
-                      {item.audience && item.audience !== "all" && (
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c9a227]">
-                          {audienceLabels[item.audience] ?? item.audience}
-                        </span>
+                    <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
+                    <div className="relative">
+                      <div className="font-medium text-white group-hover:text-white transition-colors mb-1">
+                        {item.title}
+                      </div>
+                      {item.excerpt && (
+                        <div className="text-xs text-white/40 group-hover:text-white/60 transition-colors mb-2 line-clamp-2">{item.excerpt}</div>
                       )}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <time dateTime={item.createdAt} className="text-xs text-white/30 group-hover:text-white/50 transition-colors">
+                          {new Date(item.createdAt).toLocaleDateString()}
+                        </time>
+                        {item.audience && item.audience !== "all" && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c9a227] group-hover:text-white transition-colors">
+                            {audienceLabels[item.audience] ?? item.audience}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </Link>
                 ))
@@ -230,10 +234,11 @@ export function EventsAnnouncements({
                   key={item.id}
                   to="/news/$slug"
                   params={{ slug: item.slug }}
-                  className="group bg-white/5 border border-white/10 overflow-hidden hover:bg-white/10 transition-colors"
+                  className="group relative bg-white/5 border border-white/10 overflow-hidden hover:bg-white/10 transition-colors"
                 >
+                  <span className="absolute inset-y-0 left-0 w-0 bg-[#c9a227] group-hover:w-full transition-all duration-700 ease-out -z-0" />
                   {item.coverImage ? (
-                    <div className="aspect-video overflow-hidden">
+                    <div className="relative z-10 aspect-video overflow-hidden">
                       <img
                         src={item.coverImage}
                         alt={item.title}
@@ -241,13 +246,13 @@ export function EventsAnnouncements({
                       />
                     </div>
                   ) : (
-                    <div className="aspect-video bg-gradient-to-br from-[#c9a227]/10 to-transparent flex items-center justify-center">
+                    <div className="relative z-10 aspect-video bg-gradient-to-br from-primary/10 to-transparent flex items-center justify-center">
                       <svg
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="1"
-                        className="size-10 text-[#c9a227]/20"
+                        className="size-10 text-primary/20"
                       >
                         <path
                           strokeLinecap="round"
@@ -257,16 +262,16 @@ export function EventsAnnouncements({
                       </svg>
                     </div>
                   )}
-                  <div className="p-4">
-                    <div className="font-medium text-white group-hover:text-[#c9a227] transition-colors mb-1 line-clamp-2">
+                  <div className="relative z-10 p-4">
+                    <time dateTime={item.createdAt} className="text-xs text-white/50 group-hover:text-primary transition-colors block mb-1.5">
+                      {new Date(item.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+                    </time>
+                    <div className="font-medium text-white group-hover:text-primary transition-colors mb-1 line-clamp-2">
                       {item.title}
                     </div>
                     {item.excerpt && (
-                      <div className="text-xs text-white/40 mb-2 line-clamp-2">{item.excerpt}</div>
+                      <div className="text-xs text-white/50 group-hover:text-primary/80 transition-colors mb-2 line-clamp-2">{item.excerpt}</div>
                     )}
-                    <time dateTime={item.createdAt} className="text-xs text-white/30">
-                      {new Date(item.createdAt).toLocaleDateString()}
-                    </time>
                   </div>
                 </Link>
               ))}

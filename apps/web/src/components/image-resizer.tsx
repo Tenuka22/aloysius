@@ -62,9 +62,7 @@ export function ImageResizer({
       ? editorRootElement.getBoundingClientRect().width - 20
       : 100;
   const maxHeightContainer =
-    editorRootElement !== null
-      ? editorRootElement.getBoundingClientRect().height - 20
-      : 100;
+    editorRootElement !== null ? editorRootElement.getBoundingClientRect().height - 20 : 100;
 
   const minWidth = 100;
   const minHeight = 100;
@@ -79,29 +77,13 @@ export function ImageResizer({
     const cursorDir = ew ? "ew" : ns ? "ns" : nwse ? "nwse" : "nesw";
 
     if (editorRootElement !== null) {
-      editorRootElement.style.setProperty(
-        "cursor",
-        `${cursorDir}-resize`,
-        "important",
-      );
+      editorRootElement.style.setProperty("cursor", `${cursorDir}-resize`, "important");
     }
     if (document.body !== null) {
-      document.body.style.setProperty(
-        "cursor",
-        `${cursorDir}-resize`,
-        "important",
-      );
-      userSelect.current.value = document.body.style.getPropertyValue(
-        "-webkit-user-select",
-      );
-      userSelect.current.priority = document.body.style.getPropertyPriority(
-        "-webkit-user-select",
-      );
-      document.body.style.setProperty(
-        "-webkit-user-select",
-        `none`,
-        "important",
-      );
+      document.body.style.setProperty("cursor", `${cursorDir}-resize`, "important");
+      userSelect.current.value = document.body.style.getPropertyValue("-webkit-user-select");
+      userSelect.current.priority = document.body.style.getPropertyPriority("-webkit-user-select");
+      document.body.style.setProperty("-webkit-user-select", `none`, "important");
     }
   };
 
@@ -119,10 +101,7 @@ export function ImageResizer({
     }
   };
 
-  const handlePointerDown = (
-    event: React.PointerEvent<HTMLDivElement>,
-    direction: number,
-  ) => {
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>, direction: number) => {
     if (!editor.isEditable()) {
       return;
     }
@@ -160,10 +139,8 @@ export function ImageResizer({
     const image = imageRef.current;
     const positioning = positioningRef.current;
 
-    const isHorizontal =
-      positioning.direction & (Direction.east | Direction.west);
-    const isVertical =
-      positioning.direction & (Direction.south | Direction.north);
+    const isHorizontal = positioning.direction & (Direction.east | Direction.west);
+    const isVertical = positioning.direction & (Direction.south | Direction.north);
 
     if (image !== null && positioning.isResizing) {
       const zoom = calculateZoomLevel(image);
@@ -172,11 +149,7 @@ export function ImageResizer({
         let diff = Math.floor(positioning.startX - event.clientX / zoom);
         diff = positioning.direction & Direction.east ? -diff : diff;
 
-        const width = clamp(
-          positioning.startWidth + diff,
-          minWidth,
-          maxWidthContainer,
-        );
+        const width = clamp(positioning.startWidth + diff, minWidth, maxWidthContainer);
 
         const height = width / positioning.ratio;
         image.style.width = `${width}px`;
@@ -187,11 +160,7 @@ export function ImageResizer({
         let diff = Math.floor(positioning.startY - event.clientY / zoom);
         diff = positioning.direction & Direction.south ? -diff : diff;
 
-        const height = clamp(
-          positioning.startHeight + diff,
-          minHeight,
-          maxHeightContainer,
-        );
+        const height = clamp(positioning.startHeight + diff, minHeight, maxHeightContainer);
 
         image.style.height = `${height}px`;
         positioning.currentHeight = height;
@@ -199,11 +168,7 @@ export function ImageResizer({
         let diff = Math.floor(positioning.startX - event.clientX / zoom);
         diff = positioning.direction & Direction.east ? -diff : diff;
 
-        const width = clamp(
-          positioning.startWidth + diff,
-          minWidth,
-          maxWidthContainer,
-        );
+        const width = clamp(positioning.startWidth + diff, minWidth, maxWidthContainer);
 
         image.style.width = `${width}px`;
         positioning.currentWidth = width;

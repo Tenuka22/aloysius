@@ -1,11 +1,7 @@
-"use client"
+"use client";
 
-import { useUser, useAuth } from "@clerk/tanstack-react-start"
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@aloysius-web/ui/components/avatar"
+import { useUser, useAuth } from "@clerk/tanstack-react-start";
+import { Avatar, AvatarFallback, AvatarImage } from "@aloysius-web/ui/components/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,42 +10,45 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@aloysius-web/ui/components/dropdown-menu"
+} from "@aloysius-web/ui/components/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@aloysius-web/ui/components/sidebar"
-import { IconSelector, IconLogout, IconHome } from "@tabler/icons-react"
+} from "@aloysius-web/ui/components/sidebar";
+import { IconSelector, IconLogout, IconHome } from "@tabler/icons-react";
 
 export function NavUser() {
-  const { isMobile } = useSidebar()
-  const { user } = useUser()
-  const { signOut } = useAuth()
+  const { isMobile } = useSidebar();
+  const { user } = useUser();
+  const { signOut } = useAuth();
 
-  if (!user) return null
+  if (!user) return null;
 
-  const firstName = user.firstName || "User"
-  const lastName = user.lastName || ""
-  const email = user.emailAddresses?.[0]?.emailAddress || ""
-  const avatarUrl = user.imageUrl
+  const firstName = user.firstName || "User";
+  const lastName = user.lastName || "";
+  const email = user.emailAddresses?.[0]?.emailAddress || "";
+  const avatarUrl = user.imageUrl;
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger
-            render={
-              <SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />
-            }
+            render={<SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />}
           >
             <Avatar>
               <AvatarImage src={avatarUrl} alt={firstName} />
-              <AvatarFallback>{firstName[0]}{lastName[0]}</AvatarFallback>
+              <AvatarFallback>
+                {firstName[0]}
+                {lastName[0]}
+              </AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">{firstName} {lastName}</span>
+              <span className="truncate font-medium">
+                {firstName} {lastName}
+              </span>
               <span className="truncate text-xs">{email}</span>
             </div>
             <IconSelector className="ml-auto size-4" />
@@ -65,10 +64,15 @@ export function NavUser() {
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar>
                     <AvatarImage src={avatarUrl} alt={firstName} />
-                    <AvatarFallback>{firstName[0]}{lastName[0]}</AvatarFallback>
+                    <AvatarFallback>
+                      {firstName[0]}
+                      {lastName[0]}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{firstName} {lastName}</span>
+                    <span className="truncate font-medium">
+                      {firstName} {lastName}
+                    </span>
                     <span className="truncate text-xs">{email}</span>
                   </div>
                 </div>
@@ -90,5 +94,5 @@ export function NavUser() {
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }

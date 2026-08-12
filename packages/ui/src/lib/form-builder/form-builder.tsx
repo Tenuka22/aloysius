@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { useCallback } from "react"
-import { useForm, useStore } from "@tanstack/react-form"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Button } from "@aloysius-web/ui/components/button"
-import { FieldGroup, FieldSet, FieldLegend } from "@aloysius-web/ui/components/field"
+import { useCallback } from "react";
+import { useForm, useStore } from "@tanstack/react-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@aloysius-web/ui/components/button";
+import { FieldGroup, FieldSet, FieldLegend } from "@aloysius-web/ui/components/field";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@aloysius-web/ui/components/collapsible"
-import { FieldControl, type RenderFieldArgs } from "./field-registry"
-import { FormContext } from "./form-context"
+} from "@aloysius-web/ui/components/collapsible";
+import { FieldControl, type RenderFieldArgs } from "./field-registry";
+import { FormContext } from "./form-context";
 
-import type { FormBuilderProps, FieldEntry, RowConfig } from "./types"
+import type { FormBuilderProps, FieldEntry, RowConfig } from "./types";
 
 const SPAN_CLASSES: Record<number, string> = {
   1: "md:col-span-1",
@@ -28,47 +28,47 @@ const SPAN_CLASSES: Record<number, string> = {
   10: "md:col-span-10",
   11: "md:col-span-11",
   12: "md:col-span-12",
-}
+};
 
 function findField<TData extends Record<string, unknown>>(
   fields: FieldEntry<TData>[],
-  name: string
+  name: string,
 ): FieldEntry<TData> | undefined {
-  return fields.find((f) => f.name === name)
+  return fields.find((f) => f.name === name);
 }
 
-function useFormBuilderSubmit<TData extends Record<string, unknown>>(props: FormBuilderProps<TData>) {
-  const queryClient = useQueryClient()
+function useFormBuilderSubmit<TData extends Record<string, unknown>>(
+  props: FormBuilderProps<TData>,
+) {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: props.mutationOptions?.mutationFn ?? (async () => {}),
     ...props.mutationOptions,
-  })
+  });
 
   const handleSubmit = useCallback(
     async (values: TData) => {
       try {
         if (props.config.hooks?.beforeSubmit) {
-          values = await props.config.hooks.beforeSubmit(values)
+          values = await props.config.hooks.beforeSubmit(values);
         }
         if (props.onSubmit) {
-          await props.onSubmit(values)
+          await props.onSubmit(values);
         } else if (props.mutationOptions) {
-          await mutation.mutateAsync({ body: values })
+          await mutation.mutateAsync({ body: values });
         }
         if (props.queryKeysToInvalidate?.length) {
           for (const key of props.queryKeysToInvalidate) {
-            queryClient.invalidateQueries({ queryKey: key as any })
+            queryClient.invalidateQueries({ queryKey: key as any });
           }
         }
         if (props.config.hooks?.onSuccess) {
-          await props.config.hooks.onSuccess(mutation.data)
+          await props.config.hooks.onSuccess(mutation.data);
         }
       } catch (err) {
         if (props.config.hooks?.onError) {
-          const message = err instanceof Error ? err.message : "An unexpected error occurred"
-          await props.config.hooks.onError(
-            err instanceof Error ? err : new Error(message)
-          )
+          const message = err instanceof Error ? err.message : "An unexpected error occurred";
+          await props.config.hooks.onError(err instanceof Error ? err : new Error(message));
         }
       }
     },
@@ -80,29 +80,29 @@ function useFormBuilderSubmit<TData extends Record<string, unknown>>(props: Form
       mutation.mutateAsync,
       mutation.data,
       queryClient,
-    ]
-  )
+    ],
+  );
 
   return {
     handleSubmit,
     isPending: props.submitting ?? mutation.isPending,
-  }
+  };
 }
 
 export function FormBuilder<TData extends Record<string, unknown>>(props: FormBuilderProps<TData>) {
-  const { config, defaultValues, valibotSchema } = props
-  const { handleSubmit, isPending } = useFormBuilderSubmit(props)
+  const { config, defaultValues, valibotSchema } = props;
+  const { handleSubmit, isPending } = useFormBuilderSubmit(props);
 
   const form = useForm({
     defaultValues: defaultValues as any,
     validators: valibotSchema ? ({ onSubmit: valibotSchema } as any) : undefined,
     onSubmit: async ({ value }) => {
-      await handleSubmit(value as TData)
+      await handleSubmit(value as TData);
     },
-  })
+  });
 
-  const formValues = useStore(form.store, (state) => state.values) as Record<string, unknown>
-  const formId = props.formId ?? "form-builder-form"
+  const formValues = useStore(form.store, (state) => state.values) as Record<string, unknown>;
+  const formId = props.formId ?? "form-builder-form";
 
   function renderSingleField(field: FieldEntry<TData>) {
     if (field.systemManaged) {
@@ -121,7 +121,7 @@ export function FormBuilder<TData extends Record<string, unknown>>(props: FormBu
           onBlur={() => {}}
           errors={[]}
         />
-      )
+      );
     }
 
     if (field.kind === "custom" && field.customRenderer) {
@@ -131,9 +131,9 @@ export function FormBuilder<TData extends Record<string, unknown>>(props: FormBu
           name={field.name as any}
           children={(f: any) => {
             const fieldApi = f as {
-              state: { value: unknown }
-              handleChange: (val: unknown) => void
-            }
+              state: { value: unknown };
+              handleChange: (val: unknown) => void;
+            };
             return (
               <div className="space-y-1.5">
                 {field.label && (
@@ -150,10 +150,10 @@ export function FormBuilder<TData extends Record<string, unknown>>(props: FormBu
                   setFieldValue: (n, v) => form.setFieldValue(n as any, v),
                 })}
               </div>
-            )
+            );
           }}
         />
-      )
+      );
     }
 
     return (
@@ -163,17 +163,17 @@ export function FormBuilder<TData extends Record<string, unknown>>(props: FormBu
         children={(f: any) => {
           const fieldApi = f as {
             state: {
-              value: unknown
-              meta: { isTouched: boolean; isValid: boolean; errors: any[] }
-            }
-            handleChange: (val: unknown) => void
-            handleBlur: () => void
-          }
-          const isInvalid = fieldApi.state.meta.isTouched && !fieldApi.state.meta.isValid
+              value: unknown;
+              meta: { isTouched: boolean; isValid: boolean; errors: any[] };
+            };
+            handleChange: (val: unknown) => void;
+            handleBlur: () => void;
+          };
+          const isInvalid = fieldApi.state.meta.isTouched && !fieldApi.state.meta.isValid;
 
           const changeHandler = field.onChangeOverride
             ? (val: unknown) => field.onChangeOverride!(val, fieldApi.handleChange)
-            : fieldApi.handleChange
+            : fieldApi.handleChange;
 
           const renderArgs: RenderFieldArgs = {
             kind: field.kind,
@@ -191,84 +191,80 @@ export function FormBuilder<TData extends Record<string, unknown>>(props: FormBu
             errors: fieldApi.state.meta.errors,
             inputProps: field.inputProps,
             renderLabel: field.renderLabel,
-          }
+          };
 
-          return <FieldControl {...renderArgs} />
+          return <FieldControl {...renderArgs} />;
         }}
       />
-    )
+    );
   }
 
   function isFieldHidden(field: FieldEntry<TData>): boolean {
     if (typeof field.hidden === "function") {
-      return field.hidden(formValues as Record<string, unknown>)
+      return field.hidden(formValues as Record<string, unknown>);
     }
-    return !!field.hidden
+    return !!field.hidden;
   }
 
   function isFieldDisabled(field: FieldEntry<TData>): boolean {
     if (typeof field.disabled === "function") {
-      return field.disabled(formValues as Record<string, unknown>)
+      return field.disabled(formValues as Record<string, unknown>);
     }
-    return !!field.disabled
+    return !!field.disabled;
   }
 
   function getSectionRows(sectionId: string | undefined): RowConfig[] {
-    const rowIds: number[] = []
+    const rowIds: number[] = [];
     const sectionFieldNames = new Set(
-      config.fields
-        .filter((f) => f.section === sectionId && !isFieldHidden(f))
-        .map((f) => f.name)
-    )
+      config.fields.filter((f) => f.section === sectionId && !isFieldHidden(f)).map((f) => f.name),
+    );
     config.layout.forEach((row, idx) => {
       const hasFieldInSection = row.columns.some((col) =>
-        col.fields.some((fn) => sectionFieldNames.has(fn))
-      )
-      if (hasFieldInSection) rowIds.push(idx)
-    })
-    return rowIds.map((i) => config.layout[i]).filter((row): row is RowConfig => row !== undefined)
+        col.fields.some((fn) => sectionFieldNames.has(fn)),
+      );
+      if (hasFieldInSection) rowIds.push(idx);
+    });
+    return rowIds.map((i) => config.layout[i]).filter((row): row is RowConfig => row !== undefined);
   }
 
-  const systemFields = config.fields.filter((f) => f.systemManaged)
-  const hiddenFields = config.fields.filter((f) => isFieldHidden(f))
+  const systemFields = config.fields.filter((f) => f.systemManaged);
+  const hiddenFields = config.fields.filter((f) => isFieldHidden(f));
 
   function renderLayoutContent(rows: RowConfig[]) {
     return rows.map((row) => {
-      const rowIdx = config.layout.indexOf(row)
+      const rowIdx = config.layout.indexOf(row);
       return (
         <div key={`row-${rowIdx}`} className="grid grid-cols-1 gap-4 md:grid-cols-12">
           {row.columns.map((col, colIdx) => {
             const spanClass = col.span
-              ? SPAN_CLASSES[col.span] ?? `md:col-span-${col.span}`
-              : "md:col-span-12"
+              ? (SPAN_CLASSES[col.span] ?? `md:col-span-${col.span}`)
+              : "md:col-span-12";
             return (
-              <div
-                key={`col-${colIdx}`}
-                className={`col-span-1 ${spanClass} flex flex-col gap-4`}
-              >
-              {col.fields.map((fieldName) => {
-                const field = findField(config.fields, fieldName)
-                if (!field) return null
-                return renderSingleField(field)
-              })}
-            </div>
-            )
+              <div key={`col-${colIdx}`} className={`col-span-1 ${spanClass} flex flex-col gap-4`}>
+                {col.fields.map((fieldName) => {
+                  const field = findField(config.fields, fieldName);
+                  if (!field) return null;
+                  return renderSingleField(field);
+                })}
+              </div>
+            );
           })}
         </div>
-      )
-    })
+      );
+    });
   }
 
   function renderLayout() {
-    const visibleSections = props.currentStep != null
-      ? (config.sections ?? []).filter((s) => s.step == null || s.step === props.currentStep)
-      : (config.sections ?? [])
+    const visibleSections =
+      props.currentStep != null
+        ? (config.sections ?? []).filter((s) => s.step == null || s.step === props.currentStep)
+        : (config.sections ?? []);
 
     return (
       <FieldGroup>
         {visibleSections.map((section) => {
-          const sectionRows = getSectionRows(section.id)
-          if (sectionRows.length === 0) return null
+          const sectionRows = getSectionRows(section.id);
+          if (sectionRows.length === 0) return null;
 
           const content = (
             <div className="space-y-4">
@@ -277,7 +273,7 @@ export function FormBuilder<TData extends Record<string, unknown>>(props: FormBu
               )}
               {renderLayoutContent(sectionRows)}
             </div>
-          )
+          );
 
           if (section.collapsible) {
             return (
@@ -287,7 +283,7 @@ export function FormBuilder<TData extends Record<string, unknown>>(props: FormBu
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4 pt-2">{content}</CollapsibleContent>
               </Collapsible>
-            )
+            );
           }
 
           return (
@@ -295,20 +291,20 @@ export function FormBuilder<TData extends Record<string, unknown>>(props: FormBu
               <FieldLegend>{section.title}</FieldLegend>
               {content}
             </FieldSet>
-          )
+          );
         })}
 
         {config.layout
           .filter((row) => {
-            const allFields = row.columns.flatMap((c) => c.fields)
+            const allFields = row.columns.flatMap((c) => c.fields);
             return allFields.some((fn) => {
-              const field = findField(config.fields, fn)
-              if (!field) return false
-              if (isFieldHidden(field)) return false
-              if (field.systemManaged) return false
-              if (field.section) return false
-              return true
-            })
+              const field = findField(config.fields, fn);
+              if (!field) return false;
+              if (isFieldHidden(field)) return false;
+              if (field.systemManaged) return false;
+              if (field.section) return false;
+              return true;
+            });
           })
           .map((row) => (
             <div key={`row-${config.layout.indexOf(row)}`} className="space-y-4">
@@ -327,7 +323,7 @@ export function FormBuilder<TData extends Record<string, unknown>>(props: FormBu
           <input key={field.name} type="hidden" name={field.name} />
         ))}
       </FieldGroup>
-    )
+    );
   }
 
   function renderDefaultButtons() {
@@ -339,10 +335,10 @@ export function FormBuilder<TData extends Record<string, unknown>>(props: FormBu
           </Button>
         )}
         <Button type="submit" form={formId} disabled={isPending}>
-          {isPending ? "Saving\u2026" : config.submitLabel ?? "Save"}
+          {isPending ? "Saving\u2026" : (config.submitLabel ?? "Save")}
         </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -350,9 +346,9 @@ export function FormBuilder<TData extends Record<string, unknown>>(props: FormBu
       <form
         id={formId}
         onSubmit={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          form.handleSubmit()
+          e.preventDefault();
+          e.stopPropagation();
+          form.handleSubmit();
         }}
         className="space-y-6"
       >
@@ -364,5 +360,5 @@ export function FormBuilder<TData extends Record<string, unknown>>(props: FormBu
       </form>
       {props.renderSubmitOutside && !props.hideDefaultButtons && renderDefaultButtons()}
     </FormContext.Provider>
-  )
+  );
 }

@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { Outlet } from "@tanstack/react-router"
-import { SidebarProvider, SidebarInset } from "@aloysius-web/ui/components/sidebar"
-import { AdminSidebar } from "@/components/app-sidebar"
+import { Outlet } from "@tanstack/react-router";
+import { SidebarProvider, SidebarInset } from "@aloysius-web/ui/components/sidebar";
+import { AdminSidebar } from "@/components/app-sidebar";
 
 export function AdminLayout() {
   return (
@@ -12,5 +12,5 @@ export function AdminLayout() {
         <Outlet />
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

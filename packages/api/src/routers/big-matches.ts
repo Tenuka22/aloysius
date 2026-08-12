@@ -38,9 +38,10 @@ export const bigMatchesRouter = {
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = "id" in input
-        ? await db.select().from(bigMatches).where(eq(bigMatches.id, input.id)).get()
-        : await db.select().from(bigMatches).where(eq(bigMatches.slug, input.slug)).get();
+      const row =
+        "id" in input
+          ? await db.select().from(bigMatches).where(eq(bigMatches.id, input.id)).get()
+          : await db.select().from(bigMatches).where(eq(bigMatches.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Big match not found" });
@@ -74,7 +75,7 @@ export const bigMatchesRouter = {
         galleryId: z.string().optional(),
         sortOrder: z.number().default(0),
         status: z.enum(["draft", "published", "archived"]).default("draft"),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -82,7 +83,9 @@ export const bigMatchesRouter = {
       }
 
       const db = createDb();
-      const slug = input.slug ? await generateUniqueSlug(bigMatches, input.slug) : await generateUniqueSlug(bigMatches, input.name);
+      const slug = input.slug
+        ? await generateUniqueSlug(bigMatches, input.slug)
+        : await generateUniqueSlug(bigMatches, input.name);
       const record = await db
         .insert(bigMatches)
         .values({
@@ -122,7 +125,7 @@ export const bigMatchesRouter = {
         galleryId: z.string().nullable().optional(),
         sortOrder: z.number().optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -130,11 +133,7 @@ export const bigMatchesRouter = {
       }
 
       const db = createDb();
-      const existing = await db
-        .select()
-        .from(bigMatches)
-        .where(eq(bigMatches.id, input.id))
-        .get();
+      const existing = await db.select().from(bigMatches).where(eq(bigMatches.id, input.id)).get();
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Big match not found" });

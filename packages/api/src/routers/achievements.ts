@@ -20,7 +20,7 @@ export const achievementsRouter = {
         status: z.enum(["draft", "published", "archived"]).optional(),
         category: z.enum(["academic", "sports", "arts", "clubs", "community", "other"]).optional(),
         year: z.number().optional(),
-      })
+      }),
     )
     .handler(async ({ input }) => {
       const db = createDb();
@@ -56,11 +56,7 @@ export const achievementsRouter = {
                   : achievements.createdAt;
       const orderFn = sortDir === "asc" ? asc : desc;
 
-      const [{ total }] = await db
-        .select({ total: count() })
-        .from(achievements)
-        .where(where)
-        .all();
+      const [{ total }] = await db.select({ total: count() }).from(achievements).where(where).all();
 
       const rows = await db
         .select()
@@ -100,9 +96,10 @@ export const achievementsRouter = {
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = "id" in input
-        ? await db.select().from(achievements).where(eq(achievements.id, input.id)).get()
-        : await db.select().from(achievements).where(eq(achievements.slug, input.slug)).get();
+      const row =
+        "id" in input
+          ? await db.select().from(achievements).where(eq(achievements.id, input.id)).get()
+          : await db.select().from(achievements).where(eq(achievements.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Achievement not found" });
@@ -140,7 +137,7 @@ export const achievementsRouter = {
         coverImage: z.string().optional(),
         tags: z.array(z.string()).optional(),
         publishNow: z.boolean().optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -149,7 +146,9 @@ export const achievementsRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
-      const slug = input.slug ? await generateUniqueSlug(achievements, input.slug) : await generateUniqueSlug(achievements, input.title);
+      const slug = input.slug
+        ? await generateUniqueSlug(achievements, input.slug)
+        : await generateUniqueSlug(achievements, input.title);
 
       const db = createDb();
       const record = await db
@@ -206,7 +205,7 @@ export const achievementsRouter = {
         tags: z.array(z.string()).optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
         publishNow: z.boolean().optional(),
-      })
+      }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
@@ -299,10 +298,7 @@ export const achievementsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Achievement not found" });
       }
 
-      await db
-        .delete(achievements)
-        .where(eq(achievements.id, input.id))
-        .run();
+      await db.delete(achievements).where(eq(achievements.id, input.id)).run();
 
       return { success: true };
     }),

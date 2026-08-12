@@ -1,9 +1,6 @@
 import { useCallback, useState } from "react";
 
-import {
-  $getSelectionStyleValueForProperty,
-  $patchStyleText,
-} from "@lexical/selection";
+import { $getSelectionStyleValueForProperty, $patchStyleText } from "@lexical/selection";
 import { $getSelection, $isRangeSelection, type BaseSelection } from "lexical";
 
 import { ChevronDownIcon, TypeIcon } from "lucide-react";
@@ -35,9 +32,7 @@ export function FontFamilyToolbarPlugin() {
 
   const $updateToolbar = useCallback((selection: BaseSelection) => {
     if ($isRangeSelection(selection)) {
-      setFontFamily(
-        $getSelectionStyleValueForProperty(selection, "font-family", "Arial"),
-      );
+      setFontFamily($getSelectionStyleValueForProperty(selection, "font-family", "Arial"));
     }
   }, []);
 
@@ -54,7 +49,7 @@ export function FontFamilyToolbarPlugin() {
         }
       });
       // Selection doesn't move when only inline styles change, so
-      // SELECTION_CHANGE_COMMAND won't run — sync label here.
+      // SELECTION_CHANGE_COMMAND won't run - sync label here.
       setFontFamily(option);
     },
     [activeEditor, style],
@@ -64,7 +59,20 @@ export function FontFamilyToolbarPlugin() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" className="w-min gap-1 px-2" size="sm" aria-label={buttonAriaLabel} />}><TypeIcon className="size-4" /><span style={{ fontFamily }}>{fontFamily}</span><ChevronDownIcon className="size-3" /></DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="outline"
+            className="w-min gap-1 px-2"
+            size="sm"
+            aria-label={buttonAriaLabel}
+          />
+        }
+      >
+        <TypeIcon className="size-4" />
+        <span style={{ fontFamily }}>{fontFamily}</span>
+        <ChevronDownIcon className="size-3" />
+      </DropdownMenuTrigger>
       <DropdownMenuContent className="w-40" align="start">
         {FONT_FAMILY_OPTIONS.map((option) => (
           <DropdownMenuItem
