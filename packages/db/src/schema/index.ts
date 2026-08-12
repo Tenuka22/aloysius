@@ -19,7 +19,7 @@ export const files = sqliteTable("files", {
 
 export const news = sqliteTable("news", {
   id: text("id").primaryKey(),
-  slug: text("slug").notNull(),
+  slug: text("slug").notNull().default(""),
   title: text("title").notNull(),
   content: text("content").notNull(),
   excerpt: text("excerpt"),
@@ -46,7 +46,7 @@ export const news = sqliteTable("news", {
 
 export const announcements = sqliteTable("announcements", {
   id: text("id").primaryKey(),
-  slug: text("slug").notNull(),
+  slug: text("slug").notNull().default(""),
   title: text("title").notNull(),
   content: text("content").notNull(),
   excerpt: text("excerpt"),
@@ -77,7 +77,7 @@ export const announcements = sqliteTable("announcements", {
 
 export const events = sqliteTable("events", {
   id: text("id").primaryKey(),
-  slug: text("slug").notNull(),
+  slug: text("slug").notNull().default(""),
   title: text("title").notNull(),
   content: text("content").notNull(),
   excerpt: text("excerpt"),
@@ -132,7 +132,7 @@ export const eventRecords = sqliteTable("event_records", {
 
 export const achievements = sqliteTable("achievements", {
   id: text("id").primaryKey(),
-  slug: text("slug").notNull(),
+  slug: text("slug").notNull().default(""),
   title: text("title").notNull(),
   description: text("description"),
   category: text("category", { enum: ["academic", "sports", "arts", "clubs", "community", "other"] })
@@ -164,7 +164,7 @@ export const achievements = sqliteTable("achievements", {
 
 export const gallery = sqliteTable("gallery", {
   id: text("id").primaryKey(),
-  slug: text("slug").notNull(),
+  slug: text("slug").notNull().default(""),
   title: text("title").notNull(),
   description: text("description"),
   eventId: text("event_id").references(() => events.id, { onDelete: "set null" }),
@@ -208,7 +208,7 @@ export const galleryImages = sqliteTable("gallery_images", {
 
 export const studentWorks = sqliteTable("student_works", {
   id: text("id").primaryKey(),
-  slug: text("slug").notNull(),
+  slug: text("slug").notNull().default(""),
   title: text("title").notNull(),
   description: text("description"),
   category: text("category", { enum: ["film", "art", "music", "writing", "design", "photography", "code", "other"] })
@@ -265,7 +265,7 @@ export const siteSettings = sqliteTable("site_settings", {
 
 export const bigMatches = sqliteTable("big_matches", {
   id: text("id").primaryKey(),
-  slug: text("slug").notNull(),
+  slug: text("slug").notNull().default(""),
   name: text("name").notNull(),
   opponent: text("opponent").notNull(),
   type: text("type").notNull().default("Cricket"),
@@ -290,7 +290,7 @@ export const bigMatches = sqliteTable("big_matches", {
 
 export const activities = sqliteTable("activities", {
   id: text("id").primaryKey(),
-  slug: text("slug").notNull(),
+  slug: text("slug").notNull().default(""),
   name: text("name").notNull(),
   description: text("description"),
   coverImage: text("cover_image"),

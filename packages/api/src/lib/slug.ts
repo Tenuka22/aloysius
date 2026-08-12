@@ -1,4 +1,4 @@
-import { eq, like, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
 
 function toSlug(text: string): string {
@@ -11,8 +11,14 @@ function toSlug(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
+type TableWithSlug = {
+  slug: any
+  id: any
+  [key: string]: any
+}
+
 export async function generateUniqueSlug(
-  table: { slug: { name: string }; id: { name: string } },
+  table: TableWithSlug,
   title: string,
   excludeId?: string
 ): Promise<string> {
@@ -25,7 +31,7 @@ export async function generateUniqueSlug(
   while (true) {
     const existing = await db
       .select({ id: table.id })
-      .from(table)
+      .from(table as any)
       .where(eq(table.slug, slug))
       .get();
 
@@ -36,4 +42,24 @@ export async function generateUniqueSlug(
     slug = `${base}-${counter}`;
     counter++;
   }
+}
+
+export async function checkSlugUnique(
+  table: TableWithSlug,
+  slug: string,
+  excludeId?: string
+): Promise<{ unique: boolean; suggestion?: string }> {
+  const db = createDb();
+  const existing = await db
+    .select({ id: table.id })
+    .from(table as any)
+    .where(eq(table.slug, slug))
+    .get();
+
+  if (!existing || existing.id === excludeId) {
+    return { unique: true };
+  }
+
+  const suggestion = await generateUniqueSlug(table, slug, excludeId);
+  return { unique: false, suggestion };
 }

@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1786431707037,
-      "tag": "0000_steady_karma",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1786511703124,
-      "tag": "0001_chubby_komodo",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1786515834932,
-      "tag": "0002_organic_doctor_spectrum",
+      "when": 1786517050210,
+      "tag": "0000_blushing_blockbuster",
       "breakpoints": true
     }
   ]

@@ -9,6 +9,7 @@ import { MinimalTiptapEditor } from "@aloysius-web/ui/components/minimal-tiptap"
 import { Input } from "@aloysius-web/ui/components/input"
 import { Checkbox } from "@aloysius-web/ui/components/checkbox"
 import { TagInput } from "@/components-client/tag-input"
+import { SlugFieldInline } from "@/components-client/slug-field"
 import { DateTimePicker, AllDayToggle } from "@/components-client/date-time-picker"
 import { Dropzone } from "@/components/file-upload"
 import { IconX } from "@tabler/icons-react"
@@ -21,6 +22,7 @@ import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
 
 const createEventSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
+  slug: v.optional(v.string()),
   excerpt: v.optional(v.string()),
   content: v.string(),
   coverImage: v.optional(v.string()),
@@ -43,6 +45,7 @@ type CreateEventValues = v.InferOutput<typeof createEventSchema>
 
 const updateEventSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
+  slug: v.optional(v.string()),
   excerpt: v.optional(v.string()),
   content: v.string(),
   coverImage: v.optional(v.string()),
@@ -65,6 +68,7 @@ type UpdateEventValues = v.InferOutput<typeof updateEventSchema>
 
 const fields: FieldEntry<CreateEventValues | UpdateEventValues>[] = [
   { name: "title", kind: "text", label: "Title", placeholder: "Enter event title", required: true },
+  { name: "slug", kind: "custom", label: "Slug", required: false, customRenderer: () => null, renderField: (name, value, onChange) => <SlugFieldInline routerName="events" value={(value as string) ?? ""} onChange={(v) => onChange(v)} /> },
   { name: "excerpt", kind: "textarea", label: "Excerpt", placeholder: "Brief summary for previews", required: false },
   { name: "content", kind: "text", label: "Content", hidden: true, required: true },
   { name: "coverImage", kind: "text", label: "Cover Image", hidden: true, required: false },
@@ -345,6 +349,7 @@ export function EventForm({
     fields,
     layout: [
       { columns: [{ fields: ["title"] }] },
+      { columns: [{ fields: ["slug"] }] },
       { columns: [{ fields: ["excerpt"] }] },
       { columns: [{ fields: ["purpose"] }] },
       { columns: [{ fields: ["organization"] }] },
@@ -398,6 +403,7 @@ export function EventForm({
         event
           ? {
               title: event.title,
+              slug: event.slug ?? "",
               excerpt: event.excerpt ?? "",
               content: event.content,
               coverImage: event.coverImage ?? "",
@@ -417,6 +423,7 @@ export function EventForm({
             }
           : {
               title: "",
+              slug: "",
               excerpt: "",
               content: "",
               coverImage: "",

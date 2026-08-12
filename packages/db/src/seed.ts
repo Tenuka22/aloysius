@@ -15,6 +15,16 @@ function daysFromNow(n: number): Date {
   return d;
 }
 
+function toSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 const imageUrls = [
   "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&h=400&fit=crop",
   "https://images.unsplash.com/photo-1562774053-701939374585?w=800&h=400&fit=crop",
@@ -193,6 +203,7 @@ export async function seed() {
   for (const item of newsItems) {
     await db.insert(schema.news).values({
       id: faker.string.uuid(),
+      slug: toSlug(item.title),
       title: item.title,
       content: item.content,
       excerpt: item.excerpt,
@@ -236,7 +247,7 @@ export async function seed() {
       authorName: "Admin Office",
       authorType: "org",
       tags: ["transport", "important"],
-      audience: "parents",
+      audience: "parents" as const,
     },
     {
       title: "Library Hours Extended for Exam Preparation",
@@ -260,6 +271,7 @@ export async function seed() {
   for (const item of announcements) {
     await db.insert(schema.announcements).values({
       id: faker.string.uuid(),
+      slug: toSlug(item.title),
       title: item.title,
       content: item.content,
       excerpt: item.excerpt,
@@ -353,6 +365,7 @@ export async function seed() {
     const endDate = new Date(startDate.getTime() + faker.number.int({ min: 2, max: 5 }) * 86400000);
     const data = {
       id: faker.string.uuid(),
+      slug: toSlug(item.title),
       title: item.title,
       content: item.content,
       excerpt: item.excerpt,
@@ -438,6 +451,7 @@ export async function seed() {
   for (const item of achievements) {
     await db.insert(schema.achievements).values({
       id: faker.string.uuid(),
+      slug: toSlug(item.title),
       title: item.title,
       description: item.description,
       category: item.category,
@@ -510,6 +524,7 @@ export async function seed() {
   for (const item of studentWorks) {
     const data = {
       id: faker.string.uuid(),
+      slug: toSlug(item.title),
       title: item.title,
       description: item.description,
       category: item.category,
@@ -560,6 +575,7 @@ export async function seed() {
   for (const item of galleries) {
     const data = {
       id: faker.string.uuid(),
+      slug: toSlug(item.title),
       title: item.title,
       description: item.description,
       eventId: item.eventId ?? null,
@@ -634,6 +650,7 @@ export async function seed() {
   for (let i = 0; i < bigMatches.length; i++) {
     await db.insert(schema.bigMatches).values({
       id: faker.string.uuid(),
+      slug: toSlug(bigMatches[i]!.name),
       ...bigMatches[i]!,
       eventId: i < eventsData.length ? eventsData[i]!.id : null,
       galleryId: i < galleryData.length ? galleryData[i]!.id : null,
@@ -681,6 +698,7 @@ export async function seed() {
   for (let i = 0; i < activities.length; i++) {
     await db.insert(schema.activities).values({
       id: faker.string.uuid(),
+      slug: toSlug(activities[i]!.name),
       ...activities[i]!,
       coverImage: activities[i]!.images[0],
       sortOrder: i,

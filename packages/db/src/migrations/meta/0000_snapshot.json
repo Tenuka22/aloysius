@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "0078bfa2-bc2d-4f37-9f07-be3087749cc2",
+  "id": "c2b42fb2-1548-451a-a7af-0ff81b0a80dd",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "achievements": {
@@ -13,6 +13,14 @@
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
         },
         "title": {
           "name": "title",
@@ -111,7 +119,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "achievements_slug_idx": {
+          "name": "achievements_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -126,6 +142,14 @@
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
         },
         "name": {
           "name": "name",
@@ -164,6 +188,13 @@
           "autoincrement": false,
           "default": "'club'"
         },
+        "admin_email": {
+          "name": "admin_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "sort_order": {
           "name": "sort_order",
           "type": "integer",
@@ -195,7 +226,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "activities_slug_idx": {
+          "name": "activities_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -210,6 +249,14 @@
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
         },
         "title": {
           "name": "title",
@@ -313,7 +360,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "announcements_slug_idx": {
+          "name": "announcements_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -328,6 +383,14 @@
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
         },
         "name": {
           "name": "name",
@@ -403,7 +466,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "big_matches_slug_idx": {
+          "name": "big_matches_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "big_matches_event_id_events_id_fk": {
           "name": "big_matches_event_id_events_id_fk",
@@ -525,6 +596,14 @@
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
         },
         "title": {
           "name": "title",
@@ -678,7 +757,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "events_slug_idx": {
+          "name": "events_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -759,6 +846,14 @@
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
         },
         "title": {
           "name": "title",
@@ -861,7 +956,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "gallery_slug_idx": {
+          "name": "gallery_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "gallery_event_id_events_id_fk": {
           "name": "gallery_event_id_events_id_fk",
@@ -984,6 +1087,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
         "title": {
           "name": "title",
           "type": "text",
@@ -1071,7 +1182,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "news_slug_idx": {
+          "name": "news_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -1178,6 +1297,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
         "title": {
           "name": "title",
           "type": "text",
@@ -1281,7 +1408,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "student_works_slug_idx": {
+          "name": "student_works_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

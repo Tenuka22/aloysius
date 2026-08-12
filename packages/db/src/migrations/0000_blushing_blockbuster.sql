@@ -1,5 +1,6 @@
 CREATE TABLE `achievements` (
 	`id` text PRIMARY KEY NOT NULL,
+	`slug` text DEFAULT '' NOT NULL,
 	`title` text NOT NULL,
 	`description` text,
 	`category` text DEFAULT 'other' NOT NULL,
@@ -15,21 +16,26 @@ CREATE TABLE `achievements` (
 	`user_id` text NOT NULL
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `achievements_slug_idx` ON `achievements` (`slug`);--> statement-breakpoint
 CREATE TABLE `activities` (
 	`id` text PRIMARY KEY NOT NULL,
+	`slug` text DEFAULT '' NOT NULL,
 	`name` text NOT NULL,
 	`description` text,
 	`cover_image` text,
 	`images` text DEFAULT '[]',
 	`type` text DEFAULT 'club' NOT NULL,
+	`admin_email` text,
 	`sort_order` integer DEFAULT 0 NOT NULL,
 	`status` text DEFAULT 'draft' NOT NULL,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `activities_slug_idx` ON `activities` (`slug`);--> statement-breakpoint
 CREATE TABLE `announcements` (
 	`id` text PRIMARY KEY NOT NULL,
+	`slug` text DEFAULT '' NOT NULL,
 	`title` text NOT NULL,
 	`content` text NOT NULL,
 	`excerpt` text,
@@ -46,8 +52,10 @@ CREATE TABLE `announcements` (
 	`user_id` text NOT NULL
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `announcements_slug_idx` ON `announcements` (`slug`);--> statement-breakpoint
 CREATE TABLE `big_matches` (
 	`id` text PRIMARY KEY NOT NULL,
+	`slug` text DEFAULT '' NOT NULL,
 	`name` text NOT NULL,
 	`opponent` text NOT NULL,
 	`type` text DEFAULT 'Cricket' NOT NULL,
@@ -62,6 +70,7 @@ CREATE TABLE `big_matches` (
 	FOREIGN KEY (`gallery_id`) REFERENCES `gallery`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `big_matches_slug_idx` ON `big_matches` (`slug`);--> statement-breakpoint
 CREATE TABLE `event_records` (
 	`id` text PRIMARY KEY NOT NULL,
 	`event_id` text NOT NULL,
@@ -76,6 +85,7 @@ CREATE TABLE `event_records` (
 --> statement-breakpoint
 CREATE TABLE `events` (
 	`id` text PRIMARY KEY NOT NULL,
+	`slug` text DEFAULT '' NOT NULL,
 	`title` text NOT NULL,
 	`content` text NOT NULL,
 	`excerpt` text,
@@ -99,6 +109,7 @@ CREATE TABLE `events` (
 	`user_id` text NOT NULL
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `events_slug_idx` ON `events` (`slug`);--> statement-breakpoint
 CREATE TABLE `files` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
@@ -112,6 +123,7 @@ CREATE TABLE `files` (
 --> statement-breakpoint
 CREATE TABLE `gallery` (
 	`id` text PRIMARY KEY NOT NULL,
+	`slug` text DEFAULT '' NOT NULL,
 	`title` text NOT NULL,
 	`description` text,
 	`event_id` text,
@@ -131,6 +143,7 @@ CREATE TABLE `gallery` (
 	FOREIGN KEY (`achievement_id`) REFERENCES `achievements`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `gallery_slug_idx` ON `gallery` (`slug`);--> statement-breakpoint
 CREATE TABLE `gallery_images` (
 	`id` text PRIMARY KEY NOT NULL,
 	`gallery_id` text NOT NULL,
@@ -143,6 +156,7 @@ CREATE TABLE `gallery_images` (
 --> statement-breakpoint
 CREATE TABLE `news` (
 	`id` text PRIMARY KEY NOT NULL,
+	`slug` text DEFAULT '' NOT NULL,
 	`title` text NOT NULL,
 	`content` text NOT NULL,
 	`excerpt` text,
@@ -157,6 +171,7 @@ CREATE TABLE `news` (
 	`user_id` text NOT NULL
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `news_slug_idx` ON `news` (`slug`);--> statement-breakpoint
 CREATE TABLE `site_settings` (
 	`key` text PRIMARY KEY NOT NULL,
 	`value` text,
@@ -175,6 +190,7 @@ CREATE TABLE `stats` (
 --> statement-breakpoint
 CREATE TABLE `student_works` (
 	`id` text PRIMARY KEY NOT NULL,
+	`slug` text DEFAULT '' NOT NULL,
 	`title` text NOT NULL,
 	`description` text,
 	`category` text DEFAULT 'other' NOT NULL,
@@ -190,3 +206,5 @@ CREATE TABLE `student_works` (
 	`updated_at` integer NOT NULL,
 	`user_id` text NOT NULL
 );
+--> statement-breakpoint
+CREATE UNIQUE INDEX `student_works_slug_idx` ON `student_works` (`slug`);

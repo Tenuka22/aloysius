@@ -12,11 +12,13 @@ import { cn } from "@aloysius-web/ui/lib/utils"
 import { client } from "@/utils/orpc"
 import { convertToWebp } from "@/utils/convert-to-webp"
 import { toast } from "sonner"
+import { SlugFieldInline } from "@/components-client/slug-field"
 import * as v from "valibot"
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
 
 const createActivitySchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, "Name is required")),
+  slug: v.optional(v.string()),
   description: v.optional(v.string()),
   content: v.string(),
   coverImage: v.optional(v.string()),
@@ -31,6 +33,7 @@ type CreateActivityValues = v.InferOutput<typeof createActivitySchema>
 
 const updateActivitySchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, "Name is required")),
+  slug: v.optional(v.string()),
   description: v.optional(v.string()),
   content: v.string(),
   coverImage: v.optional(v.string()),
@@ -52,6 +55,7 @@ const fields: FieldEntry<CreateActivityValues | UpdateActivityValues>[] = [
     required: true,
     hidden: true,
   },
+  { name: "slug", kind: "custom", label: "Slug", required: false, customRenderer: () => null, renderField: (name, value, onChange) => <SlugFieldInline routerName="activities" sourceField="name" value={(value as string) ?? ""} onChange={(v) => onChange(v)} /> },
   {
     name: "content",
     kind: "text",
@@ -436,6 +440,7 @@ export function ActivitiesForm({ mode, id, onSuccess }: { mode: "create" | "edit
   const formConfig: FormConfig<CreateActivityValues | UpdateActivityValues> = {
     fields,
     layout: [
+      { columns: [{ fields: ["slug"] }] },
       { columns: [{ fields: ["publishNow"] }] },
     ],
     submitLabel: mode === "create" ? "Create Activity" : "Save Changes",
@@ -474,8 +479,8 @@ export function ActivitiesForm({ mode, id, onSuccess }: { mode: "create" | "edit
       config={formConfig}
       defaultValues={
         mode === "edit" && activity
-          ? { name: activity.name, description: activity.description ?? "", content: "", coverImage: activity.coverImage ?? "", images: (activity.images as string[]) ?? [], type: activity.type, adminEmail: activity.adminEmail ?? "", sortOrder: activity.sortOrder, status: activity.status }
-          : { name: "", description: "", content: "", coverImage: "", images: [] as string[], type: "club", adminEmail: "", sortOrder: 0, status: "draft" }
+          ? { name: activity.name, slug: activity.slug ?? "", description: activity.description ?? "", content: "", coverImage: activity.coverImage ?? "", images: (activity.images as string[]) ?? [], type: activity.type, adminEmail: activity.adminEmail ?? "", sortOrder: activity.sortOrder, status: activity.status }
+          : { name: "", slug: "", description: "", content: "", coverImage: "", images: [] as string[], type: "club", adminEmail: "", sortOrder: 0, status: "draft" }
       }
       valibotSchema={mode === "create" ? createActivitySchema : updateActivitySchema}
       onSubmit={handleSubmit}

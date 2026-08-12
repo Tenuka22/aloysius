@@ -4,7 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { gallery, galleryImages } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
-import { generateUniqueSlug } from "../lib/slug";
+import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 
 const sortDirection = z.enum(["asc", "desc"]);
 
@@ -92,14 +92,12 @@ export const galleryRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ slug: z.string() }))
+    .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = await db
-        .select()
-        .from(gallery)
-        .where(eq(gallery.slug, input.slug))
-        .get();
+      const row = "id" in input
+        ? await db.select().from(gallery).where(eq(gallery.id, input.id)).get()
+        : await db.select().from(gallery).where(eq(gallery.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
@@ -143,6 +141,7 @@ export const galleryRouter = {
   create: protectedProcedure
     .input(
       z.object({
+        slug: z.string().optional(),
         title: z.string().min(1),
         description: z.string().optional(),
         eventId: z.string().optional(),
@@ -162,7 +161,7 @@ export const galleryRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
-      const slug = await generateUniqueSlug(gallery, input.title);
+      const slug = input.slug ? await generateUniqueSlug(gallery, input.slug) : await generateUniqueSlug(gallery, input.title);
 
       const db = createDb();
       const record = await db
@@ -210,6 +209,7 @@ export const galleryRouter = {
     .input(
       z.object({
         id: z.string(),
+        slug: z.string().optional(),
         title: z.string().min(1).optional(),
         description: z.string().optional(),
         eventId: z.string().optional(),
@@ -243,9 +243,14 @@ export const galleryRouter = {
         updatedAt: now,
       };
 
+      if (input.slug !== undefined) {
+        updateData.slug = await generateUniqueSlug(gallery, input.slug, input.id);
+      }
       if (input.title !== undefined) {
         updateData.title = input.title;
-        updateData.slug = await generateUniqueSlug(gallery, input.title, input.id);
+        if (input.slug === undefined) {
+          updateData.slug = await generateUniqueSlug(gallery, input.title, input.id);
+        }
       }
       if (input.description !== undefined) updateData.description = input.description || null;
       if (input.eventId !== undefined) updateData.eventId = input.eventId || null;
@@ -476,5 +481,11 @@ export const galleryRouter = {
         sortOrder: record.sortOrder,
         createdAt: record.createdAt.toISOString(),
       };
+    }),
+
+  checkSlug: publicProcedure
+    .input(z.object({ slug: z.string(), excludeId: z.string().optional() }))
+    .handler(async ({ input }) => {
+      return checkSlugUnique(gallery, input.slug, input.excludeId);
     }),
 };

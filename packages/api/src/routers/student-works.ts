@@ -4,7 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { studentWorks } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
-import { generateUniqueSlug } from "../lib/slug";
+import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 
 const sortDirection = z.enum(["asc", "desc"]);
 const studentWorkCategory = z.enum(["film", "art", "music", "writing", "design", "photography", "code", "other"]);
@@ -95,14 +95,12 @@ export const studentWorksRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ slug: z.string() }))
+    .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = await db
-        .select()
-        .from(studentWorks)
-        .where(eq(studentWorks.slug, input.slug))
-        .get();
+      const row = "id" in input
+        ? await db.select().from(studentWorks).where(eq(studentWorks.id, input.id)).get()
+        : await db.select().from(studentWorks).where(eq(studentWorks.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Student work not found" });
@@ -131,6 +129,7 @@ export const studentWorksRouter = {
   create: protectedProcedure
     .input(
       z.object({
+        slug: z.string().optional(),
         title: z.string().min(1),
         description: z.string().optional(),
         category: studentWorkCategory.default("other"),
@@ -150,7 +149,7 @@ export const studentWorksRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
-      const slug = await generateUniqueSlug(studentWorks, input.title);
+      const slug = input.slug ? await generateUniqueSlug(studentWorks, input.slug) : await generateUniqueSlug(studentWorks, input.title);
 
       const db = createDb();
       const record = await db
@@ -198,6 +197,7 @@ export const studentWorksRouter = {
     .input(
       z.object({
         id: z.string(),
+        slug: z.string().optional(),
         title: z.string().min(1).optional(),
         description: z.string().optional(),
         category: studentWorkCategory.optional(),
@@ -232,9 +232,14 @@ export const studentWorksRouter = {
         updatedAt: now,
       };
 
+      if (input.slug !== undefined) {
+        updateData.slug = await generateUniqueSlug(studentWorks, input.slug, input.id);
+      }
       if (input.title !== undefined) {
         updateData.title = input.title;
-        updateData.slug = await generateUniqueSlug(studentWorks, input.title, input.id);
+        if (input.slug === undefined) {
+          updateData.slug = await generateUniqueSlug(studentWorks, input.title, input.id);
+        }
       }
       if (input.description !== undefined) updateData.description = input.description;
       if (input.category !== undefined) updateData.category = input.category;
@@ -305,5 +310,11 @@ export const studentWorksRouter = {
         .run();
 
       return { success: true };
+    }),
+
+  checkSlug: publicProcedure
+    .input(z.object({ slug: z.string(), excludeId: z.string().optional() }))
+    .handler(async ({ input }) => {
+      return checkSlugUnique(studentWorks, input.slug, input.excludeId);
     }),
 };

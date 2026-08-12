@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@aloysius-web/ui/components/button"
 import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder"
 import { TagInput } from "@/components-client/tag-input"
+import { SlugFieldInline } from "@/components-client/slug-field"
 import { Dropzone } from "@/components/file-upload"
 import { IconX } from "@tabler/icons-react"
 import { cn } from "@aloysius-web/ui/lib/utils"
@@ -32,6 +33,7 @@ const categoryOptions = [
 
 const createSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
+  slug: v.optional(v.string()),
   description: v.optional(v.string()),
   category: v.picklist(["film", "art", "music", "writing", "design", "photography", "code", "other"]),
   studentNames: v.array(v.string()),
@@ -47,6 +49,7 @@ type CreateValues = v.InferOutput<typeof createSchema>
 
 const updateSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
+  slug: v.optional(v.string()),
   description: v.optional(v.string()),
   category: v.picklist(["film", "art", "music", "writing", "design", "photography", "code", "other"]),
   studentNames: v.array(v.string()),
@@ -62,6 +65,7 @@ type UpdateValues = v.InferOutput<typeof updateSchema>
 
 const fields: FieldEntry<CreateValues | UpdateValues>[] = [
   { name: "title", kind: "text", label: "Title", placeholder: "Enter work title", required: true, hidden: true },
+  { name: "slug", kind: "custom", label: "Slug", required: false, customRenderer: () => null, renderField: (name, value, onChange) => <SlugFieldInline routerName="studentWorks" value={(value as string) ?? ""} onChange={(v) => onChange(v)} /> },
   { name: "description", kind: "textarea", label: "Description", placeholder: "Brief description of the work", required: false },
   { name: "category", kind: "select", label: "Category", options: categoryOptions, required: true, hidden: true },
   { name: "studentNames", kind: "text", label: "Student Names", hidden: true, required: true },
@@ -235,6 +239,7 @@ export function StudentWorkForm({
   const config: FormConfig<CreateValues | UpdateValues> = {
     fields,
     layout: [
+      { columns: [{ fields: ["slug"] }] },
       { columns: [{ fields: ["description"] }] },
       { columns: [{ fields: ["authorType"] }] },
       { columns: [{ fields: ["studentGrade"] }] },
@@ -295,6 +300,7 @@ export function StudentWorkForm({
         work
           ? {
               title: work.title,
+              slug: work.slug ?? "",
               description: work.description ?? "",
               category: work.category,
               studentNames: work.studentNames ?? [],
@@ -307,6 +313,7 @@ export function StudentWorkForm({
             }
           : {
               title: "",
+              slug: "",
               description: "",
               category: "other",
               studentNames: [],

@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@aloysius-web/ui/components/button"
 import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder"
 import { TagInput } from "@/components-client/tag-input"
+import { SlugFieldInline } from "@/components-client/slug-field"
 import { NameListInput } from "@/components-client/name-list-input"
 import { Dropzone } from "@/components/file-upload"
 import { IconX } from "@tabler/icons-react"
@@ -18,6 +19,7 @@ import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
 
 const createAchievementSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
+  slug: v.optional(v.string()),
   description: v.optional(v.string()),
   category: v.pipe(v.string(), v.minLength(1, "Category is required")),
   recipientNames: v.array(v.string()),
@@ -32,6 +34,7 @@ type CreateAchievementValues = v.InferOutput<typeof createAchievementSchema>
 
 const updateAchievementSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
+  slug: v.optional(v.string()),
   description: v.optional(v.string()),
   category: v.pipe(v.string(), v.minLength(1, "Category is required")),
   recipientNames: v.array(v.string()),
@@ -201,6 +204,7 @@ function TagsField() {
 
 const fields: FieldEntry<CreateAchievementValues | UpdateAchievementValues>[] = [
   { name: "title", kind: "text", label: "Title", placeholder: "Enter achievement title", required: true, hidden: true },
+  { name: "slug", kind: "custom", label: "Slug", required: false, customRenderer: () => null, renderField: (name, value, onChange) => <SlugFieldInline routerName="achievements" value={(value as string) ?? ""} onChange={(v) => onChange(v)} /> },
   { name: "description", kind: "textarea", label: "Description", placeholder: "Describe the achievement", required: false },
   { name: "category", kind: "text", label: "Category", hidden: true, required: true },
   { name: "recipientNames", kind: "text", label: "Recipient Names", hidden: true, required: false },
@@ -271,6 +275,9 @@ export function AchievementForm({
         </div>
         <div className="flex-1 grid grid-cols-2 gap-4">
           <TitleField />
+          <div className="col-span-2">
+            <SlugFieldInline routerName="achievements" value={(achievement?.slug ?? "") as string} onChange={() => {}} />
+          </div>
           <CategoryField />
           <RecipientTypeField />
           <RecipientNamesField />
@@ -302,6 +309,7 @@ export function AchievementForm({
         achievement
           ? {
               title: achievement.title,
+              slug: achievement.slug ?? "",
               description: achievement.description ?? "",
               category: achievement.category,
               recipientNames: achievement.recipientNames ?? [],
@@ -313,6 +321,7 @@ export function AchievementForm({
             }
           : {
               title: "",
+              slug: "",
               description: "",
               category: "",
               recipientNames: [],

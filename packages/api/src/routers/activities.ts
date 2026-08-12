@@ -4,7 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { activities } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
-import { generateUniqueSlug } from "../lib/slug";
+import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 import { createClerkClient } from "@clerk/backend";
 import { env } from "@aloysius-web/env/server";
 
@@ -54,14 +54,12 @@ export const activitiesRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ slug: z.string() }))
+    .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = await db
-        .select()
-        .from(activities)
-        .where(eq(activities.slug, input.slug))
-        .get();
+      const row = "id" in input
+        ? await db.select().from(activities).where(eq(activities.id, input.id)).get()
+        : await db.select().from(activities).where(eq(activities.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Activity not found" });
@@ -86,6 +84,7 @@ export const activitiesRouter = {
   create: protectedProcedure
     .input(
       z.object({
+        slug: z.string().optional(),
         name: z.string().min(1),
         description: z.string().optional(),
         coverImage: z.string().optional(),
@@ -104,7 +103,7 @@ export const activitiesRouter = {
       const db = createDb();
       const now = new Date();
       const id = crypto.randomUUID();
-      const slug = await generateUniqueSlug(activities, input.name);
+      const slug = input.slug ? await generateUniqueSlug(activities, input.slug) : await generateUniqueSlug(activities, input.name);
 
       const record = await db
         .insert(activities)
@@ -145,6 +144,7 @@ export const activitiesRouter = {
     .input(
       z.object({
         id: z.string(),
+        slug: z.string().optional(),
         name: z.string().min(1).optional(),
         description: z.string().optional(),
         coverImage: z.string().optional(),
@@ -175,9 +175,14 @@ export const activitiesRouter = {
         updatedAt: new Date(),
       };
 
+      if (input.slug !== undefined) {
+        updateData.slug = await generateUniqueSlug(activities, input.slug, input.id);
+      }
       if (input.name !== undefined) {
         updateData.name = input.name;
-        updateData.slug = await generateUniqueSlug(activities, input.name, input.id);
+        if (input.slug === undefined) {
+          updateData.slug = await generateUniqueSlug(activities, input.name, input.id);
+        }
       }
       if (input.description !== undefined) updateData.description = input.description;
       if (input.coverImage !== undefined) updateData.coverImage = input.coverImage;
@@ -321,5 +326,11 @@ export const activitiesRouter = {
       }
 
       return results;
+    }),
+
+  checkSlug: publicProcedure
+    .input(z.object({ slug: z.string(), excludeId: z.string().optional() }))
+    .handler(async ({ input }) => {
+      return checkSlugUnique(activities, input.slug, input.excludeId);
     }),
 };

@@ -14,10 +14,12 @@ import { toast } from "sonner"
 import * as v from "valibot"
 import { Popover, PopoverTrigger, PopoverContent } from "@aloysius-web/ui/components/popover"
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@aloysius-web/ui/components/command"
+import { SlugFieldInline } from "@/components-client/slug-field"
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
 
 const createGallerySchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
+  slug: v.optional(v.string()),
   description: v.optional(v.string()),
   eventId: v.optional(v.string()),
   studentWorkId: v.optional(v.string()),
@@ -33,6 +35,7 @@ type CreateGalleryValues = v.InferOutput<typeof createGallerySchema>
 
 const updateGallerySchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
+  slug: v.optional(v.string()),
   description: v.optional(v.string()),
   eventId: v.optional(v.string()),
   studentWorkId: v.optional(v.string()),
@@ -48,6 +51,7 @@ type UpdateGalleryValues = v.InferOutput<typeof updateGallerySchema>
 
 const fields: FieldEntry<CreateGalleryValues | UpdateGalleryValues>[] = [
   { name: "title", kind: "text", label: "Title", placeholder: "Enter album title", required: true, hidden: true },
+  { name: "slug", kind: "custom", label: "Slug", required: false, customRenderer: () => null, renderField: (name, value, onChange) => <SlugFieldInline routerName="gallery" value={(value as string) ?? ""} onChange={(v) => onChange(v)} /> },
   { name: "description", kind: "textarea", label: "Description", placeholder: "Brief description of this album", required: false },
   { name: "eventId", kind: "text", label: "Event", hidden: true, required: false },
   { name: "studentWorkId", kind: "text", label: "Student Work", hidden: true, required: false },
@@ -424,6 +428,7 @@ export function GalleryForm({
   const config: FormConfig<CreateGalleryValues | UpdateGalleryValues> = {
     fields,
     layout: [
+      { columns: [{ fields: ["slug"] }] },
       { columns: [{ fields: ["authorName", "authorType"] }] },
       { columns: [{ fields: ["description"] }] },
       { columns: [{ fields: ["publishNow"] }] },
@@ -484,6 +489,7 @@ export function GalleryForm({
         gallery
           ? {
               title: gallery.title,
+              slug: gallery.slug ?? "",
               description: gallery.description ?? "",
               eventId: gallery.eventId ?? "",
               studentWorkId: (gallery as any).studentWorkId ?? "",
@@ -496,6 +502,7 @@ export function GalleryForm({
             }
             : {
                 title: "",
+                slug: "",
                 description: "",
                 eventId: "",
                 studentWorkId: "",

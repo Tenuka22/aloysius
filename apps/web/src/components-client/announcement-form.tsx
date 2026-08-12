@@ -9,6 +9,7 @@ import { MinimalTiptapEditor } from "@aloysius-web/ui/components/minimal-tiptap"
 import { Input } from "@aloysius-web/ui/components/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@aloysius-web/ui/components/select"
 import { TagInput } from "@/components-client/tag-input"
+import { SlugFieldInline } from "@/components-client/slug-field"
 import { Dropzone } from "@/components/file-upload"
 import { IconX } from "@tabler/icons-react"
 import { cn } from "@aloysius-web/ui/lib/utils"
@@ -20,6 +21,7 @@ import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
 
 const createAnnouncementSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
+  slug: v.optional(v.string()),
   excerpt: v.optional(v.string()),
   authorName: v.optional(v.string()),
   authorType: v.optional(v.string()),
@@ -35,6 +37,7 @@ type CreateAnnouncementValues = v.InferOutput<typeof createAnnouncementSchema>
 
 const updateAnnouncementSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
+  slug: v.optional(v.string()),
   excerpt: v.optional(v.string()),
   authorName: v.optional(v.string()),
   authorType: v.optional(v.string()),
@@ -50,6 +53,7 @@ type UpdateAnnouncementValues = v.InferOutput<typeof updateAnnouncementSchema>
 
 const fields: FieldEntry<CreateAnnouncementValues | UpdateAnnouncementValues>[] = [
   { name: "title", kind: "text", label: "Title", placeholder: "Enter announcement title", required: true },
+  { name: "slug", kind: "custom", label: "Slug", required: false, customRenderer: () => null, renderField: (name, value, onChange) => <SlugFieldInline routerName="announcements" value={(value as string) ?? ""} onChange={(v) => onChange(v)} /> },
   { name: "excerpt", kind: "textarea", label: "Excerpt", placeholder: "Brief summary for previews", required: false },
   { name: "authorName", kind: "text", label: "Author Name", placeholder: "Who authored this?", required: false },
   { name: "authorType", kind: "select", label: "Author Type", options: [{value:"student",label:"Student"},{value:"faculty",label:"Faculty"},{value:"club",label:"Club"},{value:"org",label:"Organization"}], required: false },
@@ -224,6 +228,7 @@ export function AnnouncementForm({ mode, id, onSuccess }: { mode: "create" | "ed
     fields,
     layout: [
       { columns: [{ fields: ["title"] }] },
+      { columns: [{ fields: ["slug"] }] },
       { columns: [{ fields: ["excerpt"] }] },
       { columns: [{ fields: ["authorName", "authorType"] }] },
       { columns: [{ fields: ["publishNow"] }] },
@@ -242,8 +247,8 @@ export function AnnouncementForm({ mode, id, onSuccess }: { mode: "create" | "ed
       config={formConfig}
       defaultValues={
         mode === "edit" && announcement
-          ? { title: announcement.title, excerpt: announcement.excerpt ?? "", authorName: announcement.authorName ?? "", authorType: announcement.authorType ?? "", content: announcement.content, coverImage: announcement.coverImage ?? "", tags: announcement.tags ?? [], audience: announcement.audience ?? "all", addressedTo: announcement.addressedTo ?? "", publishNow: announcement.status === "published" }
-          : { title: "", excerpt: "", authorName: "", authorType: "", content: "", coverImage: "", tags: [], audience: "all", addressedTo: "", publishNow: false }
+          ? { title: announcement.title, slug: announcement.slug ?? "", excerpt: announcement.excerpt ?? "", authorName: announcement.authorName ?? "", authorType: announcement.authorType ?? "", content: announcement.content, coverImage: announcement.coverImage ?? "", tags: announcement.tags ?? [], audience: announcement.audience ?? "all", addressedTo: announcement.addressedTo ?? "", publishNow: announcement.status === "published" }
+          : { title: "", slug: "", excerpt: "", authorName: "", authorType: "", content: "", coverImage: "", tags: [], audience: "all", addressedTo: "", publishNow: false }
       }
       valibotSchema={mode === "create" ? createAnnouncementSchema : updateAnnouncementSchema}
       onSubmit={handleSubmit}

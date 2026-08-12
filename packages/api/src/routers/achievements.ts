@@ -4,7 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { achievements } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
-import { generateUniqueSlug } from "../lib/slug";
+import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 
 const sortDirection = z.enum(["asc", "desc"]);
 
@@ -97,14 +97,12 @@ export const achievementsRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ slug: z.string() }))
+    .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = await db
-        .select()
-        .from(achievements)
-        .where(eq(achievements.slug, input.slug))
-        .get();
+      const row = "id" in input
+        ? await db.select().from(achievements).where(eq(achievements.id, input.id)).get()
+        : await db.select().from(achievements).where(eq(achievements.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Achievement not found" });
@@ -132,6 +130,7 @@ export const achievementsRouter = {
   create: protectedProcedure
     .input(
       z.object({
+        slug: z.string().optional(),
         title: z.string().min(1),
         description: z.string().optional(),
         category: z.enum(["academic", "sports", "arts", "clubs", "community", "other"]).optional(),
@@ -150,7 +149,7 @@ export const achievementsRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
-      const slug = await generateUniqueSlug(achievements, input.title);
+      const slug = input.slug ? await generateUniqueSlug(achievements, input.slug) : await generateUniqueSlug(achievements, input.title);
 
       const db = createDb();
       const record = await db
@@ -196,6 +195,7 @@ export const achievementsRouter = {
     .input(
       z.object({
         id: z.string(),
+        slug: z.string().optional(),
         title: z.string().min(1).optional(),
         description: z.string().optional(),
         category: z.enum(["academic", "sports", "arts", "clubs", "community", "other"]).optional(),
@@ -229,9 +229,14 @@ export const achievementsRouter = {
         updatedAt: now,
       };
 
+      if (input.slug !== undefined) {
+        updateData.slug = await generateUniqueSlug(achievements, input.slug, input.id);
+      }
       if (input.title !== undefined) {
         updateData.title = input.title;
-        updateData.slug = await generateUniqueSlug(achievements, input.title, input.id);
+        if (input.slug === undefined) {
+          updateData.slug = await generateUniqueSlug(achievements, input.title, input.id);
+        }
       }
       if (input.description !== undefined) updateData.description = input.description;
       if (input.category !== undefined) updateData.category = input.category;
@@ -300,5 +305,11 @@ export const achievementsRouter = {
         .run();
 
       return { success: true };
+    }),
+
+  checkSlug: publicProcedure
+    .input(z.object({ slug: z.string(), excludeId: z.string().optional() }))
+    .handler(async ({ input }) => {
+      return checkSlugUnique(achievements, input.slug, input.excludeId);
     }),
 };

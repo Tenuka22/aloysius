@@ -4,7 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { events, eventRecords } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
-import { generateUniqueSlug } from "../lib/slug";
+import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 
 const sortDirection = z.enum(["asc", "desc"]);
 
@@ -93,14 +93,12 @@ export const eventsRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ slug: z.string() }))
+    .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = await db
-        .select()
-        .from(events)
-        .where(eq(events.slug, input.slug))
-        .get();
+      const row = "id" in input
+        ? await db.select().from(events).where(eq(events.id, input.id)).get()
+        : await db.select().from(events).where(eq(events.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Event not found" });
@@ -135,6 +133,7 @@ export const eventsRouter = {
   create: protectedProcedure
     .input(
       z.object({
+        slug: z.string().optional(),
         title: z.string().min(1),
         content: z.string(),
         excerpt: z.string().optional(),
@@ -161,7 +160,7 @@ export const eventsRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
-      const slug = await generateUniqueSlug(events, input.title);
+      const slug = input.slug ? await generateUniqueSlug(events, input.slug) : await generateUniqueSlug(events, input.title);
 
       const db = createDb();
       const record = await db
@@ -222,6 +221,7 @@ export const eventsRouter = {
     .input(
       z.object({
         id: z.string(),
+        slug: z.string().optional(),
         title: z.string().min(1).optional(),
         content: z.string().optional(),
         excerpt: z.string().optional(),
@@ -263,9 +263,14 @@ export const eventsRouter = {
         updatedAt: now,
       };
 
+      if (input.slug !== undefined) {
+        updateData.slug = await generateUniqueSlug(events, input.slug, input.id);
+      }
       if (input.title !== undefined) {
         updateData.title = input.title;
-        updateData.slug = await generateUniqueSlug(events, input.title, input.id);
+        if (input.slug === undefined) {
+          updateData.slug = await generateUniqueSlug(events, input.title, input.id);
+        }
       }
       if (input.content !== undefined) updateData.content = input.content;
       if (input.excerpt !== undefined) updateData.excerpt = input.excerpt;
@@ -437,5 +442,11 @@ export const eventsRouter = {
         .run();
 
       return { success: true };
+    }),
+
+  checkSlug: publicProcedure
+    .input(z.object({ slug: z.string(), excludeId: z.string().optional() }))
+    .handler(async ({ input }) => {
+      return checkSlugUnique(events, input.slug, input.excludeId);
     }),
 };

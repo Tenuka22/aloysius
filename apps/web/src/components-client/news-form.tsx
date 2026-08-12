@@ -14,10 +14,12 @@ import { client } from "@/utils/orpc"
 import { convertToWebp } from "@/utils/convert-to-webp"
 import { toast } from "sonner"
 import * as v from "valibot"
+import { SlugField } from "@/components-client/slug-field"
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder"
 
 const createNewsSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
+  slug: v.optional(v.string()),
   excerpt: v.optional(v.string()),
   content: v.string(),
   coverImage: v.optional(v.string()),
@@ -31,6 +33,7 @@ type CreateNewsValues = v.InferOutput<typeof createNewsSchema>
 
 const updateNewsSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1, "Title is required")),
+  slug: v.optional(v.string()),
   excerpt: v.optional(v.string()),
   content: v.string(),
   coverImage: v.optional(v.string()),
@@ -49,6 +52,15 @@ const fields: FieldEntry<CreateNewsValues | UpdateNewsValues>[] = [
     label: "Title",
     placeholder: "Enter news title",
     required: true,
+  },
+  {
+    name: "slug",
+    kind: "custom",
+    label: "Slug",
+    required: false,
+    customRenderer: ({ value, onChange, name, formValues }) => {
+      return <SlugFieldInline sourceField="title" routerName="news" value={value as string ?? ""} onChange={onChange} />
+    },
   },
   {
     name: "excerpt",
@@ -231,6 +243,7 @@ export function NewsForm({ mode, id, onSuccess }: { mode: "create" | "edit"; id?
     fields,
     layout: [
       { columns: [{ fields: ["title"] }] },
+      { columns: [{ fields: ["slug"] }] },
       { columns: [{ fields: ["excerpt"] }] },
       { columns: [{ fields: ["authorName", "authorType"] }] },
       { columns: [{ fields: ["publishNow"] }] },
@@ -242,6 +255,7 @@ export function NewsForm({ mode, id, onSuccess }: { mode: "create" | "edit"; id?
         authorType: values.authorType || undefined,
       }),
     },
+    renderBelowFields: () => null,
   }
 
   return (
@@ -249,8 +263,8 @@ export function NewsForm({ mode, id, onSuccess }: { mode: "create" | "edit"; id?
       config={formConfig}
       defaultValues={
         mode === "edit" && newsItem
-          ? { title: newsItem.title, excerpt: newsItem.excerpt ?? "", content: newsItem.content, coverImage: newsItem.coverImage ?? "", tags: newsItem.tags ?? [], publishNow: newsItem.status === "published", authorName: (newsItem as any).authorName ?? "", authorType: (newsItem as any).authorType ?? "" }
-          : { title: "", excerpt: "", content: "", coverImage: "", tags: [], publishNow: false, authorName: "", authorType: "" }
+          ? { title: newsItem.title, slug: newsItem.slug ?? "", excerpt: newsItem.excerpt ?? "", content: newsItem.content, coverImage: newsItem.coverImage ?? "", tags: newsItem.tags ?? [], publishNow: newsItem.status === "published", authorName: (newsItem as any).authorName ?? "", authorType: (newsItem as any).authorType ?? "" }
+          : { title: "", slug: "", excerpt: "", content: "", coverImage: "", tags: [], publishNow: false, authorName: "", authorType: "" }
       }
       valibotSchema={mode === "create" ? createNewsSchema : updateNewsSchema}
       onSubmit={handleSubmit}

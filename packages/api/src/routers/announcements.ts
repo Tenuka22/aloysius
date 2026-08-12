@@ -4,7 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { announcements } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
-import { generateUniqueSlug } from "../lib/slug";
+import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 
 const sortDirection = z.enum(["asc", "desc"]);
 
@@ -90,14 +90,12 @@ export const announcementsRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ slug: z.string() }))
+    .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = await db
-        .select()
-        .from(announcements)
-        .where(eq(announcements.slug, input.slug))
-        .get();
+      const row = "id" in input
+        ? await db.select().from(announcements).where(eq(announcements.id, input.id)).get()
+        : await db.select().from(announcements).where(eq(announcements.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
@@ -125,6 +123,7 @@ export const announcementsRouter = {
   create: protectedProcedure
     .input(
       z.object({
+        slug: z.string().optional(),
         title: z.string().min(1),
         content: z.string(),
         excerpt: z.string().optional(),
@@ -144,7 +143,7 @@ export const announcementsRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
-      const slug = await generateUniqueSlug(announcements, input.title);
+      const slug = input.slug ? await generateUniqueSlug(announcements, input.slug) : await generateUniqueSlug(announcements, input.title);
 
       const db = createDb();
       const record = await db
@@ -191,6 +190,7 @@ export const announcementsRouter = {
     .input(
       z.object({
         id: z.string(),
+        slug: z.string().optional(),
         title: z.string().min(1).optional(),
         content: z.string().optional(),
         excerpt: z.string().optional(),
@@ -224,9 +224,14 @@ export const announcementsRouter = {
         updatedAt: now,
       };
 
+      if (input.slug !== undefined) {
+        updateData.slug = await generateUniqueSlug(announcements, input.slug, input.id);
+      }
       if (input.title !== undefined) {
         updateData.title = input.title;
-        updateData.slug = await generateUniqueSlug(announcements, input.title, input.id);
+        if (input.slug === undefined) {
+          updateData.slug = await generateUniqueSlug(announcements, input.title, input.id);
+        }
       }
       if (input.content !== undefined) updateData.content = input.content;
       if (input.excerpt !== undefined) updateData.excerpt = input.excerpt;
@@ -291,5 +296,11 @@ export const announcementsRouter = {
         .run();
 
       return { success: true };
+    }),
+
+  checkSlug: publicProcedure
+    .input(z.object({ slug: z.string(), excludeId: z.string().optional() }))
+    .handler(async ({ input }) => {
+      return checkSlugUnique(announcements, input.slug, input.excludeId);
     }),
 };

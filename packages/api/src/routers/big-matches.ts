@@ -4,7 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { bigMatches } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
-import { generateUniqueSlug } from "../lib/slug";
+import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 
 export const bigMatchesRouter = {
   list: publicProcedure
@@ -35,14 +35,12 @@ export const bigMatchesRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ slug: z.string() }))
+    .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = await db
-        .select()
-        .from(bigMatches)
-        .where(eq(bigMatches.slug, input.slug))
-        .get();
+      const row = "id" in input
+        ? await db.select().from(bigMatches).where(eq(bigMatches.id, input.id)).get()
+        : await db.select().from(bigMatches).where(eq(bigMatches.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Big match not found" });
@@ -67,6 +65,7 @@ export const bigMatchesRouter = {
   create: protectedProcedure
     .input(
       z.object({
+        slug: z.string().optional(),
         name: z.string().min(1),
         opponent: z.string().min(1),
         type: z.string().default("Cricket"),
@@ -83,7 +82,7 @@ export const bigMatchesRouter = {
       }
 
       const db = createDb();
-      const slug = await generateUniqueSlug(bigMatches, input.name);
+      const slug = input.slug ? await generateUniqueSlug(bigMatches, input.slug) : await generateUniqueSlug(bigMatches, input.name);
       const record = await db
         .insert(bigMatches)
         .values({
@@ -114,6 +113,7 @@ export const bigMatchesRouter = {
     .input(
       z.object({
         id: z.string(),
+        slug: z.string().optional(),
         name: z.string().min(1).optional(),
         opponent: z.string().min(1).optional(),
         type: z.string().optional(),
@@ -141,8 +141,13 @@ export const bigMatchesRouter = {
       }
 
       const { id, ...updateData } = input;
+      if (updateData.slug !== undefined) {
+        updateData.slug = await generateUniqueSlug(bigMatches, updateData.slug, id);
+      }
       if (updateData.name !== undefined) {
-        updateData.slug = await generateUniqueSlug(bigMatches, updateData.name, id);
+        if (updateData.slug === undefined) {
+          updateData.slug = await generateUniqueSlug(bigMatches, updateData.name, id);
+        }
       }
       const record = await db
         .update(bigMatches)
@@ -177,5 +182,11 @@ export const bigMatchesRouter = {
       const db = createDb();
       await db.delete(bigMatches).where(eq(bigMatches.id, input.id)).run();
       return { success: true };
+    }),
+
+  checkSlug: publicProcedure
+    .input(z.object({ slug: z.string(), excludeId: z.string().optional() }))
+    .handler(async ({ input }) => {
+      return checkSlugUnique(bigMatches, input.slug, input.excludeId);
     }),
 };
