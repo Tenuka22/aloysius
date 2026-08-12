@@ -54,16 +54,16 @@ export function Hero({ settings, carouselItems }: { settings?: Record<string, st
 
   return (
     <section ref={sectionRef}>
-      {/* Hero with dark background */}
-      <div className="relative bg-[#0a1f0a] text-white overflow-hidden">
+      {/* Hero with dark background - fills viewport minus navbar */}
+      <div className="relative bg-[#0a1f0a] text-white overflow-hidden h-[calc(100svh-3.5rem)]">
         {/* Dark overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#0a1f0a]" />
 
-        <div className="relative px-4 sm:px-6 lg:px-8 pt-24 pb-20">
+        <div className="relative h-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
             <h1
               ref={headingRef}
-              className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6"
+              className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-normal tracking-tight leading-[1.05] mb-6"
             >
               {titleLines.map((line: string, i: number) => (
                 <span key={i}>
@@ -73,7 +73,7 @@ export function Hero({ settings, carouselItems }: { settings?: Record<string, st
               ))}
             </h1>
 
-            <p ref={textRef} className="text-white/70 text-lg sm:text-xl max-w-2xl mx-auto mb-10">
+            <p ref={textRef} className="text-white/60 text-lg sm:text-xl max-w-2xl mx-auto mb-10">
               {s("hero_subtitle")}
             </p>
 

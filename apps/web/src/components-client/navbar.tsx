@@ -8,11 +8,20 @@ import { UserMenu } from "@/components-client/user-menu"
 
 gsap.registerPlugin(ScrollTrigger)
 
+const navLinks = [
+  { label: "About Us", to: "/about" },
+  { label: "Student Works", to: "/student-works" },
+  { label: "Achievements", to: "/achievements" },
+  { label: "Gallery", to: "/gallery" },
+  { label: "News & Events", to: "/news-events" },
+]
+
 export function Navbar() {
   const headerRef = useRef<HTMLElement>(null)
   const logoRef = useRef<HTMLDivElement>(null)
   const linksRef = useRef<HTMLDivElement>(null)
   const ctaRef = useRef<HTMLDivElement>(null)
+  const mobileMenuRef = useRef<HTMLDivElement>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -27,34 +36,35 @@ export function Navbar() {
     return () => ctx.revert()
   }, [])
 
+  useEffect(() => {
+    if (mobileMenuRef.current) {
+      if (mobileMenuOpen) {
+        gsap.fromTo(mobileMenuRef.current, { height: 0, opacity: 0 }, { height: "auto", opacity: 1, duration: 0.3, ease: "power2.out" })
+      } else {
+        gsap.to(mobileMenuRef.current, { height: 0, opacity: 0, duration: 0.2, ease: "power2.in" })
+      }
+    }
+  }, [mobileMenuOpen])
+
   return (
-    <header
-      ref={headerRef}
-      className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-    >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header ref={headerRef} className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <a href="/" aria-label="Aloysius College - Home" ref={logoRef} className="flex items-center gap-2 shrink-0">
-          <div className="size-10 rounded-full bg-muted flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-6 text-muted-foreground">
+          <div className="size-8 rounded-full bg-muted flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-5 text-muted-foreground">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
           <div className="leading-none">
-            <div className="text-sm font-bold tracking-wide">ALOYSIUS COLLEGE</div>
-            <div className="text-[10px] tracking-widest text-muted-foreground">NIL DESPERANDUM</div>
+            <div className="text-xs font-bold tracking-wide">ALOYSIUS COLLEGE</div>
+            <div className="text-[9px] tracking-widest text-muted-foreground">NIL DESPERANDUM</div>
           </div>
         </a>
 
         {/* Nav Links */}
         <nav ref={linksRef} aria-label="Main navigation" className="hidden lg:flex items-center gap-1">
-          {[
-            { label: "About Us", to: "/about" },
-            { label: "Student Works", to: "/student-works" },
-            { label: "Achievements", to: "/achievements" },
-            { label: "Gallery", to: "/gallery" },
-            { label: "News & Events", to: "/news-events" },
-          ].map((item) => (
+          {navLinks.map((item) => (
             <Link
               key={item.label}
               to={item.to}
@@ -72,14 +82,39 @@ export function Navbar() {
             className="lg:hidden inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
-            aria-controls="mobile-menu"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5">
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            {mobileMenuOpen ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5">
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
           </button>
         </div>
+      </div>
+
+      {/* Mobile Menu */}
+      <div
+        ref={mobileMenuRef}
+        className="lg:hidden overflow-hidden border-t bg-background/95 backdrop-blur"
+        style={{ height: 0, opacity: 0 }}
+      >
+        <nav className="flex flex-col px-4 py-3 gap-1">
+          {navLinks.map((item) => (
+            <Link
+              key={item.label}
+              to={item.to}
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </header>
   )
