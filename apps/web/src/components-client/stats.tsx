@@ -122,11 +122,11 @@ export function Stats({
     <section className="border-y border-border/50 bg-[#0a1f0a]">
       <div
         ref={ref}
-        className="mx-auto max-w-6xl flex flex-wrap justify-center gap-x-12 gap-y-8 py-12 px-4 sm:px-6 lg:px-8"
+        className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 py-12 px-4 sm:px-6 lg:px-8"
       >
         {stats.map((stat) => (
-          <div key={stat.label} className="flex items-center gap-4">
-            <div className="size-11 bg-white/10 border border-white/20 flex items-center justify-center text-[#c9a227]">
+          <div key={stat.label} className="flex items-center gap-4 justify-center">
+            <div className="size-11 bg-white/10 border border-white/20 flex items-center justify-center text-[#c9a227] shrink-0">
               <StatIcon icon={stat.icon} />
             </div>
             <div>
