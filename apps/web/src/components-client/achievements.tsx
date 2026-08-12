@@ -115,7 +115,7 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
             <Link
               to="/achievements/$slug"
               params={{ slug: featured.slug }}
-              className="group grid md:grid-cols-2 gap-6 rounded-2xl border bg-background overflow-hidden hover:shadow-lg transition-shadow"
+              className="group grid md:grid-cols-2 gap-6 border bg-background overflow-hidden hover:shadow-lg transition-shadow"
             >
               <div className="aspect-video md:aspect-auto bg-muted overflow-hidden">
                 {featured.coverImage ? (
@@ -143,7 +143,7 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
                 )}
               </div>
               <div className="p-6 md:p-8 flex flex-col justify-center">
-                <span className="inline-flex items-center rounded-full bg-[#c9a227]/10 text-[#c9a227] px-3 py-1 text-xs font-semibold mb-3 w-fit">
+                <span className="inline-flex items-center bg-[#c9a227]/10 text-[#c9a227] px-3 py-1 text-xs font-semibold mb-3 w-fit">
                   {categoryLabels[featured.category] ?? featured.category}
                   {featured.year && ` · ${featured.year}`}
                 </span>
@@ -172,7 +172,7 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
                 key={item.id}
                 to="/achievements/$slug"
                 params={{ slug: item.slug }}
-                className="group rounded-xl border bg-background overflow-hidden hover:shadow-md transition-shadow"
+                className="group border bg-background overflow-hidden hover:shadow-md transition-shadow"
               >
                 <div className="aspect-video bg-muted overflow-hidden">
                   {item.coverImage ? (

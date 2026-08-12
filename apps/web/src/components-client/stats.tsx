@@ -126,7 +126,7 @@ export function Stats({
       >
         {stats.map((stat) => (
           <div key={stat.label} className="flex items-center gap-4">
-            <div className="size-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#c9a227]">
+            <div className="size-11 bg-white/5 border border-white/10 flex items-center justify-center text-[#c9a227]">
               <StatIcon icon={stat.icon} />
             </div>
             <div>

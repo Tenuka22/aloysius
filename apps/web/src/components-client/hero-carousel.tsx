@@ -62,7 +62,7 @@ export function HeroCarousel({ items }: { items: HeroCarouselItem[] }) {
             const config = sourceConfig[item.source] ?? sourceConfig.news;
             return (
               <CarouselItem key={item.id} className="pl-3 md:basis-1/2 lg:basis-1/4">
-                <div className="aspect-[3/4] rounded-2xl overflow-hidden relative group cursor-pointer">
+                <div className="aspect-[3/4] overflow-hidden relative group cursor-pointer">
                   {item.coverImage ? (
                     <img
                       src={item.coverImage}

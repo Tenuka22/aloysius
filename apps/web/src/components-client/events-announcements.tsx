@@ -112,7 +112,7 @@ export function EventsAnnouncements({
                       key={event.id}
                       to="/events/$slug"
                       params={{ slug: event.slug }}
-                      className="group flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                      className="group flex items-start gap-4 p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
                     >
                       <div className="shrink-0 text-center w-12">
                         <div className="text-[10px] font-bold uppercase tracking-wider text-[#c9a227]">
@@ -140,7 +140,7 @@ export function EventsAnnouncements({
                   );
                 })
               ) : (
-                <div className="p-6 rounded-xl bg-white/5 border border-white/10 text-center text-white/40 text-sm">
+                <div className="p-6 bg-white/5 border border-white/10 text-center text-white/40 text-sm">
                   No upcoming events
                 </div>
               )}
@@ -165,7 +165,7 @@ export function EventsAnnouncements({
                     key={item.id}
                     to="/announcements/$slug"
                     params={{ slug: item.slug }}
-                    className="group block p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                    className="group block p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
                   >
                     <div className="font-medium text-white group-hover:text-[#c9a227] transition-colors mb-1">
                       {item.title}
@@ -186,7 +186,7 @@ export function EventsAnnouncements({
                   </Link>
                 ))
               ) : (
-                <div className="p-6 rounded-xl bg-white/5 border border-white/10 text-center text-white/40 text-sm">
+                <div className="p-6 bg-white/5 border border-white/10 text-center text-white/40 text-sm">
                   No announcements yet
                 </div>
               )}
@@ -212,7 +212,7 @@ export function EventsAnnouncements({
                   key={item.id}
                   to="/news/$slug"
                   params={{ slug: item.slug }}
-                  className="group rounded-xl bg-white/5 border border-white/10 overflow-hidden hover:bg-white/10 transition-colors"
+                  className="group bg-white/5 border border-white/10 overflow-hidden hover:bg-white/10 transition-colors"
                 >
                   {item.coverImage ? (
                     <div className="aspect-video overflow-hidden">

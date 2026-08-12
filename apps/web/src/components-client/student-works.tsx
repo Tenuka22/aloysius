@@ -113,7 +113,7 @@ export function StudentWorks({ initialData }: { initialData?: StudentWorkRow[] }
               params={{ slug: work.slug }}
               className="group shrink-0 w-[260px] snap-start"
             >
-              <div className="aspect-[3/4] rounded-2xl bg-muted overflow-hidden mb-3 relative">
+              <div className="aspect-[3/4] bg-muted overflow-hidden mb-3 relative">
                 {work.coverImage ? (
                   <img
                     src={work.coverImage}
@@ -136,7 +136,7 @@ export function StudentWorks({ initialData }: { initialData?: StudentWorkRow[] }
                   </div>
                 )}
                 <div className="absolute top-3 left-3">
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-black/50 backdrop-blur-sm text-white px-2 py-1 rounded-full">
+                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-black/50 backdrop-blur-sm text-white px-2 py-1">
                     {categoryLabels[work.category] ?? work.category}
                   </span>
                 </div>
