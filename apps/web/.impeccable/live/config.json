@@ -1,0 +1,19 @@
+{
+  "devUrl": "http://localhost:5173",
+  "devCommand": "vp dev",
+  "devCwd": ".",
+  "livePort": 8400,
+  "files": [
+    "src/routes/index.tsx",
+    "src/components-client/hero.tsx",
+    "src/components-client/hero-carousel.tsx",
+    "src/components-client/stats.tsx",
+    "src/components-client/student-works.tsx",
+    "src/components-client/achievements.tsx",
+    "src/components-client/gallery.tsx",
+    "src/components-client/events-announcements.tsx"
+  ],
+  "insertBefore": "<head>",
+  "insertAfter": "</head>",
+  "commentSyntax": "html"
+}
