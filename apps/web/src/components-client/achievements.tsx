@@ -25,6 +25,7 @@ const recipientTypeLabels: Record<string, string> = {
 
 interface AchievementRow {
   id: string
+  slug: string
   title: string
   description: string | null
   category: string
@@ -38,34 +39,50 @@ interface AchievementRow {
 export function Achievements({ initialData }: { initialData?: AchievementRow[] }) {
   const ref = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLDivElement>(null)
+  const featuredRef = useRef<HTMLDivElement>(null)
 
   const items = initialData ?? []
+  const featured = items[0]
+  const rest = items.slice(1, 5)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         headingRef.current,
-        { opacity: 0, x: -30 },
-        {
-          opacity: 1,
-          x: 0,
-          duration: 0.6,
-          ease: "power3.out",
-          scrollTrigger: { trigger: headingRef.current, start: "top 85%", once: true },
-        }
-      )
-
-      gsap.fromTo(
-        ref.current?.children ?? [],
-        { opacity: 0, y: 40, scale: 0.95 },
+        { opacity: 0, y: 20 },
         {
           opacity: 1,
           y: 0,
-          scale: 1,
           duration: 0.6,
-          stagger: 0.1,
           ease: "power3.out",
-          scrollTrigger: { trigger: ref.current, start: "top 85%", once: true },
+          scrollTrigger: { trigger: headingRef.current, start: "top 90%", once: true },
+        }
+      )
+
+      if (featuredRef.current) {
+        gsap.fromTo(
+          featuredRef.current,
+          { opacity: 0, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            ease: "power3.out",
+            scrollTrigger: { trigger: featuredRef.current, start: "top 90%", once: true },
+          }
+        )
+      }
+
+      gsap.fromTo(
+        ref.current?.children ?? [],
+        { opacity: 0, y: 20 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          stagger: 0.08,
+          ease: "power3.out",
+          scrollTrigger: { trigger: ref.current, start: "top 90%", once: true },
         }
       )
     })
@@ -74,79 +91,96 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
   }, [])
 
   return (
-    <section className="px-4 sm:px-6 lg:px-8 py-16 border-t">
-      <div className="mx-auto max-w-6xl">
-        <div ref={headingRef} className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold">Achievements</h2>
-          <a href="/achievements" className="text-sm font-medium hover:underline inline-flex items-center gap-1">
+    <section className="py-16 sm:py-20 bg-muted/30">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div ref={headingRef} className="flex items-end justify-between mb-10">
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">Recognition</span>
+            <h2 className="text-2xl sm:text-3xl font-bold">Achievements</h2>
+          </div>
+          <a href="/achievements" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5">
             View All
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </a>
         </div>
-        <div ref={ref} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {items.length === 0 ? (
-            <div className="col-span-full text-center text-muted-foreground py-8">
-              No achievements published yet.
-            </div>
-          ) : items.map((item) => (
+
+        {featured ? (
+          <div ref={featuredRef} className="mb-8">
             <Link
-              key={item.id}
               to="/achievements/$slug"
-              params={{ slug: item.slug }}
-              className="group rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
+              params={{ slug: featured.slug }}
+              className="group grid md:grid-cols-2 gap-6 rounded-2xl border bg-background overflow-hidden hover:shadow-lg transition-shadow"
             >
-              <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
-                {item.coverImage ? (
+              <div className="aspect-video md:aspect-auto bg-muted overflow-hidden">
+                {featured.coverImage ? (
                   <img
-                    src={item.coverImage}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    src={featured.coverImage}
+                    alt={featured.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="size-8 text-muted-foreground/50">
-                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                    <path d="M4 22h16" />
-                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-                  </svg>
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#c9a227]/10 to-[#c9a227]/5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-16 text-[#c9a227]/30">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.996.172-1.756.96-1.756 1.94v3.03c0 .621.504 1.125 1.125 1.125h3.03c.98 0 1.768-.788 1.94-1.756M5.25 4.236A2.25 2.25 0 017.5 2.25h9a2.25 2.25 0 012.25 2.25c.343 1.32.467 2.688.35 4.047" />
+                    </svg>
+                  </div>
                 )}
               </div>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                    {categoryLabels[item.category] ?? item.category}
-                  </span>
-                  {item.year && (
-                    <span className="text-xs text-muted-foreground">{item.year}</span>
-                  )}
-                </div>
-                <div className="font-medium mb-1 group-hover:text-primary transition-colors">{item.title}</div>
-                {item.description && (
-                  <div className="text-sm text-muted-foreground mb-2 line-clamp-2">{item.description}</div>
+              <div className="p-6 md:p-8 flex flex-col justify-center">
+                <span className="inline-flex items-center rounded-full bg-[#c9a227]/10 text-[#c9a227] px-3 py-1 text-xs font-semibold mb-3 w-fit">
+                  {categoryLabels[featured.category] ?? featured.category}
+                  {featured.year && ` · ${featured.year}`}
+                </span>
+                <h3 className="text-xl sm:text-2xl font-bold mb-3 group-hover:text-[#c9a227] transition-colors">{featured.title}</h3>
+                {featured.description && (
+                  <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 mb-4">{featured.description}</p>
                 )}
-                <div className="flex items-center gap-2 flex-wrap">
-                  {item.recipientNames && item.recipientNames.length > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      {item.recipientNames.join(", ")}
-                      {item.recipientType && ` (${recipientTypeLabels[item.recipientType] ?? item.recipientType})`}
-                    </span>
-                  )}
-                  {item.tags && item.tags.length > 0 && (
-                    <div className="flex gap-1">
-                      {item.tags.slice(0, 2).map((tag) => (
-                        <span key={tag} className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                          {tag}
-                        </span>
-                      ))}
+                {featured.recipientNames && featured.recipientNames.length > 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    {featured.recipientNames.join(", ")}
+                  </div>
+                )}
+              </div>
+            </Link>
+          </div>
+        ) : null}
+
+        {rest.length > 0 && (
+          <div ref={ref} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {rest.map((item) => (
+              <Link
+                key={item.id}
+                to="/achievements/$slug"
+                params={{ slug: item.slug }}
+                className="group rounded-xl border bg-background overflow-hidden hover:shadow-md transition-shadow"
+              >
+                <div className="aspect-video bg-muted overflow-hidden">
+                  {item.coverImage ? (
+                    <img
+                      src={item.coverImage}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="size-8 text-muted-foreground/30">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.996.172-1.756.96-1.756 1.94v3.03c0 .621.504 1.125 1.125 1.125h3.03c.98 0 1.768-.788 1.94-1.756M5.25 4.236A2.25 2.25 0 017.5 2.25h9a2.25 2.25 0 012.25 2.25c.343 1.32.467 2.688.35 4.047" />
+                      </svg>
                     </div>
                   )}
                 </div>
+                <div className="p-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c9a227]">
+                    {categoryLabels[item.category] ?? item.category}
+                  </span>
+                  <div className="text-sm font-semibold mt-1 group-hover:text-[#c9a227] transition-colors line-clamp-2">{item.title}</div>
                 </div>
               </Link>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

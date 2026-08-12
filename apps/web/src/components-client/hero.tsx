@@ -5,7 +5,7 @@ import gsap from "gsap"
 import { HeroCarousel } from "./hero-carousel"
 
 const DEFAULTS: Record<string, string> = {
-  hero_title: "Where Excellencies\nAre Made",
+  hero_title: "Where Excellence\nIs Made",
   hero_subtitle: "St. Aloysius' College, Galle — nurturing minds, building character, and inspiring generations of leaders since 1862.",
   hero_cta1_text: "Explore Our College",
   hero_cta1_url: "/about",
@@ -36,15 +36,15 @@ export function Hero({ settings, carouselItems }: { settings?: Record<string, st
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } })
 
-      tl.fromTo(headingRef.current, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 1 })
-        .fromTo(textRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7 }, "-=0.5")
+      tl.fromTo(headingRef.current, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 })
+        .fromTo(textRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, "-=0.4")
         .fromTo(
           buttonsRef.current?.children ?? [],
           { opacity: 0, y: 15 },
           { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 },
           "-=0.3"
         )
-        .fromTo(carouselRef.current, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 }, "-=0.2")
+        .fromTo(carouselRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7 }, "-=0.2")
     }, sectionRef)
 
     return () => ctx.revert()
@@ -54,34 +54,50 @@ export function Hero({ settings, carouselItems }: { settings?: Record<string, st
 
   return (
     <section ref={sectionRef}>
-      {/* Hero with dark background - fills viewport minus navbar */}
-      <div className="relative bg-[#0a1f0a] text-white overflow-hidden h-[calc(100svh-3.5rem)]">
-        {/* Dark overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#0a1f0a]" />
+      <div className="relative bg-[#0a1f0a] text-white overflow-hidden">
+        {/* Subtle texture overlay */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
 
-        <div className="relative h-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="relative py-20 sm:py-28 lg:py-36 px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
+            {/* Eyebrow */}
+            <div className="inline-flex items-center gap-2 text-[#c9a227]/80 text-xs sm:text-sm font-medium tracking-widest uppercase mb-6">
+              <span className="w-8 h-px bg-[#c9a227]/40" />
+              Est. 1862
+              <span className="w-8 h-px bg-[#c9a227]/40" />
+            </div>
+
             <h1
               ref={headingRef}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal tracking-tight leading-[1.05] mb-6"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] mb-6"
             >
               {titleLines.map((line: string, i: number) => (
                 <span key={i}>
-                  {line}
+                  {i === titleLines.length - 1 ? (
+                    <span className="text-[#c9a227]">{line}</span>
+                  ) : (
+                    line
+                  )}
                   {i < titleLines.length - 1 && <br />}
                 </span>
               ))}
             </h1>
 
-            <p ref={textRef} className="text-white/60 text-lg sm:text-xl max-w-2xl mx-auto mb-10">
+            <p ref={textRef} className="text-white/50 text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
               {s("hero_subtitle")}
             </p>
 
             <div ref={buttonsRef} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a href={s("hero_cta1_url") || "/about"} className="inline-flex h-12 items-center rounded-lg bg-[#c9a227] px-8 text-sm font-semibold text-[#0a1f0a] hover:bg-[#b89220] transition-colors">
+              <a
+                href={s("hero_cta1_url") || "/about"}
+                className="inline-flex h-12 items-center rounded-full bg-[#c9a227] px-8 text-sm font-semibold text-[#0a1f0a] hover:bg-[#d4ad2e] transition-all duration-200 hover:shadow-lg hover:shadow-[#c9a227]/20"
+              >
                 {s("hero_cta1_text") || "Explore Our College"}
               </a>
-              <a href={s("hero_cta2_url") || "/student-works"} className="inline-flex h-12 items-center rounded-lg border border-white/20 bg-white/5 px-8 text-sm font-semibold text-white hover:bg-white/10 transition-colors">
+              <a
+                href={s("hero_cta2_url") || "/student-works"}
+                className="inline-flex h-12 items-center rounded-full border border-white/20 px-8 text-sm font-semibold text-white hover:bg-white/5 transition-all duration-200"
+              >
                 {s("hero_cta2_text") || "Student Works"}
               </a>
             </div>
@@ -90,27 +106,10 @@ export function Hero({ settings, carouselItems }: { settings?: Record<string, st
       </div>
 
       {/* Carousel section */}
-      <div ref={carouselRef} className="px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mx-auto max-w-6xl">
-          {carouselItems && carouselItems.length > 0 ? (
-            <HeroCarousel items={carouselItems} />
-          ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 max-w-3xl mx-auto perspective-[1000px]">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="aspect-[3/4] rounded-xl bg-muted flex items-center justify-center overflow-hidden"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="size-8 text-muted-foreground/50">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <path d="M21 15l-5-5L5 21" />
-                  </svg>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      <div ref={carouselRef} className="px-4 sm:px-6 lg:px-8 py-10 bg-background">
+        {carouselItems && carouselItems.length > 0 ? (
+          <HeroCarousel items={carouselItems} />
+        ) : null}
       </div>
     </section>
   )
