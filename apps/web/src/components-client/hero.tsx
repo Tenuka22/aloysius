@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { HeroCarousel } from "./hero-carousel";
 
 const DEFAULTS: Record<string, string> = {
+  hero_badge: "Est. 1862",
   hero_title: "Where Excellence\nIs Made",
   hero_subtitle:
     "St. Aloysius' College, Galle — nurturing minds, building character, and inspiring generations of leaders since 1862.",
@@ -86,7 +87,7 @@ export function Hero({
             {/* Eyebrow */}
             <div className="inline-flex items-center gap-2 text-[#c9a227]/80 text-xs sm:text-sm font-medium tracking-widest uppercase mb-6">
               <span className="w-8 h-px bg-[#c9a227]/40" />
-              Est. 1862
+              {s("hero_badge") || "Est. 1862"}
               <span className="w-8 h-px bg-[#c9a227]/40" />
             </div>
 
