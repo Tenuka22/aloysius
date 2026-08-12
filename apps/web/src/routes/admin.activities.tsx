@@ -40,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@aloysius-web/ui/components/select"
+import { Tabs, TabsList, TabsTrigger } from "@aloysius-web/ui/components/tabs"
 import { IconPlus, IconDotsVertical, IconPencil, IconTrash } from "@tabler/icons-react"
 import { client } from "@/utils/orpc"
 import { toast } from "sonner"
@@ -52,6 +53,7 @@ type ActivityItem = {
   coverImage: string | null
   images: string[]
   type: string
+  adminEmail: string | null
   sortOrder: number
   status: string
   createdAt: string
@@ -229,6 +231,7 @@ function AdminActivitiesList() {
   })
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [typeFilter, setTypeFilter] = useState<string>("all")
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const sort = sorting[0]
@@ -245,8 +248,9 @@ function AdminActivitiesList() {
   })
 
   const allItems = (data ?? []) as ActivityItem[]
-  const items = allItems.slice(pagination.pageIndex * pagination.pageSize, (pagination.pageIndex + 1) * pagination.pageSize)
-  const pageCount = Math.ceil(allItems.length / pagination.pageSize)
+  const filteredItems = typeFilter === "all" ? allItems : allItems.filter((item) => item.type === typeFilter)
+  const items = filteredItems.slice(pagination.pageIndex * pagination.pageSize, (pagination.pageIndex + 1) * pagination.pageSize)
+  const pageCount = Math.ceil(filteredItems.length / pagination.pageSize)
 
   return (
     <div className="flex flex-col">
@@ -262,64 +266,74 @@ function AdminActivitiesList() {
         </div>
       </header>
       <div className="flex-1 p-6">
-        <DataTable
-          columns={columns}
-          data={items}
-          pageCount={pageCount}
-          loading={isLoading}
-          pagination={pagination}
-          sorting={sorting}
-          columnFilters={columnFilters}
-          onPaginationChange={setPagination}
-          onSortingChange={setSorting}
-          onColumnFiltersChange={setColumnFilters}
-          toolbar={(table) => {
-            const filters = table.getState().columnFilters
-            const isFiltered = filters.length > 0
-            const setFilter = (id: string, value: string) => {
-              const next = filters.filter((f) => f.id !== id)
-              if (value) next.push({ id, value })
-              table.setColumnFilters(next)
-            }
-            return (
-              <div className="flex items-center justify-between">
-                <div className="flex flex-1 items-center gap-2">
-                  <Input
-                    ref={searchInputRef}
-                    placeholder="Filter by name..."
-                    value={(filters.find((f) => f.id === "name")?.value as string) ?? ""}
-                    onChange={(e) => setFilter("name", e.target.value)}
-                    className="h-8 w-[200px] lg:w-[250px]"
-                  />
-                  <Select
-                    value={(filters.find((f) => f.id === "status")?.value as string) ?? ""}
-                    onValueChange={(val) => setFilter("status", val ?? "")}
-                  >
-                    <SelectTrigger className="h-8 w-[140px]">
-                      <SelectValue placeholder="All statuses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {isFiltered && (
-                    <Button
-                      variant="ghost"
-                      onClick={() => table.resetColumnFilters()}
-                      className="h-8 px-2 lg:px-3"
+        <Tabs value={typeFilter} onValueChange={(val) => { setTypeFilter(val); setPagination((p) => ({ ...p, pageIndex: 0 })) }}>
+          <TabsList variant="line">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="club">Clubs</TabsTrigger>
+            <TabsTrigger value="sport">Sports</TabsTrigger>
+            <TabsTrigger value="other">Other</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <div className="mt-4">
+          <DataTable
+            columns={columns}
+            data={items}
+            pageCount={pageCount}
+            loading={isLoading}
+            pagination={pagination}
+            sorting={sorting}
+            columnFilters={columnFilters}
+            onPaginationChange={setPagination}
+            onSortingChange={setSorting}
+            onColumnFiltersChange={setColumnFilters}
+            toolbar={(table) => {
+              const filters = table.getState().columnFilters
+              const isFiltered = filters.length > 0
+              const setFilter = (id: string, value: string) => {
+                const next = filters.filter((f) => f.id !== id)
+                if (value) next.push({ id, value })
+                table.setColumnFilters(next)
+              }
+              return (
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-1 items-center gap-2">
+                    <Input
+                      ref={searchInputRef}
+                      placeholder="Filter by name..."
+                      value={(filters.find((f) => f.id === "name")?.value as string) ?? ""}
+                      onChange={(e) => setFilter("name", e.target.value)}
+                      className="h-8 w-[200px] lg:w-[250px]"
+                    />
+                    <Select
+                      value={(filters.find((f) => f.id === "status")?.value as string) ?? ""}
+                      onValueChange={(val) => setFilter("status", val ?? "")}
                     >
-                      Reset
-                    </Button>
-                  )}
+                      <SelectTrigger className="h-8 w-[140px]">
+                        <SelectValue placeholder="All statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {isFiltered && (
+                      <Button
+                        variant="ghost"
+                        onClick={() => table.resetColumnFilters()}
+                        className="h-8 px-2 lg:px-3"
+                      >
+                        Reset
+                      </Button>
+                    )}
+                  </div>
+                  <DataTableViewOptions table={table} />
                 </div>
-                <DataTableViewOptions table={table} />
-              </div>
-            )
-          }}
-          paginationBar={(table) => <DataTablePagination table={table} />}
-        />
+              )
+            }}
+            paginationBar={(table) => <DataTablePagination table={table} />}
+          />
+        </div>
       </div>
     </div>
   )

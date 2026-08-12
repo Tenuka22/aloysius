@@ -36,6 +36,7 @@ export const activitiesRouter = {
         coverImage: row.coverImage,
         images: row.images ?? [],
         type: row.type,
+        adminEmail: row.adminEmail,
         sortOrder: row.sortOrder,
         status: row.status,
         createdAt: row.createdAt.toISOString(),
@@ -64,6 +65,7 @@ export const activitiesRouter = {
         coverImage: row.coverImage,
         images: row.images ?? [],
         type: row.type,
+        adminEmail: row.adminEmail,
         sortOrder: row.sortOrder,
         status: row.status,
         createdAt: row.createdAt.toISOString(),
@@ -79,6 +81,7 @@ export const activitiesRouter = {
         coverImage: z.string().optional(),
         images: z.array(z.string()).optional(),
         type: z.enum(["club", "sport", "other"]).default("club"),
+        adminEmail: z.string().email().optional(),
         sortOrder: z.number().optional(),
         status: z.enum(["draft", "published", "archived"]).default("draft"),
       })
@@ -101,6 +104,7 @@ export const activitiesRouter = {
           coverImage: input.coverImage,
           images: input.images ?? [],
           type: input.type,
+          adminEmail: input.adminEmail,
           sortOrder: input.sortOrder ?? 0,
           status: input.status,
           createdAt: now,
@@ -116,6 +120,7 @@ export const activitiesRouter = {
         coverImage: record.coverImage,
         images: record.images ?? [],
         type: record.type,
+        adminEmail: record.adminEmail,
         sortOrder: record.sortOrder,
         status: record.status,
         createdAt: record.createdAt.toISOString(),
@@ -132,6 +137,7 @@ export const activitiesRouter = {
         coverImage: z.string().optional(),
         images: z.array(z.string()).optional(),
         type: z.enum(["club", "sport", "other"]).optional(),
+        adminEmail: z.string().email().optional().nullable(),
         sortOrder: z.number().optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
       })
@@ -161,6 +167,7 @@ export const activitiesRouter = {
       if (input.coverImage !== undefined) updateData.coverImage = input.coverImage;
       if (input.images !== undefined) updateData.images = input.images;
       if (input.type !== undefined) updateData.type = input.type;
+      if (input.adminEmail !== undefined) updateData.adminEmail = input.adminEmail;
       if (input.sortOrder !== undefined) updateData.sortOrder = input.sortOrder;
       if (input.status !== undefined) updateData.status = input.status;
 
@@ -178,6 +185,7 @@ export const activitiesRouter = {
         coverImage: record.coverImage,
         images: record.images ?? [],
         type: record.type,
+        adminEmail: record.adminEmail,
         sortOrder: record.sortOrder,
         status: record.status,
         createdAt: record.createdAt.toISOString(),

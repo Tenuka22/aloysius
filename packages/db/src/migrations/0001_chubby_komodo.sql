@@ -1,0 +1,1 @@
+ALTER TABLE `activities` ADD `admin_email` text;

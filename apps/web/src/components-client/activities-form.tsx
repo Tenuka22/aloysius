@@ -22,6 +22,7 @@ const createActivitySchema = v.object({
   coverImage: v.optional(v.string()),
   images: v.array(v.string()),
   type: v.string(),
+  adminEmail: v.optional(v.string()),
   sortOrder: v.number(),
   status: v.string(),
 })
@@ -35,6 +36,7 @@ const updateActivitySchema = v.object({
   coverImage: v.optional(v.string()),
   images: v.array(v.string()),
   type: v.string(),
+  adminEmail: v.optional(v.string()),
   sortOrder: v.number(),
   status: v.string(),
 })
@@ -82,6 +84,13 @@ const fields: FieldEntry<CreateActivityValues | UpdateActivityValues>[] = [
     ],
     required: true,
     hidden: true,
+  },
+  {
+    name: "adminEmail",
+    kind: "text",
+    label: "Admin Email",
+    hidden: true,
+    required: false,
   },
   {
     name: "sortOrder",
@@ -197,6 +206,28 @@ function TypeField() {
         <option value="sport">Sport</option>
         <option value="other">Other</option>
       </select>
+    </div>
+  )
+}
+
+function AdminEmailField() {
+  const form = useBuildForm()
+  const value = useStore(form.store, (state: any) => state.values.adminEmail) as string ?? ""
+  const type = useStore(form.store, (state: any) => state.values.type) as string
+
+  if (type === "academic") return null
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Administrator Email</label>
+      <p className="text-xs text-muted-foreground">The administrator responsible for managing this {type}.</p>
+      <input
+        type="email"
+        value={value}
+        onChange={(e) => form.setFieldValue("adminEmail", e.target.value)}
+        placeholder="admin@example.com"
+        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      />
     </div>
   )
 }
@@ -414,6 +445,7 @@ export function ActivitiesForm({ mode, id, onSuccess }: { mode: "create" | "edit
         description: values.description || undefined,
         coverImage: values.coverImage || undefined,
         type: values.type as "club" | "sport" | "other",
+        adminEmail: values.adminEmail || undefined,
         status: values.status as "draft" | "published" | "archived",
       }),
     },
@@ -426,6 +458,7 @@ export function ActivitiesForm({ mode, id, onSuccess }: { mode: "create" | "edit
           <div className="flex-1 grid grid-cols-2 gap-4">
             <NameField />
             <TypeField />
+            <AdminEmailField />
             <StatusField />
             <SortOrderField />
           </div>
@@ -441,8 +474,8 @@ export function ActivitiesForm({ mode, id, onSuccess }: { mode: "create" | "edit
       config={formConfig}
       defaultValues={
         mode === "edit" && activity
-          ? { name: activity.name, description: activity.description ?? "", content: "", coverImage: activity.coverImage ?? "", images: (activity.images as string[]) ?? [], type: activity.type, sortOrder: activity.sortOrder, status: activity.status }
-          : { name: "", description: "", content: "", coverImage: "", images: [] as string[], type: "club", sortOrder: 0, status: "draft" }
+          ? { name: activity.name, description: activity.description ?? "", content: "", coverImage: activity.coverImage ?? "", images: (activity.images as string[]) ?? [], type: activity.type, adminEmail: activity.adminEmail ?? "", sortOrder: activity.sortOrder, status: activity.status }
+          : { name: "", description: "", content: "", coverImage: "", images: [] as string[], type: "club", adminEmail: "", sortOrder: 0, status: "draft" }
       }
       valibotSchema={mode === "create" ? createActivitySchema : updateActivitySchema}
       onSubmit={handleSubmit}

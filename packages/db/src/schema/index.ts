@@ -276,6 +276,7 @@ export const activities = sqliteTable("activities", {
   type: text("type", { enum: ["club", "sport", "other"] })
     .notNull()
     .default("club"),
+  adminEmail: text("admin_email"),
   sortOrder: integer("sort_order").notNull().default(0),
   status: text("status", { enum: ["draft", "published", "archived"] })
     .notNull()
