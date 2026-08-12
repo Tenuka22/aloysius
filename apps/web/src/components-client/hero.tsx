@@ -63,7 +63,7 @@ export function Hero({ settings, carouselItems }: { settings?: Record<string, st
           <div className="mx-auto max-w-5xl text-center">
             <h1
               ref={headingRef}
-              className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-normal tracking-tight leading-[1.05] mb-6"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal tracking-tight leading-[1.05] mb-6"
             >
               {titleLines.map((line: string, i: number) => (
                 <span key={i}>

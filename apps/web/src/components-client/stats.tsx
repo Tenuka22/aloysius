@@ -103,7 +103,7 @@ export function Stats({ initialData }: { initialData?: { id: string; value: stri
 
   return (
     <section className="border-y bg-muted/30 px-4 sm:px-6 lg:px-8 py-12">
-      <div ref={ref} className="mx-auto max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div ref={ref} className="mx-auto max-w-4xl flex flex-wrap justify-center gap-12">
         {stats.map((stat) => (
           <div key={stat.label} className="flex flex-col items-center text-center gap-2">
             <div className="size-10 rounded-full bg-muted flex items-center justify-center mb-1">
