@@ -4,6 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { studentWorks } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import { generateUniqueSlug } from "../lib/slug";
 
 const sortDirection = z.enum(["asc", "desc"]);
 const studentWorkCategory = z.enum(["film", "art", "music", "writing", "design", "photography", "code", "other"]);
@@ -70,6 +71,7 @@ export const studentWorksRouter = {
       return {
         rows: rows.map((row) => ({
           id: row.id,
+          slug: row.slug,
           title: row.title,
           description: row.description,
           category: row.category,
@@ -93,13 +95,13 @@ export const studentWorksRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ slug: z.string() }))
     .handler(async ({ input }) => {
       const db = createDb();
       const row = await db
         .select()
         .from(studentWorks)
-        .where(eq(studentWorks.id, input.id))
+        .where(eq(studentWorks.slug, input.slug))
         .get();
 
       if (!row) {
@@ -108,6 +110,7 @@ export const studentWorksRouter = {
 
       return {
         id: row.id,
+        slug: row.slug,
         title: row.title,
         description: row.description,
         category: row.category,
@@ -147,12 +150,14 @@ export const studentWorksRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
+      const slug = await generateUniqueSlug(studentWorks, input.title);
 
       const db = createDb();
       const record = await db
         .insert(studentWorks)
         .values({
           id,
+          slug,
           title: input.title,
           description: input.description ?? null,
           category: input.category,
@@ -171,6 +176,7 @@ export const studentWorksRouter = {
 
       return {
         id: record.id,
+        slug: record.slug,
         title: record.title,
         description: record.description,
         category: record.category,
@@ -226,7 +232,10 @@ export const studentWorksRouter = {
         updatedAt: now,
       };
 
-      if (input.title !== undefined) updateData.title = input.title;
+      if (input.title !== undefined) {
+        updateData.title = input.title;
+        updateData.slug = await generateUniqueSlug(studentWorks, input.title, input.id);
+      }
       if (input.description !== undefined) updateData.description = input.description;
       if (input.category !== undefined) updateData.category = input.category;
       if (input.studentNames !== undefined) updateData.studentNames = input.studentNames;
@@ -254,6 +263,7 @@ export const studentWorksRouter = {
 
       return {
         id: record.id,
+        slug: record.slug,
         title: record.title,
         description: record.description,
         category: record.category,

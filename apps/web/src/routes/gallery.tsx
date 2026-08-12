@@ -58,8 +58,8 @@ function GalleryPage() {
                 {albums.map((album) => (
                   <Link
                     key={album.id}
-                    to="/gallery/$albumId"
-                    params={{ albumId: album.id }}
+                    to="/gallery/$slug"
+                    params={{ slug: album.slug }}
                     className="group block overflow-hidden rounded-xl border bg-card hover:shadow-md transition-shadow"
                   >
                     {album.coverImage ? (

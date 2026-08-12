@@ -4,6 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { gallery, galleryImages } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import { generateUniqueSlug } from "../lib/slug";
 
 const sortDirection = z.enum(["asc", "desc"]);
 
@@ -67,6 +68,7 @@ export const galleryRouter = {
       return {
         rows: rows.map((row) => ({
           id: row.id,
+          slug: row.slug,
           title: row.title,
           description: row.description,
           eventId: row.eventId,
@@ -90,13 +92,13 @@ export const galleryRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ slug: z.string() }))
     .handler(async ({ input }) => {
       const db = createDb();
       const row = await db
         .select()
         .from(gallery)
-        .where(eq(gallery.id, input.id))
+        .where(eq(gallery.slug, input.slug))
         .get();
 
       if (!row) {
@@ -106,12 +108,13 @@ export const galleryRouter = {
       const images = await db
         .select()
         .from(galleryImages)
-        .where(eq(galleryImages.galleryId, input.id))
+        .where(eq(galleryImages.galleryId, row.id))
         .orderBy(asc(galleryImages.sortOrder))
         .all();
 
       return {
         id: row.id,
+        slug: row.slug,
         title: row.title,
         description: row.description,
         eventId: row.eventId,
@@ -159,12 +162,14 @@ export const galleryRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
+      const slug = await generateUniqueSlug(gallery, input.title);
 
       const db = createDb();
       const record = await db
         .insert(gallery)
         .values({
           id,
+          slug,
           title: input.title,
           description: input.description ?? null,
           eventId: input.eventId || null,
@@ -183,6 +188,7 @@ export const galleryRouter = {
 
       return {
         id: record.id,
+        slug: record.slug,
         title: record.title,
         description: record.description,
         eventId: record.eventId,
@@ -237,7 +243,10 @@ export const galleryRouter = {
         updatedAt: now,
       };
 
-      if (input.title !== undefined) updateData.title = input.title;
+      if (input.title !== undefined) {
+        updateData.title = input.title;
+        updateData.slug = await generateUniqueSlug(gallery, input.title, input.id);
+      }
       if (input.description !== undefined) updateData.description = input.description || null;
       if (input.eventId !== undefined) updateData.eventId = input.eventId || null;
       if (input.studentWorkId !== undefined) updateData.studentWorkId = input.studentWorkId || null;
@@ -262,6 +271,7 @@ export const galleryRouter = {
 
       return {
         id: record.id,
+        slug: record.slug,
         title: record.title,
         description: record.description,
         eventId: record.eventId,

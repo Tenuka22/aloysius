@@ -160,10 +160,10 @@ function NewsEventsPage() {
                         const time = eventDate.toLocaleTimeString("default", { hour: "2-digit", minute: "2-digit" })
 
                         return (
-                          <Link
+                           <Link
                             key={event.id}
-                            to="/events/$eventId"
-                            params={{ eventId: event.id }}
+                            to="/events/$slug"
+                            params={{ slug: event.slug }}
                             className="flex items-start gap-4 p-5 rounded-xl border bg-card hover:shadow-md transition-shadow"
                           >
                             {event.coverImage ? (
@@ -227,8 +227,8 @@ function NewsEventsPage() {
                       announcements.map((item) => (
                         <Link
                           key={item.id}
-                          to="/announcements/$announcementId"
-                          params={{ announcementId: item.id }}
+                          to="/announcements/$slug"
+                          params={{ slug: item.slug }}
                           className="block p-5 rounded-xl border bg-card hover:shadow-md transition-shadow"
                         >
                           {item.coverImage && (
@@ -283,8 +283,8 @@ function NewsEventsPage() {
                       news.map((item) => (
                         <Link
                           key={item.id}
-                          to="/news/$newsId"
-                          params={{ newsId: item.id }}
+                          to="/news/$slug"
+                          params={{ slug: item.slug }}
                           className="group rounded-xl border bg-card overflow-hidden hover:shadow-md transition-shadow"
                         >
                           {item.coverImage ? (

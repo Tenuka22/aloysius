@@ -71,8 +71,8 @@ function StudentWorksPage() {
                 {items.map((item) => (
                   <Link
                     key={item.id}
-                    to="/student-works/$studentWorkId"
-                    params={{ studentWorkId: item.id }}
+                    to="/student-works/$slug"
+                    params={{ slug: item.slug }}
                     className="group block overflow-hidden rounded-xl border bg-card hover:shadow-md transition-shadow"
                   >
                     {item.coverImage ? (

@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const files = sqliteTable("files", {
   id: text("id").primaryKey(),
@@ -19,6 +19,7 @@ export const files = sqliteTable("files", {
 
 export const news = sqliteTable("news", {
   id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
   title: text("title").notNull(),
   content: text("content").notNull(),
   excerpt: text("excerpt"),
@@ -37,12 +38,15 @@ export const news = sqliteTable("news", {
     .notNull()
     .$defaultFn(() => new Date()),
   userId: text("user_id").notNull(),
-});
+}, (table) => [
+  uniqueIndex("news_slug_idx").on(table.slug),
+]);
 
 // --- Announcements table (targeted communications to specific groups/people) ---
 
 export const announcements = sqliteTable("announcements", {
   id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
   title: text("title").notNull(),
   content: text("content").notNull(),
   excerpt: text("excerpt"),
@@ -65,12 +69,15 @@ export const announcements = sqliteTable("announcements", {
     .notNull()
     .$defaultFn(() => new Date()),
   userId: text("user_id").notNull(),
-});
+}, (table) => [
+  uniqueIndex("announcements_slug_idx").on(table.slug),
+]);
 
 // --- Events table ---
 
 export const events = sqliteTable("events", {
   id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
   title: text("title").notNull(),
   content: text("content").notNull(),
   excerpt: text("excerpt"),
@@ -98,7 +105,9 @@ export const events = sqliteTable("events", {
     .notNull()
     .$defaultFn(() => new Date()),
   userId: text("user_id").notNull(),
-});
+}, (table) => [
+  uniqueIndex("events_slug_idx").on(table.slug),
+]);
 
 // --- Event Records (success/postponed/failed outcomes) ---
 
@@ -123,6 +132,7 @@ export const eventRecords = sqliteTable("event_records", {
 
 export const achievements = sqliteTable("achievements", {
   id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
   title: text("title").notNull(),
   description: text("description"),
   category: text("category", { enum: ["academic", "sports", "arts", "clubs", "community", "other"] })
@@ -146,12 +156,15 @@ export const achievements = sqliteTable("achievements", {
     .notNull()
     .$defaultFn(() => new Date()),
   userId: text("user_id").notNull(),
-});
+}, (table) => [
+  uniqueIndex("achievements_slug_idx").on(table.slug),
+]);
 
 // --- Gallery table (photo albums connected to events) ---
 
 export const gallery = sqliteTable("gallery", {
   id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
   title: text("title").notNull(),
   description: text("description"),
   eventId: text("event_id").references(() => events.id, { onDelete: "set null" }),
@@ -172,7 +185,9 @@ export const gallery = sqliteTable("gallery", {
     .notNull()
     .$defaultFn(() => new Date()),
   userId: text("user_id").notNull(),
-});
+}, (table) => [
+  uniqueIndex("gallery_slug_idx").on(table.slug),
+]);
 
 // --- Gallery Images table ---
 
@@ -193,6 +208,7 @@ export const galleryImages = sqliteTable("gallery_images", {
 
 export const studentWorks = sqliteTable("student_works", {
   id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
   title: text("title").notNull(),
   description: text("description"),
   category: text("category", { enum: ["film", "art", "music", "writing", "design", "photography", "code", "other"] })
@@ -215,7 +231,9 @@ export const studentWorks = sqliteTable("student_works", {
     .notNull()
     .$defaultFn(() => new Date()),
   userId: text("user_id").notNull(),
-});
+}, (table) => [
+  uniqueIndex("student_works_slug_idx").on(table.slug),
+]);
 
 // --- Stats table (editable homepage statistics) ---
 
@@ -247,6 +265,7 @@ export const siteSettings = sqliteTable("site_settings", {
 
 export const bigMatches = sqliteTable("big_matches", {
   id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
   name: text("name").notNull(),
   opponent: text("opponent").notNull(),
   type: text("type").notNull().default("Cricket"),
@@ -263,12 +282,15 @@ export const bigMatches = sqliteTable("big_matches", {
   updatedAt: integer("updated_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
-});
+}, (table) => [
+  uniqueIndex("big_matches_slug_idx").on(table.slug),
+]);
 
 // --- Activities table (clubs, societies, sports for about page) ---
 
 export const activities = sqliteTable("activities", {
   id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
   name: text("name").notNull(),
   description: text("description"),
   coverImage: text("cover_image"),
@@ -287,4 +309,6 @@ export const activities = sqliteTable("activities", {
   updatedAt: integer("updated_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
-});
+}, (table) => [
+  uniqueIndex("activities_slug_idx").on(table.slug),
+]);

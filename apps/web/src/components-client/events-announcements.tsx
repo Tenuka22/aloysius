@@ -94,8 +94,8 @@ export function EventsAnnouncements({ initialEvents = [], initialNews = [], init
                     data-animate
                   >
                     <Link
-                      to="/events/$eventId"
-                      params={{ eventId: event.id }}
+                      to="/events/$slug"
+                      params={{ slug: event.slug }}
                       className="flex items-start gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors"
                     >
                     {event.coverImage ? (
@@ -177,11 +177,11 @@ export function EventsAnnouncements({ initialEvents = [], initialNews = [], init
                   role="listitem"
                   data-animate
                 >
-                  <Link
-                    to="/announcements/$announcementId"
-                    params={{ announcementId: item.id }}
+                   <Link
+                    to="/announcements/$slug"
+                    params={{ slug: item.slug }}
                     className="block p-4 rounded-lg border hover:bg-muted/50 transition-colors"
-                  >
+                   >
                   {item.coverImage && (
                     <div className="mb-3 overflow-hidden rounded-md">
                       <img
@@ -250,8 +250,8 @@ export function EventsAnnouncements({ initialEvents = [], initialNews = [], init
             {publishedNews.map((item: any) => (
               <Link
                 key={item.id}
-                to="/news/$newsId"
-                params={{ newsId: item.id }}
+                to="/news/$slug"
+                params={{ slug: item.slug }}
                 className="group rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
               >
                 {item.coverImage ? (

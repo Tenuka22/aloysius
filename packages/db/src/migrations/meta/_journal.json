@@ -15,6 +15,13 @@
       "when": 1786511703124,
       "tag": "0001_chubby_komodo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786515834932,
+      "tag": "0002_organic_doctor_spectrum",
+      "breakpoints": true
     }
   ]
 }

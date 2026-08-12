@@ -29,7 +29,7 @@ const authorTypeLabels: Record<string, string> = {
   org: "Organization",
 }
 
-export const Route = createFileRoute("/events_/$eventId")({
+export const Route = createFileRoute("/events_/$slug")({
   loader: async ({ params }) => {
     const [{ createRouterClient }, { appRouter }] = await Promise.all([
       import("@orpc/server"),
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/events_/$eventId")({
     ])
 
     const serverClient = createRouterClient(appRouter)
-    const event = await serverClient.events.get({ id: params.eventId })
+    const event = await serverClient.events.get({ slug: params.slug })
     return { event }
   },
   staleTime: 5 * 60_000,

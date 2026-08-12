@@ -93,8 +93,8 @@ export function Achievements({ initialData }: { initialData?: AchievementRow[] }
           ) : items.map((item) => (
             <Link
               key={item.id}
-              to="/achievements/$achievementId"
-              params={{ achievementId: item.id }}
+              to="/achievements/$slug"
+              params={{ slug: item.slug }}
               className="group rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
             >
               <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">

@@ -4,6 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { activities } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import { generateUniqueSlug } from "../lib/slug";
 import { createClerkClient } from "@clerk/backend";
 import { env } from "@aloysius-web/env/server";
 
@@ -38,6 +39,7 @@ export const activitiesRouter = {
 
       return rows.map((row) => ({
         id: row.id,
+        slug: row.slug,
         name: row.name,
         description: row.description,
         coverImage: row.coverImage,
@@ -52,13 +54,13 @@ export const activitiesRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ slug: z.string() }))
     .handler(async ({ input }) => {
       const db = createDb();
       const row = await db
         .select()
         .from(activities)
-        .where(eq(activities.id, input.id))
+        .where(eq(activities.slug, input.slug))
         .get();
 
       if (!row) {
@@ -67,6 +69,7 @@ export const activitiesRouter = {
 
       return {
         id: row.id,
+        slug: row.slug,
         name: row.name,
         description: row.description,
         coverImage: row.coverImage,
@@ -101,11 +104,13 @@ export const activitiesRouter = {
       const db = createDb();
       const now = new Date();
       const id = crypto.randomUUID();
+      const slug = await generateUniqueSlug(activities, input.name);
 
       const record = await db
         .insert(activities)
         .values({
           id,
+          slug,
           name: input.name,
           description: input.description,
           coverImage: input.coverImage,
@@ -122,6 +127,7 @@ export const activitiesRouter = {
 
       return {
         id: record.id,
+        slug: record.slug,
         name: record.name,
         description: record.description,
         coverImage: record.coverImage,
@@ -169,7 +175,10 @@ export const activitiesRouter = {
         updatedAt: new Date(),
       };
 
-      if (input.name !== undefined) updateData.name = input.name;
+      if (input.name !== undefined) {
+        updateData.name = input.name;
+        updateData.slug = await generateUniqueSlug(activities, input.name, input.id);
+      }
       if (input.description !== undefined) updateData.description = input.description;
       if (input.coverImage !== undefined) updateData.coverImage = input.coverImage;
       if (input.images !== undefined) updateData.images = input.images;
@@ -187,6 +196,7 @@ export const activitiesRouter = {
 
       return {
         id: record.id,
+        slug: record.slug,
         name: record.name,
         description: record.description,
         coverImage: record.coverImage,

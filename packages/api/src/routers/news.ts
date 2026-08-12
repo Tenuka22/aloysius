@@ -4,6 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { news } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import { generateUniqueSlug } from "../lib/slug";
 
 const sortDirection = z.enum(["asc", "desc"]);
 
@@ -61,6 +62,7 @@ export const newsRouter = {
       return {
         rows: rows.map((row) => ({
           id: row.id,
+          slug: row.slug,
           title: row.title,
           excerpt: row.excerpt,
           coverImage: row.coverImage,
@@ -80,13 +82,13 @@ export const newsRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ slug: z.string() }))
     .handler(async ({ input }) => {
       const db = createDb();
       const row = await db
         .select()
         .from(news)
-        .where(eq(news.id, input.id))
+        .where(eq(news.slug, input.slug))
         .get();
 
       if (!row) {
@@ -95,6 +97,7 @@ export const newsRouter = {
 
       return {
         id: row.id,
+        slug: row.slug,
         title: row.title,
         content: row.content,
         excerpt: row.excerpt,
@@ -129,12 +132,14 @@ export const newsRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
+      const slug = await generateUniqueSlug(news, input.title);
 
       const db = createDb();
       const record = await db
         .insert(news)
         .values({
           id,
+          slug,
           title: input.title,
           content: input.content,
           excerpt: input.excerpt ?? null,
@@ -151,6 +156,7 @@ export const newsRouter = {
 
       return {
         id: record.id,
+        slug: record.slug,
         title: record.title,
         content: record.content,
         excerpt: record.excerpt,
@@ -200,7 +206,10 @@ export const newsRouter = {
         updatedAt: now,
       };
 
-      if (input.title !== undefined) updateData.title = input.title;
+      if (input.title !== undefined) {
+        updateData.title = input.title;
+        updateData.slug = await generateUniqueSlug(news, input.title, input.id);
+      }
       if (input.content !== undefined) updateData.content = input.content;
       if (input.excerpt !== undefined) updateData.excerpt = input.excerpt;
       if (input.coverImage !== undefined) updateData.coverImage = input.coverImage;
@@ -221,6 +230,7 @@ export const newsRouter = {
 
       return {
         id: record.id,
+        slug: record.slug,
         title: record.title,
         content: record.content,
         excerpt: record.excerpt,

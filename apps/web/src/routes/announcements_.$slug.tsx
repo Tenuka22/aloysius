@@ -31,7 +31,7 @@ const audienceLabels: Record<string, string> = {
   alumni: "Alumni",
 }
 
-export const Route = createFileRoute("/announcements_/$announcementId")({
+export const Route = createFileRoute("/announcements_/$slug")({
   loader: async ({ params }) => {
     const [{ createRouterClient }, { appRouter }] = await Promise.all([
       import("@orpc/server"),
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/announcements_/$announcementId")({
     ])
 
     const serverClient = createRouterClient(appRouter)
-    const announcement = await serverClient.announcements.get({ id: params.announcementId })
+    const announcement = await serverClient.announcements.get({ slug: params.slug })
     return { announcement }
   },
   staleTime: 5 * 60_000,

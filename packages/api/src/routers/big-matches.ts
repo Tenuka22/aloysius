@@ -4,6 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { bigMatches } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import { generateUniqueSlug } from "../lib/slug";
 
 export const bigMatchesRouter = {
   list: publicProcedure
@@ -17,24 +18,50 @@ export const bigMatchesRouter = {
       }
 
       const rows = await query.all();
-      return rows;
+      return rows.map((row) => ({
+        id: row.id,
+        slug: row.slug,
+        name: row.name,
+        opponent: row.opponent,
+        type: row.type,
+        year: row.year,
+        eventId: row.eventId,
+        galleryId: row.galleryId,
+        sortOrder: row.sortOrder,
+        status: row.status,
+        createdAt: row.createdAt.toISOString(),
+        updatedAt: row.updatedAt.toISOString(),
+      }));
     }),
 
   get: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ slug: z.string() }))
     .handler(async ({ input }) => {
       const db = createDb();
       const row = await db
         .select()
         .from(bigMatches)
-        .where(eq(bigMatches.id, input.id))
+        .where(eq(bigMatches.slug, input.slug))
         .get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Big match not found" });
       }
 
-      return row;
+      return {
+        id: row.id,
+        slug: row.slug,
+        name: row.name,
+        opponent: row.opponent,
+        type: row.type,
+        year: row.year,
+        eventId: row.eventId,
+        galleryId: row.galleryId,
+        sortOrder: row.sortOrder,
+        status: row.status,
+        createdAt: row.createdAt.toISOString(),
+        updatedAt: row.updatedAt.toISOString(),
+      };
     }),
 
   create: protectedProcedure
@@ -56,16 +83,31 @@ export const bigMatchesRouter = {
       }
 
       const db = createDb();
+      const slug = await generateUniqueSlug(bigMatches, input.name);
       const record = await db
         .insert(bigMatches)
         .values({
           id: crypto.randomUUID(),
+          slug,
           ...input,
         })
         .returning()
         .get();
 
-      return record;
+      return {
+        id: record.id,
+        slug: record.slug,
+        name: record.name,
+        opponent: record.opponent,
+        type: record.type,
+        year: record.year,
+        eventId: record.eventId,
+        galleryId: record.galleryId,
+        sortOrder: record.sortOrder,
+        status: record.status,
+        createdAt: record.createdAt.toISOString(),
+        updatedAt: record.updatedAt.toISOString(),
+      };
     }),
 
   update: protectedProcedure
@@ -99,6 +141,9 @@ export const bigMatchesRouter = {
       }
 
       const { id, ...updateData } = input;
+      if (updateData.name !== undefined) {
+        updateData.slug = await generateUniqueSlug(bigMatches, updateData.name, id);
+      }
       const record = await db
         .update(bigMatches)
         .set({ ...updateData, updatedAt: new Date() })
@@ -106,7 +151,20 @@ export const bigMatchesRouter = {
         .returning()
         .get();
 
-      return record;
+      return {
+        id: record.id,
+        slug: record.slug,
+        name: record.name,
+        opponent: record.opponent,
+        type: record.type,
+        year: record.year,
+        eventId: record.eventId,
+        galleryId: record.galleryId,
+        sortOrder: record.sortOrder,
+        status: record.status,
+        createdAt: record.createdAt.toISOString(),
+        updatedAt: record.updatedAt.toISOString(),
+      };
     }),
 
   delete: protectedProcedure

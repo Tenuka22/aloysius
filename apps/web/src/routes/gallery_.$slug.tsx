@@ -22,17 +22,17 @@ type Album = {
   images: AlbumImage[]
 }
 
-export const Route = createFileRoute("/gallery_/$albumId")({
+export const Route = createFileRoute("/gallery_/$slug")({
   component: AlbumDetailPage,
 })
 
 function AlbumDetailPage() {
-  const { albumId } = Route.useParams()
+  const { slug } = Route.useParams()
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const { data: album, isLoading } = useQuery({
-    queryKey: ["gallery", albumId],
-    queryFn: () => client.gallery.get({ id: albumId }),
+    queryKey: ["gallery", slug],
+    queryFn: () => client.gallery.get({ slug }),
   })
 
   const images = (album as Album | undefined)?.images ?? []

@@ -40,7 +40,7 @@ const recipientTypeLabels: Record<string, string> = {
   org: "Organization",
 }
 
-export const Route = createFileRoute("/achievements_/$achievementId")({
+export const Route = createFileRoute("/achievements_/$slug")({
   loader: async ({ params }) => {
     const [{ createRouterClient }, { appRouter }] = await Promise.all([
       import("@orpc/server"),
@@ -48,7 +48,7 @@ export const Route = createFileRoute("/achievements_/$achievementId")({
     ])
 
     const serverClient = createRouterClient(appRouter)
-    const achievement = await serverClient.achievements.get({ id: params.achievementId })
+    const achievement = await serverClient.achievements.get({ slug: params.slug })
     return { achievement }
   },
   staleTime: 5 * 60_000,

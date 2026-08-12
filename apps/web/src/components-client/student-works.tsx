@@ -96,8 +96,8 @@ export function StudentWorks({ initialData }: { initialData?: StudentWorkRow[] }
           ) : works.map((work) => (
             <Link
               key={work.id}
-              to="/student-works/$studentWorkId"
-              params={{ studentWorkId: work.id }}
+              to="/student-works/$slug"
+              params={{ slug: work.slug }}
               className="group"
             >
               <div className="aspect-[3/4] rounded-xl bg-muted flex items-center justify-center overflow-hidden mb-3">

@@ -4,6 +4,7 @@ import { createDb } from "@aloysius-web/db";
 import { achievements } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import { generateUniqueSlug } from "../lib/slug";
 
 const sortDirection = z.enum(["asc", "desc"]);
 
@@ -73,6 +74,7 @@ export const achievementsRouter = {
       return {
         rows: rows.map((row) => ({
           id: row.id,
+          slug: row.slug,
           title: row.title,
           description: row.description,
           category: row.category,
@@ -95,13 +97,13 @@ export const achievementsRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ slug: z.string() }))
     .handler(async ({ input }) => {
       const db = createDb();
       const row = await db
         .select()
         .from(achievements)
-        .where(eq(achievements.id, input.id))
+        .where(eq(achievements.slug, input.slug))
         .get();
 
       if (!row) {
@@ -110,6 +112,7 @@ export const achievementsRouter = {
 
       return {
         id: row.id,
+        slug: row.slug,
         title: row.title,
         description: row.description,
         category: row.category,
@@ -147,12 +150,14 @@ export const achievementsRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
+      const slug = await generateUniqueSlug(achievements, input.title);
 
       const db = createDb();
       const record = await db
         .insert(achievements)
         .values({
           id,
+          slug,
           title: input.title,
           description: input.description ?? null,
           category: input.category ?? "other",
@@ -170,6 +175,7 @@ export const achievementsRouter = {
 
       return {
         id: record.id,
+        slug: record.slug,
         title: record.title,
         description: record.description,
         category: record.category,
@@ -223,7 +229,10 @@ export const achievementsRouter = {
         updatedAt: now,
       };
 
-      if (input.title !== undefined) updateData.title = input.title;
+      if (input.title !== undefined) {
+        updateData.title = input.title;
+        updateData.slug = await generateUniqueSlug(achievements, input.title, input.id);
+      }
       if (input.description !== undefined) updateData.description = input.description;
       if (input.category !== undefined) updateData.category = input.category;
       if (input.recipientNames !== undefined) updateData.recipientNames = input.recipientNames;
@@ -250,6 +259,7 @@ export const achievementsRouter = {
 
       return {
         id: record.id,
+        slug: record.slug,
         title: record.title,
         description: record.description,
         category: record.category,
