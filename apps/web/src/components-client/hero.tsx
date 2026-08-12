@@ -5,13 +5,12 @@ import gsap from "gsap"
 import { HeroCarousel } from "./hero-carousel"
 
 const DEFAULTS: Record<string, string> = {
-  hero_title: "A place to shape\ncharacter. A stage to\nshowcase greatness.",
-  hero_badge: "#AloysiusPride",
-  hero_subtitle: "At Aloysius College, students don\u2019t just learn \u2014 they create, explore, and inspire. Discover the talent, innovation, and spirit of our students.",
-  hero_cta1_text: "Explore Student Works",
-  hero_cta1_url: "/student-works",
-  hero_cta2_text: "About Our College",
-  hero_cta2_url: "#",
+  hero_title: "Where Excellencies\nAre Made",
+  hero_subtitle: "St. Aloysius' College, Galle — nurturing minds, building character, and inspiring generations of leaders since 1862.",
+  hero_cta1_text: "Explore Our College",
+  hero_cta1_url: "/about",
+  hero_cta2_text: "Student Works",
+  hero_cta2_url: "/student-works",
 }
 
 type CarouselItem = {
@@ -27,10 +26,9 @@ type CarouselItem = {
 export function Hero({ settings, carouselItems }: { settings?: Record<string, string>; carouselItems?: CarouselItem[] }) {
   const sectionRef = useRef<HTMLElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
-  const badgeRef = useRef<HTMLDivElement>(null)
-  const carouselRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLParagraphElement>(null)
   const buttonsRef = useRef<HTMLDivElement>(null)
+  const carouselRef = useRef<HTMLDivElement>(null)
 
   const s = (key: string) => settings?.[key] || DEFAULTS[key] || ""
 
@@ -38,16 +36,15 @@ export function Hero({ settings, carouselItems }: { settings?: Record<string, st
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } })
 
-      tl.fromTo(headingRef.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1 })
-        .fromTo(badgeRef.current, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.5 }, "-=0.5")
-        .fromTo(carouselRef.current, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 }, "-=0.3")
-        .fromTo(textRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, "-=0.3")
+      tl.fromTo(headingRef.current, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 1 })
+        .fromTo(textRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7 }, "-=0.5")
         .fromTo(
           buttonsRef.current?.children ?? [],
           { opacity: 0, y: 15 },
           { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 },
           "-=0.3"
         )
+        .fromTo(carouselRef.current, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 }, "-=0.2")
     }, sectionRef)
 
     return () => ctx.revert()
@@ -56,31 +53,49 @@ export function Hero({ settings, carouselItems }: { settings?: Record<string, st
   const titleLines = s("hero_title").split("\n")
 
   return (
-    <section ref={sectionRef} className="px-4 sm:px-6 lg:px-8 pt-16 pb-12">
-      <div className="mx-auto max-w-5xl text-center">
-        <h1
-          ref={headingRef}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-8"
-        >
-          {titleLines.map((line: string, i: number) => (
-            <span key={i}>
-              {line}
-              {i < titleLines.length - 1 && <br />}
-            </span>
-          ))}
-        </h1>
+    <section ref={sectionRef}>
+      {/* Hero with dark background */}
+      <div className="relative bg-[#0a1f0a] text-white overflow-hidden">
+        {/* Dark overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#0a1f0a]" />
 
-        {s("hero_badge") && (
-          <div ref={badgeRef} className="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2 mb-8">
-            <span className="text-sm font-medium">{s("hero_badge")}</span>
+        <div className="relative px-4 sm:px-6 lg:px-8 pt-24 pb-20">
+          <div className="mx-auto max-w-5xl text-center">
+            <h1
+              ref={headingRef}
+              className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6"
+            >
+              {titleLines.map((line: string, i: number) => (
+                <span key={i}>
+                  {line}
+                  {i < titleLines.length - 1 && <br />}
+                </span>
+              ))}
+            </h1>
+
+            <p ref={textRef} className="text-white/70 text-lg sm:text-xl max-w-2xl mx-auto mb-10">
+              {s("hero_subtitle")}
+            </p>
+
+            <div ref={buttonsRef} className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a href={s("hero_cta1_url") || "/about"} className="inline-flex h-12 items-center rounded-lg bg-[#c9a227] px-8 text-sm font-semibold text-[#0a1f0a] hover:bg-[#b89220] transition-colors">
+                {s("hero_cta1_text") || "Explore Our College"}
+              </a>
+              <a href={s("hero_cta2_url") || "/student-works"} className="inline-flex h-12 items-center rounded-lg border border-white/20 bg-white/5 px-8 text-sm font-semibold text-white hover:bg-white/10 transition-colors">
+                {s("hero_cta2_text") || "Student Works"}
+              </a>
+            </div>
           </div>
-        )}
+        </div>
+      </div>
 
-        <div ref={carouselRef}>
+      {/* Carousel section */}
+      <div ref={carouselRef} className="px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mx-auto max-w-6xl">
           {carouselItems && carouselItems.length > 0 ? (
             <HeroCarousel items={carouselItems} />
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 max-w-3xl mx-auto mb-8 perspective-[1000px]">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 max-w-3xl mx-auto perspective-[1000px]">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={i}
@@ -95,19 +110,6 @@ export function Hero({ settings, carouselItems }: { settings?: Record<string, st
               ))}
             </div>
           )}
-        </div>
-
-        <p ref={textRef} className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto mb-8">
-          {s("hero_subtitle")}
-        </p>
-
-        <div ref={buttonsRef} className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <a href={s("hero_cta1_url") || "/student-works"} className="inline-flex h-10 items-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-            {s("hero_cta1_text") || "Explore Student Works"}
-          </a>
-          <a href={s("hero_cta2_url") || "#"} className="inline-flex h-10 items-center rounded-lg border border-border bg-background px-6 text-sm font-medium hover:bg-muted transition-colors">
-            {s("hero_cta2_text") || "About Our College"}
-          </a>
         </div>
       </div>
     </section>
