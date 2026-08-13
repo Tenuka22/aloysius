@@ -1,385 +1,355 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
 
-type Tab = "events" | "announcements" | "news";
+type StorySource = "news" | "events" | "announcements" | "achievement";
 
-type Event = {
+type Story = {
   id: string;
+  slug: string;
   title: string;
-  excerpt: string | null;
-  coverImage: string | null;
-  location: string | null;
-  startDate: string;
-  endDate: string | null;
-  isAllDay: boolean;
-  isRecurring: boolean;
-  organizerName: string | null;
-  organizerType: string | null;
-  organization: string | null;
-  tags: string[] | null;
+  image: string | null;
+  date: string;
+  catLabel: string;
+  catColor: string;
+  source: StorySource;
 };
 
-type Announcement = {
-  id: string;
-  title: string;
-  excerpt: string | null;
-  coverImage: string | null;
-  audience: string;
-  addressedTo: string | null;
-  authorName: string | null;
-  authorType: string | null;
-  createdAt: string;
-  tags: string[] | null;
+const CATEGORIES = ["ALL", "COLLEGE NEWS", "ACADEMIC", "SPORTS", "EVENTS", "ANNOUNCEMENTS", "ACHIEVEMENTS"];
+const GREEN = "#013405";
+const MAROON = "#A51919";
+const PAGE_SIZE = 9;
+
+const routeFor: Record<StorySource, string> = {
+  news: "/news/$slug",
+  events: "/events/$slug",
+  announcements: "/announcements/$slug",
+  achievement: "/achievements/$slug",
 };
 
-type NewsItem = {
-  id: string;
-  title: string;
-  excerpt: string | null;
-  coverImage: string | null;
-  authorName: string | null;
-  authorType: string | null;
-  createdAt: string;
-  tags: string[] | null;
-};
+function formatDate(date: string) {
+  if (!date) return "";
+  return new Date(date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
 
-const authorTypeLabels: Record<string, string> = {
-  student: "Student",
-  faculty: "Faculty",
-  club: "Club",
-  org: "Organization",
-};
-
-const audienceLabels: Record<string, string> = {
-  all: "Everyone",
-  students: "Students",
-  parents: "Parents",
-  staff: "Staff",
-  alumni: "Alumni",
-};
+function pageWindow(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = new Set([1, total, current - 1, current, current + 1]);
+  const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+  const result: (number | "…")[] = [];
+  let prev = 0;
+  for (const p of sorted) {
+    if (prev && p - prev > 1) result.push("…");
+    result.push(p);
+    prev = p;
+  }
+  return result;
+}
 
 export const Route = createFileRoute("/news-events")({
+  head: () => ({
+    links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",
+      },
+    ],
+  }),
+  loader: async () => {
+    const [newsData, eventsData, announcementsData, achievementsData] = await Promise.all([
+      client.news.list({ page: 1, pageSize: 50, status: "published" }),
+      client.events.list({ page: 1, pageSize: 50, status: "published" }),
+      client.announcements.list({ page: 1, pageSize: 50, status: "published" }),
+      client.achievements.list({ page: 1, pageSize: 50, status: "published" }),
+    ]);
+    return {
+      news: newsData.rows,
+      events: eventsData.rows,
+      announcements: announcementsData.rows,
+      achievements: achievementsData.rows,
+    };
+  },
+  staleTime: 5 * 60_000,
   component: NewsEventsPage,
 });
 
 function NewsEventsPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("events");
+  const { news, events, announcements, achievements } = Route.useLoaderData();
+  const [activeCat, setActiveCat] = useState("ALL");
+  const [page, setPage] = useState(1);
 
-  const { data: eventsData, isLoading: eventsLoading } = useQuery({
-    queryKey: ["events", "public"],
-    queryFn: () => client.events.list({ page: 1, pageSize: 50, status: "published" }),
-  });
+  const allStories: Story[] = useMemo(() => {
+    const fromNews: Story[] = (news as any[]).map((n) => ({
+      id: n.id,
+      slug: n.slug,
+      title: n.title,
+      image: n.coverImage,
+      date: n.publishedAt ?? n.createdAt ?? "",
+      catLabel: "COLLEGE NEWS",
+      catColor: GREEN,
+      source: "news",
+    }));
+    const fromEvents: Story[] = (events as any[]).map((e) => ({
+      id: e.id,
+      slug: e.slug,
+      title: e.title,
+      image: e.coverImage,
+      date: e.publishedAt ?? e.startDate ?? e.createdAt ?? "",
+      catLabel: "EVENTS",
+      catColor: GREEN,
+      source: "events",
+    }));
+    const fromAnnouncements: Story[] = (announcements as any[]).map((a) => ({
+      id: a.id,
+      slug: a.slug,
+      title: a.title,
+      image: a.coverImage,
+      date: a.publishedAt ?? a.createdAt ?? "",
+      catLabel: "ANNOUNCEMENTS",
+      catColor: GREEN,
+      source: "announcements",
+    }));
+    const fromAchievements: Story[] = (achievements as any[]).map((a) => {
+      const catLabel = a.category === "academic" ? "ACADEMIC" : a.category === "sports" ? "SPORTS" : "ACHIEVEMENTS";
+      return {
+        id: a.id,
+        slug: a.slug,
+        title: a.title,
+        image: a.coverImage,
+        date: a.publishedAt ?? a.createdAt ?? "",
+        catLabel,
+        catColor: MAROON,
+        source: "achievement",
+      };
+    });
+    return [...fromNews, ...fromEvents, ...fromAnnouncements, ...fromAchievements].sort((a, b) =>
+      b.date.localeCompare(a.date),
+    );
+  }, [news, events, announcements, achievements]);
 
-  const { data: announcementsData, isLoading: announcementsLoading } = useQuery({
-    queryKey: ["announcements", "public"],
-    queryFn: () => client.announcements.list({ page: 1, pageSize: 50, status: "published" }),
-  });
+  const featured = allStories[0];
 
-  const { data: newsData, isLoading: newsLoading } = useQuery({
-    queryKey: ["news", "public"],
-    queryFn: () => client.news.list({ page: 1, pageSize: 50, status: "published" }),
-  });
+  const filtered = useMemo(() => {
+    const base = activeCat === "ALL" ? allStories : allStories.filter((s) => s.catLabel === activeCat);
+    return base.filter((s) => s.id !== featured?.id);
+  }, [allStories, activeCat, featured]);
 
-  const events = (eventsData?.rows ?? []) as Event[];
-  const announcements = (announcementsData?.rows ?? []) as Announcement[];
-  const news = (newsData?.rows ?? []) as NewsItem[];
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: "events", label: "Events", count: events.length },
-    { key: "announcements", label: "Announcements", count: announcements.length },
-    { key: "news", label: "News", count: news.length },
-  ];
+  const upcomingEvents = useMemo(() => {
+    const now = Date.now();
+    return (events as any[])
+      .filter((e) => new Date(e.startDate).getTime() >= now)
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+      .slice(0, 4);
+  }, [events]);
 
-  const isLoading = eventsLoading || announcementsLoading || newsLoading;
+  const selectCategory = (cat: string) => {
+    setActiveCat(cat);
+    setPage(1);
+  };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#FFF8E7]" style={{ fontFamily: "'Manrope', sans-serif" }}>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground focus:outline-none"
       >
         Skip to main content
       </a>
       <Navbar />
       <main id="main-content">
-        <section className="px-4 sm:px-6 lg:px-8 pt-16 pb-8">
-          <div className="mx-auto max-w-5xl text-center">
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">News & Events</h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Stay updated with the latest happenings at St. Aloysius College.
-            </p>
+        {/* Hero */}
+        <section className="bg-[#013405] text-[#FFF8E7] pt-27.5 pb-17.5 px-4 sm:px-6 lg:px-12">
+          <div className="mx-auto max-w-295">
+            <div className="text-xs tracking-[0.2em] text-[#FFF8E7]/60 mb-6.5">
+              <a href="/" className="hover:text-[#FFB203] transition-colors">
+                HOME
+              </a>
+              &nbsp;/&nbsp;<span className="text-[#FFB203]">NEWS &amp; EVENTS</span>
+            </div>
+            <h1 className="font-['Cormorant_Garamond'] font-semibold text-5xl sm:text-6xl lg:text-[72px] leading-[1.02] m-0">
+              News &amp; Events
+            </h1>
+            <div className="flex gap-3 flex-wrap mt-11">
+              {CATEGORIES.map((cat) => {
+                const active = cat === activeCat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => selectCategory(cat)}
+                    className="text-xs font-bold tracking-widest px-4.5 py-2.25 transition-colors"
+                    style={{
+                      border: `1px solid ${active ? "#FFB203" : "rgba(255,178,3,0.4)"}`,
+                      background: active ? "#FFB203" : "transparent",
+                      color: active ? "#013405" : "#FFB203",
+                    }}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </section>
 
-        <section className="px-4 sm:px-6 lg:px-8 pb-16">
-          <div className="mx-auto max-w-6xl">
-            {/* Tabs */}
-            <div className="flex gap-1 border-b mb-8">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === tab.key
-                      ? "border-foreground text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
+        {/* Featured story */}
+        {featured && (
+          <section className="bg-[#FFF8E7] py-22.5 px-4 sm:px-6 lg:px-12">
+            <div className="mx-auto max-w-295 grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-10 lg:gap-14 items-end">
+              <Link to={routeFor[featured.source]} params={{ slug: featured.slug }} className="block">
+                {featured.image ? (
+                  <img
+                    src={featured.image}
+                    alt={featured.title}
+                    className="w-full h-70 sm:h-115 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-70 sm:h-115 bg-gradient-to-br from-[#013405]/10 to-[#013405]/5" />
+                )}
+              </Link>
+              <div>
+                <div className="flex gap-3.5 text-[11px] tracking-[0.14em] font-bold mb-4">
+                  <span className="text-[#A51919]">FEATURED</span>
+                  <span className="text-[#013405]/45">{formatDate(featured.date)}</span>
+                </div>
+                <h2 className="font-['Cormorant_Garamond'] font-semibold text-3xl sm:text-[44px] leading-[1.1] mb-5">
+                  <Link to={routeFor[featured.source]} params={{ slug: featured.slug }}>
+                    {featured.title}
+                  </Link>
+                </h2>
+                <Link
+                  to={routeFor[featured.source]}
+                  params={{ slug: featured.slug }}
+                  className="inline-flex items-center gap-2.5 font-bold text-sm border-b-2 border-[#FFB203] pb-1.5"
                 >
-                  {tab.label}
-                  {tab.count > 0 && (
-                    <span className="ml-2 text-xs bg-muted px-2 py-0.5 rounded-full">
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
+                  Read the Story <span>&rarr;</span>
+                </Link>
+              </div>
             </div>
+          </section>
+        )}
 
-            {isLoading ? (
-              <div className="text-center text-muted-foreground py-16">Loading...</div>
+        {/* Grid */}
+        <section className="bg-[#fffdf6] border-t border-[#013405]/[0.08] py-22.5 px-4 sm:px-6 lg:px-12">
+          <div className="mx-auto max-w-295">
+            {pageItems.length === 0 ? (
+              <div className="text-center text-[#013405]/50 py-16">No stories in this category yet.</div>
             ) : (
-              <>
-                {/* Events Tab */}
-                {activeTab === "events" && (
-                  <div className="space-y-4">
-                    {events.length === 0 ? (
-                      <div className="text-center text-muted-foreground py-16">No events yet.</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 gap-x-8">
+                {pageItems.map((story) => (
+                  <Link key={story.id} to={routeFor[story.source]} params={{ slug: story.slug }} className="block">
+                    {story.image ? (
+                      <img src={story.image} alt={story.title} className="w-full h-57.5 object-cover" />
                     ) : (
-                      events.map((event) => {
-                        const eventDate = new Date(event.startDate);
-                        const month = eventDate.toLocaleString("default", { month: "short" });
-                        const day = eventDate.getDate();
-                        const time = eventDate.toLocaleTimeString("default", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        });
-
-                        return (
-                          <Link
-                            key={event.id}
-                            to="/events/$slug"
-                            params={{ slug: event.slug }}
-                            className="flex items-start gap-4 p-5 rounded-xl border bg-card hover:shadow-md transition-shadow"
-                          >
-                            {event.coverImage ? (
-                              <div className="shrink-0 w-16 h-16 rounded-lg overflow-hidden">
-                                <img
-                                  src={event.coverImage}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            ) : (
-                              <div className="shrink-0 text-center w-16">
-                                <div className="text-xs font-medium text-muted-foreground uppercase">
-                                  {month}
-                                </div>
-                                <time dateTime={event.startDate} className="text-3xl font-bold">
-                                  {day}
-                                </time>
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-lg mb-1">{event.title}</h3>
-                              {event.excerpt && (
-                                <p className="text-sm text-muted-foreground mb-2">
-                                  {event.excerpt}
-                                </p>
-                              )}
-                              <div className="text-sm text-muted-foreground">
-                                {event.isAllDay ? "All day" : time}
-                                {event.location && ` • ${event.location}`}
-                              </div>
-                              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                {event.organization && (
-                                  <span className="text-xs text-muted-foreground">
-                                    {event.organization}
-                                  </span>
-                                )}
-                                {event.organizerName && (
-                                  <span className="text-xs text-muted-foreground">
-                                    by {event.organizerName}
-                                    {event.organizerType &&
-                                      ` (${authorTypeLabels[event.organizerType] ?? event.organizerType})`}
-                                  </span>
-                                )}
-                                {event.isRecurring && (
-                                  <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                    Recurring
-                                  </span>
-                                )}
-                                {event.tags && event.tags.length > 0 && (
-                                  <div className="flex gap-1">
-                                    {event.tags.slice(0, 3).map((tag) => (
-                                      <span
-                                        key={tag}
-                                        className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                      >
-                                        {tag}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </Link>
-                        );
-                      })
+                      <div className="w-full h-57.5 bg-gradient-to-br from-[#013405]/10 to-[#013405]/5" />
                     )}
-                  </div>
-                )}
-
-                {/* Announcements Tab */}
-                {activeTab === "announcements" && (
-                  <div className="space-y-4">
-                    {announcements.length === 0 ? (
-                      <div className="text-center text-muted-foreground py-16">
-                        No announcements yet.
-                      </div>
-                    ) : (
-                      announcements.map((item) => (
-                        <Link
-                          key={item.id}
-                          to="/announcements/$slug"
-                          params={{ slug: item.slug }}
-                          className="block p-5 rounded-xl border bg-card hover:shadow-md transition-shadow"
-                        >
-                          {item.coverImage && (
-                            <div className="mb-3 overflow-hidden rounded-lg">
-                              <img
-                                src={item.coverImage}
-                                alt={item.title}
-                                className="w-full h-40 object-cover"
-                              />
-                            </div>
-                          )}
-                          <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
-                          {item.excerpt && (
-                            <p className="text-sm text-muted-foreground mb-2">{item.excerpt}</p>
-                          )}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <time
-                              dateTime={item.createdAt}
-                              className="text-xs text-muted-foreground"
-                            >
-                              {new Date(item.createdAt).toLocaleDateString()}
-                            </time>
-                            {item.authorName && (
-                              <span className="text-xs text-muted-foreground">
-                                by {item.authorName}
-                                {item.authorType &&
-                                  ` (${authorTypeLabels[item.authorType] ?? item.authorType})`}
-                              </span>
-                            )}
-                            {item.audience && item.audience !== "all" && (
-                              <span className="inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                                {audienceLabels[item.audience] ?? item.audience}
-                              </span>
-                            )}
-                            {item.addressedTo && (
-                              <span className="text-xs text-muted-foreground">
-                                To: {item.addressedTo}
-                              </span>
-                            )}
-                            {item.tags && item.tags.length > 0 && (
-                              <div className="flex gap-1">
-                                {item.tags.slice(0, 3).map((tag) => (
-                                  <span
-                                    key={tag}
-                                    className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </Link>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {/* News Tab */}
-                {activeTab === "news" && (
-                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {news.length === 0 ? (
-                      <div className="col-span-full text-center text-muted-foreground py-16">
-                        No news yet.
-                      </div>
-                    ) : (
-                      news.map((item) => (
-                        <Link
-                          key={item.id}
-                          to="/news/$slug"
-                          params={{ slug: item.slug }}
-                          className="group rounded-xl border bg-card overflow-hidden hover:shadow-md transition-shadow"
-                        >
-                          {item.coverImage ? (
-                            <div className="aspect-video overflow-hidden">
-                              <img
-                                src={item.coverImage}
-                                alt={item.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                            </div>
-                          ) : (
-                            <div className="aspect-video bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 flex items-center justify-center">
-                              <span className="text-4xl font-bold text-blue-200 dark:text-blue-800">
-                                N
-                              </span>
-                            </div>
-                          )}
-                          <div className="p-5">
-                            <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
-                              {item.title}
-                            </h3>
-                            {item.excerpt && (
-                              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                                {item.excerpt}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <time
-                                dateTime={item.createdAt}
-                                className="text-xs text-muted-foreground"
-                              >
-                                {new Date(item.createdAt).toLocaleDateString()}
-                              </time>
-                              {item.authorName && (
-                                <span className="text-xs text-muted-foreground">
-                                  by {item.authorName}
-                                  {item.authorType &&
-                                    ` (${authorTypeLabels[item.authorType] ?? item.authorType})`}
-                                </span>
-                              )}
-                              {item.tags && item.tags.length > 0 && (
-                                <div className="flex gap-1">
-                                  {item.tags.slice(0, 2).map((tag) => (
-                                    <span
-                                      key={tag}
-                                      className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                    >
-                                      {tag}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </Link>
-                      ))
-                    )}
-                  </div>
-                )}
-              </>
+                    <div className="flex gap-3.5 text-[10.5px] tracking-[0.14em] font-bold my-4.5">
+                      <span style={{ color: story.catColor }}>{story.catLabel}</span>
+                      <span className="text-[#013405]/45">{formatDate(story.date)}</span>
+                    </div>
+                    <div className="font-['Cormorant_Garamond'] text-2xl font-semibold leading-tight">
+                      {story.title}
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
+
+            {totalPages > 1 && (
+              <div className="flex justify-center gap-2.5 mt-20 text-sm font-bold">
+                {pageWindow(currentPage, totalPages).map((p, i) =>
+                  p === "…" ? (
+                    <span key={`e${i}`} className="w-10 h-10 flex items-center justify-center text-[#013405]/40">
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className="w-10 h-10 flex items-center justify-center transition-colors"
+                      style={
+                        p === currentPage
+                          ? { background: "#013405", color: "#FFB203" }
+                          : { border: "1px solid rgba(1,52,5,0.25)" }
+                      }
+                    >
+                      {p}
+                    </button>
+                  ),
+                )}
+                <button
+                  onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="w-10 h-10 flex items-center justify-center border border-[#013405]/25 disabled:opacity-30"
+                >
+                  &rarr;
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Upcoming Events */}
+        <section className="bg-[#013405] text-[#FFF8E7] py-27.5 px-4 sm:px-6 lg:px-12">
+          <div className="mx-auto max-w-295">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14">
+              <div>
+                <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-4.5">CALENDAR</div>
+                <h2 className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl m-0">
+                  Upcoming Events
+                </h2>
+              </div>
+            </div>
+            <div className="flex flex-col">
+              {upcomingEvents.length === 0 ? (
+                <div className="text-[#FFF8E7]/50 py-8">No upcoming events scheduled.</div>
+              ) : (
+                upcomingEvents.map((event: any) => {
+                  const eventDate = new Date(event.startDate);
+                  const day = eventDate.getDate();
+                  const month = eventDate.toLocaleString("default", { month: "short" }).toUpperCase();
+                  const time = event.isAllDay
+                    ? "All day"
+                    : eventDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+
+                  return (
+                    <div
+                      key={event.id}
+                      className="grid grid-cols-[auto_1fr_auto] gap-6 sm:gap-10 items-center py-7.5 border-b border-[#FFF8E7]/[0.12]"
+                    >
+                      <div className="text-center border border-[#FFB203]/40 px-2.5 py-3.5 w-21.5">
+                        <div className="font-['Cormorant_Garamond'] text-[34px] font-semibold text-[#FFB203] leading-none">
+                          {day}
+                        </div>
+                        <div className="text-[10px] tracking-[0.2em] text-[#FFF8E7]/60 mt-1.5">{month}</div>
+                      </div>
+                      <div>
+                        <div className="font-bold text-lg sm:text-[19px]">{event.title}</div>
+                        <div className="text-[13px] text-[#FFF8E7]/60 mt-1.5">
+                          {[event.location, time].filter(Boolean).join(" • ")}
+                        </div>
+                      </div>
+                      <Link
+                        to="/events/$slug"
+                        params={{ slug: event.slug }}
+                        className="border border-[#FFF8E7]/40 text-[#FFF8E7] font-bold text-xs sm:text-[12.5px] px-4 sm:px-5.5 py-2.75 whitespace-nowrap hover:border-[#FFB203] hover:text-[#FFB203] transition-colors"
+                      >
+                        Details
+                      </Link>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </section>
       </main>
