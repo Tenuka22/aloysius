@@ -68,8 +68,7 @@ const DEFAULTS: Record<string, string> = {
     "St. Aloysius' College was established in 1895 by Belgian Jesuit missionaries led by Bishop Joseph Van Reeth, the first bishop of Galle. The college was named after Saint Aloysius Gonzaga, the patron saint of youth. Situated on Mount Calvary, the college neighbours St. Mary's Cathedral on one side and Sacred Heart Convent on the other. For over a century, it has been a beacon of educational excellence in the Southern Province.",
   about_history_founding:
     "Established in 1895 by Belgian Jesuit missionaries under Bishop Joseph Van Reeth.",
-  about_history_location:
-    "Located on Mount Calvary, Galle, neighbouring St. Mary's Cathedral.",
+  about_history_location: "Located on Mount Calvary, Galle, neighbouring St. Mary's Cathedral.",
   about_history_nationalisation:
     "Became a national school in 1971 with the appointment of the first Buddhist principal.",
   about_history_students:
@@ -91,8 +90,7 @@ const DEFAULTS: Record<string, string> = {
   about_sports_title: "Sporting Excellence",
   about_sports_desc: "Excellence across 62+ sports disciplines, from cricket to rugby.",
   about_bigmatches_title: "Big Match Encounters",
-  about_bigmatches_desc:
-    "Annual cricket encounters that define our sporting tradition.",
+  about_bigmatches_desc: "Annual cricket encounters that define our sporting tradition.",
   about_anthem_title: "College Anthem",
   about_anthem_desc:
     "Sung with pride by generations of Aloysians, our anthem embodies the spirit and values of St. Aloysius' College.",
