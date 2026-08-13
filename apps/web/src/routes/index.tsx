@@ -15,7 +15,7 @@ import { client } from "@/utils/orpc";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const [settings, statsData, achievementsData, galleryData, eventsData, newsData, announcementsData] =
+    const [settings, statsData, achievementsData, galleryData, eventsData, newsData, announcementsData, principalData] =
       await Promise.all([
         client.settings.getAll(),
         client.stats.list(),
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/")({
         client.events.list({ page: 1, pageSize: 10, status: "published" }),
         client.news.list({ page: 1, pageSize: 10, status: "published" }),
         client.announcements.list({ page: 1, pageSize: 10, status: "published" }),
+        client.principals.getCurrent(),
       ]);
 
     return {
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/")({
       events: eventsData.rows,
       news: newsData.rows,
       announcements: announcementsData.rows,
+      principal: principalData,
     };
   },
   staleTime: 5 * 60_000,
@@ -41,7 +43,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { settings, stats, achievements, gallery, events, news, announcements } = Route.useLoaderData();
+  const { settings, stats, achievements, gallery, events, news, announcements, principal } = Route.useLoaderData();
 
   return (
     <div className="min-h-screen bg-cream">
@@ -56,7 +58,7 @@ function Home() {
       <main id="main-content">
         <Hero settings={settings} />
         <Heritage settings={settings} />
-        <PrincipalMessage settings={settings} />
+        <PrincipalMessage settings={settings} principal={principal} />
         <Academics settings={settings} stats={stats} />
         <StudentLife settings={settings} />
         <EventsAnnouncements

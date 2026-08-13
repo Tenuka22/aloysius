@@ -12,10 +12,26 @@ const DEFAULTS: Record<string, string> = {
   principal_name: "The Principal",
 };
 
-export function PrincipalMessage({ settings }: { settings?: Record<string, string> }) {
+type Principal = {
+  name: string;
+  title: string | null;
+  quote: string | null;
+  portrait: string | null;
+} | null;
+
+export function PrincipalMessage({
+  settings,
+  principal,
+}: {
+  settings?: Record<string, string>;
+  principal?: Principal;
+}) {
   const sectionRef = useRef<HTMLElement>(null);
   const s = (key: string) => settings?.[key] || DEFAULTS[key] || "";
-  const photo = settings?.principal_photo;
+
+  const displayName = principal?.name || s("principal_name") || DEFAULTS.principal_name;
+  const displayQuote = principal?.quote || s("principal_quote") || DEFAULTS.principal_quote;
+  const photo = principal?.portrait || settings?.principal_photo;
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -46,7 +62,7 @@ export function PrincipalMessage({ settings }: { settings?: Record<string, strin
         <div data-animate className="relative max-w-[340px] mx-auto lg:mx-0 w-full">
           <div className="absolute -right-3.5 -bottom-3.5 w-full h-full border border-gold -z-10 pointer-events-none" />
           {photo ? (
-            <img src={photo} alt={s("principal_name")} className="w-full h-[420px] object-cover" />
+            <img src={photo} alt={displayName} className="w-full h-[420px] object-cover" />
           ) : (
             <div className="w-full h-[420px] flex items-center justify-center bg-gradient-to-br from-green-dark/10 to-green-dark/5">
               <span className="text-[11px] tracking-widest text-green-dark/40 font-semibold">
@@ -60,16 +76,18 @@ export function PrincipalMessage({ settings }: { settings?: Record<string, strin
             FROM THE PRINCIPAL
           </div>
           <p className="font-heading text-2xl sm:text-[32px] leading-[1.35] font-medium text-green-dark mb-6.5">
-            &ldquo;{s("principal_quote")}&rdquo;
+            &ldquo;{displayQuote}&rdquo;
           </p>
           <div className="font-heading italic text-[28px] text-green-dark/50">
-            &mdash; {s("principal_name")}
+            &mdash; {displayName}
           </div>
           <div className="text-xs tracking-[0.16em] text-green-dark/60 my-1.5 mb-7.5">
-            PRINCIPAL, ST. ALOYSIUS&rsquo; COLLEGE
+            {principal?.title
+              ? `${principal.title.toUpperCase()}, ST. ALOYSIUS&rsquo; COLLEGE`
+              : "PRINCIPAL, ST. ALOYSIUS&rsquo; COLLEGE"}
           </div>
           <a
-            href="/about"
+            href="/principals"
             className="inline-flex items-center gap-2.5 font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5"
           >
             Read the Full Message <span>&rarr;</span>

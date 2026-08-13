@@ -209,8 +209,11 @@ const jumpLinks = [
 
 export const Route = createFileRoute("/about")({
   loader: async () => {
-    const settings = await client.settings.getAll();
-    return { settings };
+    const [settings, principalData] = await Promise.all([
+      client.settings.getAll(),
+      client.principals.getCurrent(),
+    ]);
+    return { settings, principal: principalData };
   },
   staleTime: 5 * 60_000,
   component: AboutPage,
@@ -230,9 +233,14 @@ function ArchivalImage({ src, className }: { src?: string; className?: string })
 }
 
 function AboutPage() {
-  const { settings: settingsRaw } = Route.useLoaderData();
+  const { settings: settingsRaw, principal } = Route.useLoaderData();
   const settings = settingsRaw as Record<string, string>;
   const s = (key: string) => settings[key] || DEFAULTS[key] || "";
+
+  const displayName = principal?.name || s("principal_name") || DEFAULTS.principal_name;
+  const displayHeading = principal?.quote ? "A Word from the Principal" : s("about_principal_heading");
+  const displayMessage = principal?.quote || s("about_principal_message");
+  const photo = principal?.portrait || settings.principal_photo;
 
   const heroRef = useRef<HTMLElement>(null);
   const historyRef = useRef<HTMLElement>(null);
@@ -474,10 +482,10 @@ function AboutPage() {
           <div className="mx-auto max-w-270 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-10 lg:gap-18 items-center">
             <div data-animate className="relative max-w-[340px] mx-auto lg:mx-0 w-full">
               <div className="absolute -right-3.5 -bottom-3.5 w-full h-full border border-[#FFB203] -z-10 pointer-events-none" />
-              {settings.principal_photo ? (
+              {photo ? (
                 <img
-                  src={settings.principal_photo}
-                  alt={s("principal_name")}
+                  src={photo}
+                  alt={displayName}
                   className="w-full h-105 object-cover"
                 />
               ) : (
@@ -493,14 +501,20 @@ function AboutPage() {
                 PRINCIPAL&rsquo;S MESSAGE
               </div>
               <h2 className="font-['Cormorant_Garamond'] font-semibold text-3xl sm:text-[44px] mb-6">
-                {s("about_principal_heading")}
+                {displayHeading}
               </h2>
               <p className="text-base leading-[1.75] text-[#013405]/80 mb-6.5">
-                {s("about_principal_message")}
+                {displayMessage}
               </p>
               <div className="font-['Cormorant_Garamond'] italic text-2xl sm:text-[28px] text-[#013405]/50">
-                &mdash; {s("principal_name")}
+                &mdash; {displayName}
               </div>
+              <a
+                href="/principals"
+                className="inline-flex items-center gap-2.5 font-bold text-sm text-[#013405] border-b-2 border-[#FFB203] pb-1.5 mt-6"
+              >
+                View All Principals <span>&rarr;</span>
+              </a>
             </div>
           </div>
         </section>
