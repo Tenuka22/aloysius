@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 
 export const files = sqliteTable("files", {
   id: text("id").primaryKey(),
@@ -40,6 +40,13 @@ export const news = sqliteTable(
       .notNull()
       .$defaultFn(() => new Date()),
     userId: text("user_id").notNull(),
+    activityId: text("activity_id").references(() => activities.id, { onDelete: "set null" }),
+    reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] })
+      .notNull()
+      .default("approved"),
+    reviewedBy: text("reviewed_by"),
+    reviewedAt: integer("reviewed_at", { mode: "timestamp" }),
+    rejectionReason: text("rejection_reason"),
   },
   (table) => [uniqueIndex("news_slug_idx").on(table.slug)],
 );
@@ -73,6 +80,13 @@ export const announcements = sqliteTable(
       .notNull()
       .$defaultFn(() => new Date()),
     userId: text("user_id").notNull(),
+    activityId: text("activity_id").references(() => activities.id, { onDelete: "set null" }),
+    reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] })
+      .notNull()
+      .default("approved"),
+    reviewedBy: text("reviewed_by"),
+    reviewedAt: integer("reviewed_at", { mode: "timestamp" }),
+    rejectionReason: text("rejection_reason"),
   },
   (table) => [uniqueIndex("announcements_slug_idx").on(table.slug)],
 );
@@ -111,6 +125,13 @@ export const events = sqliteTable(
       .notNull()
       .$defaultFn(() => new Date()),
     userId: text("user_id").notNull(),
+    activityId: text("activity_id").references(() => activities.id, { onDelete: "set null" }),
+    reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] })
+      .notNull()
+      .default("approved"),
+    reviewedBy: text("reviewed_by"),
+    reviewedAt: integer("reviewed_at", { mode: "timestamp" }),
+    rejectionReason: text("rejection_reason"),
   },
   (table) => [uniqueIndex("events_slug_idx").on(table.slug)],
 );
@@ -251,6 +272,13 @@ export const studentWorks = sqliteTable(
       .notNull()
       .$defaultFn(() => new Date()),
     userId: text("user_id").notNull(),
+    activityId: text("activity_id").references(() => activities.id, { onDelete: "set null" }),
+    reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] })
+      .notNull()
+      .default("approved"),
+    reviewedBy: text("reviewed_by"),
+    reviewedAt: integer("reviewed_at", { mode: "timestamp" }),
+    rejectionReason: text("rejection_reason"),
   },
   (table) => [uniqueIndex("student_works_slug_idx").on(table.slug)],
 );
@@ -290,6 +318,7 @@ export const bigMatches = sqliteTable(
     slug: text("slug").notNull().default(""),
     name: text("name").notNull(),
     opponent: text("opponent").notNull(),
+    coverImage: text("cover_image"),
     type: text("type").notNull().default("Cricket"),
     year: integer("year"),
     eventId: text("event_id").references(() => events.id, { onDelete: "set null" }),
@@ -318,6 +347,8 @@ export const activities = sqliteTable(
     name: text("name").notNull(),
     description: text("description"),
     coverImage: text("cover_image"),
+    logoUrl: text("logo_url"),
+    bannerUrl: text("banner_url"),
     images: text("images", { mode: "json" }).default([]),
     type: text("type", { enum: ["club", "sport", "other"] })
       .notNull()
@@ -335,4 +366,108 @@ export const activities = sqliteTable(
       .$defaultFn(() => new Date()),
   },
   (table) => [uniqueIndex("activities_slug_idx").on(table.slug)],
+);
+
+// --- Club Members table (who belongs to each club/sport, and their status) ---
+
+export const clubMembers = sqliteTable(
+  "club_members",
+  {
+    id: text("id").primaryKey(),
+    activityId: text("activity_id")
+      .notNull()
+      .references(() => activities.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    name: text("name"),
+    role: text("role", { enum: ["admin", "member"] }).notNull().default("member"),
+    status: text("status", { enum: ["pending", "approved", "rejected", "revoked"] })
+      .notNull()
+      .default("pending"),
+    reason: text("reason"),
+    decidedBy: text("decided_by"),
+    decidedAt: integer("decided_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [uniqueIndex("club_members_activity_user_idx").on(table.activityId, table.userId)],
+);
+
+// --- Club Albums table (photo albums released by clubs, approved by site admin) ---
+
+export const clubAlbums = sqliteTable(
+  "club_albums",
+  {
+    id: text("id").primaryKey(),
+    activityId: text("activity_id")
+      .notNull()
+      .references(() => activities.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    coverImage: text("cover_image"),
+    status: text("status", { enum: ["draft", "published", "archived"] })
+      .notNull()
+      .default("draft"),
+    reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] })
+      .notNull()
+      .default("pending"),
+    reviewedBy: text("reviewed_by"),
+    reviewedAt: integer("reviewed_at", { mode: "timestamp" }),
+    rejectionReason: text("rejection_reason"),
+    featuredOnHome: integer("featured_on_home", { mode: "boolean" }).notNull().default(false),
+    userId: text("user_id").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("club_albums_activity_idx").on(table.activityId)],
+);
+
+// --- Club Album Images table ---
+
+export const clubAlbumImages = sqliteTable("club_album_images", {
+  id: text("id").primaryKey(),
+  albumId: text("album_id")
+    .notNull()
+    .references(() => clubAlbums.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  caption: text("caption"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+// --- Notifications table (in-app alerts for membership/content decisions) ---
+
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    type: text("type", {
+      enum: [
+        "membership_request",
+        "membership_approved",
+        "membership_rejected",
+        "membership_revoked",
+        "content_approved",
+        "content_rejected",
+      ],
+    }).notNull(),
+    title: text("title").notNull(),
+    body: text("body"),
+    link: text("link"),
+    read: integer("read", { mode: "boolean" }).notNull().default(false),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("notifications_user_read_idx").on(table.userId, table.read)],
 );

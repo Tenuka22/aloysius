@@ -322,10 +322,12 @@ export function StudentWorkForm({
   mode,
   id,
   onSuccess,
+  activityId,
 }: {
   mode: "create" | "edit";
   id?: string;
   onSuccess?: () => void;
+  activityId?: string;
 }) {
   const queryClient = useQueryClient();
 
@@ -428,7 +430,7 @@ export function StudentWorkForm({
       }
       onSubmit={async (values) => {
         if (mode === "create") {
-          return client.studentWorks.create(values as CreateValues);
+          return client.studentWorks.create({ ...(values as CreateValues), activityId } as any);
         }
         return client.studentWorks.update({ id: id!, ...values });
       }}

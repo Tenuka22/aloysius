@@ -139,7 +139,9 @@ export function Gallery({
                     </div>
                   )}
                   {item.authorName && (
-                    <div className="text-xs text-primary/60 group-hover:text-white/70 transition-colors mt-1">by {item.authorName}</div>
+                    <div className="text-xs text-primary/60 group-hover:text-white/70 transition-colors mt-1">
+                      by {item.authorName}
+                    </div>
                   )}
                 </div>
               </div>

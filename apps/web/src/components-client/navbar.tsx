@@ -64,11 +64,7 @@ export function Navbar() {
           ref={logoRef}
           className="flex items-center gap-2 shrink-0"
         >
-          <img
-            src="/logo.png"
-            alt="Aloysius College"
-            className="size-9 object-contain"
-          />
+          <img src="/logo.png" alt="Aloysius College" className="size-9 object-contain" />
           <div className="leading-none">
             <div className="text-xs font-medium tracking-wide">ALOYSIUS COLLEGE</div>
             <div className="text-[9px] tracking-widest text-muted-foreground">NIL DESPERANDUM</div>

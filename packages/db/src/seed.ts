@@ -696,22 +696,25 @@ export async function seed() {
   // ── Big Matches ──
   const bigMatches = [
     {
-      name: "St. Xavier's vs St. Joseph's",
-      opponent: "St. Joseph's Academy",
+      name: "Battle of the Two Cities",
+      opponent: "Rahula College, Matara",
       type: "Cricket",
       year: 2025,
+      coverImage: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&h=500&fit=crop",
     },
     {
-      name: "The Founder's Trophy",
-      opponent: "Bishop Cotton School",
-      type: "Football",
+      name: "Battle of the Glory of Galle",
+      opponent: "Vidyaloka College, Galle",
+      type: "Cricket",
       year: 2025,
+      coverImage: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=500&fit=crop",
     },
     {
-      name: "City Rivalry Cup",
-      opponent: "Delhi Public School",
-      type: "Basketball",
-      year: 2024,
+      name: "The Battle of Dreams",
+      opponent: "Holy Cross College, Kalutara",
+      type: "Cricket",
+      year: 2026,
+      coverImage: "https://images.unsplash.com/photo-1589801258579-18e091f4ca24?w=800&h=500&fit=crop",
     },
   ];
   for (let i = 0; i < bigMatches.length; i++) {

@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, and } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
-import { activities } from "@aloysius-web/db/schema";
+import { activities, clubMembers } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
+import { syncClubMembershipsMetadata } from "../lib/club-access";
 import { createClerkClient } from "@clerk/backend";
 import { env } from "@aloysius-web/env/server";
 
@@ -41,6 +42,8 @@ export const activitiesRouter = {
         name: row.name,
         description: row.description,
         coverImage: row.coverImage,
+        logoUrl: row.logoUrl,
+        bannerUrl: row.bannerUrl,
         images: row.images ?? [],
         type: row.type,
         adminEmail: row.adminEmail,
@@ -70,6 +73,8 @@ export const activitiesRouter = {
         name: row.name,
         description: row.description,
         coverImage: row.coverImage,
+        logoUrl: row.logoUrl,
+        bannerUrl: row.bannerUrl,
         images: row.images ?? [],
         type: row.type,
         adminEmail: row.adminEmail,
@@ -87,6 +92,8 @@ export const activitiesRouter = {
         name: z.string().min(1),
         description: z.string().optional(),
         coverImage: z.string().optional(),
+        logoUrl: z.string().optional(),
+        bannerUrl: z.string().optional(),
         images: z.array(z.string()).optional(),
         type: z.enum(["club", "sport", "other"]).default("club"),
         adminEmail: z.string().email().optional(),
@@ -114,6 +121,8 @@ export const activitiesRouter = {
           name: input.name,
           description: input.description,
           coverImage: input.coverImage,
+          logoUrl: input.logoUrl,
+          bannerUrl: input.bannerUrl,
           images: input.images ?? [],
           type: input.type,
           adminEmail: input.adminEmail,
@@ -131,6 +140,8 @@ export const activitiesRouter = {
         name: record.name,
         description: record.description,
         coverImage: record.coverImage,
+        logoUrl: record.logoUrl,
+        bannerUrl: record.bannerUrl,
         images: record.images ?? [],
         type: record.type,
         adminEmail: record.adminEmail,
@@ -149,6 +160,8 @@ export const activitiesRouter = {
         name: z.string().min(1).optional(),
         description: z.string().optional(),
         coverImage: z.string().optional(),
+        logoUrl: z.string().optional().nullable(),
+        bannerUrl: z.string().optional().nullable(),
         images: z.array(z.string()).optional(),
         type: z.enum(["club", "sport", "other"]).optional(),
         adminEmail: z.string().email().optional().nullable(),
@@ -183,6 +196,8 @@ export const activitiesRouter = {
       }
       if (input.description !== undefined) updateData.description = input.description;
       if (input.coverImage !== undefined) updateData.coverImage = input.coverImage;
+      if (input.logoUrl !== undefined) updateData.logoUrl = input.logoUrl;
+      if (input.bannerUrl !== undefined) updateData.bannerUrl = input.bannerUrl;
       if (input.images !== undefined) updateData.images = input.images;
       if (input.type !== undefined) updateData.type = input.type;
       if (input.adminEmail !== undefined) updateData.adminEmail = input.adminEmail;
@@ -202,6 +217,8 @@ export const activitiesRouter = {
         name: record.name,
         description: record.description,
         coverImage: record.coverImage,
+        logoUrl: record.logoUrl,
+        bannerUrl: record.bannerUrl,
         images: record.images ?? [],
         type: record.type,
         adminEmail: record.adminEmail,
@@ -281,6 +298,37 @@ export const activitiesRouter = {
           });
           results.updated++;
         }
+
+        // Seed club_members rows (role=admin, approved) for this admin's clubs
+        for (const activityId of activityIds) {
+          const existingMember = await db
+            .select()
+            .from(clubMembers)
+            .where(and(eq(clubMembers.activityId, activityId), eq(clubMembers.userId, user.id)))
+            .get();
+
+          if (!existingMember) {
+            const now = new Date();
+            await db
+              .insert(clubMembers)
+              .values({
+                id: crypto.randomUUID(),
+                activityId,
+                userId: user.id,
+                name: user.firstName || user.lastName
+                  ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
+                  : null,
+                role: "admin",
+                status: "approved",
+                decidedBy: "system",
+                decidedAt: now,
+                createdAt: now,
+                updatedAt: now,
+              })
+              .run();
+          }
+        }
+        await syncClubMembershipsMetadata(user.id);
       } catch (err) {
         results.errorsList.push(
           `Error syncing ${email}: ${err instanceof Error ? err.message : String(err)}`,
@@ -292,7 +340,7 @@ export const activitiesRouter = {
     const allAdminEmails = new Set(emailToActivityIds.keys());
 
     const usersWithAdminMeta = await clerkClient.users.getUserList({
-      pageSize: 500,
+      limit: 500,
     });
 
     for (const user of usersWithAdminMeta.data) {

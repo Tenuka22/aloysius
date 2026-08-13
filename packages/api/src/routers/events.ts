@@ -5,6 +5,7 @@ import { events, eventRecords } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
+import { resolveClubAccess, assertClubMember } from "../lib/club-access";
 
 const sortDirection = z.enum(["asc", "desc"]);
 
@@ -18,12 +19,29 @@ export const eventsRouter = {
         sortDir: sortDirection.default("desc"),
         search: z.string().optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
+        activityId: z.string().optional(),
+        reviewStatus: z.enum(["pending", "approved", "rejected"]).optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const db = createDb();
       const { page, pageSize, sort, sortDir, search, status } = input;
       const offset = (page - 1) * pageSize;
+
+      // Review visibility: non-members can only see approved club content.
+      // Site admins always see everything.
+      const userId = context.auth?.userId ?? null;
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      let canSeeNonApproved = isSiteAdmin;
+      if (input.activityId && userId) {
+        const { membership, isClubAdmin } = await resolveClubAccess(
+          db,
+          input.activityId,
+          userId,
+          isSiteAdmin,
+        );
+        canSeeNonApproved = canSeeNonApproved || isClubAdmin || membership?.status === "approved";
+      }
 
       const conditions = [];
       if (search) {
@@ -31,6 +49,20 @@ export const eventsRouter = {
       }
       if (status) {
         conditions.push(eq(events.status, status));
+      }
+      if (input.activityId) {
+        conditions.push(eq(events.activityId, input.activityId));
+      }
+      if (input.reviewStatus) {
+        if (input.reviewStatus !== "approved" && !canSeeNonApproved) {
+          throw new ORPCError("UNAUTHORIZED", {
+            message: "You must be a club member to view pending content.",
+          });
+        }
+        conditions.push(eq(events.reviewStatus, input.reviewStatus));
+      } else if (!canSeeNonApproved) {
+        // Public listings only surface approved content.
+        conditions.push(eq(events.reviewStatus, "approved"));
       }
       const where = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -77,6 +109,11 @@ export const eventsRouter = {
           recurrenceRule: row.recurrenceRule,
           tags: row.tags,
           status: row.status,
+          activityId: row.activityId,
+          reviewStatus: row.reviewStatus,
+          reviewedBy: row.reviewedBy,
+          reviewedAt: row.reviewedAt?.toISOString() ?? null,
+          rejectionReason: row.rejectionReason,
           publishedAt: row.publishedAt?.toISOString() ?? null,
           createdAt: row.createdAt.toISOString(),
           updatedAt: row.updatedAt.toISOString(),
@@ -90,7 +127,7 @@ export const eventsRouter = {
 
   get: publicProcedure
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const db = createDb();
       const row =
         "id" in input
@@ -99,6 +136,26 @@ export const eventsRouter = {
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Event not found" });
+      }
+
+      // Non-approved club content is only visible to the author, club members/admins, or site admins.
+      if (row.activityId && row.reviewStatus !== "approved") {
+        const userId = context.auth?.userId ?? null;
+        const isSiteAdmin = context.auth?.adminCalled ?? false;
+        const isAuthor = userId !== null && userId === row.userId;
+        let canView = isSiteAdmin || isAuthor;
+        if (!canView && userId) {
+          const { membership, isClubAdmin } = await resolveClubAccess(
+            db,
+            row.activityId,
+            userId,
+            isSiteAdmin,
+          );
+          canView = isClubAdmin || membership?.status === "approved";
+        }
+        if (!canView) {
+          throw new ORPCError("NOT_FOUND", { message: "Event not found" });
+        }
       }
 
       return {
@@ -121,6 +178,11 @@ export const eventsRouter = {
         recurrenceRule: row.recurrenceRule,
         tags: row.tags,
         status: row.status,
+        activityId: row.activityId,
+        reviewStatus: row.reviewStatus,
+        reviewedBy: row.reviewedBy,
+        reviewedAt: row.reviewedAt?.toISOString() ?? null,
+        rejectionReason: row.rejectionReason,
         publishedAt: row.publishedAt?.toISOString() ?? null,
         createdAt: row.createdAt.toISOString(),
         updatedAt: row.updatedAt.toISOString(),
@@ -148,6 +210,7 @@ export const eventsRouter = {
         recurrenceRule: z.string().optional(),
         tags: z.array(z.string()).optional(),
         publishNow: z.boolean().optional(),
+        activityId: z.string().optional(),
       }),
     )
     .handler(async ({ input, context }) => {
@@ -155,13 +218,35 @@ export const eventsRouter = {
         throw new ORPCError("UNAUTHORIZED");
       }
 
+      const db = createDb();
+
+      // Club content: the user must be an approved member (or club admin / site admin),
+      // and it always starts as pending review until a site admin approves it.
+      let reviewStatus: "pending" | "approved" | "rejected" = "approved";
+      let status: "draft" | "published" = input.publishNow ? "published" : "draft";
+      let publishedAt: Date | null = input.publishNow ? new Date() : null;
+
+      if (input.activityId) {
+        const { membership, isClubAdmin } = await resolveClubAccess(
+          db,
+          input.activityId,
+          context.auth.userId,
+          context.auth.adminCalled,
+        );
+        assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
+
+        if (!context.auth.adminCalled) {
+          reviewStatus = "pending";
+          status = "draft";
+          publishedAt = null;
+        }
+      }
+
       const id = crypto.randomUUID();
-      const now = new Date();
       const slug = input.slug
         ? await generateUniqueSlug(events, input.slug)
         : await generateUniqueSlug(events, input.title);
 
-      const db = createDb();
       const record = await db
         .insert(events)
         .values({
@@ -183,8 +268,10 @@ export const eventsRouter = {
           isAllDay: input.isAllDay ?? false,
           recurrenceRule: input.recurrenceRule ?? null,
           tags: input.tags ?? [],
-          status: input.publishNow ? "published" : "draft",
-          publishedAt: input.publishNow ? now : null,
+          status,
+          activityId: input.activityId ?? null,
+          reviewStatus,
+          publishedAt,
           userId: context.auth.userId,
         })
         .returning()
@@ -210,6 +297,11 @@ export const eventsRouter = {
         recurrenceRule: record.recurrenceRule,
         tags: record.tags,
         status: record.status,
+        activityId: record.activityId,
+        reviewStatus: record.reviewStatus,
+        reviewedBy: record.reviewedBy,
+        reviewedAt: record.reviewedAt?.toISOString() ?? null,
+        rejectionReason: record.rejectionReason,
         publishedAt: record.publishedAt?.toISOString() ?? null,
         createdAt: record.createdAt.toISOString(),
         updatedAt: record.updatedAt.toISOString(),
@@ -253,10 +345,31 @@ export const eventsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Event not found" });
       }
 
+      // Club content: only members/admins may edit, and any member edit must be re-reviewed.
+      if (existing.activityId) {
+        const { membership, isClubAdmin } = await resolveClubAccess(
+          db,
+          existing.activityId,
+          context.auth.userId,
+          context.auth.adminCalled,
+        );
+        assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
+      }
+
       const now = new Date();
       const updateData: Record<string, unknown> = {
         updatedAt: now,
       };
+
+      if (existing.activityId && !context.auth.adminCalled) {
+        // Any change by a club member requires fresh site-admin review.
+        updateData.reviewStatus = "pending";
+        updateData.status = "draft";
+        updateData.publishedAt = null;
+        updateData.reviewedBy = null;
+        updateData.reviewedAt = null;
+        updateData.rejectionReason = null;
+      }
 
       if (input.slug !== undefined) {
         updateData.slug = await generateUniqueSlug(events, input.slug, input.id);
@@ -320,6 +433,11 @@ export const eventsRouter = {
         recurrenceRule: record.recurrenceRule,
         tags: record.tags,
         status: record.status,
+        activityId: record.activityId,
+        reviewStatus: record.reviewStatus,
+        reviewedBy: record.reviewedBy,
+        reviewedAt: record.reviewedAt?.toISOString() ?? null,
+        rejectionReason: record.rejectionReason,
         publishedAt: record.publishedAt?.toISOString() ?? null,
         createdAt: record.createdAt.toISOString(),
         updatedAt: record.updatedAt.toISOString(),
@@ -338,6 +456,22 @@ export const eventsRouter = {
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Event not found" });
+      }
+
+      // Club content: only the author, club admin, or site admin may delete.
+      if (existing.activityId) {
+        const { isClubAdmin } = await resolveClubAccess(
+          db,
+          existing.activityId,
+          context.auth.userId,
+          context.auth.adminCalled,
+        );
+        const isAuthor = existing.userId === context.auth.userId;
+        if (!isAuthor && !isClubAdmin) {
+          throw new ORPCError("UNAUTHORIZED", {
+            message: "Only the author or a club admin can delete this.",
+          });
+        }
       }
 
       await db.delete(events).where(eq(events.id, input.id)).run();

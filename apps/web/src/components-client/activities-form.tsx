@@ -22,6 +22,8 @@ const createActivitySchema = v.object({
   description: v.optional(v.string()),
   content: v.string(),
   coverImage: v.optional(v.string()),
+  logoUrl: v.optional(v.string()),
+  bannerUrl: v.optional(v.string()),
   images: v.array(v.string()),
   type: v.string(),
   adminEmail: v.optional(v.string()),
@@ -37,6 +39,8 @@ const updateActivitySchema = v.object({
   description: v.optional(v.string()),
   content: v.string(),
   coverImage: v.optional(v.string()),
+  logoUrl: v.optional(v.string()),
+  bannerUrl: v.optional(v.string()),
   images: v.array(v.string()),
   type: v.string(),
   adminEmail: v.optional(v.string()),
@@ -81,6 +85,20 @@ const fields: FieldEntry<CreateActivityValues | UpdateActivityValues>[] = [
     name: "coverImage",
     kind: "text",
     label: "Cover Image URL",
+    hidden: true,
+    required: false,
+  },
+  {
+    name: "logoUrl",
+    kind: "text",
+    label: "Logo URL",
+    hidden: true,
+    required: false,
+  },
+  {
+    name: "bannerUrl",
+    kind: "text",
+    label: "Banner URL",
     hidden: true,
     required: false,
   },
@@ -195,6 +213,90 @@ function CoverImageField() {
           crop
           aspect={16 / 9}
           cropTitle="Crop Cover Image"
+          className={cn("h-[208px]", uploading && "opacity-50 pointer-events-none")}
+        />
+      )}
+    </div>
+  );
+}
+
+function BrandingImageField({
+  field,
+  label,
+  aspect,
+  aspectClass,
+  cropTitle,
+  hint,
+}: {
+  field: "logoUrl" | "bannerUrl";
+  label: string;
+  aspect: number;
+  aspectClass: string;
+  cropTitle: string;
+  hint: string;
+}) {
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values[field]) as string | undefined;
+  const [uploading, setUploading] = useState(false);
+
+  const handleFilesSelected = useCallback(
+    async (files: File[]) => {
+      const file = files[0];
+      if (!file) return;
+      setUploading(true);
+      try {
+        const webp = await convertToWebp(file);
+        const result = await client.files.uploadFile(webp);
+        form.setFieldValue(field, result.url);
+      } catch {
+        toast.error(`Failed to upload ${label.toLowerCase()}`);
+      } finally {
+        setUploading(false);
+      }
+    },
+    [form, field, label],
+  );
+
+  const handleRemove = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      form.setFieldValue(field, "");
+    },
+    [form, field],
+  );
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">{label}</label>
+      <p className="text-xs text-muted-foreground">{hint}</p>
+      {value ? (
+        <div className="relative overflow-hidden rounded-xl border">
+          <img
+            src={value}
+            alt={label}
+            className={`w-full ${aspectClass} object-cover pointer-events-none`}
+          />
+          <Button
+            variant="destructive"
+            size="sm"
+            type="button"
+            className="absolute top-2 right-2 z-10 gap-1.5"
+            onClick={handleRemove}
+          >
+            <IconX className="size-4" />
+            Remove
+          </Button>
+        </div>
+      ) : (
+        <Dropzone
+          onFilesSelected={handleFilesSelected}
+          maxFiles={1}
+          maxSize={10 * 1024 * 1024}
+          disabled={uploading}
+          crop
+          aspect={aspect}
+          cropTitle={cropTitle}
           className={cn("h-[208px]", uploading && "opacity-50 pointer-events-none")}
         />
       )}
@@ -540,6 +642,24 @@ export function ActivitiesForm({
             <SortOrderField />
           </div>
         </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <BrandingImageField
+            field="logoUrl"
+            label="Logo (1:1)"
+            aspect={1}
+            aspectClass="aspect-square"
+            cropTitle="Crop Logo"
+            hint="Square logo shown on the club's page and in club cards."
+          />
+          <BrandingImageField
+            field="bannerUrl"
+            label="Banner (16:9)"
+            aspect={16 / 9}
+            aspectClass="aspect-video"
+            cropTitle="Crop Banner"
+            hint="Wide banner shown at the top of the club's page."
+          />
+        </div>
         <ImagesField />
         <DescriptionEditorField />
       </div>
@@ -557,6 +677,8 @@ export function ActivitiesForm({
               description: activity.description ?? "",
               content: "",
               coverImage: activity.coverImage ?? "",
+              logoUrl: activity.logoUrl ?? "",
+              bannerUrl: activity.bannerUrl ?? "",
               images: (activity.images as string[]) ?? [],
               type: activity.type,
               adminEmail: activity.adminEmail ?? "",
@@ -569,6 +691,8 @@ export function ActivitiesForm({
               description: "",
               content: "",
               coverImage: "",
+              logoUrl: "",
+              bannerUrl: "",
               images: [] as string[],
               type: "club",
               adminEmail: "",

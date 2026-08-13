@@ -91,10 +91,14 @@ function AchievementsPage() {
                           {item.category}
                         </span>
                         {item.year && (
-                          <span className="text-xs text-primary/70 group-hover:text-white/80 transition-colors">{item.year}</span>
+                          <span className="text-xs text-primary/70 group-hover:text-white/80 transition-colors">
+                            {item.year}
+                          </span>
                         )}
                       </div>
-                      <h3 className="font-semibold text-lg mb-1 text-primary group-hover:text-white transition-colors line-clamp-2">{item.title}</h3>
+                      <h3 className="font-semibold text-lg mb-1 text-primary group-hover:text-white transition-colors line-clamp-2">
+                        {item.title}
+                      </h3>
                       {item.recipientNames && item.recipientNames.length > 0 && (
                         <p className="text-sm text-primary/60 group-hover:text-white/70 transition-colors mb-2">
                           {item.recipientNames.join(", ")}

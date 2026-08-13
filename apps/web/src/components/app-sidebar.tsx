@@ -7,8 +7,10 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@aloysius-web/ui/components/sidebar";
+import { useQuery } from "@tanstack/react-query";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
+import { client } from "@/utils/orpc";
 import {
   IconDashboard,
   IconCalendarEvent,
@@ -20,6 +22,7 @@ import {
   IconChartBar,
   IconHome,
   IconDevices,
+  IconClipboardCheck,
 } from "@tabler/icons-react";
 
 const overviewItems = [
@@ -50,7 +53,31 @@ const publishingItems = [
       { title: "New Announcement", url: "/admin/announcements/new" },
     ],
   },
+  {
+    title: "Club Content Review",
+    url: "/admin/reviews",
+    icon: <IconClipboardCheck />,
+    badge: <PendingReviewBadge />,
+  },
 ];
+
+/** Live count of club content awaiting site-admin approval. */
+function PendingReviewBadge() {
+  const { data } = useQuery({
+    queryKey: ["reviews", "pending-count"],
+    queryFn: () => client.clubs.pendingReviewCount(),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+    retry: false,
+  });
+  const count = data ?? 0;
+  if (count === 0) return null;
+  return (
+    <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
 
 const contentItems = [
   {

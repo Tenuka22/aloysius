@@ -5,6 +5,7 @@ import { announcements } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
+import { resolveClubAccess, assertClubMember } from "../lib/club-access";
 
 const sortDirection = z.enum(["asc", "desc"]);
 
@@ -19,12 +20,27 @@ export const announcementsRouter = {
         search: z.string().optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
         audience: z.enum(["all", "students", "parents", "staff", "alumni"]).optional(),
+        activityId: z.string().optional(),
+        reviewStatus: z.enum(["pending", "approved", "rejected"]).optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const db = createDb();
       const { page, pageSize, sort, sortDir, search, status, audience } = input;
       const offset = (page - 1) * pageSize;
+
+      const userId = context.auth?.userId ?? null;
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      let canSeeNonApproved = isSiteAdmin;
+      if (input.activityId && userId) {
+        const { membership, isClubAdmin } = await resolveClubAccess(
+          db,
+          input.activityId,
+          userId,
+          isSiteAdmin,
+        );
+        canSeeNonApproved = canSeeNonApproved || isClubAdmin || membership?.status === "approved";
+      }
 
       const conditions = [];
       if (search) {
@@ -35,6 +51,19 @@ export const announcementsRouter = {
       }
       if (audience) {
         conditions.push(eq(announcements.audience, audience));
+      }
+      if (input.activityId) {
+        conditions.push(eq(announcements.activityId, input.activityId));
+      }
+      if (input.reviewStatus) {
+        if (input.reviewStatus !== "approved" && !canSeeNonApproved) {
+          throw new ORPCError("UNAUTHORIZED", {
+            message: "You must be a club member to view pending content.",
+          });
+        }
+        conditions.push(eq(announcements.reviewStatus, input.reviewStatus));
+      } else if (!canSeeNonApproved) {
+        conditions.push(eq(announcements.reviewStatus, "approved"));
       }
       const where = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -81,6 +110,11 @@ export const announcementsRouter = {
           updatedAt: row.updatedAt.toISOString(),
           authorName: row.authorName,
           authorType: row.authorType,
+          activityId: row.activityId,
+          reviewStatus: row.reviewStatus,
+          reviewedBy: row.reviewedBy,
+          reviewedAt: row.reviewedAt?.toISOString() ?? null,
+          rejectionReason: row.rejectionReason,
         })),
         total,
         pageCount: Math.ceil(total / pageSize),
@@ -91,7 +125,7 @@ export const announcementsRouter = {
 
   get: publicProcedure
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const db = createDb();
       const row =
         "id" in input
@@ -100,6 +134,25 @@ export const announcementsRouter = {
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
+      }
+
+      if (row.activityId && row.reviewStatus !== "approved") {
+        const userId = context.auth?.userId ?? null;
+        const isSiteAdmin = context.auth?.adminCalled ?? false;
+        const isAuthor = userId !== null && userId === row.userId;
+        let canView = isSiteAdmin || isAuthor;
+        if (!canView && userId) {
+          const { membership, isClubAdmin } = await resolveClubAccess(
+            db,
+            row.activityId,
+            userId,
+            isSiteAdmin,
+          );
+          canView = isClubAdmin || membership?.status === "approved";
+        }
+        if (!canView) {
+          throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
+        }
       }
 
       return {
@@ -118,6 +171,11 @@ export const announcementsRouter = {
         updatedAt: row.updatedAt.toISOString(),
         authorName: row.authorName,
         authorType: row.authorType,
+        activityId: row.activityId,
+        reviewStatus: row.reviewStatus,
+        reviewedBy: row.reviewedBy,
+        reviewedAt: row.reviewedAt?.toISOString() ?? null,
+        rejectionReason: row.rejectionReason,
       };
     }),
 
@@ -135,6 +193,7 @@ export const announcementsRouter = {
         publishNow: z.boolean().optional(),
         authorName: z.string().optional(),
         authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
+        activityId: z.string().optional(),
       }),
     )
     .handler(async ({ input, context }) => {
@@ -142,13 +201,33 @@ export const announcementsRouter = {
         throw new ORPCError("UNAUTHORIZED");
       }
 
+      const db = createDb();
+
+      let reviewStatus: "pending" | "approved" | "rejected" = "approved";
+      let status: "draft" | "published" = input.publishNow ? "published" : "draft";
+      let publishedAt: Date | null = input.publishNow ? new Date() : null;
+
+      if (input.activityId) {
+        const { membership, isClubAdmin } = await resolveClubAccess(
+          db,
+          input.activityId,
+          context.auth.userId,
+          context.auth.adminCalled,
+        );
+        assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
+
+        if (!context.auth.adminCalled) {
+          reviewStatus = "pending";
+          status = "draft";
+          publishedAt = null;
+        }
+      }
+
       const id = crypto.randomUUID();
-      const now = new Date();
       const slug = input.slug
         ? await generateUniqueSlug(announcements, input.slug)
         : await generateUniqueSlug(announcements, input.title);
 
-      const db = createDb();
       const record = await db
         .insert(announcements)
         .values({
@@ -159,13 +238,15 @@ export const announcementsRouter = {
           excerpt: input.excerpt ?? null,
           coverImage: input.coverImage ?? null,
           tags: input.tags ?? [],
-          status: input.publishNow ? "published" : "draft",
+          status,
           audience: input.audience ?? "all",
           addressedTo: input.addressedTo ?? null,
-          publishedAt: input.publishNow ? now : null,
+          publishedAt,
           authorName: input.authorName ?? null,
           authorType: input.authorType ?? null,
           userId: context.auth.userId,
+          activityId: input.activityId ?? null,
+          reviewStatus,
         })
         .returning()
         .get();
@@ -186,6 +267,11 @@ export const announcementsRouter = {
         updatedAt: record.updatedAt.toISOString(),
         authorName: record.authorName,
         authorType: record.authorType,
+        activityId: record.activityId,
+        reviewStatus: record.reviewStatus,
+        reviewedBy: record.reviewedBy,
+        reviewedAt: record.reviewedAt?.toISOString() ?? null,
+        rejectionReason: record.rejectionReason,
       };
     }),
 
@@ -222,10 +308,29 @@ export const announcementsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
       }
 
+      if (existing.activityId) {
+        const { membership, isClubAdmin } = await resolveClubAccess(
+          db,
+          existing.activityId,
+          context.auth.userId,
+          context.auth.adminCalled,
+        );
+        assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
+      }
+
       const now = new Date();
       const updateData: Record<string, unknown> = {
         updatedAt: now,
       };
+
+      if (existing.activityId && !context.auth.adminCalled) {
+        updateData.reviewStatus = "pending";
+        updateData.status = "draft";
+        updateData.publishedAt = null;
+        updateData.reviewedBy = null;
+        updateData.reviewedAt = null;
+        updateData.rejectionReason = null;
+      }
 
       if (input.slug !== undefined) {
         updateData.slug = await generateUniqueSlug(announcements, input.slug, input.id);
@@ -272,6 +377,11 @@ export const announcementsRouter = {
         updatedAt: record.updatedAt.toISOString(),
         authorName: record.authorName,
         authorType: record.authorType,
+        activityId: record.activityId,
+        reviewStatus: record.reviewStatus,
+        reviewedBy: record.reviewedBy,
+        reviewedAt: record.reviewedAt?.toISOString() ?? null,
+        rejectionReason: record.rejectionReason,
       };
     }),
 
@@ -291,6 +401,21 @@ export const announcementsRouter = {
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
+      }
+
+      if (existing.activityId) {
+        const { isClubAdmin } = await resolveClubAccess(
+          db,
+          existing.activityId,
+          context.auth.userId,
+          context.auth.adminCalled,
+        );
+        const isAuthor = existing.userId === context.auth.userId;
+        if (!isAuthor && !isClubAdmin) {
+          throw new ORPCError("UNAUTHORIZED", {
+            message: "Only the author or a club admin can delete this.",
+          });
+        }
       }
 
       await db.delete(announcements).where(eq(announcements.id, input.id)).run();

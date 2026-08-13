@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
@@ -10,11 +10,14 @@ import { Input } from "@aloysius-web/ui/components/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@aloysius-web/ui/components/card";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
+import { Dropzone } from "@/components/file-upload";
+import { cn } from "@aloysius-web/ui/lib/utils";
 
 type BigMatch = {
   id: string;
   name: string;
   opponent: string;
+  coverImage: string | null;
   type: string;
   year: number | null;
   eventId: string | null;
@@ -31,10 +34,26 @@ function BigMatchCard({ match }: { match: BigMatch }) {
   const queryClient = useQueryClient();
   const [name, setName] = useState(match.name);
   const [opponent, setOpponent] = useState(match.opponent);
+  const [coverImage, setCoverImage] = useState(match.coverImage ?? "");
   const [type, setType] = useState(match.type);
   const [year, setYear] = useState(match.year?.toString() ?? "");
   const [sortOrder, setSortOrder] = useState(match.sortOrder);
   const [status, setStatus] = useState(match.status);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
+    setUploading(true);
+    try {
+      const result = await client.files.uploadFile(files[0]!);
+      setCoverImage(result.url);
+      toast.success("Image uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }, []);
 
   const updateMutation = useMutation({
     mutationFn: () =>
@@ -42,6 +61,7 @@ function BigMatchCard({ match }: { match: BigMatch }) {
         id: match.id,
         name,
         opponent,
+        coverImage: coverImage || null,
         type,
         year: year ? Number(year) : null,
         sortOrder,
@@ -89,6 +109,32 @@ function BigMatchCard({ match }: { match: BigMatch }) {
               onChange={(e) => setOpponent(e.target.value)}
               placeholder="e.g. Rahula College, Matara"
             />
+          </div>
+          <div className="space-y-1.5 col-span-2">
+            <label className="text-xs font-medium">Cover Image</label>
+            {coverImage ? (
+              <div className="relative aspect-video rounded-lg overflow-hidden border">
+                <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => setCoverImage("")}
+                >
+                  Remove
+                </Button>
+              </div>
+            ) : (
+              <Dropzone
+                onFilesSelected={handleImageUpload}
+                maxFiles={1}
+                maxSize={5 * 1024 * 1024}
+                disabled={uploading}
+                aspect={16 / 9}
+                crop={false}
+                className={cn(uploading && "opacity-50 pointer-events-none")}
+              />
+            )}
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium">Type</label>
@@ -156,19 +202,36 @@ function AdminBigMatches() {
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
   const [newOpponent, setNewOpponent] = useState("");
+  const [newCoverImage, setNewCoverImage] = useState("");
   const [newType, setNewType] = useState("Cricket");
   const [newYear, setNewYear] = useState("");
+  const [newUploading, setNewUploading] = useState(false);
 
   const { data: bigMatches, isLoading } = useQuery({
     queryKey: ["bigMatches"],
     queryFn: () => client.bigMatches.list(),
   });
 
+  const handleNewImageUpload = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
+    setNewUploading(true);
+    try {
+      const result = await client.files.uploadFile(files[0]!);
+      setNewCoverImage(result.url);
+      toast.success("Image uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setNewUploading(false);
+    }
+  }, []);
+
   const createMutation = useMutation({
     mutationFn: () =>
       client.bigMatches.create({
         name: newName,
         opponent: newOpponent,
+        coverImage: newCoverImage || undefined,
         type: newType,
         year: newYear ? Number(newYear) : undefined,
         status: "published",
@@ -179,6 +242,7 @@ function AdminBigMatches() {
       setShowNew(false);
       setNewName("");
       setNewOpponent("");
+      setNewCoverImage("");
       setNewType("Cricket");
       setNewYear("");
     },
@@ -222,6 +286,32 @@ function AdminBigMatches() {
                     onChange={(e) => setNewOpponent(e.target.value)}
                     placeholder="e.g. Rahula College, Matara"
                   />
+                </div>
+                <div className="space-y-1.5 col-span-2">
+                  <label className="text-xs font-medium">Cover Image</label>
+                  {newCoverImage ? (
+                    <div className="relative aspect-video rounded-lg overflow-hidden border">
+                      <img src={newCoverImage} alt="Cover" className="w-full h-full object-cover" />
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => setNewCoverImage("")}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <Dropzone
+                      onFilesSelected={handleNewImageUpload}
+                      maxFiles={1}
+                      maxSize={5 * 1024 * 1024}
+                      disabled={newUploading}
+                      aspect={16 / 9}
+                      crop={false}
+                      className={cn(newUploading && "opacity-50 pointer-events-none")}
+                    />
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium">Type</label>

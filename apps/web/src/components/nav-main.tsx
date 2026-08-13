@@ -23,6 +23,7 @@ export function NavMain({
     title: string;
     url: string;
     icon?: React.ReactNode;
+    badge?: React.ReactNode;
     isActive?: boolean;
     items?: {
       title: string;
@@ -65,6 +66,7 @@ export function NavMain({
               <SidebarMenuButton tooltip={item.title} render={<a href={item.url} />}>
                 {item.icon}
                 <span>{item.title}</span>
+                {item.badge}
               </SidebarMenuButton>
             </SidebarMenuItem>
           ),

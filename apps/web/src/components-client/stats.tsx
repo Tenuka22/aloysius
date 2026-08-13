@@ -27,7 +27,10 @@ const defaultStats = [
   { value: "20+", label: "Global Partnerships", icon: "global" },
 ];
 
-const iconMap: Record<string, React.ComponentType<{ stroke?: number; size?: number | string; className?: string }>> = {
+const iconMap: Record<
+  string,
+  React.ComponentType<{ stroke?: number; size?: number | string; className?: string }>
+> = {
   heritage: IconSchool,
   students: IconUsers,
   activities: IconTrophy,
@@ -125,7 +128,10 @@ export function Stats({
   }, []);
 
   return (
-    <section ref={sectionRef} className="bg-muted/30 relative overflow-hidden border-y border-border">
+    <section
+      ref={sectionRef}
+      className="bg-muted/30 relative overflow-hidden border-y border-border"
+    >
       <div className="relative mx-auto max-w-6xl grid grid-cols-2 lg:grid-cols-4 gap-0 py-16 px-4 sm:px-6 lg:px-8 justify-center">
         {stats.map((stat, i) => {
           const iconKey = stat.icon?.toLowerCase() ?? "school";
@@ -137,9 +143,7 @@ export function Stats({
               data-stat
               className={`flex flex-col items-center justify-center text-center gap-4 py-6 px-4 ${
                 i < 2 ? "border-b lg:border-b-0 border-border" : ""
-              } ${
-                i < stats.length - 1 ? "lg:border-r border-border" : ""
-              }`}
+              } ${i < stats.length - 1 ? "lg:border-r border-border" : ""}`}
             >
               <div className="text-[#c9a227]">
                 <Icon stroke={1.25} size={36} />
@@ -148,7 +152,9 @@ export function Stats({
                 <div className="text-3xl sm:text-4xl font-light text-[#c9a227] tracking-tight tabular-nums">
                   <AnimatedValue value={stat.value} shouldAnimate={hasAnimated} />
                 </div>
-                <div className="text-xs uppercase tracking-widest text-muted-foreground mt-2">{stat.label}</div>
+                <div className="text-xs uppercase tracking-widest text-muted-foreground mt-2">
+                  {stat.label}
+                </div>
               </div>
             </div>
           );

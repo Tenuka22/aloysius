@@ -17,6 +17,13 @@ const ABOUT_KEYS = [
   "about_mission_jesuit_desc",
   "about_mission_saint_title",
   "about_mission_saint_desc",
+  "about_history_title",
+  "about_history_desc",
+  "about_history_founding",
+  "about_history_location",
+  "about_history_nationalisation",
+  "about_history_students",
+  "about_crest_title",
   "about_values_title",
   "about_value1_title",
   "about_value1_desc",
@@ -24,11 +31,16 @@ const ABOUT_KEYS = [
   "about_value2_desc",
   "about_value3_title",
   "about_value3_desc",
+  "about_houses_title",
+  "about_houses_desc",
   "about_clubs_title",
   "about_clubs_desc",
   "about_sports_title",
   "about_sports_desc",
   "about_bigmatches_title",
+  "about_bigmatches_desc",
+  "about_anthem_title",
+  "about_anthem_desc",
   "about_location_title",
   "about_location_address",
   "about_location_phone",
@@ -43,7 +55,7 @@ const DEFAULTS: Record<string, string> = {
   about_hero_badge: "Est. 1895",
   about_hero_title: "St. Aloysius' College",
   about_hero_location: "Galle, Sri Lanka",
-  about_hero_motto: '"Nil Desperandum" - Never Despair',
+  about_hero_motto: '"Certa Viriliter" - Strive Manfully',
   about_mission_title: "Our Mission",
   about_mission_jesuit_title: "Jesuit Tradition",
   about_mission_jesuit_desc:
@@ -51,6 +63,18 @@ const DEFAULTS: Record<string, string> = {
   about_mission_saint_title: "Named After a Saint",
   about_mission_saint_desc:
     "Named after St. Aloysius Gonzaga, the patron saint of youth, we embody the Jesuit values of academic excellence, moral integrity, and service to others.",
+  about_history_title: "Our History",
+  about_history_desc:
+    "St. Aloysius' College was established in 1895 by Belgian Jesuit missionaries led by Bishop Joseph Van Reeth, the first bishop of Galle. The college was named after Saint Aloysius Gonzaga, the patron saint of youth. Situated on Mount Calvary, the college neighbours St. Mary's Cathedral on one side and Sacred Heart Convent on the other. For over a century, it has been a beacon of educational excellence in the Southern Province.",
+  about_history_founding:
+    "Established in 1895 by Belgian Jesuit missionaries under Bishop Joseph Van Reeth.",
+  about_history_location:
+    "Located on Mount Calvary, Galle, neighbouring St. Mary's Cathedral.",
+  about_history_nationalisation:
+    "Became a national school in 1971 with the appointment of the first Buddhist principal.",
+  about_history_students:
+    "Over 5,000 students from grade 1 to G.C.E. A/L, representing diverse religious groups.",
+  about_crest_title: "The College Crest",
   about_values_title: "Our Values",
   about_value1_title: "Competence",
   about_value1_desc: "Academic excellence and practical skills for life",
@@ -58,22 +82,29 @@ const DEFAULTS: Record<string, string> = {
   about_value2_desc: "Moral integrity and ethical decision-making",
   about_value3_title: "Compassion",
   about_value3_desc: "Service to others and care for the community",
+  about_houses_title: "College Houses",
+  about_houses_desc:
+    "Students represent five houses named after Jesuit Fathers who were pioneers in developing the school in its early days.",
   about_clubs_title: "Clubs & Societies",
   about_clubs_desc:
     "Over 25 clubs and societies fostering leadership, creativity, and intellectual growth.",
   about_sports_title: "Sporting Excellence",
   about_sports_desc: "Excellence across 62+ sports disciplines, from cricket to rugby.",
   about_bigmatches_title: "Big Match Encounters",
+  about_bigmatches_desc:
+    "Annual cricket encounters that define our sporting tradition.",
+  about_anthem_title: "College Anthem",
+  about_anthem_desc:
+    "Sung with pride by generations of Aloysians, our anthem embodies the spirit and values of St. Aloysius' College.",
   about_location_title: "Find Us",
   about_location_address:
     "St. Aloysius' College\nTemplars' Road\nGalle 80000\nSouthern Province, Sri Lanka",
   about_location_phone: "011 2 333 233",
-  about_location_email: "info@loysius.lk",
+  about_location_email: "info@aloysiuscollege.lk",
   about_location_website: "aloysiuscollege.lk",
   about_alumni_title: "Old Aloysians",
-  about_alumni_desc:
-    "Our alumni network spans the globe, with branches in Australia, New Zealand, Qatar, and the United Kingdom.",
-  about_alumni_countries: "Australia,New Zealand,Qatar,United Kingdom",
+  about_alumni_desc: "Our alumni network spans the globe, with branches in UK, Galle, and Colombo.",
+  about_alumni_countries: "UK,Galle,Colombo",
 };
 
 function Field({
@@ -231,6 +262,95 @@ function AboutEditor() {
       </section>
 
       <section className="space-y-4">
+        <h2 className="text-lg font-semibold border-b pb-2">History Section</h2>
+        <Field
+          label="Section Title"
+          value={getValue("about_history_title")}
+          onChange={(v) => setField("about_history_title", v)}
+          placeholder="e.g. Our History"
+        />
+        <Field
+          label="History Description"
+          value={getValue("about_history_desc")}
+          onChange={(v) => setField("about_history_desc", v)}
+          placeholder="Main history paragraph"
+          multiline
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <Field
+            label="Founding Card Text"
+            value={getValue("about_history_founding")}
+            onChange={(v) => setField("about_history_founding", v)}
+            placeholder="Founding info"
+          />
+          <Field
+            label="Location Card Text"
+            value={getValue("about_history_location")}
+            onChange={(v) => setField("about_history_location", v)}
+            placeholder="Location info"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Field
+            label="Nationalisation Card Text"
+            value={getValue("about_history_nationalisation")}
+            onChange={(v) => setField("about_history_nationalisation", v)}
+            placeholder="Nationalisation info"
+          />
+          <Field
+            label="Students Card Text"
+            value={getValue("about_history_students")}
+            onChange={(v) => setField("about_history_students", v)}
+            placeholder="Students info"
+          />
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold border-b pb-2">Crest Section</h2>
+        <Field
+          label="Section Title"
+          value={getValue("about_crest_title")}
+          onChange={(v) => setField("about_crest_title", v)}
+          placeholder="e.g. The College Crest"
+        />
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold border-b pb-2">Houses Section</h2>
+        <Field
+          label="Section Title"
+          value={getValue("about_houses_title")}
+          onChange={(v) => setField("about_houses_title", v)}
+          placeholder="e.g. College Houses"
+        />
+        <Field
+          label="Section Description"
+          value={getValue("about_houses_desc")}
+          onChange={(v) => setField("about_houses_desc", v)}
+          placeholder="Description of the house system"
+          multiline
+        />
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold border-b pb-2">Anthem Section</h2>
+        <Field
+          label="Section Title"
+          value={getValue("about_anthem_title")}
+          onChange={(v) => setField("about_anthem_title", v)}
+          placeholder="e.g. College Anthem"
+        />
+        <Field
+          label="Section Description"
+          value={getValue("about_anthem_desc")}
+          onChange={(v) => setField("about_anthem_desc", v)}
+          placeholder="Description of the anthem"
+          multiline
+        />
+      </section>
+
+      <section className="space-y-4">
         <h2 className="text-lg font-semibold border-b pb-2">Values Section</h2>
         <Field
           label="Section Title"
@@ -323,6 +443,13 @@ function AboutEditor() {
           value={getValue("about_bigmatches_title")}
           onChange={(v) => setField("about_bigmatches_title", v)}
           placeholder="e.g. Big Match Encounters"
+        />
+        <Field
+          label="Description"
+          value={getValue("about_bigmatches_desc")}
+          onChange={(v) => setField("about_bigmatches_desc", v)}
+          placeholder="Description text"
+          multiline
         />
       </section>
 

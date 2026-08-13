@@ -6,6 +6,7 @@ import { StudentWorks } from "@/components-client/student-works";
 import { Achievements } from "@/components-client/achievements";
 import { Gallery } from "@/components-client/gallery";
 import { EventsAnnouncements } from "@/components-client/events-announcements";
+import { ClubAlbumsHome } from "@/components-client/club-albums-home";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
 
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/")({
       eventsData,
       newsData,
       announcementsData,
+      clubAlbumsData,
     ] = await Promise.all([
       client.settings.getAll(),
       client.stats.list(),
@@ -29,6 +31,7 @@ export const Route = createFileRoute("/")({
       client.events.list({ page: 1, pageSize: 10, status: "published" }),
       client.news.list({ page: 1, pageSize: 10, status: "published" }),
       client.announcements.list({ page: 1, pageSize: 10, status: "published" }),
+      client.clubAlbums.listFeatured(),
     ]);
 
     return {
@@ -40,6 +43,7 @@ export const Route = createFileRoute("/")({
       events: eventsData.rows,
       news: newsData.rows,
       announcements: announcementsData.rows,
+      clubAlbums: clubAlbumsData,
     };
   },
   staleTime: 5 * 60_000,
@@ -47,8 +51,17 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { settings, stats, studentWorks, achievements, gallery, events, news, announcements } =
-    Route.useLoaderData();
+  const {
+    settings,
+    stats,
+    studentWorks,
+    achievements,
+    gallery,
+    events,
+    news,
+    announcements,
+    clubAlbums,
+  } = Route.useLoaderData();
 
   const carouselItems = [
     ...news.slice(0, 3).map((n: any) => ({ ...n, source: "news" as const })),
@@ -84,6 +97,7 @@ function Home() {
           initialAnnouncements={announcements}
           settings={settings}
         />
+        <ClubAlbumsHome initialAlbums={clubAlbums} settings={settings} />
       </main>
       <Footer />
     </div>

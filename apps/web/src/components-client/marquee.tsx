@@ -9,11 +9,7 @@ interface Announcement {
   audience?: string | null;
 }
 
-export function AnnouncementsMarquee({
-  announcements,
-}: {
-  announcements: Announcement[];
-}) {
+export function AnnouncementsMarquee({ announcements }: { announcements: Announcement[] }) {
   if (!announcements || announcements.length === 0) return null;
 
   // Duplicate for seamless loop

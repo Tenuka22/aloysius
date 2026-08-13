@@ -237,10 +237,12 @@ export function NewsForm({
   mode,
   id,
   onSuccess,
+  activityId,
 }: {
   mode: "create" | "edit";
   id?: string;
   onSuccess: () => void;
+  activityId?: string;
 }) {
   const queryClient = useQueryClient();
 
@@ -251,7 +253,7 @@ export function NewsForm({
   });
 
   const createMutation = useMutation({
-    mutationFn: (body: CreateNewsValues) => client.news.create(body),
+    mutationFn: (body: CreateNewsValues) => client.news.create({ ...body, activityId } as any),
     onSuccess: () => {
       toast.success("News article created");
       queryClient.invalidateQueries({ queryKey: ["news"] });

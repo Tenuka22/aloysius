@@ -18,7 +18,7 @@ const steps = [
     number: "02",
     title: "Submit Application",
     description:
-      "Complete and hand in the official application form by the deadline. Include all required supporting documents and the application fee.",
+      "Complete and hand in the official application form by the deadline. Include all required supporting documents.",
   },
   {
     number: "03",
@@ -30,7 +30,7 @@ const steps = [
     number: "04",
     title: "Enrolment",
     description:
-      "Successful applicants complete enrolment and join the College. Confirm your place by paying the enrolment fee and attending orientation.",
+      "Successful applicants complete enrolment and join the College. Confirm your place by attending orientation.",
   },
 ];
 
@@ -84,11 +84,10 @@ function AdmissionsPage() {
               <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
                 Join Us
               </span>
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-                How to Apply
-              </h1>
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">How to Apply</h1>
               <p className="text-muted-foreground text-lg max-w-2xl">
-                Become part of the St. Aloysius' College family. Follow these simple steps to begin your journey with us.
+                Become part of the St. Aloysius' College family. Follow these simple steps to begin
+                your journey with us.
               </p>
             </div>
           </div>
@@ -120,12 +119,6 @@ function AdmissionsPage() {
                 Download the application form or contact our admissions office for more information.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link
-                  to="/"
-                  className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-                >
-                  Download Application Form
-                </Link>
                 <a
                   href="mailto:admissions@aloysiuscollege.lk"
                   className="inline-flex items-center justify-center rounded-md border px-6 py-3 text-sm font-medium hover:bg-muted transition-colors"

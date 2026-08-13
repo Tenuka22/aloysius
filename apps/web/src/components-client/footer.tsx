@@ -45,27 +45,27 @@ export function Footer() {
   }, []);
 
   return (
-    <footer ref={ref} role="contentinfo" className="bg-muted/30 border-t border-border px-4 sm:px-6 lg:px-8 py-12">
+    <footer
+      ref={ref}
+      role="contentinfo"
+      className="bg-muted/30 border-t border-border px-4 sm:px-6 lg:px-8 py-12"
+    >
       <div className="mx-auto max-w-6xl">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div data-animate>
             <div className="flex items-center gap-2 mb-4">
-              <img
-                src="/logo.png"
-                alt="Aloysius College"
-                className="size-10 object-contain"
-              />
+              <img src="/logo.png" alt="Aloysius College" className="size-10 object-contain" />
               <div className="leading-none">
-                <div className="text-sm font-medium tracking-wide">ALOYSIUS COLLEGE</div>
+                <div className="text-sm font-medium tracking-wide">ST. ALOYSIUS' COLLEGE</div>
                 <div className="text-[10px] tracking-widest text-muted-foreground">
-                  NIL DESPERANDUM
+                  CERTA VIRILITER
                 </div>
               </div>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              Aloysius College is committed to forming young men of competence, conscience, and
-              compassion.
+              A national boys' school in Galle, forming young men of competence, conscience, and
+              compassion since 1895.
             </p>
             <div className="flex gap-3" role="list" aria-label="Social media links">
               {[
@@ -160,9 +160,13 @@ export function Footer() {
                   <circle cx="12" cy="10" r="3" />
                 </svg>
                 <address className="not-italic">
-                  71, Galle Road, Colombo 03,
+                  St. Aloysius' College
                   <br />
-                  Sri Lanka
+                  Templars' Road
+                  <br />
+                  Galle 80000
+                  <br />
+                  Southern Province, Sri Lanka
                 </address>
               </li>
               <li className="flex items-center gap-2">
@@ -176,8 +180,8 @@ export function Footer() {
                 >
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                 </svg>
-                <a href="tel:+91112333233" className="hover:text-foreground transition-colors">
-                  011 2 333 233
+                <a href="tel:+91213333233" className="hover:text-foreground transition-colors">
+                  091 2 333 233
                 </a>
               </li>
               <li className="flex items-center gap-2">
@@ -193,10 +197,10 @@ export function Footer() {
                   <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                 </svg>
                 <a
-                  href="mailto:info@loysius.lk"
+                  href="mailto:info@aloysiuscollege.lk"
                   className="hover:text-foreground transition-colors"
                 >
-                  info@loysius.lk
+                  info@aloysiuscollege.lk
                 </a>
               </li>
             </ul>
@@ -204,7 +208,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <div>&copy; {new Date().getFullYear()} Aloysius College. All rights reserved.</div>
+          <div>&copy; {new Date().getFullYear()} St. Aloysius' College. All rights reserved.</div>
           <div className="flex gap-4">
             <a href="#" className="hover:text-foreground transition-colors">
               Privacy Policy

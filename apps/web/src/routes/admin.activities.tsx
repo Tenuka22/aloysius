@@ -57,6 +57,8 @@ type ActivityItem = {
   name: string;
   description: string | null;
   coverImage: string | null;
+  logoUrl: string | null;
+  bannerUrl: string | null;
   images: string[];
   type: string;
   adminEmail: string | null;
@@ -290,7 +292,7 @@ function AdminActivitiesList() {
       }),
   });
 
-  const allItems = (data ?? []) as ActivityItem[];
+  const allItems = (data ?? []) as unknown as ActivityItem[];
   const filteredItems =
     typeFilter === "all" ? allItems : allItems.filter((item) => item.type === typeFilter);
   const items = filteredItems.slice(

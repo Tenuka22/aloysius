@@ -280,10 +280,12 @@ export function AnnouncementForm({
   mode,
   id,
   onSuccess,
+  activityId,
 }: {
   mode: "create" | "edit";
   id?: string;
   onSuccess: () => void;
+  activityId?: string;
 }) {
   const queryClient = useQueryClient();
 
@@ -297,8 +299,9 @@ export function AnnouncementForm({
     mutationFn: (body: CreateAnnouncementValues) =>
       client.announcements.create({
         ...body,
+        activityId,
         audience: body.audience as "all" | "students" | "parents" | "staff" | "alumni",
-      }),
+      } as any),
     onSuccess: () => {
       toast.success("Announcement created");
       queryClient.invalidateQueries({ queryKey: ["announcements"] });

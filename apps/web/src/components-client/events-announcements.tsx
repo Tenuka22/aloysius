@@ -192,10 +192,15 @@ export function EventsAnnouncements({
                         {item.title}
                       </div>
                       {item.excerpt && (
-                        <div className="text-xs text-muted-foreground group-hover:text-foreground transition-colors mb-2 line-clamp-2">{item.excerpt}</div>
+                        <div className="text-xs text-muted-foreground group-hover:text-foreground transition-colors mb-2 line-clamp-2">
+                          {item.excerpt}
+                        </div>
                       )}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <time dateTime={item.createdAt} className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                        <time
+                          dateTime={item.createdAt}
+                          className="text-xs text-muted-foreground group-hover:text-foreground transition-colors"
+                        >
                           {new Date(item.createdAt).toLocaleDateString()}
                         </time>
                         {item.audience && item.audience !== "all" && (
@@ -263,14 +268,23 @@ export function EventsAnnouncements({
                     </div>
                   )}
                   <div className="relative z-10 p-4">
-                    <time dateTime={item.createdAt} className="text-xs text-muted-foreground group-hover:text-foreground transition-colors block mb-1.5">
-                      {new Date(item.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+                    <time
+                      dateTime={item.createdAt}
+                      className="text-xs text-muted-foreground group-hover:text-foreground transition-colors block mb-1.5"
+                    >
+                      {new Date(item.createdAt).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
                     </time>
                     <div className="font-medium text-foreground group-hover:text-foreground transition-colors mb-1 line-clamp-2">
                       {item.title}
                     </div>
                     {item.excerpt && (
-                      <div className="text-xs text-muted-foreground group-hover:text-foreground transition-colors mb-2 line-clamp-2">{item.excerpt}</div>
+                      <div className="text-xs text-muted-foreground group-hover:text-foreground transition-colors mb-2 line-clamp-2">
+                        {item.excerpt}
+                      </div>
                     )}
                   </div>
                 </Link>

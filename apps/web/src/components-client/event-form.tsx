@@ -415,10 +415,12 @@ export function EventForm({
   mode,
   id,
   onSuccess,
+  activityId,
 }: {
   mode: "create" | "edit";
   id?: string;
   onSuccess?: () => void;
+  activityId?: string;
 }) {
   const queryClient = useQueryClient();
 
@@ -431,7 +433,7 @@ export function EventForm({
   const mutation = useMutation({
     mutationFn: (values: CreateEventValues | UpdateEventValues) => {
       if (mode === "create") {
-        return client.events.create(values as CreateEventValues);
+        return client.events.create({ ...(values as CreateEventValues), activityId } as any);
       }
       return client.events.update({ id: id!, ...values });
     },

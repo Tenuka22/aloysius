@@ -13,6 +13,9 @@ import { tagsRouter } from "./tags";
 import { settingsRouter } from "./settings";
 import { activitiesRouter } from "./activities";
 import { bigMatchesRouter } from "./big-matches";
+import { clubsRouter } from "./clubs";
+import { notificationsRouter } from "./notifications";
+import { clubAlbumsRouter } from "./club-albums";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -36,6 +39,9 @@ export const appRouter = {
   settings: settingsRouter,
   activities: activitiesRouter,
   bigMatches: bigMatchesRouter,
+  clubs: clubsRouter,
+  notifications: notificationsRouter,
+  clubAlbums: clubAlbumsRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

@@ -48,6 +48,7 @@
   "dependencies": {
     "@aloysius-web/env": "workspace:*",
     "dotenv": "catalog:",
+    "vexflow": "^5.0.0",
     "zod": "catalog:"
   },
   "devDependencies": {
