@@ -100,7 +100,7 @@ export function Navbar() {
         <div ref={ctaRef} className="flex items-center gap-3 lg:ml-6">
           <Link
             to="/admissions"
-            className="hidden sm:inline-flex items-center bg-[#FFB203] text-[#013405] font-extrabold text-[13px] tracking-[0.05em] px-[22px] py-[11px] hover:bg-[#FFD45A] transition-colors"
+            className="hidden sm:inline-flex items-center bg-[#FFB203] text-[#013405] font-extrabold text-[13px] tracking-[0.05em] px-4 py-2 hover:bg-[#FFD45A] transition-colors"
           >
             Admissions
           </Link>
@@ -158,7 +158,7 @@ export function Navbar() {
           <Link
             to="/admissions"
             onClick={() => setMobileMenuOpen(false)}
-            className="mt-2 inline-flex items-center justify-center bg-[#FFB203] text-[#013405] font-extrabold text-[13px] tracking-[0.05em] px-[22px] py-[11px]"
+            className="mt-2 inline-flex items-center justify-center bg-[#FFB203] text-[#013405] font-extrabold text-[13px] tracking-[0.05em] px-4 py-2"
           >
             Admissions
           </Link>

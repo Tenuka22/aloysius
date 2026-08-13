@@ -23,6 +23,7 @@ import {
   IconHome,
   IconDevices,
   IconClipboardCheck,
+  IconUserPlus,
 } from "@tabler/icons-react";
 
 const overviewItems = [
@@ -120,6 +121,11 @@ const cmsItems = [
     title: "About",
     url: "/admin/about",
     icon: <IconSchool />,
+  },
+  {
+    title: "Admissions",
+    url: "/admin/admissions",
+    icon: <IconUserPlus />,
   },
   {
     title: "Stats",
