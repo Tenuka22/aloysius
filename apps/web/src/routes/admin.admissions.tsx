@@ -8,9 +8,9 @@ import { client } from "@/utils/orpc";
 import { toast } from "sonner";
 
 const ADMISSIONS_KEYS = [
-  "admissions_badge",
   "admissions_title",
   "admissions_subtitle",
+  "admissions_notice_text",
   "admissions_step1_title",
   "admissions_step1_desc",
   "admissions_step2_title",
@@ -19,36 +19,83 @@ const ADMISSIONS_KEYS = [
   "admissions_step3_desc",
   "admissions_step4_title",
   "admissions_step4_desc",
+  "requirement1",
+  "requirement2",
+  "requirement3",
+  "requirement4",
+  "requirement5",
+  "date1_label",
+  "date1_value",
+  "date2_label",
+  "date2_value",
+  "date3_label",
+  "date3_value",
+  "date4_label",
+  "date4_value",
+  "download1_title",
+  "download1_url",
+  "download2_title",
+  "download2_url",
+  "download3_title",
+  "download3_url",
+  "faq1_q",
+  "faq1_a",
+  "faq2_q",
+  "faq2_a",
+  "faq3_q",
+  "faq3_a",
+  "faq4_q",
+  "faq4_a",
   "admissions_cta_title",
   "admissions_cta_desc",
   "admissions_cta_button_text",
   "admissions_cta_button_url",
-  "admissions_contact_email",
 ];
 
 const DEFAULTS: Record<string, string> = {
-  admissions_badge: "Join Us",
-  admissions_title: "How to Apply",
+  admissions_title: "Become an Aloysian",
   admissions_subtitle:
-    "Become part of the St. Aloysius' College family. Follow these simple steps to begin your journey with us.",
+    "Everything a parent needs to know about joining St. Aloysius' College - process, requirements and key dates.",
+  admissions_notice_text: "",
   admissions_step1_title: "Review Requirements",
-  admissions_step1_desc:
-    "Check eligibility and the documents needed before applying. Ensure you meet the academic and age requirements for your desired grade level.",
+  admissions_step1_desc: "Check eligibility and the documents needed before applying.",
   admissions_step2_title: "Submit Application",
-  admissions_step2_desc:
-    "Complete and hand in the official application form by the deadline. Include all required supporting documents.",
-  admissions_step3_title: "Interview & Selection",
-  admissions_step3_desc:
-    "Shortlisted families are invited for the selection process. This includes an interview, entrance assessment, and interaction with faculty.",
+  admissions_step2_desc: "Complete and hand in the official application form by the deadline.",
+  admissions_step3_title: "Interview / Selection",
+  admissions_step3_desc: "Shortlisted families are invited for the selection process.",
   admissions_step4_title: "Enrolment",
-  admissions_step4_desc:
-    "Successful applicants complete enrolment and join the College. Confirm your place by attending orientation.",
-  admissions_cta_title: "Ready to Apply?",
-  admissions_cta_desc:
-    "Download the application form or contact our admissions office for more information.",
-  admissions_cta_button_text: "Contact Admissions",
+  admissions_step4_desc: "Successful applicants complete enrolment and join the College.",
+  requirement1: "Completed official application form",
+  requirement2: "Birth certificate and identity documents",
+  requirement3: "Proof of residence",
+  requirement4: "Previous school records where applicable",
+  requirement5: "Requirements per Ministry of Education circulars",
+  date1_label: "Applications open",
+  date1_value: "",
+  date2_label: "Application deadline",
+  date2_value: "",
+  date3_label: "Interviews / selection",
+  date3_value: "",
+  date4_label: "Term begins",
+  date4_value: "",
+  download1_title: "Grade 1 Application Form",
+  download1_url: "#",
+  download2_title: "Admission Instructions & Circular",
+  download2_url: "#",
+  download3_title: "Required Documents Checklist",
+  download3_url: "#",
+  faq1_q: "When do admissions open?",
+  faq1_a: "Answer text managed by the school office.",
+  faq2_q: "What grades accept new students?",
+  faq2_a: "Answer text managed by the school office.",
+  faq3_q: "What documents are required?",
+  faq3_a: "Answer text managed by the school office.",
+  faq4_q: "How are applicants selected?",
+  faq4_a: "Answer text managed by the school office.",
+  admissions_cta_title: "Still have questions?",
+  admissions_cta_desc: "The College office is happy to help.",
+  admissions_cta_button_text: "Contact the College",
   admissions_cta_button_url: "mailto:admissions@aloysiuscollege.lk",
-  admissions_contact_email: "admissions@aloysiuscollege.lk",
 };
 
 function Field({
@@ -57,23 +104,26 @@ function Field({
   onChange,
   placeholder,
   multiline,
+  description,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   multiline?: boolean;
+  description?: string;
 }) {
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium leading-none">{label}</label>
+      {description && <p className="text-xs text-muted-foreground">{description}</p>}
       {multiline ? (
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           rows={3}
-          className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px]"
+          className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 min-h-20"
         />
       ) : (
         <input
@@ -85,6 +135,15 @@ function Field({
         />
       )}
     </div>
+  );
+}
+
+function SectionHeader({ title, description }: { title: string; description?: string }) {
+  return (
+    <h2 className="text-lg font-semibold border-b pb-2 mb-2">
+      {title}
+      {description && <p className="text-sm font-normal text-muted-foreground mt-1">{description}</p>}
+    </h2>
   );
 }
 
@@ -137,50 +196,126 @@ function AdminAdmissions() {
   return (
     <div className="space-y-8 p-6 w-full max-w-4xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Admissions Page Content</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Admissions Page Content</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Customize every section of the admissions page
+          </p>
+        </div>
         <Button onClick={handleSave} disabled={mutation.isPending}>
           {mutation.isPending ? "Saving..." : "Save Changes"}
         </Button>
       </div>
 
       <section className="border bg-card p-6 space-y-4">
-        <h2 className="text-lg font-semibold border-b pb-2">Hero Section</h2>
-        <Field
-          label="Badge"
-          value={getValue("admissions_badge")}
-          onChange={(v) => setField("admissions_badge", v)}
-          placeholder="e.g. Join Us"
-        />
+        <SectionHeader title="Hero Section" />
         <Field
           label="Title"
           value={getValue("admissions_title")}
           onChange={(v) => setField("admissions_title", v)}
-          placeholder="e.g. How to Apply"
         />
         <Field
-          label="Subtitle"
+          label="Intro"
           value={getValue("admissions_subtitle")}
           onChange={(v) => setField("admissions_subtitle", v)}
-          placeholder="Short description"
           multiline
         />
       </section>
 
       <section className="border bg-card p-6 space-y-4">
-        <h2 className="text-lg font-semibold border-b pb-2">Steps</h2>
+        <SectionHeader
+          title="Priority Notice"
+          description="Thin banner shown below the hero. Leave empty to hide it."
+        />
+        <Field
+          label="Notice Text"
+          value={getValue("admissions_notice_text")}
+          onChange={(v) => setField("admissions_notice_text", v)}
+          placeholder="e.g. Grade 1 application deadline and interview dates now open"
+        />
+      </section>
+
+      <section className="border bg-card p-6 space-y-4">
+        <SectionHeader title="Application Process" description="Four steps shown in order" />
         {[1, 2, 3, 4].map((num) => (
           <div key={num} className="grid grid-cols-2 gap-4">
             <Field
               label={`Step ${num} Title`}
               value={getValue(`admissions_step${num}_title`)}
               onChange={(v) => setField(`admissions_step${num}_title`, v)}
-              placeholder="Step title"
             />
             <Field
               label={`Step ${num} Description`}
               value={getValue(`admissions_step${num}_desc`)}
               onChange={(v) => setField(`admissions_step${num}_desc`, v)}
-              placeholder="Step description"
+            />
+          </div>
+        ))}
+      </section>
+
+      <section className="border bg-card p-6 space-y-4">
+        <SectionHeader title="Requirements" description="Shown as a checklist" />
+        {[1, 2, 3, 4, 5].map((num) => (
+          <Field
+            key={num}
+            label={`Requirement ${num}`}
+            value={getValue(`requirement${num}`)}
+            onChange={(v) => setField(`requirement${num}`, v)}
+          />
+        ))}
+      </section>
+
+      <section className="border bg-card p-6 space-y-4">
+        <SectionHeader title="Key Dates" />
+        {[1, 2, 3, 4].map((num) => (
+          <div key={num} className="grid grid-cols-2 gap-4">
+            <Field
+              label={`Date ${num} Label`}
+              value={getValue(`date${num}_label`)}
+              onChange={(v) => setField(`date${num}_label`, v)}
+            />
+            <Field
+              label={`Date ${num} Value`}
+              value={getValue(`date${num}_value`)}
+              onChange={(v) => setField(`date${num}_value`, v)}
+              placeholder="e.g. 15 January 2027"
+            />
+          </div>
+        ))}
+      </section>
+
+      <section className="border bg-card p-6 space-y-4">
+        <SectionHeader title="Downloads" description="Link to already-hosted PDF files" />
+        {[1, 2, 3].map((num) => (
+          <div key={num} className="grid grid-cols-2 gap-4">
+            <Field
+              label={`Download ${num} Title`}
+              value={getValue(`download${num}_title`)}
+              onChange={(v) => setField(`download${num}_title`, v)}
+            />
+            <Field
+              label={`Download ${num} URL`}
+              value={getValue(`download${num}_url`)}
+              onChange={(v) => setField(`download${num}_url`, v)}
+              placeholder="https://..."
+            />
+          </div>
+        ))}
+      </section>
+
+      <section className="border bg-card p-6 space-y-4">
+        <SectionHeader title="FAQs" />
+        {[1, 2, 3, 4].map((num) => (
+          <div key={num} className="space-y-2 border rounded-lg p-4">
+            <Field
+              label={`FAQ ${num} Question`}
+              value={getValue(`faq${num}_q`)}
+              onChange={(v) => setField(`faq${num}_q`, v)}
+            />
+            <Field
+              label={`FAQ ${num} Answer`}
+              value={getValue(`faq${num}_a`)}
+              onChange={(v) => setField(`faq${num}_a`, v)}
               multiline
             />
           </div>
@@ -188,26 +323,22 @@ function AdminAdmissions() {
       </section>
 
       <section className="border bg-card p-6 space-y-4">
-        <h2 className="text-lg font-semibold border-b pb-2">Call to Action</h2>
+        <SectionHeader title="Contact Callout" description="Shown after the FAQs" />
         <Field
-          label="CTA Title"
+          label="Title"
           value={getValue("admissions_cta_title")}
           onChange={(v) => setField("admissions_cta_title", v)}
-          placeholder="e.g. Ready to Apply?"
         />
         <Field
-          label="CTA Description"
+          label="Description"
           value={getValue("admissions_cta_desc")}
           onChange={(v) => setField("admissions_cta_desc", v)}
-          placeholder="CTA description"
-          multiline
         />
         <div className="grid grid-cols-2 gap-4">
           <Field
             label="Button Text"
             value={getValue("admissions_cta_button_text")}
             onChange={(v) => setField("admissions_cta_button_text", v)}
-            placeholder="e.g. Contact Admissions"
           />
           <Field
             label="Button URL"
@@ -216,12 +347,6 @@ function AdminAdmissions() {
             placeholder="e.g. mailto:admissions@aloysiuscollege.lk"
           />
         </div>
-        <Field
-          label="Contact Email"
-          value={getValue("admissions_contact_email")}
-          onChange={(v) => setField("admissions_contact_email", v)}
-          placeholder="e.g. admissions@aloysiuscollege.lk"
-        />
       </section>
     </div>
   );
