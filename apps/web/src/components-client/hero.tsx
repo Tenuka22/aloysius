@@ -49,7 +49,7 @@ export function Hero({ settings }: { settings?: Record<string, string> }) {
   return (
     <section
       ref={sectionRef}
-      className="relative bg-[#013405] overflow-hidden"
+      className="relative bg-green-dark overflow-hidden"
       style={{ height: "92vh", minHeight: 640 }}
     >
       {bgImage && (
@@ -75,13 +75,13 @@ export function Hero({ settings }: { settings?: Record<string, string> }) {
         style={{ right: -120, bottom: -160, height: 640, width: "auto" }}
       />
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-[#FFF8E7] px-6">
-        <div className="text-[11px] tracking-[0.5em] font-bold text-[#FFB203] mb-6">
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-cream px-6">
+        <div className="text-[11px] tracking-[0.5em] font-bold text-gold mb-6">
           {s("hero_badge").toUpperCase()}
         </div>
         <h1
           ref={headingRef}
-          className="font-['Cormorant_Garamond'] font-semibold leading-[1.02] m-0"
+          className="font-heading font-semibold leading-[1.02] m-0"
           style={{ fontSize: "clamp(48px, 7vw, 96px)" }}
         >
           {titleLines.map((line: string, i: number) => (
@@ -91,33 +91,33 @@ export function Hero({ settings }: { settings?: Record<string, string> }) {
             </span>
           ))}
         </h1>
-        <div className="mt-4.5 text-[13px] tracking-[0.42em] font-semibold text-[#FFF8E7]/85">
+        <div className="mt-4.5 text-[13px] tracking-[0.42em] font-semibold text-cream/85">
           GALLE &bull; SRI LANKA
         </div>
-        <div className="w-14 h-0.5 bg-[#FFB203] my-8.5" />
+        <div className="w-14 h-0.5 bg-gold my-8.5" />
         <p
           ref={taglineRef}
-          className="font-['Cormorant_Garamond'] italic text-[26px] m-0 text-[#FFF8E7]/95"
+          className="font-heading italic text-[26px] m-0 text-cream/95"
         >
           {s("hero_tagline")}
         </p>
         <div ref={buttonsRef} className="flex flex-col sm:flex-row gap-4 mt-11">
           <a
             href={s("hero_cta1_url") || "/about"}
-            className="inline-flex items-center justify-center bg-[#FFB203] text-[#013405] font-extrabold text-sm tracking-wider px-8.5 py-3.75 hover:bg-[#FFD45A] transition-colors"
+            className="inline-flex items-center justify-center bg-gold text-green-dark font-extrabold text-sm tracking-wider px-8.5 py-3.75 hover:bg-gold-light transition-colors"
           >
             {s("hero_cta1_text") || "Explore the College"}
           </a>
           <a
             href={s("hero_cta2_url") || "/admissions"}
-            className="inline-flex items-center justify-center border border-[#FFF8E7]/60 text-[#FFF8E7] font-bold text-sm tracking-wider px-8.5 py-3.75 hover:border-[#FFB203] hover:text-[#FFB203] transition-colors"
+            className="inline-flex items-center justify-center border border-cream/60 text-cream font-bold text-sm tracking-wider px-8.5 py-3.75 hover:border-gold hover:text-gold transition-colors"
           >
             {s("hero_cta2_text") || "Admissions"}
           </a>
         </div>
       </div>
 
-      <div className="absolute bottom-6.5 left-1/2 -translate-x-1/2 text-[#FFF8E7]/60 text-[10px] tracking-[0.3em] pointer-events-none">
+      <div className="absolute bottom-6.5 left-1/2 -translate-x-1/2 text-cream/60 text-[10px] tracking-[0.3em] pointer-events-none">
         SCROLL
       </div>
     </section>

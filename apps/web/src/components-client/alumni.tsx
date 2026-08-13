@@ -45,7 +45,7 @@ export function Alumni({ settings }: { settings?: Record<string, string> }) {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden bg-[#013405] text-[#FFF8E7] py-24 sm:py-32.5 px-4 sm:px-6 lg:px-12"
+      className="relative overflow-hidden bg-green-dark text-cream py-24 sm:py-32.5 px-4 sm:px-6 lg:px-12"
     >
       <img
         src="/logo.png"
@@ -56,25 +56,25 @@ export function Alumni({ settings }: { settings?: Record<string, string> }) {
       />
       <div className="relative mx-auto max-w-270 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-14 lg:gap-20 items-center">
         <div data-animate>
-          <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-5">
+          <div className="text-[11px] tracking-[0.4em] font-bold text-gold mb-5">
             OLD BOYS&rsquo; ASSOCIATION
           </div>
-          <h2 className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[56px] leading-[1.08] mb-6.5">
+          <h2 className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[56px] leading-[1.08] mb-6.5">
             &ldquo;{s("alumni_quote")}&rdquo;
           </h2>
-          <p className="text-base leading-[1.75] text-[#FFF8E7]/75 max-w-[54ch] mb-10">
+          <p className="text-base leading-[1.75] text-cream/75 max-w-[54ch] mb-10">
             {s("alumni_description")}
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <a
               href={s("alumni_cta1_url") || "#"}
-              className="inline-flex items-center justify-center bg-[#FFB203] text-[#013405] font-extrabold text-sm px-7.5 py-3.5 hover:bg-[#FFD45A] transition-colors"
+              className="inline-flex items-center justify-center bg-gold text-green-dark font-extrabold text-sm px-7.5 py-3.5 hover:bg-gold-light transition-colors"
             >
               {s("alumni_cta1_text")}
             </a>
             <a
               href={s("alumni_cta2_url") || "#"}
-              className="inline-flex items-center justify-center border border-[#FFF8E7]/50 text-[#FFF8E7] font-bold text-sm px-7.5 py-3.5 hover:border-[#FFB203] hover:text-[#FFB203] transition-colors"
+              className="inline-flex items-center justify-center border border-cream/50 text-cream font-bold text-sm px-7.5 py-3.5 hover:border-gold hover:text-gold transition-colors"
             >
               {s("alumni_cta2_text")}
             </a>
@@ -84,8 +84,8 @@ export function Alumni({ settings }: { settings?: Record<string, string> }) {
           {photo ? (
             <img src={photo} alt="" className="w-full h-[300px] sm:h-110 object-cover" />
           ) : (
-            <div className="w-full h-[300px] sm:h-110 flex items-center justify-center bg-[#FFF8E7]/5">
-              <span className="text-[11px] tracking-widest text-[#FFF8E7]/40 font-semibold">
+            <div className="w-full h-[300px] sm:h-110 flex items-center justify-center bg-cream/5">
+              <span className="text-[11px] tracking-widest text-cream/40 font-semibold">
                 ARCHIVAL PHOTOGRAPH
               </span>
             </div>

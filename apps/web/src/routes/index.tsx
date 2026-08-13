@@ -14,16 +14,6 @@ import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",
-      },
-    ],
-  }),
   loader: async () => {
     const [settings, statsData, achievementsData, galleryData, eventsData, newsData, announcementsData] =
       await Promise.all([
@@ -54,7 +44,7 @@ function Home() {
   const { settings, stats, achievements, gallery, events, news, announcements } = Route.useLoaderData();
 
   return (
-    <div className="min-h-screen bg-[#FFF8E7]" style={{ fontFamily: "'Manrope', sans-serif" }}>
+    <div className="min-h-screen bg-cream">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground focus:outline-none"

@@ -62,27 +62,27 @@ export function Gallery({
   }, [items.length]);
 
   return (
-    <section ref={sectionRef} className="bg-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
+    <section ref={sectionRef} className="bg-cream py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
       <div className="mx-auto max-w-295">
         <div data-animate className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14">
           <div>
-            <div className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+            <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
               MEDIA
             </div>
-            <h2 className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] m-0">
+            <h2 className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] m-0">
               {heading}
             </h2>
           </div>
           <a
             href="/gallery"
-            className="font-bold text-sm text-[#013405] border-b-2 border-[#FFB203] pb-1.5 whitespace-nowrap"
+            className="font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5 whitespace-nowrap"
           >
             Full Gallery &rarr;
           </a>
         </div>
 
         {items.length === 0 ? (
-          <div className="text-center text-[#013405]/50 py-12">No gallery albums published yet.</div>
+          <div className="text-center text-green-dark/50 py-12">No gallery albums published yet.</div>
         ) : (
           <div ref={gridRef} className="grid grid-cols-2 sm:grid-cols-4 auto-rows-32.5 sm:auto-rows-37.5 gap-3.5">
             {items.map((item, i) => (
@@ -97,7 +97,7 @@ export function Gallery({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#013405]/10 to-[#013405]/5" />
+                  <div className="w-full h-full bg-gradient-to-br from-green-dark/10 to-green-dark/5" />
                 )}
               </div>
             ))}

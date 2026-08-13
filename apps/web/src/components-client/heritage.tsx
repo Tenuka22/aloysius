@@ -18,9 +18,9 @@ function ArchivalImage({ src, className }: { src?: string; className?: string })
   }
   return (
     <div
-      className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-[#013405]/10 to-[#013405]/5 ${className ?? ""}`}
+      className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-green-dark/10 to-green-dark/5 ${className ?? ""}`}
     >
-      <span className="text-[11px] tracking-widest text-[#013405]/40 font-semibold">
+      <span className="text-[11px] tracking-widest text-green-dark/40 font-semibold">
         ARCHIVE PHOTO
       </span>
     </div>
@@ -55,7 +55,7 @@ export function Heritage({ settings }: { settings?: Record<string, string> }) {
   const tradition = new Date().getFullYear() - foundingYear;
 
   return (
-    <section ref={sectionRef} className="bg-[#FFF8E7] py-24 sm:py-[120px] px-4 sm:px-6 lg:px-12">
+    <section ref={sectionRef} className="bg-cream py-24 sm:py-[120px] px-4 sm:px-6 lg:px-12">
       <div className="mx-auto max-w-[1180px] grid grid-cols-1 lg:grid-cols-[2px_minmax(0,1fr)_minmax(0,440px)] gap-10 lg:gap-14 items-start">
         <div
           data-animate
@@ -63,38 +63,38 @@ export function Heritage({ settings }: { settings?: Record<string, string> }) {
           style={{ background: "linear-gradient(180deg, #FFB203, rgba(255,178,3,0.08))" }}
         />
         <div data-animate>
-          <div className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-5">
+          <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-5">
             OUR HERITAGE
           </div>
-          <h2 className="font-['Cormorant_Garamond'] font-semibold text-[#013405] text-4xl sm:text-5xl lg:text-[58px] leading-[1.05] mb-7">
+          <h2 className="font-heading font-semibold text-green-dark text-4xl sm:text-5xl lg:text-[58px] leading-[1.05] mb-7">
             A Legacy of
             <br />
             Excellence
           </h2>
-          <p className="text-[16.5px] leading-[1.75] text-[#013405]/80 max-w-[52ch] mb-4">
+          <p className="text-[16.5px] leading-[1.75] text-green-dark/80 max-w-[52ch] mb-4">
             {s("heritage_intro")}
           </p>
           <div className="flex gap-11 my-11">
             <div>
-              <div className="font-['Cormorant_Garamond'] text-4xl font-semibold text-[#013405]">
+              <div className="font-heading text-4xl font-semibold text-green-dark">
                 Est.&nbsp;{foundingYear}
               </div>
-              <div className="text-xs tracking-[0.14em] text-[#013405]/60 mt-1">
+              <div className="text-xs tracking-[0.14em] text-green-dark/60 mt-1">
                 FOUNDED IN GALLE
               </div>
             </div>
             <div>
-              <div className="font-['Cormorant_Garamond'] text-4xl font-semibold text-[#013405]">
+              <div className="font-heading text-4xl font-semibold text-green-dark">
                 {tradition}&nbsp;Years
               </div>
-              <div className="text-xs tracking-[0.14em] text-[#013405]/60 mt-1">
+              <div className="text-xs tracking-[0.14em] text-green-dark/60 mt-1">
                 OF ALOYSIAN TRADITION
               </div>
             </div>
           </div>
           <a
             href="/about"
-            className="inline-flex items-center gap-2.5 font-bold text-sm text-[#013405] border-b-2 border-[#FFB203] pb-1.5"
+            className="inline-flex items-center gap-2.5 font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5"
           >
             Explore Our History <span>&rarr;</span>
           </a>
