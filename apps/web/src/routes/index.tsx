@@ -1,49 +1,49 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { NoticeStrip } from "@/components-client/notice-strip";
 import { Navbar } from "@/components-client/navbar";
 import { Hero } from "@/components-client/hero";
-import { Stats } from "@/components-client/stats";
-import { StudentWorks } from "@/components-client/student-works";
-import { Achievements } from "@/components-client/achievements";
-import { Gallery } from "@/components-client/gallery";
+import { Heritage } from "@/components-client/heritage";
+import { PrincipalMessage } from "@/components-client/principal-message";
+import { Academics } from "@/components-client/academics";
+import { StudentLife } from "@/components-client/student-life";
 import { EventsAnnouncements } from "@/components-client/events-announcements";
-import { ClubAlbumsHome } from "@/components-client/club-albums-home";
+import { Achievements } from "@/components-client/achievements";
+import { Alumni } from "@/components-client/alumni";
+import { Gallery } from "@/components-client/gallery";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",
+      },
+    ],
+  }),
   loader: async () => {
-    const [
-      settings,
-      statsData,
-      studentWorksData,
-      achievementsData,
-      galleryData,
-      eventsData,
-      newsData,
-      announcementsData,
-      clubAlbumsData,
-    ] = await Promise.all([
-      client.settings.getAll(),
-      client.stats.list(),
-      client.studentWorks.list({ page: 1, pageSize: 6, status: "published" }),
-      client.achievements.list({ page: 1, pageSize: 6, status: "published" }),
-      client.gallery.list({ page: 1, pageSize: 6, status: "published" }),
-      client.events.list({ page: 1, pageSize: 10, status: "published" }),
-      client.news.list({ page: 1, pageSize: 10, status: "published" }),
-      client.announcements.list({ page: 1, pageSize: 10, status: "published" }),
-      client.clubAlbums.listFeatured(),
-    ]);
+    const [settings, statsData, achievementsData, galleryData, eventsData, newsData, announcementsData] =
+      await Promise.all([
+        client.settings.getAll(),
+        client.stats.list(),
+        client.achievements.list({ page: 1, pageSize: 6, status: "published" }),
+        client.gallery.list({ page: 1, pageSize: 6, status: "published" }),
+        client.events.list({ page: 1, pageSize: 10, status: "published" }),
+        client.news.list({ page: 1, pageSize: 10, status: "published" }),
+        client.announcements.list({ page: 1, pageSize: 10, status: "published" }),
+      ]);
 
     return {
       settings,
       stats: statsData,
-      studentWorks: studentWorksData.rows,
       achievements: achievementsData.rows,
       gallery: galleryData.rows,
       events: eventsData.rows,
       news: newsData.rows,
       announcements: announcementsData.rows,
-      clubAlbums: clubAlbumsData,
     };
   },
   staleTime: 5 * 60_000,
@@ -51,55 +51,35 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const {
-    settings,
-    stats,
-    studentWorks,
-    achievements,
-    gallery,
-    events,
-    news,
-    announcements,
-    clubAlbums,
-  } = Route.useLoaderData();
-
-  const carouselItems = [
-    ...news.slice(0, 3).map((n: any) => ({ ...n, source: "news" as const })),
-    ...events.slice(0, 3).map((e: any) => ({ ...e, source: "events" as const })),
-    ...studentWorks.slice(0, 3).map((sw: any) => ({ ...sw, source: "student-works" as const })),
-    ...achievements.slice(0, 3).map((a: any) => ({ ...a, source: "achievements" as const })),
-    ...gallery.slice(0, 2).map((g: any) => ({ ...g, source: "gallery" as const })),
-    ...announcements.slice(0, 2).map((a: any) => ({ ...a, source: "announcements" as const })),
-  ].sort((a, b) => {
-    const da = a.publishedAt ?? a.createdAt ?? "";
-    const db = b.publishedAt ?? b.createdAt ?? "";
-    return db.localeCompare(da);
-  });
+  const { settings, stats, achievements, gallery, events, news, announcements } = Route.useLoaderData();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#FFF8E7]" style={{ fontFamily: "'Manrope', sans-serif" }}>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground focus:outline-none"
       >
         Skip to main content
       </a>
+      <NoticeStrip settings={settings} />
       <Navbar />
       <main id="main-content">
-        <Hero settings={settings} carouselItems={carouselItems} announcements={announcements} />
-        <Stats initialData={stats} />
-        <StudentWorks initialData={studentWorks} settings={settings} />
-        <Achievements initialData={achievements} settings={settings} />
-        <Gallery initialData={gallery} settings={settings} />
+        <Hero settings={settings} />
+        <Heritage settings={settings} />
+        <PrincipalMessage settings={settings} />
+        <Academics settings={settings} stats={stats} />
+        <StudentLife settings={settings} />
         <EventsAnnouncements
           initialEvents={events}
           initialNews={news}
           initialAnnouncements={announcements}
           settings={settings}
         />
-        <ClubAlbumsHome initialAlbums={clubAlbums} settings={settings} />
+        <Achievements initialData={achievements} settings={settings} />
+        <Alumni settings={settings} />
+        <Gallery initialData={gallery} settings={settings} />
       </main>
-      <Footer />
+      <Footer settings={settings} />
     </div>
   );
 }

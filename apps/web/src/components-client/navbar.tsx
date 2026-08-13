@@ -9,8 +9,8 @@ import { UserMenu } from "@/components-client/user-menu";
 gsap.registerPlugin(ScrollTrigger);
 
 const navLinks = [
-  { label: "About Us", to: "/about" },
-  { label: "Admissions", to: "/admissions" },
+  { label: "Home", to: "/" },
+  { label: "About", to: "/about" },
   { label: "Student Works", to: "/student-works" },
   { label: "Achievements", to: "/achievements" },
   { label: "Gallery", to: "/gallery" },
@@ -19,7 +19,7 @@ const navLinks = [
 
 export function Navbar() {
   const headerRef = useRef<HTMLElement>(null);
-  const logoRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLAnchorElement>(null);
   const linksRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -54,34 +54,42 @@ export function Navbar() {
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-border"
+      className="sticky top-0 z-50 w-full bg-[#013405] text-[#FFF8E7] border-b border-[#FFB203]/25"
     >
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-[78px] max-w-7xl items-center gap-8 px-4 sm:px-6 lg:px-12">
         {/* Logo */}
         <a
           href="/"
-          aria-label="Aloysius College - Home"
+          aria-label="St. Aloysius' College - Home"
           ref={logoRef}
-          className="flex items-center gap-2 shrink-0"
+          className="flex items-center gap-3 shrink-0"
         >
-          <img src="/logo.png" alt="Aloysius College" className="size-9 object-contain" />
-          <div className="leading-none">
-            <div className="text-xs font-medium tracking-wide">ALOYSIUS COLLEGE</div>
-            <div className="text-[9px] tracking-widest text-muted-foreground">NIL DESPERANDUM</div>
-          </div>
+          <img src="/logo.png" alt="St. Aloysius' College crest" className="h-11 w-auto object-contain" />
+          <span className="leading-[1.15] hidden sm:block">
+            <span className="block font-extrabold text-[15px] tracking-[0.06em]">
+              ST. ALOYSIUS&rsquo; COLLEGE
+            </span>
+            <span className="block text-[10px] tracking-[0.28em] text-[#FFB203]">
+              GALLE &bull; SRI LANKA
+            </span>
+          </span>
         </a>
 
         {/* Nav Links */}
         <nav
           ref={linksRef}
           aria-label="Main navigation"
-          className="hidden lg:flex items-center gap-1"
+          className="hidden lg:flex items-center gap-6 ml-auto text-[13.5px] font-semibold"
         >
           {navLinks.map((item) => (
             <Link
               key={item.label}
               to={item.to}
-              className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted"
+              className="py-1.5 border-b-2 border-transparent text-[#FFF8E7] hover:text-[#FFB203] transition-colors"
+              activeProps={{
+                className: "!text-[#FFB203] !border-[#FFB203]",
+              }}
+              activeOptions={{ exact: item.to === "/" }}
             >
               {item.label}
             </Link>
@@ -89,10 +97,16 @@ export function Navbar() {
         </nav>
 
         {/* Right Side */}
-        <div ref={ctaRef} className="flex items-center gap-3">
+        <div ref={ctaRef} className="flex items-center gap-3 lg:ml-6">
+          <Link
+            to="/admissions"
+            className="hidden sm:inline-flex items-center bg-[#FFB203] text-[#013405] font-extrabold text-[13px] tracking-[0.05em] px-[22px] py-[11px] hover:bg-[#FFD45A] transition-colors"
+          >
+            Admissions
+          </Link>
           <UserMenu />
           <button
-            className="lg:hidden inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="lg:hidden inline-flex size-8 items-center justify-center text-[#FFF8E7] hover:text-[#FFB203] transition-colors"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -125,7 +139,7 @@ export function Navbar() {
       {/* Mobile Menu */}
       <div
         ref={mobileMenuRef}
-        className="lg:hidden overflow-hidden border-t border-border bg-white/95 backdrop-blur"
+        className="lg:hidden overflow-hidden border-t border-[#FFB203]/20 bg-[#013405]"
         style={{ height: 0, opacity: 0 }}
       >
         <nav className="flex flex-col px-4 py-3 gap-1">
@@ -134,11 +148,20 @@ export function Navbar() {
               key={item.label}
               to={item.to}
               onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted"
+              className="px-3 py-2.5 text-sm font-semibold text-[#FFF8E7] hover:text-[#FFB203] transition-colors"
+              activeProps={{ className: "!text-[#FFB203]" }}
+              activeOptions={{ exact: item.to === "/" }}
             >
               {item.label}
             </Link>
           ))}
+          <Link
+            to="/admissions"
+            onClick={() => setMobileMenuOpen(false)}
+            className="mt-2 inline-flex items-center justify-center bg-[#FFB203] text-[#013405] font-extrabold text-[13px] tracking-[0.05em] px-[22px] py-[11px]"
+          >
+            Admissions
+          </Link>
         </nav>
       </div>
     </header>
