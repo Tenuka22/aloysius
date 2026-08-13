@@ -99,9 +99,7 @@ export function EventsAnnouncements({
     return () => ctx.revert();
   }, [merged.length]);
 
-  if (!featured) return null;
-
-  const featuredMeta = sourceMeta[featured.source];
+  const featuredMeta = featured ? sourceMeta[featured.source] : null;
 
   return (
     <section
@@ -129,6 +127,11 @@ export function EventsAnnouncements({
           </a>
         </div>
 
+        {!featured || !featuredMeta ? (
+          <div className="text-center text-[#013405]/50 py-12">
+            No news, events, or announcements published yet.
+          </div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-10 items-start">
           <Link
             data-animate
@@ -180,6 +183,7 @@ export function EventsAnnouncements({
             )}
           </div>
         </div>
+        )}
       </div>
     </section>
   );
