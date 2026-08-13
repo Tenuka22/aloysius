@@ -2,53 +2,22 @@
 
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
-import { HeroCarousel } from "./hero-carousel";
-import { AnnouncementsMarquee } from "./marquee";
 
 const DEFAULTS: Record<string, string> = {
-  hero_badge: "Est. 1862",
-  hero_title: "Where Excellence\nIs Made",
-  hero_subtitle:
-    "St. Aloysius' College, Galle - nurturing minds, building character, and inspiring generations of leaders since 1862.",
-  hero_cta1_text: "Explore Our College",
+  hero_badge: "Certa Viriliter",
+  hero_title: "St. Aloysius'\nCollege",
+  hero_tagline: "Tradition. Excellence. Leadership.",
+  hero_cta1_text: "Explore the College",
   hero_cta1_url: "/about",
-  hero_cta2_text: "Student Works",
-  hero_cta2_url: "/student-works",
+  hero_cta2_text: "Admissions",
+  hero_cta2_url: "/admissions",
 };
 
-type CarouselItem = {
-  id: string;
-  title: string;
-  excerpt?: string | null;
-  coverImage?: string | null;
-  category?: string;
-  tags?: string[];
-  source: "news" | "events" | "student-works" | "achievements" | "gallery" | "announcements";
-};
-
-type Announcement = {
-  id: string;
-  title: string;
-  slug?: string;
-  excerpt?: string | null;
-  createdAt?: string;
-  audience?: string | null;
-};
-
-export function Hero({
-  settings,
-  carouselItems,
-  announcements,
-}: {
-  settings?: Record<string, string>;
-  carouselItems?: CarouselItem[];
-  announcements?: Announcement[];
-}) {
+export function Hero({ settings }: { settings?: Record<string, string> }) {
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const textRef = useRef<HTMLParagraphElement>(null);
+  const taglineRef = useRef<HTMLParagraphElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
-  const carouselRef = useRef<HTMLDivElement>(null);
 
   const s = (key: string) => settings?.[key] || DEFAULTS[key] || "";
 
@@ -58,7 +27,7 @@ export function Hero({
 
       tl.fromTo(headingRef.current, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 })
         .fromTo(
-          textRef.current,
+          taglineRef.current,
           { opacity: 0, y: 20 },
           { opacity: 1, y: 0, duration: 0.6 },
           "-=0.4",
@@ -68,12 +37,6 @@ export function Hero({
           { opacity: 0, y: 15 },
           { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 },
           "-=0.3",
-        )
-        .fromTo(
-          carouselRef.current,
-          { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 0.7 },
-          "-=0.2",
         );
     }, sectionRef);
 
@@ -81,80 +44,81 @@ export function Hero({
   }, []);
 
   const titleLines = s("hero_title").split("\n");
+  const bgImage = settings?.hero_bg_image;
 
   return (
-    <section ref={sectionRef}>
-      <div
-        className="relative bg-[#0a1f0a] text-white size-full flex items-center justify-center"
-        style={{ minHeight: "calc(100svh - 3.5rem)" }}
-      >
-        {/* Subtle texture overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-          }}
+    <section
+      ref={sectionRef}
+      className="relative bg-[#013405] overflow-hidden"
+      style={{ height: "92vh", minHeight: 640 }}
+    >
+      {bgImage && (
+        <img
+          src={bgImage}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          aria-hidden="true"
         />
+      )}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(1,52,5,0.5) 0%, rgba(1,52,5,0.72) 60%, rgba(1,52,5,0.94) 100%)",
+        }}
+      />
+      <img
+        src="/logo.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute pointer-events-none opacity-[0.07]"
+        style={{ right: -120, bottom: -160, height: 640, width: "auto" }}
+      />
 
-        <div className="py-20 sm:py-28 lg:py-36 px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl text-center">
-            {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 text-[#c9a227]/80 text-xs sm:text-sm font-medium tracking-widest uppercase mb-6">
-              <span className="w-8 h-px bg-[#c9a227]/40" />
-              {s("hero_badge") || "Est. 1862"}
-              <span className="w-8 h-px bg-[#c9a227]/40" />
-            </div>
-
-            <h1
-              ref={headingRef}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight leading-[1.05] mb-6"
-            >
-              {titleLines.map((line: string, i: number) => (
-                <span key={i}>
-                  {i === titleLines.length - 1 ? (
-                    <span className="text-[#c9a227]">{line}</span>
-                  ) : (
-                    line
-                  )}
-                  {i < titleLines.length - 1 && <br />}
-                </span>
-              ))}
-            </h1>
-
-            <p
-              ref={textRef}
-              className="text-white/50 text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed"
-            >
-              {s("hero_subtitle")}
-            </p>
-
-            <div
-              ref={buttonsRef}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
-            >
-              <a
-                href={s("hero_cta1_url") || "/about"}
-                className="inline-flex h-12 items-center bg-[#c9a227] px-8 text-sm font-semibold text-[#0a1f0a] hover:bg-[#d4ad2e] transition-all duration-200 hover:shadow-lg hover:shadow-[#c9a227]/20"
-              >
-                {s("hero_cta1_text") || "Explore Our College"}
-              </a>
-              <a
-                href={s("hero_cta2_url") || "/student-works"}
-                className="inline-flex h-12 items-center border border-white/20 px-8 text-sm font-semibold text-white hover:bg-white/5 transition-all duration-200"
-              >
-                {s("hero_cta2_text") || "Student Works"}
-              </a>
-            </div>
-          </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-[#FFF8E7] px-6">
+        <div className="text-[11px] tracking-[0.5em] font-bold text-[#FFB203] mb-6">
+          {s("hero_badge").toUpperCase()}
+        </div>
+        <h1
+          ref={headingRef}
+          className="font-['Cormorant_Garamond'] font-semibold leading-[1.02] m-0"
+          style={{ fontSize: "clamp(48px, 7vw, 96px)" }}
+        >
+          {titleLines.map((line: string, i: number) => (
+            <span key={i}>
+              {line}
+              {i < titleLines.length - 1 && <br />}
+            </span>
+          ))}
+        </h1>
+        <div className="mt-4.5 text-[13px] tracking-[0.42em] font-semibold text-[#FFF8E7]/85">
+          GALLE &bull; SRI LANKA
+        </div>
+        <div className="w-14 h-0.5 bg-[#FFB203] my-8.5" />
+        <p
+          ref={taglineRef}
+          className="font-['Cormorant_Garamond'] italic text-[26px] m-0 text-[#FFF8E7]/95"
+        >
+          {s("hero_tagline")}
+        </p>
+        <div ref={buttonsRef} className="flex flex-col sm:flex-row gap-4 mt-11">
+          <a
+            href={s("hero_cta1_url") || "/about"}
+            className="inline-flex items-center justify-center bg-[#FFB203] text-[#013405] font-extrabold text-sm tracking-wider px-8.5 py-3.75 hover:bg-[#FFD45A] transition-colors"
+          >
+            {s("hero_cta1_text") || "Explore the College"}
+          </a>
+          <a
+            href={s("hero_cta2_url") || "/admissions"}
+            className="inline-flex items-center justify-center border border-[#FFF8E7]/60 text-[#FFF8E7] font-bold text-sm tracking-wider px-8.5 py-3.75 hover:border-[#FFB203] hover:text-[#FFB203] transition-colors"
+          >
+            {s("hero_cta2_text") || "Admissions"}
+          </a>
         </div>
       </div>
 
-      <AnnouncementsMarquee announcements={announcements?.slice(0, 4) ?? []} />
-
-      {/* Carousel section */}
-      <div ref={carouselRef} className="px-4 sm:px-6 lg:px-8 py-16 bg-background">
-        {carouselItems && carouselItems.length > 0 ? <HeroCarousel items={carouselItems} /> : null}
+      <div className="absolute bottom-6.5 left-1/2 -translate-x-1/2 text-[#FFF8E7]/60 text-[10px] tracking-[0.3em] pointer-events-none">
+        SCROLL
       </div>
     </section>
   );

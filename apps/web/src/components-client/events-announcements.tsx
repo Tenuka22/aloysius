@@ -7,19 +7,34 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const audienceLabels: Record<string, string> = {
-  all: "Everyone",
-  students: "Students",
-  parents: "Parents",
-  staff: "Staff",
-  alumni: "Alumni",
-};
-
 interface EventsAnnouncementsProps {
   initialEvents?: any[];
   initialNews?: any[];
   initialAnnouncements?: any[];
   settings?: Record<string, string>;
+}
+
+type FeedSource = "news" | "events" | "announcements";
+
+type FeedItem = {
+  id: string;
+  title: string;
+  slug?: string;
+  excerpt?: string | null;
+  coverImage?: string | null;
+  date: string;
+  source: FeedSource;
+};
+
+const sourceMeta: Record<FeedSource, { label: string; color: string; to: string }> = {
+  news: { label: "COLLEGE NEWS", color: "#013405", to: "/news/$slug" },
+  events: { label: "EVENTS", color: "#013405", to: "/events/$slug" },
+  announcements: { label: "ANNOUNCEMENTS", color: "#A51919", to: "/announcements/$slug" },
+};
+
+function formatDate(date: string) {
+  if (!date) return "";
+  return new Date(date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
 export function EventsAnnouncements({
@@ -28,270 +43,143 @@ export function EventsAnnouncements({
   initialAnnouncements = [],
   settings,
 }: EventsAnnouncementsProps) {
-  const eventsRef = useRef<HTMLDivElement>(null);
-  const announcementsRef = useRef<HTMLDivElement>(null);
-  const headingRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const heading = settings?.events_heading || "Life at the College";
 
-  const heading = settings?.events_heading || "Events & Announcements";
-  const publishedEvents = initialEvents.slice(0, 4);
-  const publishedNews = initialNews.slice(0, 3);
-  const publishedAnnouncements = initialAnnouncements.slice(0, 3);
+  const merged: FeedItem[] = [
+    ...initialNews.map((n: any) => ({
+      id: n.id,
+      title: n.title,
+      slug: n.slug,
+      excerpt: n.excerpt,
+      coverImage: n.coverImage,
+      date: n.publishedAt ?? n.createdAt ?? "",
+      source: "news" as const,
+    })),
+    ...initialEvents.map((e: any) => ({
+      id: e.id,
+      title: e.title,
+      slug: e.slug,
+      excerpt: e.location,
+      coverImage: e.coverImage,
+      date: e.publishedAt ?? e.startDate ?? e.createdAt ?? "",
+      source: "events" as const,
+    })),
+    ...initialAnnouncements.map((a: any) => ({
+      id: a.id,
+      title: a.title,
+      slug: a.slug,
+      excerpt: a.excerpt,
+      coverImage: a.coverImage,
+      date: a.publishedAt ?? a.createdAt ?? "",
+      source: "announcements" as const,
+    })),
+  ].sort((a, b) => b.date.localeCompare(a.date));
+
+  const featured = merged[0];
+  const list = merged.slice(1, 5);
 
   useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        headingRef.current,
-        { opacity: 0, y: 20 },
+        el.querySelectorAll("[data-animate]"),
+        { opacity: 0, y: 24 },
         {
           opacity: 1,
           y: 0,
           duration: 0.6,
-          ease: "power3.out",
-          scrollTrigger: { trigger: headingRef.current, start: "top 90%", once: true },
-        },
-      );
-
-      gsap.fromTo(
-        eventsRef.current?.children ?? [],
-        { opacity: 0, x: -20 },
-        {
-          opacity: 1,
-          x: 0,
-          duration: 0.5,
           stagger: 0.08,
           ease: "power3.out",
-          scrollTrigger: { trigger: eventsRef.current, start: "top 90%", once: true },
+          scrollTrigger: { trigger: el, start: "top 85%", once: true },
         },
       );
-
-      gsap.fromTo(
-        announcementsRef.current?.children ?? [],
-        { opacity: 0, x: 20 },
-        {
-          opacity: 1,
-          x: 0,
-          duration: 0.5,
-          stagger: 0.08,
-          ease: "power3.out",
-          scrollTrigger: { trigger: announcementsRef.current, start: "top 90%", once: true },
-        },
-      );
-    });
-
+    }, el);
     return () => ctx.revert();
-  }, [publishedEvents, publishedNews, publishedAnnouncements]);
+  }, [merged.length]);
+
+  if (!featured) return null;
+
+  const featuredMeta = sourceMeta[featured.source];
 
   return (
-    <section className="py-16 sm:py-20 bg-background">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div ref={headingRef} className="mb-10">
-          <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
-            Stay Updated
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-light">{heading}</h2>
+    <section
+      ref={sectionRef}
+      className="bg-[#fffdf6] border-t border-[#013405]/[0.08] py-24 sm:py-[120px] px-4 sm:px-6 lg:px-12"
+    >
+      <div className="mx-auto max-w-[1180px]">
+        <div
+          data-animate
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14"
+        >
+          <div>
+            <div className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+              NEWS &amp; EVENTS
+            </div>
+            <h2 className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] m-0">
+              {heading}
+            </h2>
+          </div>
+          <a
+            href="/news-events"
+            className="font-bold text-sm text-[#013405] border-b-2 border-[#FFB203] pb-1.5 whitespace-nowrap"
+          >
+            View All News &rarr;
+          </a>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {/* Upcoming Events */}
-          <div ref={eventsRef}>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-semibold">Upcoming Events</h3>
-              <a
-                href="/news-events"
-                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
-              >
-                View All →
-              </a>
+        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-10 items-start">
+          <Link
+            data-animate
+            to={featuredMeta.to}
+            params={{ slug: featured.slug }}
+            className="block"
+          >
+            {featured.coverImage ? (
+              <img
+                src={featured.coverImage}
+                alt={featured.title}
+                className="w-full h-[280px] sm:h-[380px] object-cover"
+              />
+            ) : (
+              <div className="w-full h-[280px] sm:h-[380px] bg-gradient-to-br from-[#013405]/10 to-[#013405]/5" />
+            )}
+            <div className="flex gap-3.5 items-center mt-5 mb-2.5 text-[11px] tracking-[0.14em] font-bold">
+              <span style={{ color: featuredMeta.color }}>{featuredMeta.label}</span>
+              <span className="text-[#013405]/45">{formatDate(featured.date)}</span>
             </div>
-            <div className="space-y-3">
-              {publishedEvents.length > 0 ? (
-                publishedEvents.map((event: any) => {
-                  const eventDate = new Date(event.startDate);
-                  const month = eventDate.toLocaleString("default", { month: "short" });
-                  const day = eventDate.getDate();
+            <div className="font-['Cormorant_Garamond'] text-2xl sm:text-[32px] font-semibold leading-[1.15] text-[#013405]">
+              {featured.title}
+            </div>
+          </Link>
 
-                  return (
-                    <Link
-                      key={event.id}
-                      to="/events/$slug"
-                      params={{ slug: event.slug }}
-                      className="group relative overflow-hidden bg-card border border-border hover:shadow-md transition-all"
-                    >
-                      <span className="absolute inset-y-0 left-0 w-0 bg-card-hover group-hover:w-full transition-all duration-700 ease-out -z-0" />
-                      {event.coverImage && (
-                        <div className="absolute inset-0">
-                          <img
-                            src={event.coverImage}
-                            alt={event.title || "Event cover"}
-                            className="w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent" />
-                        </div>
-                      )}
-                      <div className="relative flex items-start gap-4 p-4">
-                        <div className="shrink-0 text-center w-12">
-                          <div className="text-[10px] font-medium uppercase tracking-wider text-[#c9a227]">
-                            {month}
-                          </div>
-                          <time
-                            dateTime={event.startDate}
-                            className="text-2xl font-light text-foreground group-hover:text-foreground transition-colors"
-                          >
-                            {day}
-                          </time>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-foreground group-hover:text-foreground transition-colors mb-0.5">
-                            {event.title}
-                          </div>
-                          <div className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-                            {event.isAllDay
-                              ? "All day"
-                              : eventDate.toLocaleTimeString("default", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                            {event.location && ` · ${event.location}`}
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })
-              ) : (
-                <div className="p-6 bg-muted/50 border border-border text-center text-muted-foreground text-sm">
-                  No upcoming events
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Latest Announcements */}
-          <div ref={announcementsRef}>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-semibold">Latest Announcements</h3>
-              <a
-                href="/news-events"
-                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
-              >
-                View All →
-              </a>
-            </div>
-            <div className="space-y-3">
-              {publishedAnnouncements.length > 0 ? (
-                publishedAnnouncements.map((item: any) => (
+          <div data-animate className="flex flex-col">
+            {list.length > 0 ? (
+              list.map((item) => {
+                const meta = sourceMeta[item.source];
+                return (
                   <Link
                     key={item.id}
-                    to="/announcements/$slug"
+                    to={meta.to}
                     params={{ slug: item.slug }}
-                    className="group relative block p-4 bg-card border border-border hover:shadow-md transition-all"
+                    className="block py-5.5 border-b border-[#013405]/[0.12]"
                   >
-                    <span className="absolute inset-y-0 left-0 w-0 bg-card-hover group-hover:w-full transition-all duration-700 ease-out -z-0" />
-                    <div className="relative">
-                      <div className="font-medium text-foreground group-hover:text-foreground transition-colors mb-1">
-                        {item.title}
-                      </div>
-                      {item.excerpt && (
-                        <div className="text-xs text-muted-foreground group-hover:text-foreground transition-colors mb-2 line-clamp-2">
-                          {item.excerpt}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <time
-                          dateTime={item.createdAt}
-                          className="text-xs text-muted-foreground group-hover:text-foreground transition-colors"
-                        >
-                          {new Date(item.createdAt).toLocaleDateString()}
-                        </time>
-                        {item.audience && item.audience !== "all" && (
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c9a227]">
-                            {audienceLabels[item.audience] ?? item.audience}
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex gap-3.5 text-[10.5px] tracking-[0.14em] font-bold mb-2">
+                      <span style={{ color: meta.color }}>{meta.label}</span>
+                      <span className="text-[#013405]/45">{formatDate(item.date)}</span>
                     </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="p-6 bg-muted/50 border border-border text-center text-muted-foreground text-sm">
-                  No announcements yet
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Published News */}
-        {publishedNews.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-semibold">Latest News</h3>
-              <a
-                href="/news-events"
-                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
-              >
-                View All →
-              </a>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {publishedNews.map((item: any) => (
-                <Link
-                  key={item.id}
-                  to="/news/$slug"
-                  params={{ slug: item.slug }}
-                  className="group relative bg-card border border-border overflow-hidden hover:shadow-md transition-all"
-                >
-                  <span className="absolute inset-y-0 left-0 w-0 bg-card-hover group-hover:w-full transition-all duration-700 ease-out -z-0" />
-                  {item.coverImage ? (
-                    <div className="relative z-10 aspect-video overflow-hidden">
-                      <img
-                        src={item.coverImage}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                  ) : (
-                    <div className="relative z-10 aspect-video bg-gradient-to-br from-primary/10 to-transparent flex items-center justify-center">
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1"
-                        className="size-10 text-primary/20"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                  <div className="relative z-10 p-4">
-                    <time
-                      dateTime={item.createdAt}
-                      className="text-xs text-muted-foreground group-hover:text-foreground transition-colors block mb-1.5"
-                    >
-                      {new Date(item.createdAt).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </time>
-                    <div className="font-medium text-foreground group-hover:text-foreground transition-colors mb-1 line-clamp-2">
+                    <div className="font-bold text-[16.5px] leading-snug text-[#013405]">
                       {item.title}
                     </div>
-                    {item.excerpt && (
-                      <div className="text-xs text-muted-foreground group-hover:text-foreground transition-colors mb-2 line-clamp-2">
-                        {item.excerpt}
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                );
+              })
+            ) : (
+              <div className="text-sm text-[#013405]/50">No further updates yet.</div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </section>
   );
