@@ -345,6 +345,49 @@ function AboutPage() {
           </div>
         </section>
 
+        {/* Founders */}
+        <section className="bg-[#fffdf6] border-t border-[#013405]/[0.08] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
+          <div className="mx-auto max-w-295">
+            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+              OUR FOUNDATIONS
+            </div>
+            <h2
+              data-animate
+              className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-15"
+            >
+              Built on Faith & Tradition
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+              <div data-animate className="flex flex-col">
+                <div className="aspect-[4/5] overflow-hidden mb-6 border border-[#FFB203]/20">
+                  <img
+                    src="/Bishop Joseph Van Reeth.png"
+                    alt="Bishop Joseph Van Reeth"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h3 className="font-bold text-lg mb-2">Bishop Joseph Van Reeth</h3>
+                <p className="text-sm leading-[1.7] text-[#013405]/75">
+                  Founded in 1895 by Belgian Jesuit missionaries under Bishop Joseph Van Reeth, the first bishop of Galle, St. Aloysius' College carries forward a 130-year tradition of forming young men of competence, conscience and compassion.
+                </p>
+              </div>
+              <div data-animate className="flex flex-col">
+                <div className="aspect-[4/5] overflow-hidden mb-6 border border-[#FFB203]/20">
+                  <img
+                    src="/St. Aloysius Gonzaga.png"
+                    alt="St. Aloysius Gonzaga"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h3 className="font-bold text-lg mb-2">St. Aloysius Gonzaga</h3>
+                <p className="text-sm leading-[1.7] text-[#013405]/75">
+                  Named after St. Aloysius Gonzaga, the patron saint of youth, the college embodies the Jesuit values of academic excellence, moral integrity and service to others.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* History Timeline */}
         <section id="history" ref={historyRef} className="bg-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
           <div className="mx-auto max-w-295">
