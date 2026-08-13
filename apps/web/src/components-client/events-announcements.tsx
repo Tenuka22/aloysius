@@ -117,7 +117,7 @@ export function EventsAnnouncements({
                       params={{ slug: event.slug }}
                       className="group relative overflow-hidden bg-card border border-border hover:shadow-md transition-all"
                     >
-                      <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
+                      <span className="absolute inset-y-0 left-0 w-0 bg-card-hover group-hover:w-full transition-all duration-700 ease-out -z-0" />
                       {event.coverImage && (
                         <div className="absolute inset-0">
                           <img
@@ -135,13 +135,13 @@ export function EventsAnnouncements({
                           </div>
                           <time
                             dateTime={event.startDate}
-                            className="text-2xl font-light text-foreground group-hover:text-primary transition-colors"
+                            className="text-2xl font-light text-foreground group-hover:text-foreground transition-colors"
                           >
                             {day}
                           </time>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-foreground group-hover:text-primary transition-colors mb-0.5">
+                          <div className="font-medium text-foreground group-hover:text-foreground transition-colors mb-0.5">
                             {event.title}
                           </div>
                           <div className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
@@ -186,9 +186,9 @@ export function EventsAnnouncements({
                     params={{ slug: item.slug }}
                     className="group relative block p-4 bg-card border border-border hover:shadow-md transition-all"
                   >
-                    <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
+                    <span className="absolute inset-y-0 left-0 w-0 bg-card-hover group-hover:w-full transition-all duration-700 ease-out -z-0" />
                     <div className="relative">
-                      <div className="font-medium text-foreground group-hover:text-primary transition-colors mb-1">
+                      <div className="font-medium text-foreground group-hover:text-foreground transition-colors mb-1">
                         {item.title}
                       </div>
                       {item.excerpt && (
@@ -236,7 +236,7 @@ export function EventsAnnouncements({
                   params={{ slug: item.slug }}
                   className="group relative bg-card border border-border overflow-hidden hover:shadow-md transition-all"
                 >
-                  <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
+                  <span className="absolute inset-y-0 left-0 w-0 bg-card-hover group-hover:w-full transition-all duration-700 ease-out -z-0" />
                   {item.coverImage ? (
                     <div className="relative z-10 aspect-video overflow-hidden">
                       <img
@@ -263,14 +263,14 @@ export function EventsAnnouncements({
                     </div>
                   )}
                   <div className="relative z-10 p-4">
-                    <time dateTime={item.createdAt} className="text-xs text-muted-foreground group-hover:text-primary transition-colors block mb-1.5">
+                    <time dateTime={item.createdAt} className="text-xs text-muted-foreground group-hover:text-foreground transition-colors block mb-1.5">
                       {new Date(item.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
                     </time>
-                    <div className="font-medium text-foreground group-hover:text-primary transition-colors mb-1 line-clamp-2">
+                    <div className="font-medium text-foreground group-hover:text-foreground transition-colors mb-1 line-clamp-2">
                       {item.title}
                     </div>
                     {item.excerpt && (
-                      <div className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors mb-2 line-clamp-2">{item.excerpt}</div>
+                      <div className="text-xs text-muted-foreground group-hover:text-foreground transition-colors mb-2 line-clamp-2">{item.excerpt}</div>
                     )}
                   </div>
                 </Link>
