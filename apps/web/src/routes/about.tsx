@@ -9,79 +9,55 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-type ActivityRow = {
-  id: string;
-  name: string;
-  description: string | null;
-  coverImage: string | null;
-  logoUrl: string | null;
-  type: string;
-};
-type BigMatchRow = {
-  id: string;
-  name: string;
-  opponent: string;
-  coverImage: string | null;
-  type: string;
-  year: number | null;
-  eventId: string | null;
-  galleryId: string | null;
-};
-
 const DEFAULTS: Record<string, string> = {
-  about_hero_badge: "Est. 1895",
-  about_hero_title: "St. Aloysius' College",
-  about_hero_location: "Galle, Sri Lanka",
-  about_hero_motto: '"Certa Viriliter" - Strive Manfully',
-  about_mission_title: "Our Mission",
-  about_mission_jesuit_title: "Jesuit Tradition",
-  about_mission_jesuit_desc:
-    "Founded in 1895 by Belgian Jesuit missionaries led by Bishop Joseph Van Reeth, we carry forward a 130-year tradition of forming young men of competence, conscience, and compassion.",
-  about_mission_saint_title: "Named After a Saint",
-  about_mission_saint_desc:
-    "Named after St. Aloysius Gonzaga, the patron saint of youth, we embody the Jesuit values of academic excellence, moral integrity, and service to others.",
-  about_history_title: "Our History",
-  about_history_desc:
-    "St. Aloysius' College was established in 1895 by Belgian Jesuit missionaries led by Bishop Joseph Van Reeth, the first bishop of Galle. The college was named after Saint Aloysius Gonzaga, the patron saint of youth. Situated on Mount Calvary, the college neighbours St. Mary's Cathedral on one side and Sacred Heart Convent on the other. For over a century, it has been a beacon of educational excellence in the Southern Province.",
-  about_history_founding:
-    "Established in 1895 by Belgian Jesuit missionaries under Bishop Joseph Van Reeth.",
-  about_history_location:
-    "Located on Mount Calvary, Galle, neighbouring St. Mary's Cathedral.",
-  about_history_nationalisation:
-    "Became a national school in 1971 with the appointment of the first Buddhist principal.",
-  about_history_students:
-    "Over 5,000 students from grade 1 to G.C.E. A/L, representing diverse religious groups.",
-  about_crest_title: "The College Crest",
-  about_values_title: "Our Values",
-  about_value1_title: "Competence",
-  about_value1_desc: "Academic excellence and practical skills for life",
-  about_value2_title: "Conscience",
-  about_value2_desc: "Moral integrity and ethical decision-making",
-  about_value3_title: "Compassion",
-  about_value3_desc: "Service to others and care for the community",
-  about_houses_title: "College Houses",
-  about_houses_desc:
-    "Students represent five houses named after Jesuit Fathers who were pioneers in developing the school in its early days.",
-  about_clubs_title: "Clubs & Societies",
-  about_clubs_desc:
-    "Over 25 clubs and societies fostering leadership, creativity, and intellectual growth.",
-  about_sports_title: "Sporting Excellence",
-  about_sports_desc: "Excellence across 62+ sports disciplines, from cricket to rugby.",
-  about_bigmatches_title: "Big Match Encounters",
-  about_bigmatches_desc:
-    "Annual cricket encounters that define our sporting tradition.",
-  about_anthem_title: "College Anthem",
+  about_hero_title: "Our Story, Our Heritage",
+  about_hero_intro:
+    "The history, mission and people of St. Aloysius' College - a Catholic institution rooted in the heart of Galle.",
+  about_history_title: "More Than a Century in Galle",
+  history1_year: "1895",
+  history1_title: "Founding of the College",
+  history1_body:
+    "St. Aloysius' College was established by Belgian Jesuit missionaries led by Bishop Joseph Van Reeth.",
+  history1_image: "",
+  history2_year: "1920s",
+  history2_title: "Early Growth",
+  history2_body: "Expansion of the College, early buildings and student body.",
+  history2_image: "",
+  history3_year: "1971",
+  history3_title: "A Century of Excellence",
+  history3_body:
+    "Became a national school with the appointment of the first Buddhist principal, marking milestones in academics, sport and national life.",
+  history3_image: "",
+  history4_year: "Today",
+  history4_title: "The Modern College",
+  history4_body:
+    "St. Aloysius' College today - facilities, programmes and a community of over 5,000 students.",
+  history4_image: "",
+  about_vision_statement:
+    "To be a leading centre of academic and moral excellence, forming young men of competence, conscience and compassion.",
+  about_mission_statement:
+    "To provide a holistic Catholic education grounded in Jesuit values, nurturing faith, discipline and service to others.",
+  about_principal_heading: "A Word from the Principal",
+  about_principal_message:
+    "Every Aloysian carries forward a tradition of faith, discipline and excellence - certa viriliter.",
+  principal_name: "The Principal",
+  principal_photo: "",
+  about_anthem_title: "The College Anthem",
   about_anthem_desc:
     "Sung with pride by generations of Aloysians, our anthem embodies the spirit and values of St. Aloysius' College.",
-  about_location_title: "Find Us",
-  about_location_address:
-    "St. Aloysius' College\nTemplars' Road\nGalle 80000\nSouthern Province, Sri Lanka",
-  about_location_phone: "011 2 333 233",
-  about_location_email: "info@aloysiuscollege.lk",
-  about_location_website: "aloysiuscollege.lk",
-  about_alumni_title: "Old Aloysians",
-  about_alumni_desc: "Our alumni network spans the globe, with branches in UK, Galle, and Colombo.",
-  about_alumni_countries: "UK,Galle,Colombo",
+  about_administration_heading: "College Leadership",
+  staff1_name: "",
+  staff1_role: "PRINCIPAL",
+  staff1_photo: "",
+  staff2_name: "",
+  staff2_role: "VICE PRINCIPAL",
+  staff2_photo: "",
+  staff3_name: "",
+  staff3_role: "VICE PRINCIPAL",
+  staff3_photo: "",
+  staff4_name: "",
+  staff4_role: "SECTIONAL HEAD",
+  staff4_photo: "",
 };
 
 const anthemLyrics: Record<string, { label: string; stanzas: string[][] }> = {
@@ -222,278 +198,299 @@ const anthemLyrics: Record<string, { label: string; stanzas: string[][] }> = {
   },
 };
 
-export const Route = createFileRoute("/about")({
-  loader: async () => {
-    const [settings, activitiesData, bigMatchesData] = await Promise.all([
-      client.settings.getAll(),
-      client.activities.list({ status: "published" }),
-      client.bigMatches.list({ status: "published" }),
-    ]);
+const jumpLinks = [
+  { label: "HISTORY", href: "#history" },
+  { label: "VISION & MISSION", href: "#vision" },
+  { label: "MOTTO", href: "#motto" },
+  { label: "PRINCIPAL", href: "#principal" },
+  { label: "ANTHEM", href: "#anthem" },
+  { label: "ADMINISTRATION", href: "#administration" },
+];
 
-    return {
-      settings,
-      activities: activitiesData,
-      bigMatches: bigMatchesData,
-    };
+export const Route = createFileRoute("/about")({
+  head: () => ({
+    links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",
+      },
+    ],
+  }),
+  loader: async () => {
+    const settings = await client.settings.getAll();
+    return { settings };
   },
   staleTime: 5 * 60_000,
   component: AboutPage,
 });
 
+function ArchivalImage({ src, className }: { src?: string; className?: string }) {
+  if (src) {
+    return <img src={src} alt="" className={`w-full h-full object-cover ${className ?? ""}`} />;
+  }
+  return (
+    <div
+      className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-[#013405]/10 to-[#013405]/5 ${className ?? ""}`}
+    >
+      <span className="text-[10px] tracking-widest text-[#013405]/40 font-semibold">ARCHIVE PHOTO</span>
+    </div>
+  );
+}
+
 function AboutPage() {
-  const { settings: settingsRaw, activities, bigMatches: bigMatchesRaw } = Route.useLoaderData();
+  const { settings: settingsRaw } = Route.useLoaderData();
+  const settings = settingsRaw as Record<string, string>;
+  const s = (key: string) => settings[key] || DEFAULTS[key] || "";
+
   const heroRef = useRef<HTMLElement>(null);
-  const missionRef = useRef<HTMLDivElement>(null);
-  const anthemRef = useRef<HTMLDivElement>(null);
-  const clubsRef = useRef<HTMLDivElement>(null);
-  const sportsRef = useRef<HTMLDivElement>(null);
-  const valuesRef = useRef<HTMLDivElement>(null);
+  const historyRef = useRef<HTMLElement>(null);
+  const visionRef = useRef<HTMLElement>(null);
+  const principalRef = useRef<HTMLElement>(null);
+  const anthemRef = useRef<HTMLElement>(null);
+  const administrationRef = useRef<HTMLElement>(null);
   const [anthemTab, setAnthemTab] = useState("en");
   const [showScore, setShowScore] = useState(false);
 
-  const settings = settingsRaw as Record<string, string>;
-  const allActivities = (activities as ActivityRow[]) ?? [];
-  const bigMatches = (bigMatchesRaw as BigMatchRow[]) ?? [];
-
-  const clubs = allActivities.filter((a) => a.type === "club");
-  const sports = allActivities.filter((a) => a.type === "sport");
-
-  const getSetting = (key: string) => settings[key] || DEFAULTS[key] || "";
-
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        heroRef.current?.querySelectorAll("[data-animate]") ?? [],
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: "power3.out" },
-      );
-
-      gsap.fromTo(
-        missionRef.current?.querySelectorAll("[data-animate]") ?? [],
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          stagger: 0.1,
-          ease: "power3.out",
-          scrollTrigger: { trigger: missionRef.current, start: "top 85%", once: true },
-        },
-      );
-
-      gsap.fromTo(
-        anthemRef.current?.querySelectorAll("[data-animate]") ?? [],
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          stagger: 0.05,
-          ease: "power3.out",
-          scrollTrigger: { trigger: anthemRef.current, start: "top 85%", once: true },
-        },
-      );
-
-      gsap.fromTo(
-        clubsRef.current?.querySelectorAll("[data-animate]") ?? [],
-        { opacity: 0, y: 40, scale: 0.95 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.5,
-          stagger: 0.05,
-          ease: "power3.out",
-          scrollTrigger: { trigger: clubsRef.current, start: "top 85%", once: true },
-        },
-      );
-
-      gsap.fromTo(
-        sportsRef.current?.querySelectorAll("[data-animate]") ?? [],
-        { opacity: 0, y: 40, scale: 0.95 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.5,
-          stagger: 0.05,
-          ease: "power3.out",
-          scrollTrigger: { trigger: sportsRef.current, start: "top 85%", once: true },
-        },
-      );
-
-      gsap.fromTo(
-        valuesRef.current?.querySelectorAll("[data-animate]") ?? [],
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          stagger: 0.15,
-          ease: "power3.out",
-          scrollTrigger: { trigger: valuesRef.current, start: "top 85%", once: true },
-        },
-      );
+      for (const ref of [heroRef, historyRef, visionRef, principalRef, anthemRef, administrationRef]) {
+        gsap.fromTo(
+          ref.current?.querySelectorAll("[data-animate]") ?? [],
+          { opacity: 0, y: 24 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            stagger: 0.08,
+            ease: "power3.out",
+            scrollTrigger: { trigger: ref.current, start: "top 85%", once: true },
+          },
+        );
+      }
     });
-
     return () => ctx.revert();
   }, []);
 
-  const values = [
-    { title: getSetting("about_value1_title"), description: getSetting("about_value1_desc") },
-    { title: getSetting("about_value2_title"), description: getSetting("about_value2_desc") },
-    { title: getSetting("about_value3_title"), description: getSetting("about_value3_desc") },
-  ];
+  const timeline = [1, 2, 3, 4].map((i) => ({
+    year: s(`history${i}_year`),
+    title: s(`history${i}_title`),
+    body: s(`history${i}_body`),
+    image: settings[`history${i}_image`],
+  }));
 
-  const alumniCountries = getSetting("about_alumni_countries").split(",").filter(Boolean);
-  const locationAddress = getSetting("about_location_address").split("\n");
+  const staff = [1, 2, 3, 4].map((i) => ({
+    name: s(`staff${i}_name`) || "Staff Member",
+    role: s(`staff${i}_role`),
+    photo: settings[`staff${i}_photo`],
+  }));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#FFF8E7]" style={{ fontFamily: "'Manrope', sans-serif" }}>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground focus:outline-none"
       >
         Skip to main content
       </a>
       <Navbar />
       <main id="main-content">
         {/* Hero */}
-        <section ref={heroRef} className="py-16 sm:py-20">
-          <div className="mx-auto max-w-5xl text-center px-4 sm:px-6 lg:px-8">
-            <div data-animate className="mb-8">
-              <img
-                src="/logo.png"
-                alt="St. Aloysius' College Logo"
-                className="mx-auto h-32 sm:h-40 w-auto"
-              />
-            </div>
-            <div
-              data-animate
-              className="inline-flex items-center gap-2 text-[#c9a227]/80 text-xs sm:text-sm font-medium tracking-widest uppercase mb-6"
-            >
-              <span className="w-8 h-px bg-[#c9a227]/40" />
-              {getSetting("about_hero_badge")}
-              <span className="w-8 h-px bg-[#c9a227]/40" />
+        <section
+          ref={heroRef}
+          className="relative bg-[#013405] text-[#FFF8E7] overflow-hidden py-32.5 sm:pt-32.5 sm:pb-27.5 px-4 sm:px-6 lg:px-12"
+        >
+          <img
+            src="/logo.png"
+            alt=""
+            aria-hidden="true"
+            className="absolute pointer-events-none opacity-[0.07] hidden sm:block"
+            style={{ right: -90, top: -60, height: 480, width: "auto" }}
+          />
+          <div className="relative mx-auto max-w-295">
+            <div data-animate className="text-xs tracking-[0.2em] text-[#FFF8E7]/60 mb-6.5">
+              <a href="/" className="hover:text-[#FFB203] transition-colors">
+                HOME
+              </a>
+              &nbsp;/&nbsp;<span className="text-[#FFB203]">ABOUT</span>
             </div>
             <h1
               data-animate
-              className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tight mb-4"
+              className="font-['Cormorant_Garamond'] font-semibold text-5xl sm:text-6xl lg:text-[76px] leading-[1.02] mb-6 max-w-[12ch]"
             >
-              {getSetting("about_hero_title")}
+              {s("about_hero_title")}
             </h1>
-            <p data-animate className="text-xl text-muted-foreground mb-2">
-              {getSetting("about_hero_location")}
+            <p data-animate className="text-base sm:text-[17px] leading-[1.7] text-[#FFF8E7]/75 max-w-[56ch]">
+              {s("about_hero_intro")}
             </p>
-            <p data-animate className="text-lg text-muted-foreground italic">
-              {getSetting("about_hero_motto")}
-            </p>
-          </div>
-        </section>
-
-        {/* Mission */}
-        <section ref={missionRef} className="py-16 sm:py-20 bg-muted/30 border-y border-border">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
-                Purpose
-              </span>
-              <h2 data-animate className="text-2xl sm:text-3xl font-light">
-                {getSetting("about_mission_title")}
-              </h2>
-            </div>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div data-animate className="p-6 rounded-xl border bg-card">
-                <div className="aspect-square bg-muted/40 rounded-lg mb-4 overflow-hidden">
-                  <img
-                    src="/Bishop Joseph Van Reeth.png"
-                    alt="Bishop Joseph Van Reeth"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="font-semibold text-lg mb-3">
-                  {getSetting("about_mission_jesuit_title")}
-                </h3>
-                <p className="text-muted-foreground">{getSetting("about_mission_jesuit_desc")}</p>
-              </div>
-              <div data-animate className="p-6 rounded-xl border bg-card">
-                <div className="aspect-square bg-muted/40 rounded-lg mb-4 overflow-hidden">
-                  <img
-                    src="/St. Aloysius Gonzaga.png"
-                    alt="St. Aloysius Gonzaga"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="font-semibold text-lg mb-3">
-                  {getSetting("about_mission_saint_title")}
-                </h3>
-                <p className="text-muted-foreground">{getSetting("about_mission_saint_desc")}</p>
-              </div>
+            <div
+              data-animate
+              className="flex gap-5 sm:gap-7 mt-11 flex-wrap text-[13px] font-bold tracking-[0.08em]"
+            >
+              {jumpLinks.map((link, i) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className={
+                    i === 0
+                      ? "text-[#FFB203] border-b-2 border-[#FFB203] pb-1.5"
+                      : "text-[#FFF8E7]/80 hover:text-[#FFB203] pb-1.5 transition-colors"
+                  }
+                >
+                  {link.label}
+                </a>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* History */}
-        <section className="py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
-                Heritage
-              </span>
-              <h2 data-animate className="text-2xl sm:text-3xl font-light">
-                {getSetting("about_history_title")}
-              </h2>
+        {/* History Timeline */}
+        <section id="history" ref={historyRef} className="bg-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
+          <div className="mx-auto max-w-295">
+            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+              HISTORY
             </div>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div data-animate className="space-y-6">
-                <p className="text-muted-foreground leading-relaxed">
-                  {getSetting("about_history_desc")}
-                </p>
+            <h2
+              data-animate
+              className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-17.5"
+            >
+              {s("about_history_title")}
+            </h2>
+            <div className="flex flex-col">
+              {timeline.map((t, i) => (
+                <div
+                  key={i}
+                  data-animate
+                  className="grid grid-cols-1 sm:grid-cols-[140px_2px_1fr] lg:grid-cols-[180px_2px_minmax(0,1fr)_minmax(0,320px)] gap-6 lg:gap-11 py-8 sm:py-11 border-b border-[#013405]/10 items-start"
+                >
+                  <div className="font-['Cormorant_Garamond'] text-4xl sm:text-[46px] font-semibold text-[#FFB203] leading-none">
+                    {t.year}
+                  </div>
+                  <div className="hidden sm:block bg-[#FFB203] h-full min-h-20" />
+                  <div>
+                    <div className="font-bold text-lg sm:text-[19px] mb-2.5">{t.title}</div>
+                    <div className="text-sm sm:text-[15px] leading-[1.7] text-[#013405]/75">{t.body}</div>
+                  </div>
+                  <div className="hidden lg:block h-42.5">
+                    <ArchivalImage src={t.image} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Vision & Mission */}
+        <section
+          id="vision"
+          ref={visionRef}
+          className="text-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
+          style={{ background: "linear-gradient(180deg, #013405, #062B0A)" }}
+        >
+          <div
+            className="mx-auto max-w-270 grid grid-cols-1 sm:grid-cols-2 gap-px border border-[#FFB203]/25"
+            style={{ background: "rgba(255,178,3,0.25)" }}
+          >
+            <div data-animate className="bg-[#013405] px-8 sm:px-13 py-15">
+              <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-5.5">VISION</div>
+              <p className="font-['Cormorant_Garamond'] text-2xl sm:text-[30px] leading-[1.4] font-medium m-0">
+                {s("about_vision_statement")}
+              </p>
+            </div>
+            <div data-animate className="bg-[#013405] px-8 sm:px-13 py-15">
+              <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-5.5">MISSION</div>
+              <p className="font-['Cormorant_Garamond'] text-2xl sm:text-[30px] leading-[1.4] font-medium m-0">
+                {s("about_mission_statement")}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Motto */}
+        <section
+          id="motto"
+          className="relative overflow-hidden bg-black text-[#FFF8E7] py-35 px-4 sm:px-6 lg:px-12 text-center"
+        >
+          <img
+            src="/logo.png"
+            alt=""
+            aria-hidden="true"
+            className="absolute pointer-events-none opacity-[0.06] left-1/2 top-1/2 hidden sm:block"
+            style={{ transform: "translate(-50%, -50%)", height: 520, width: "auto" }}
+          />
+          <div className="relative">
+            <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-7.5">
+              THE COLLEGE MOTTO
+            </div>
+            <div
+              className="font-['Cormorant_Garamond'] font-semibold tracking-[0.04em] leading-none"
+              style={{ fontSize: "clamp(56px, 8vw, 110px)" }}
+            >
+              CERTA VIRILITER
+            </div>
+            <div className="w-14 h-0.5 bg-[#FFB203] my-9 mx-auto" />
+            <p className="font-['Cormorant_Garamond'] italic text-2xl sm:text-[26px] text-[#FFF8E7]/80 m-0">
+              &ldquo;Strive Manfully&rdquo;
+            </p>
+          </div>
+        </section>
+
+        {/* Principal's Message */}
+        <section id="principal" ref={principalRef} className="bg-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
+          <div className="mx-auto max-w-270 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-10 lg:gap-18 items-center">
+            <div data-animate className="relative max-w-[340px] mx-auto lg:mx-0 w-full">
+              <div className="absolute -right-3.5 -bottom-3.5 w-full h-full border border-[#FFB203] -z-10 pointer-events-none" />
+              {settings.principal_photo ? (
+                <img
+                  src={settings.principal_photo}
+                  alt={s("principal_name")}
+                  className="w-full h-105 object-cover"
+                />
+              ) : (
+                <div className="w-full h-105 flex items-center justify-center bg-gradient-to-br from-[#013405]/10 to-[#013405]/5">
+                  <span className="text-[11px] tracking-widest text-[#013405]/40 font-semibold">
+                    PRINCIPAL PORTRAIT
+                  </span>
+                </div>
+              )}
+            </div>
+            <div data-animate>
+              <div className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+                PRINCIPAL&rsquo;S MESSAGE
               </div>
-              <div data-animate className="space-y-4">
-                <div className="p-5 rounded-xl border bg-card">
-                  <h3 className="font-semibold text-lg mb-2">Founding</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {getSetting("about_history_founding")}
-                  </p>
-                </div>
-                <div className="p-5 rounded-xl border bg-card">
-                  <h3 className="font-semibold text-lg mb-2">Location</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {getSetting("about_history_location")}
-                  </p>
-                </div>
-                <div className="p-5 rounded-xl border bg-card">
-                  <h3 className="font-semibold text-lg mb-2">Nationalisation</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {getSetting("about_history_nationalisation")}
-                  </p>
-                </div>
-                <div className="p-5 rounded-xl border bg-card">
-                  <h3 className="font-semibold text-lg mb-2">Students</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {getSetting("about_history_students")}
-                  </p>
-                </div>
+              <h2 className="font-['Cormorant_Garamond'] font-semibold text-3xl sm:text-[44px] mb-6">
+                {s("about_principal_heading")}
+              </h2>
+              <p className="text-base leading-[1.75] text-[#013405]/80 mb-6.5">
+                {s("about_principal_message")}
+              </p>
+              <div className="font-['Cormorant_Garamond'] italic text-2xl sm:text-[28px] text-[#013405]/50">
+                &mdash; {s("principal_name")}
               </div>
             </div>
           </div>
         </section>
 
         {/* College Anthem */}
-        <section ref={anthemRef} className="py-16 sm:py-20">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-10">
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
-                Heritage
-              </span>
-              <h2 data-animate className="text-2xl sm:text-3xl font-light mb-4">
-                {getSetting("about_anthem_title")}
-              </h2>
-              <p data-animate className="text-muted-foreground max-w-xl mx-auto">
-                {getSetting("about_anthem_desc")}
-              </p>
+        <section
+          id="anthem"
+          ref={anthemRef}
+          className="bg-[#fffdf6] border-t border-[#013405]/[0.08] py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
+        >
+          <div className="mx-auto max-w-190 text-center">
+            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+              COLLEGE ANTHEM
             </div>
+            <h2
+              data-animate
+              className="font-['Cormorant_Garamond'] font-semibold text-3xl sm:text-[50px] mb-10"
+            >
+              {s("about_anthem_title")}
+            </h2>
+            <p data-animate className="text-[#013405]/70 max-w-xl mx-auto mb-9">
+              {s("about_anthem_desc")}
+            </p>
 
             <div data-animate>
               <div className="flex justify-center gap-1 mb-8">
@@ -501,10 +498,10 @@ function AboutPage() {
                   <button
                     key={key}
                     onClick={() => setAnthemTab(key)}
-                    className={`px-5 py-2 text-sm font-medium transition-colors ${
+                    className={`px-5 py-2 text-sm font-semibold transition-colors ${
                       anthemTab === key
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:text-foreground"
+                        ? "bg-[#013405] text-[#FFF8E7]"
+                        : "bg-[#013405]/5 text-[#013405]/60 hover:text-[#013405]"
                     }`}
                   >
                     {lang.label}
@@ -512,40 +509,40 @@ function AboutPage() {
                 ))}
               </div>
 
-              <div data-animate className="mb-6">
-                <div className="aspect-[21/9] bg-muted/40 rounded-xl overflow-hidden">
+              <div className="mb-6">
+                <div className="aspect-21/9 bg-[#013405]/5 overflow-hidden">
                   <img
                     src="/collage-en-anthem-creators.png"
                     alt="College Anthem Creators"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground text-center mt-2 italic">
-                  English: Words by D. Anghie &middot; Music by Strom Sidicinus, S.J. &middot;
-                  Sinhala: Lyrics by Rev. Fr. Moses Perera &middot; Music by Sunil Santha
+                <p className="text-xs text-[#013405]/50 text-center mt-2 italic">
+                  English: Words by D. Anghie &middot; Music by Strom Sidicinus, S.J. &middot; Sinhala:
+                  Lyrics by Rev. Fr. Moses Perera &middot; Music by Sunil Santha
                 </p>
               </div>
 
-              <div className="bg-card border border-border rounded-xl p-6 sm:p-8">
+              <div className="border border-[#013405]/15 border-t-2 border-t-[#FFB203] bg-[#FFF8E7] p-7 sm:p-11">
                 {anthemLyrics[anthemTab]?.stanzas.length === 0 ? (
-                  <p className="text-center text-muted-foreground italic py-8">Coming soon.</p>
+                  <p className="text-center text-[#013405]/50 italic py-8">Coming soon.</p>
                 ) : (
                   <div className="space-y-6">
                     {anthemLyrics[anthemTab]?.stanzas.map((stanza, si) => (
                       <div
                         key={si}
-                        data-animate
-                        className={
-                          si === 1 || si === 2 || si === 18 || si === 19 ? "text-center" : ""
-                        }
+                        className={si === 1 || si === 2 || si === 18 || si === 19 ? "text-center" : ""}
                       >
                         {stanza.map((line, li) => (
-                          <p key={li} className="text-sm leading-relaxed text-foreground/80">
+                          <p
+                            key={li}
+                            className="font-['Cormorant_Garamond'] text-lg leading-relaxed text-[#013405]/85"
+                          >
                             {line}
                           </p>
                         ))}
                         {si < (anthemLyrics[anthemTab]?.stanzas.length ?? 0) - 1 && (
-                          <div className="border-b border-border/50 my-4" />
+                          <div className="border-b border-[#013405]/10 my-4" />
                         )}
                       </div>
                     ))}
@@ -557,15 +554,9 @@ function AboutPage() {
                 <div className="mt-6">
                   <button
                     onClick={() => setShowScore(!showScore)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-[#013405]/70 hover:text-[#013405] border border-[#013405]/15 transition-colors"
                   >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      className="size-4"
-                    >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-4">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -580,19 +571,15 @@ function AboutPage() {
                       strokeWidth="2"
                       className={`size-3 transition-transform ${showScore ? "rotate-180" : ""}`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                     </svg>
                   </button>
 
                   {showScore && (
-                    <div className="mt-4 bg-card border border-border rounded-xl p-4 sm:p-6 overflow-hidden">
+                    <div className="mt-4 bg-[#FFF8E7] border border-[#013405]/15 p-4 sm:p-6 overflow-hidden">
                       <div className="text-center mb-4">
-                        <h3 className="font-semibold text-sm tracking-wide">COLLEGE ANTHEM</h3>
-                        <p className="text-xs text-muted-foreground mt-1 italic">
+                        <h3 className="font-bold text-sm tracking-wide">COLLEGE ANTHEM</h3>
+                        <p className="text-xs text-[#013405]/60 mt-1 italic">
                           Words by D. Anghie &middot; Music by Strom Sidicinus, S.J.
                         </p>
                       </div>
@@ -605,558 +592,43 @@ function AboutPage() {
           </div>
         </section>
 
-        {/* Values */}
-        <section ref={valuesRef} className="py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
-                Principles
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-light">
-                {getSetting("about_values_title")}
-              </h2>
+        {/* Administration */}
+        <section
+          id="administration"
+          ref={administrationRef}
+          className="bg-[#013405] text-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
+        >
+          <div className="mx-auto max-w-295">
+            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-4.5">
+              ADMINISTRATION
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {values.map((value) => (
-                <div
-                  key={value.title}
-                  data-animate
-                  className="p-6 rounded-xl border bg-card text-center"
-                >
-                  <div className="size-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      className="size-6 text-muted-foreground"
-                    >
-                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">{value.title}</h3>
-                  <p className="text-sm text-muted-foreground">{value.description}</p>
+            <h2
+              data-animate
+              className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-15"
+            >
+              {s("about_administration_heading")}
+            </h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-7">
+              {staff.map((member, i) => (
+                <div key={i} data-animate>
+                  {member.photo ? (
+                    <img src={member.photo} alt={member.name} className="w-full h-70 object-cover" />
+                  ) : (
+                    <div className="w-full h-70 flex items-center justify-center bg-[#FFF8E7]/5">
+                      <span className="text-[10px] tracking-widest text-[#FFF8E7]/40 font-semibold">
+                        PORTRAIT
+                      </span>
+                    </div>
+                  )}
+                  <div className="font-bold text-base mt-4.5 mb-1">{member.name}</div>
+                  <div className="text-xs tracking-[0.12em] text-[#FFB203]">{member.role}</div>
                 </div>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Crest */}
-        <section className="py-16 sm:py-20 bg-muted/30 border-y border-border">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
-                Symbols
-              </span>
-              <h2 data-animate className="text-2xl sm:text-3xl font-light">
-                {getSetting("about_crest_title")}
-              </h2>
-            </div>
-            <div className="grid md:grid-cols-2 gap-10 items-center">
-              <div data-animate className="flex justify-center">
-                <img
-                  src="/logo.png"
-                  alt="St. Aloysius' College Crest"
-                  className="w-full max-w-sm"
-                />
-              </div>
-              <div data-animate className="space-y-4">
-                <div className="p-4 rounded-xl border bg-card">
-                  <h3 className="font-semibold text-sm mb-1 text-[#c9a227]">IHS</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Iesus Hominum Salvator — Jesus, Saviour of Mankind
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl border bg-card">
-                  <h3 className="font-semibold text-sm mb-1 text-[#c9a227]">The Tusker</h3>
-                  <p className="text-sm text-muted-foreground">Symbol of Courage</p>
-                </div>
-                <div className="p-4 rounded-xl border bg-card">
-                  <h3 className="font-semibold text-sm mb-1 text-[#c9a227]">Lilies</h3>
-                  <p className="text-sm text-muted-foreground">Purity of Conscience</p>
-                </div>
-                <div className="p-4 rounded-xl border bg-card">
-                  <h3 className="font-semibold text-sm mb-1 text-[#c9a227]">Torch</h3>
-                  <p className="text-sm text-muted-foreground">Torch of Learning</p>
-                </div>
-                <div className="p-4 rounded-xl border bg-card">
-                  <h3 className="font-semibold text-sm mb-1 text-[#c9a227]">Rooster</h3>
-                  <p className="text-sm text-muted-foreground">Symbol of Galle</p>
-                </div>
-                <div className="p-4 rounded-xl border bg-card">
-                  <h3 className="font-semibold text-sm mb-1 text-[#c9a227]">Motto</h3>
-                  <p className="text-sm text-muted-foreground italic">
-                    Certa Viriliter — Strive Manfully
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Houses */}
-        <section className="py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
-                Community
-              </span>
-              <h2 data-animate className="text-2xl sm:text-3xl font-light">
-                {getSetting("about_houses_title")}
-              </h2>
-              <p data-animate className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-                {getSetting("about_houses_desc")}
-              </p>
-            </div>
-            <div className="flex justify-center items-center gap-6 sm:gap-8 flex-wrap">
-              {[
-                { name: "Cooreman", color: "#FFD700" },
-                { name: "Murphy", color: "#E31E24" },
-                { name: "Neut", color: "#009A44" },
-                { name: "Standaert", color: "#C52691" },
-                { name: "Van Reeth", color: "#0072CE" },
-              ].map((house) => (
-                <div key={house.name} data-animate className="flex flex-col items-center gap-2">
-                  <div
-                    className="size-16 sm:size-20 rounded-full"
-                    style={{ backgroundColor: house.color }}
-                  />
-                  <span className="text-xs font-medium text-muted-foreground">{house.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Clubs & Societies */}
-        <section ref={clubsRef} className="py-16 sm:py-20 bg-muted/30">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="flex items-end justify-between mb-10">
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
-                  Activities
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-light">
-                  {getSetting("about_clubs_title")}
-                </h2>
-              </div>
-              <p className="text-sm text-muted-foreground max-w-md hidden sm:block">
-                {getSetting("about_clubs_desc")}
-              </p>
-            </div>
-            {clubs.length > 0 && (
-              <div data-animate className="mb-6">
-                <div className="group relative border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow">
-                  <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
-                  <div className="relative z-10 grid md:grid-cols-2 gap-0">
-                    <div className="aspect-video md:min-h-[240px] bg-muted overflow-hidden">
-                      {clubs[0]?.coverImage || clubs[0]?.logoUrl ? (
-                        <img
-                          src={clubs[0].coverImage || clubs[0].logoUrl || ""}
-                          alt={clubs[0].name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            className="size-16 text-primary/30"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"
-                            />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="relative z-10 p-6 md:p-8 flex flex-col justify-center">
-                      <h3 className="text-xl sm:text-2xl font-light mb-3 text-primary group-hover:text-secondary transition-colors">
-                        {clubs[0].name}
-                      </h3>
-                      {clubs[0].description && (
-                        <p className="text-primary/60 text-sm leading-relaxed line-clamp-3 mb-4 group-hover:text-secondary/70 transition-colors">
-                          {clubs[0].description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {clubs.length > 1 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {clubs.slice(1, 5).map((club) => (
-                  <div
-                    key={club.id}
-                    data-animate
-                    className="group relative border bg-background overflow-hidden hover:shadow-md transition-shadow"
-                  >
-                    <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
-                    <div className="relative z-10 aspect-video bg-muted overflow-hidden">
-                      {club.coverImage || club.logoUrl ? (
-                        <img
-                          src={club.coverImage || club.logoUrl || ""}
-                          alt={club.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1"
-                            className="size-8 text-muted-foreground/30"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="relative z-10 p-3">
-                      <div className="text-sm font-semibold text-primary group-hover:text-secondary transition-colors line-clamp-2">
-                        {club.name}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Sports */}
-        <section ref={sportsRef} className="py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="flex items-end justify-between mb-10">
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
-                  Athletics
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-light">
-                  {getSetting("about_sports_title")}
-                </h2>
-              </div>
-              <p className="text-sm text-muted-foreground max-w-md hidden sm:block">
-                {getSetting("about_sports_desc")}
-              </p>
-            </div>
-            {sports.length > 0 && (
-              <div data-animate className="mb-6">
-                <div className="group relative border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow">
-                  <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
-                  <div className="relative z-10 grid md:grid-cols-2 gap-0">
-                    <div className="aspect-video md:min-h-[240px] bg-muted overflow-hidden">
-                      {sports[0]?.coverImage || sports[0]?.logoUrl ? (
-                        <img
-                          src={sports[0].coverImage || sports[0].logoUrl || ""}
-                          alt={sports[0].name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            className="size-16 text-primary/30"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.996.172-1.756.96-1.756 1.94v3.03c0 .621.504 1.125 1.125 1.125h3.03c.98 0 1.768-.788 1.94-1.756M5.25 4.236A2.25 2.25 0 017.5 2.25h9a2.25 2.25 0 012.25 2.25c.343 1.32.467 2.688.35 4.047"
-                            />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="relative z-10 p-6 md:p-8 flex flex-col justify-center">
-                      <h3 className="text-xl sm:text-2xl font-light mb-3 text-primary group-hover:text-secondary transition-colors">
-                        {sports[0].name}
-                      </h3>
-                      {sports[0].description && (
-                        <p className="text-primary/60 text-sm leading-relaxed line-clamp-3 mb-4 group-hover:text-secondary/70 transition-colors">
-                          {sports[0].description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {sports.length > 1 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {sports.slice(1, 5).map((sport) => (
-                  <div
-                    key={sport.id}
-                    data-animate
-                    className="group relative border bg-background overflow-hidden hover:shadow-md transition-shadow"
-                  >
-                    <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
-                    <div className="relative z-10 aspect-video bg-muted overflow-hidden">
-                      {sport.coverImage || sport.logoUrl ? (
-                        <img
-                          src={sport.coverImage || sport.logoUrl || ""}
-                          alt={sport.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1"
-                            className="size-8 text-muted-foreground/30"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="relative z-10 p-3">
-                      <div className="text-sm font-semibold text-primary group-hover:text-secondary transition-colors line-clamp-2">
-                        {sport.name}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Big Matches */}
-        <section className="py-16 sm:py-20 bg-muted/30 border-y border-border">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="flex items-end justify-between mb-10">
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
-                  Rivalries
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-light">
-                  {getSetting("about_bigmatches_title")}
-                </h2>
-              </div>
-              <p className="text-sm text-muted-foreground max-w-md hidden sm:block">
-                {getSetting("about_bigmatches_desc")}
-              </p>
-            </div>
-            {bigMatches.length > 0 && (
-              <div data-animate className="mb-6">
-                <div className="group relative border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow">
-                  <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
-                  <div className="relative z-10 grid md:grid-cols-2 gap-0">
-                    <div className="aspect-video md:min-h-[240px] bg-muted overflow-hidden">
-                      {bigMatches[0]?.coverImage ? (
-                        <img
-                          src={bigMatches[0].coverImage}
-                          alt={bigMatches[0].name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            className="size-16 text-primary/30"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.996.172-1.756.96-1.756 1.94v3.03c0 .621.504 1.125 1.125 1.125h3.03c.98 0 1.768-.788 1.94-1.756M5.25 4.236A2.25 2.25 0 017.5 2.25h9a2.25 2.25 0 012.25 2.25c.343 1.32.467 2.688.35 4.047"
-                            />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="relative z-10 p-6 md:p-8 flex flex-col justify-center">
-                      <span className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
-                        {bigMatches[0].type}
-                      </span>
-                      <h3 className="text-xl sm:text-2xl font-light mb-3 text-primary group-hover:text-secondary transition-colors">
-                        {bigMatches[0].name}
-                      </h3>
-                      <p className="text-primary/60 text-sm leading-relaxed mb-2 group-hover:text-secondary/70 transition-colors">
-                        vs {bigMatches[0].opponent}
-                      </p>
-                      {bigMatches[0].year && (
-                        <p className="text-xs text-primary/50 group-hover:text-secondary/60 transition-colors">
-                          {bigMatches[0].year}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {bigMatches.length > 1 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {bigMatches.slice(1, 4).map((match) => (
-                  <div
-                    key={match.id}
-                    data-animate
-                    className="group relative border bg-background overflow-hidden hover:shadow-md transition-shadow"
-                  >
-                    <span className="absolute inset-y-0 left-0 w-0 bg-primary/90 group-hover:w-full transition-all duration-700 ease-out -z-0" />
-                    <div className="relative z-10 aspect-video bg-muted overflow-hidden">
-                      {match.coverImage ? (
-                        <img
-                          src={match.coverImage}
-                          alt={match.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1"
-                            className="size-8 text-muted-foreground/30"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="relative z-10 p-3">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-primary group-hover:text-secondary transition-colors">
-                        {match.type}
-                      </span>
-                      <div className="text-sm font-semibold text-primary group-hover:text-secondary transition-colors line-clamp-2 mt-1">
-                        {match.name}
-                      </div>
-                      <div className="text-xs text-primary/50 group-hover:text-secondary/60 transition-colors">
-                        vs {match.opponent}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Location & Contact */}
-        <section className="py-16 sm:py-20 bg-muted/30 border-y border-border">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
-                Visit Us
-              </span>
-              <h2 data-animate className="text-2xl sm:text-3xl font-light">
-                {getSetting("about_location_title")}
-              </h2>
-            </div>
-            <div className="grid lg:grid-cols-2 gap-8">
-              <div data-animate className="rounded-xl border bg-card overflow-hidden">
-                <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.523!2d80.21222!3d6.03583!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwMDItMjknDA4!5e0!3m2!1sen!2slk!4v1710000000000"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0, minHeight: '300px' }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="St. Aloysius' College Location"
-                />
-              </div>
-              <div data-animate className="space-y-4">
-                <div className="p-5 rounded-xl border bg-card">
-                  <div className="flex items-start gap-4">
-                    <div className="size-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-5 text-muted-foreground">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Address</h3>
-                      <p className="text-sm text-muted-foreground">
-                        St. Aloysius' College<br />
-                        Templars' Road<br />
-                        Galle 80000<br />
-                        Southern Province, Sri Lanka
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-5 rounded-xl border bg-card">
-                  <div className="flex items-start gap-4">
-                    <div className="size-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-5 text-muted-foreground">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Phone</h3>
-                      <a
-                        href={`tel:${getSetting("about_location_phone").replace(/\s/g, "")}`}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {getSetting("about_location_phone")}
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-5 rounded-xl border bg-card">
-                  <div className="flex items-start gap-4">
-                    <div className="size-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-5 text-muted-foreground">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Email & Web</h3>
-                      <a
-                        href={`mailto:${getSetting("about_location_email")}`}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors block"
-                      >
-                        {getSetting("about_location_email")}
-                      </a>
-                      <a
-                        href={`https://${getSetting("about_location_website")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors block mt-1"
-                      >
-                        {getSetting("about_location_website")}
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-12 text-center">
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#c9a227] mb-2 block">
-                Global Network
-              </span>
-              <p className="text-muted-foreground mb-4">{getSetting("about_alumni_desc")}</p>
-              <div className="flex justify-center gap-3 flex-wrap">
-                {alumniCountries.map((country) => (
-                  <span
-                    key={country}
-                    className="inline-flex items-center rounded-full bg-card border border-border px-4 py-2 text-sm font-medium"
-                  >
-                    {country}
-                  </span>
-                ))}
-              </div>
             </div>
           </div>
         </section>
       </main>
-      <Footer />
+      <Footer settings={settings} />
     </div>
   );
 }
