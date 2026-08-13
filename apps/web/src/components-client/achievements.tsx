@@ -68,7 +68,7 @@ export function Achievements({
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden text-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
+      className="relative overflow-hidden text-cream py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
       style={{ background: "#000000" }}
     >
       <div
@@ -76,13 +76,13 @@ export function Achievements({
         style={{ background: "linear-gradient(135deg, #000000, #013405)" }}
       />
       <div className="relative mx-auto max-w-295">
-        <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-4.5">
+        <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-gold mb-4.5">
           HALL OF FAME
         </div>
-        <h2 className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] mb-4">
+        <h2 className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] mb-4">
           {heading}
         </h2>
-        <p data-animate className="text-[15px] text-[#FFF8E7]/65 max-w-[60ch] mb-14">
+        <p data-animate className="text-[15px] text-cream/65 max-w-[60ch] mb-14">
           {description}
         </p>
 
@@ -91,7 +91,7 @@ export function Achievements({
             <a
               key={cat}
               href="/achievements"
-              className="border border-[#FFB203]/40 text-[#FFB203] text-xs font-bold tracking-widest px-4.5 py-2.25 hover:bg-[#FFB203] hover:text-[#013405] transition-colors"
+              className="border border-gold/40 text-gold text-xs font-bold tracking-widest px-4.5 py-2.25 hover:bg-gold hover:text-green-dark transition-colors"
             >
               {cat === "ALL" ? "ALL" : categoryLabels[cat].toUpperCase()}
             </a>
@@ -106,22 +106,22 @@ export function Achievements({
                 data-animate
                 to="/achievements/$slug"
                 params={{ slug: item.slug }}
-                className="block border-t-2 border-[#FFB203] pt-6"
+                className="block border-t-2 border-gold pt-6"
               >
-                <div className="text-[11px] tracking-[0.16em] font-bold text-[#FFB203]">
+                <div className="text-[11px] tracking-[0.16em] font-bold text-gold">
                   {(categoryLabels[item.category] ?? item.category).toUpperCase()}
                 </div>
-                <div className="font-['Cormorant_Garamond'] text-[27px] font-semibold leading-tight my-3.5">
+                <div className="font-heading text-[27px] font-semibold leading-tight my-3.5">
                   {item.title}
                 </div>
-                <div className="text-[13px] text-[#FFF8E7]/60">
+                <div className="text-[13px] text-cream/60">
                   {[item.year, item.recipientNames?.join(", ")].filter(Boolean).join(" • ")}
                 </div>
               </Link>
             ))}
           </div>
         ) : (
-          <div className="text-sm text-[#FFF8E7]/50">No achievements published yet.</div>
+          <div className="text-sm text-cream/50">No achievements published yet.</div>
         )}
       </div>
     </section>

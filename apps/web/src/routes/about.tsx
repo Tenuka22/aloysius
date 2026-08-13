@@ -208,16 +208,6 @@ const jumpLinks = [
 ];
 
 export const Route = createFileRoute("/about")({
-  head: () => ({
-    links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",
-      },
-    ],
-  }),
   loader: async () => {
     const settings = await client.settings.getAll();
     return { settings };
@@ -232,9 +222,9 @@ function ArchivalImage({ src, className }: { src?: string; className?: string })
   }
   return (
     <div
-      className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-[#013405]/10 to-[#013405]/5 ${className ?? ""}`}
+      className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-green-dark/10 to-green-dark/5 ${className ?? ""}`}
     >
-      <span className="text-[10px] tracking-widest text-[#013405]/40 font-semibold">ARCHIVE PHOTO</span>
+      <span className="text-[10px] tracking-widest text-green-dark/40 font-semibold">ARCHIVE PHOTO</span>
     </div>
   );
 }
@@ -287,7 +277,7 @@ function AboutPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-[#FFF8E7]" style={{ fontFamily: "'Manrope', sans-serif" }}>
+    <div className="min-h-screen bg-cream">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground focus:outline-none"
@@ -299,7 +289,7 @@ function AboutPage() {
         {/* Hero */}
         <section
           ref={heroRef}
-          className="relative bg-[#013405] text-[#FFF8E7] overflow-hidden py-32.5 sm:pt-32.5 sm:pb-27.5 px-4 sm:px-6 lg:px-12"
+          className="relative bg-green-dark text-cream overflow-hidden py-32.5 sm:pt-32.5 sm:pb-27.5 px-4 sm:px-6 lg:px-12"
         >
           <img
             src="/logo.png"
@@ -309,19 +299,19 @@ function AboutPage() {
             style={{ right: -90, top: -60, height: 480, width: "auto" }}
           />
           <div className="relative mx-auto max-w-295">
-            <div data-animate className="text-xs tracking-[0.2em] text-[#FFF8E7]/60 mb-6.5">
-              <a href="/" className="hover:text-[#FFB203] transition-colors">
+            <div data-animate className="text-xs tracking-[0.2em] text-cream/60 mb-6.5">
+              <a href="/" className="hover:text-gold transition-colors">
                 HOME
               </a>
-              &nbsp;/&nbsp;<span className="text-[#FFB203]">ABOUT</span>
+              &nbsp;/&nbsp;<span className="text-gold">ABOUT</span>
             </div>
             <h1
               data-animate
-              className="font-['Cormorant_Garamond'] font-semibold text-5xl sm:text-6xl lg:text-[76px] leading-[1.02] mb-6 max-w-[12ch]"
+              className="font-heading font-semibold text-5xl sm:text-6xl lg:text-[76px] leading-[1.02] mb-6 max-w-[12ch]"
             >
               {s("about_hero_title")}
             </h1>
-            <p data-animate className="text-base sm:text-[17px] leading-[1.7] text-[#FFF8E7]/75 max-w-[56ch]">
+            <p data-animate className="text-base sm:text-[17px] leading-[1.7] text-cream/75 max-w-[56ch]">
               {s("about_hero_intro")}
             </p>
             <div
@@ -334,8 +324,8 @@ function AboutPage() {
                   href={link.href}
                   className={
                     i === 0
-                      ? "text-[#FFB203] border-b-2 border-[#FFB203] pb-1.5"
-                      : "text-[#FFF8E7]/80 hover:text-[#FFB203] pb-1.5 transition-colors"
+                      ? "text-gold border-b-2 border-gold pb-1.5"
+                      : "text-cream/80 hover:text-gold pb-1.5 transition-colors"
                   }
                 >
                   {link.label}
@@ -346,9 +336,9 @@ function AboutPage() {
         </section>
 
         {/* Founders */}
-        <section className="bg-[#fffdf6] border-t border-[#013405]/[0.08] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
+        <section className="bg-cream-warm border-t border-green-dark/[0.08] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
           <div className="mx-auto max-w-295">
-            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
               OUR FOUNDATIONS
             </div>
             <h2
@@ -359,7 +349,7 @@ function AboutPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
               <div data-animate className="flex flex-col">
-                <div className="aspect-[4/5] overflow-hidden mb-6 border border-[#FFB203]/20">
+                <div className="aspect-[4/5] overflow-hidden mb-6 border border-gold/20">
                   <img
                     src="/Bishop Joseph Van Reeth.png"
                     alt="Bishop Joseph Van Reeth"
@@ -372,7 +362,7 @@ function AboutPage() {
                 </p>
               </div>
               <div data-animate className="flex flex-col">
-                <div className="aspect-[4/5] overflow-hidden mb-6 border border-[#FFB203]/20">
+                <div className="aspect-[4/5] overflow-hidden mb-6 border border-gold/20">
                   <img
                     src="/St. Aloysius Gonzaga.png"
                     alt="St. Aloysius Gonzaga"

@@ -104,7 +104,7 @@ export function EventsAnnouncements({
   return (
     <section
       ref={sectionRef}
-      className="bg-[#fffdf6] border-t border-[#013405]/[0.08] py-24 sm:py-[120px] px-4 sm:px-6 lg:px-12"
+      className="bg-cream-warm border-t border-green-dark/[0.08] py-24 sm:py-[120px] px-4 sm:px-6 lg:px-12"
     >
       <div className="mx-auto max-w-[1180px]">
         <div
@@ -112,23 +112,23 @@ export function EventsAnnouncements({
           className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14"
         >
           <div>
-            <div className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+            <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
               NEWS &amp; EVENTS
             </div>
-            <h2 className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] m-0">
+            <h2 className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] m-0">
               {heading}
             </h2>
           </div>
           <a
             href="/news-events"
-            className="font-bold text-sm text-[#013405] border-b-2 border-[#FFB203] pb-1.5 whitespace-nowrap"
+            className="font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5 whitespace-nowrap"
           >
             View All News &rarr;
           </a>
         </div>
 
         {!featured || !featuredMeta ? (
-          <div className="text-center text-[#013405]/50 py-12">
+          <div className="text-center text-green-dark/50 py-12">
             No news, events, or announcements published yet.
           </div>
         ) : (
@@ -146,13 +146,13 @@ export function EventsAnnouncements({
                 className="w-full h-[280px] sm:h-[380px] object-cover"
               />
             ) : (
-              <div className="w-full h-[280px] sm:h-[380px] bg-gradient-to-br from-[#013405]/10 to-[#013405]/5" />
+              <div className="w-full h-[280px] sm:h-[380px] bg-gradient-to-br from-green-dark/10 to-green-dark/5" />
             )}
             <div className="flex gap-3.5 items-center mt-5 mb-2.5 text-[11px] tracking-[0.14em] font-bold">
               <span style={{ color: featuredMeta.color }}>{featuredMeta.label}</span>
-              <span className="text-[#013405]/45">{formatDate(featured.date)}</span>
+              <span className="text-green-dark/45">{formatDate(featured.date)}</span>
             </div>
-            <div className="font-['Cormorant_Garamond'] text-2xl sm:text-[32px] font-semibold leading-[1.15] text-[#013405]">
+            <div className="font-heading text-2xl sm:text-[32px] font-semibold leading-[1.15] text-green-dark">
               {featured.title}
             </div>
           </Link>
@@ -166,20 +166,20 @@ export function EventsAnnouncements({
                     key={item.id}
                     to={meta.to}
                     params={{ slug: item.slug }}
-                    className="block py-5.5 border-b border-[#013405]/[0.12]"
+                    className="block py-5.5 border-b border-green-dark/[0.12]"
                   >
                     <div className="flex gap-3.5 text-[10.5px] tracking-[0.14em] font-bold mb-2">
                       <span style={{ color: meta.color }}>{meta.label}</span>
-                      <span className="text-[#013405]/45">{formatDate(item.date)}</span>
+                      <span className="text-green-dark/45">{formatDate(item.date)}</span>
                     </div>
-                    <div className="font-bold text-[16.5px] leading-snug text-[#013405]">
+                    <div className="font-bold text-[16.5px] leading-snug text-green-dark">
                       {item.title}
                     </div>
                   </Link>
                 );
               })
             ) : (
-              <div className="text-sm text-[#013405]/50">No further updates yet.</div>
+              <div className="text-sm text-green-dark/50">No further updates yet.</div>
             )}
           </div>
         </div>

@@ -54,7 +54,7 @@ export function Navbar() {
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-50 w-full bg-[#013405] text-[#FFF8E7] border-b border-[#FFB203]/25"
+      className="sticky top-0 z-50 w-full bg-green-dark text-cream border-b border-gold/25"
     >
       <div className="mx-auto flex h-[78px] max-w-7xl items-center gap-8 px-4 sm:px-6 lg:px-12">
         {/* Logo */}
@@ -69,7 +69,7 @@ export function Navbar() {
             <span className="block font-extrabold text-[15px] tracking-[0.06em]">
               ST. ALOYSIUS&rsquo; COLLEGE
             </span>
-            <span className="block text-[10px] tracking-[0.28em] text-[#FFB203]">
+            <span className="block text-[10px] tracking-[0.28em] text-gold">
               GALLE &bull; SRI LANKA
             </span>
           </span>
@@ -85,9 +85,9 @@ export function Navbar() {
             <Link
               key={item.label}
               to={item.to}
-              className="py-1.5 border-b-2 border-transparent text-[#FFF8E7] hover:text-[#FFB203] transition-colors"
+              className="py-1.5 border-b-2 border-transparent text-cream hover:text-gold transition-colors"
               activeProps={{
-                className: "!text-[#FFB203] !border-[#FFB203]",
+                className: "!text-gold !border-gold",
               }}
               activeOptions={{ exact: item.to === "/" }}
             >
@@ -100,13 +100,13 @@ export function Navbar() {
         <div ref={ctaRef} className="flex items-center gap-3 lg:ml-6">
           <Link
             to="/admissions"
-            className="hidden sm:inline-flex items-center bg-[#FFB203] text-[#013405] font-extrabold text-[13px] tracking-[0.05em] px-4 py-2 hover:bg-[#FFD45A] transition-colors"
+            className="hidden sm:inline-flex items-center bg-gold text-green-dark font-extrabold text-[13px] tracking-[0.05em] px-4 py-2 hover:bg-gold-light transition-colors"
           >
             Admissions
           </Link>
           <UserMenu />
           <button
-            className="lg:hidden inline-flex size-8 items-center justify-center text-[#FFF8E7] hover:text-[#FFB203] transition-colors"
+            className="lg:hidden inline-flex size-8 items-center justify-center text-cream hover:text-gold transition-colors"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -139,7 +139,7 @@ export function Navbar() {
       {/* Mobile Menu */}
       <div
         ref={mobileMenuRef}
-        className="lg:hidden overflow-hidden border-t border-[#FFB203]/20 bg-[#013405]"
+        className="lg:hidden overflow-hidden border-t border-gold/20 bg-green-dark"
         style={{ height: 0, opacity: 0 }}
       >
         <nav className="flex flex-col px-4 py-3 gap-1">
@@ -148,8 +148,8 @@ export function Navbar() {
               key={item.label}
               to={item.to}
               onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 text-sm font-semibold text-[#FFF8E7] hover:text-[#FFB203] transition-colors"
-              activeProps={{ className: "!text-[#FFB203]" }}
+              className="px-3 py-2.5 text-sm font-semibold text-cream hover:text-gold transition-colors"
+              activeProps={{ className: "!text-gold" }}
               activeOptions={{ exact: item.to === "/" }}
             >
               {item.label}
@@ -158,7 +158,7 @@ export function Navbar() {
           <Link
             to="/admissions"
             onClick={() => setMobileMenuOpen(false)}
-            className="mt-2 inline-flex items-center justify-center bg-[#FFB203] text-[#013405] font-extrabold text-[13px] tracking-[0.05em] px-4 py-2"
+            className="mt-2 inline-flex items-center justify-center bg-gold text-green-dark font-extrabold text-[13px] tracking-[0.05em] px-4 py-2"
           >
             Admissions
           </Link>

@@ -67,26 +67,26 @@ export function Footer({ settings }: { settings?: Record<string, string> } = {})
   }, []);
 
   return (
-    <footer ref={ref} role="contentinfo" className="bg-[#062B0A] text-[#FFF8E7] border-t-2 border-[#FFB203]">
+    <footer ref={ref} role="contentinfo" className="bg-green-darker text-cream border-t-2 border-gold">
       <div className="mx-auto max-w-295 px-4 sm:px-6 lg:px-12 pt-16 sm:pt-22.5 pb-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1.2fr] gap-10 lg:gap-14">
           {/* Brand */}
           <div data-animate>
             <img src="/logo.png" alt="St. Aloysius' College crest" className="h-27.5 w-auto object-contain mb-5.5" />
             <div className="font-extrabold text-[17px] tracking-[0.06em]">ST. ALOYSIUS&rsquo; COLLEGE</div>
-            <div className="text-[11px] tracking-[0.26em] text-[#FFB203] mt-1">GALLE, SRI LANKA</div>
-            <div className="font-['Cormorant_Garamond'] italic text-lg text-[#FFF8E7]/70 mt-4">
+            <div className="text-[11px] tracking-[0.26em] text-gold mt-1">GALLE, SRI LANKA</div>
+            <div className="font-heading italic text-lg text-cream/70 mt-4">
               Certa Viriliter
             </div>
           </div>
 
           {/* College */}
           <nav data-animate aria-label="College links">
-            <h3 className="text-[11px] tracking-[0.24em] font-bold text-[#FFB203] mb-5">COLLEGE</h3>
+            <h3 className="text-[11px] tracking-[0.24em] font-bold text-gold mb-5">COLLEGE</h3>
             <ul className="flex flex-col gap-2.5 text-sm">
               {collegeLinks.map((link) => (
                 <li key={link.label}>
-                  <Link to={link.to} className="text-[#FFF8E7]/80 hover:text-[#FFB203] transition-colors">
+                  <Link to={link.to} className="text-cream/80 hover:text-gold transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -96,11 +96,11 @@ export function Footer({ settings }: { settings?: Record<string, string> } = {})
 
           {/* Community */}
           <nav data-animate aria-label="Community links">
-            <h3 className="text-[11px] tracking-[0.24em] font-bold text-[#FFB203] mb-5">COMMUNITY</h3>
+            <h3 className="text-[11px] tracking-[0.24em] font-bold text-gold mb-5">COMMUNITY</h3>
             <ul className="flex flex-col gap-2.5 text-sm">
               {communityLinks.map((link) => (
                 <li key={link.label}>
-                  <Link to={link.to} className="text-[#FFF8E7]/80 hover:text-[#FFB203] transition-colors">
+                  <Link to={link.to} className="text-cream/80 hover:text-gold transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -110,13 +110,13 @@ export function Footer({ settings }: { settings?: Record<string, string> } = {})
 
           {/* Contact */}
           <div data-animate>
-            <h3 className="text-[11px] tracking-[0.24em] font-bold text-[#FFB203] mb-5">CONTACT</h3>
-            <div className="flex flex-col gap-2.5 text-sm text-[#FFF8E7]/80">
+            <h3 className="text-[11px] tracking-[0.24em] font-bold text-gold mb-5">CONTACT</h3>
+            <div className="flex flex-col gap-2.5 text-sm text-cream/80">
               <address className="not-italic whitespace-pre-line">{address}</address>
-              <a href={`tel:${phone.replace(/\s+/g, "")}`} className="hover:text-[#FFB203] transition-colors">
+              <a href={`tel:${phone.replace(/\s+/g, "")}`} className="hover:text-gold transition-colors">
                 {phone}
               </a>
-              <a href={`mailto:${email}`} className="hover:text-[#FFB203] transition-colors">
+              <a href={`mailto:${email}`} className="hover:text-gold transition-colors">
                 {email}
               </a>
               <div className="flex gap-3 mt-2.5" role="list" aria-label="Social media links">
@@ -126,7 +126,7 @@ export function Footer({ settings }: { settings?: Record<string, string> } = {})
                     href={`https://${social.name}.com/aloysiuscollege`}
                     aria-label={social.label}
                     role="listitem"
-                    className="size-8.5 border border-[#FFF8E7]/35 flex items-center justify-center text-[11px] font-bold hover:border-[#FFB203] hover:text-[#FFB203] transition-colors"
+                    className="size-8.5 border border-cream/35 flex items-center justify-center text-[11px] font-bold hover:border-gold hover:text-gold transition-colors"
                   >
                     {social.initials}
                   </a>
@@ -136,7 +136,7 @@ export function Footer({ settings }: { settings?: Record<string, string> } = {})
           </div>
         </div>
 
-        <div className="border-t border-[#FFF8E7]/15 mt-17.5 pt-6.5 flex flex-col sm:flex-row justify-between gap-5 text-[12.5px] text-[#FFF8E7]/55">
+        <div className="border-t border-cream/15 mt-17.5 pt-6.5 flex flex-col sm:flex-row justify-between gap-5 text-[12.5px] text-cream/55">
           <span>&copy; {new Date().getFullYear()} St. Aloysius&rsquo; College, Galle. All Rights Reserved.</span>
           <span className="tracking-[0.2em]">CERTA VIRILITER</span>
         </div>

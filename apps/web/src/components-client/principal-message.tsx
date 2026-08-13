@@ -40,37 +40,37 @@ export function PrincipalMessage({ settings }: { settings?: Record<string, strin
   return (
     <section
       ref={sectionRef}
-      className="bg-[#fffdf6] border-t border-[#013405]/[0.08] py-24 sm:py-[110px] px-4 sm:px-6 lg:px-12"
+      className="bg-cream-warm border-t border-green-dark/[0.08] py-24 sm:py-[110px] px-4 sm:px-6 lg:px-12"
     >
       <div className="mx-auto max-w-[1080px] grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-10 lg:gap-[72px] items-center">
         <div data-animate className="relative max-w-[340px] mx-auto lg:mx-0 w-full">
-          <div className="absolute -right-3.5 -bottom-3.5 w-full h-full border border-[#FFB203] -z-10 pointer-events-none" />
+          <div className="absolute -right-3.5 -bottom-3.5 w-full h-full border border-gold -z-10 pointer-events-none" />
           {photo ? (
             <img src={photo} alt={s("principal_name")} className="w-full h-[420px] object-cover" />
           ) : (
-            <div className="w-full h-[420px] flex items-center justify-center bg-gradient-to-br from-[#013405]/10 to-[#013405]/5">
-              <span className="text-[11px] tracking-widest text-[#013405]/40 font-semibold">
+            <div className="w-full h-[420px] flex items-center justify-center bg-gradient-to-br from-green-dark/10 to-green-dark/5">
+              <span className="text-[11px] tracking-widest text-green-dark/40 font-semibold">
                 PRINCIPAL PORTRAIT
               </span>
             </div>
           )}
         </div>
         <div data-animate>
-          <div className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+          <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
             FROM THE PRINCIPAL
           </div>
-          <p className="font-['Cormorant_Garamond'] text-2xl sm:text-[32px] leading-[1.35] font-medium text-[#013405] mb-6.5">
+          <p className="font-heading text-2xl sm:text-[32px] leading-[1.35] font-medium text-green-dark mb-6.5">
             &ldquo;{s("principal_quote")}&rdquo;
           </p>
-          <div className="font-['Cormorant_Garamond'] italic text-[28px] text-[#013405]/50">
+          <div className="font-heading italic text-[28px] text-green-dark/50">
             &mdash; {s("principal_name")}
           </div>
-          <div className="text-xs tracking-[0.16em] text-[#013405]/60 my-1.5 mb-7.5">
+          <div className="text-xs tracking-[0.16em] text-green-dark/60 my-1.5 mb-7.5">
             PRINCIPAL, ST. ALOYSIUS&rsquo; COLLEGE
           </div>
           <a
             href="/about"
-            className="inline-flex items-center gap-2.5 font-bold text-sm text-[#013405] border-b-2 border-[#FFB203] pb-1.5"
+            className="inline-flex items-center gap-2.5 font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5"
           >
             Read the Full Message <span>&rarr;</span>
           </a>
