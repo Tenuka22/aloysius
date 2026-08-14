@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/manrope";
-@import "@fontsource-variable/cormorant-garamond";
+@import "@fontsource-variable/playfair-display";
 @source "../../../apps/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
 
@@ -91,7 +91,7 @@
 @theme inline {
   --font-sans: "Manrope Variable", sans-serif;
   --font-mono: "Manrope Variable", monospace;
-  --font-heading: "Cormorant Garamond Variable", serif;
+  --font-heading: "Playfair Display Variable", serif;
   --color-cream: var(--cream);
   --color-cream-light: var(--cream-light);
   --color-cream-warm: var(--cream-warm);
