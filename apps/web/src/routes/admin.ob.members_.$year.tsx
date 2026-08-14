@@ -11,6 +11,7 @@ import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Input } from "@aloysius-web/ui/components/input";
+import { Card, CardContent } from "@aloysius-web/ui/components/card";
 import {
   DataTable,
   DataTableColumnHeader,
