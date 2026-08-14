@@ -954,18 +954,18 @@ export async function seed() {
 
   // ── OB Members ──
   const obMembers = [
-    { name: "Ranil Wickramasinghe", role: "President", email: "ranil@ob-alloysius.lk", adminEmail: "ranil@ob-alloysius.lk", bio: "Class of 1978. Attorney-at-law and former President of the OB Association. Leading fundraising initiatives for the college infrastructure.", year: "2026", sortOrder: 0, status: "approved" as const },
-    { name: "Mahinda Rajapaksa", role: "Vice President", email: "mahinda@ob-alloysius.lk", adminEmail: "mahinda@ob-alloysius.lk", bio: "Class of 1975. Retired senior government official. Active in mentoring current students and organizing career guidance programs.", year: "2026", sortOrder: 1, status: "approved" as const },
-    { name: "Chandrika Kumaratunga", role: "Secretary", email: "chandrika@ob-alloysius.lk", adminEmail: "chandrika@ob-alloysius.lk", bio: "Class of 1980. Former diplomat. Manages OB communications and coordinates alumni events.", year: "2026", sortOrder: 2, status: "approved" as const },
-    { name: "Dinesh Gunawardena", role: "Treasurer", email: "dinesh@ob-alloysius.lk", adminEmail: "dinesh@ob-alloysius.lk", bio: "Class of 1982. Chartered accountant. Oversees OB Association finances and donation management.", year: "2026", sortOrder: 3, status: "approved" as const },
-    { name: "Sajith Premadasa", role: "Committee Member", email: "sajith@ob-alloysius.lk", adminEmail: "", bio: "Class of 1985. Entrepreneur and philanthropist. Sponsors annual sports awards and student scholarships.", year: "2026", sortOrder: 4, status: "approved" as const },
-    { name: "Ranil Mathew", role: "Committee Member", email: "ranil.m@ob-alloysius.lk", adminEmail: "", bio: "Class of 1990. Software engineer based in Melbourne. Coordinates overseas alumni chapter activities.", year: "2026", sortOrder: 5, status: "approved" as const },
-    { name: "Nimal Fernando", role: "Committee Member", email: "nimal@ob-alloysius.lk", adminEmail: "", bio: "Class of 1988. Senior architect. Leads campus beautification and infrastructure projects.", year: "2026", sortOrder: 6, status: "approved" as const },
-    { name: "Kamal Perera", role: "Immediate Past President", email: "kamal@ob-alloysius.lk", adminEmail: "", bio: "Class of 1976. Retired school principal. Served as OB President from 2018-2024. Now an advisory board member.", year: "2026", sortOrder: 7, status: "approved" as const },
-    { name: "Amal Suriyaarachchi", role: "Committee Member", email: "amal@ob-alloysius.lk", adminEmail: "", bio: "Class of 1992. Medical doctor. Coordinates health awareness programs and scholarship fund.", year: "2025", sortOrder: 0, status: "approved" as const },
-    { name: "Lasantha Jayasuriya", role: "President", email: "lasantha@ob-alloysius.lk", adminEmail: "lasantha@ob-alloysius.lk", bio: "Class of 1972. Retired judge. Led the 2025 committee with focus on legal aid and mentorship.", year: "2025", sortOrder: 1, status: "approved" as const },
-    { name: "Priyantha Silva", role: "Secretary", email: "priyantha@ob-alloysius.lk", adminEmail: "", bio: "Class of 1981. Chartered accountant. Managed OB communications and record-keeping.", year: "2025", sortOrder: 2, status: "approved" as const },
-    { name: "New Member Request", role: "Committee Member", email: "newmember@ob-alloysius.lk", adminEmail: "", bio: "Pending approval for 2026 committee.", year: "2026", sortOrder: 8, status: "pending" as const },
+    { name: "Ranil Wickramasinghe", role: "President", email: "ranil@ob-alloysius.lk", bio: "Class of 1978. Attorney-at-law and former President of the OB Association. Leading fundraising initiatives for the college infrastructure.", year: "2026", sortOrder: 0, status: "approved" as const },
+    { name: "Mahinda Rajapaksa", role: "Vice President", email: "mahinda@ob-alloysius.lk", bio: "Class of 1975. Retired senior government official. Active in mentoring current students and organizing career guidance programs.", year: "2026", sortOrder: 1, status: "approved" as const },
+    { name: "Chandrika Kumaratunga", role: "Secretary", email: "chandrika@ob-alloysius.lk", bio: "Class of 1980. Former diplomat. Manages OB communications and coordinates alumni events.", year: "2026", sortOrder: 2, status: "approved" as const },
+    { name: "Dinesh Gunawardena", role: "Treasurer", email: "dinesh@ob-alloysius.lk", bio: "Class of 1982. Chartered accountant. Oversees OB Association finances and donation management.", year: "2026", sortOrder: 3, status: "approved" as const },
+    { name: "Sajith Premadasa", role: "Committee Member", email: "sajith@ob-alloysius.lk", bio: "Class of 1985. Entrepreneur and philanthropist. Sponsors annual sports awards and student scholarships.", year: "2026", sortOrder: 4, status: "approved" as const },
+    { name: "Ranil Mathew", role: "Committee Member", email: "ranil.m@ob-alloysius.lk", bio: "Class of 1990. Software engineer based in Melbourne. Coordinates overseas alumni chapter activities.", year: "2026", sortOrder: 5, status: "approved" as const },
+    { name: "Nimal Fernando", role: "Committee Member", email: "nimal@ob-alloysius.lk", bio: "Class of 1988. Senior architect. Leads campus beautification and infrastructure projects.", year: "2026", sortOrder: 6, status: "approved" as const },
+    { name: "Kamal Perera", role: "Immediate Past President", email: "kamal@ob-alloysius.lk", bio: "Class of 1976. Retired school principal. Served as OB President from 2018-2024. Now an advisory board member.", year: "2026", sortOrder: 7, status: "approved" as const },
+    { name: "Amal Suriyaarachchi", role: "Committee Member", email: "amal@ob-alloysius.lk", bio: "Class of 1992. Medical doctor. Coordinates health awareness programs and scholarship fund.", year: "2025", sortOrder: 0, status: "approved" as const },
+    { name: "Lasantha Jayasuriya", role: "President", email: "lasantha@ob-alloysius.lk", bio: "Class of 1972. Retired judge. Led the 2025 committee with focus on legal aid and mentorship.", year: "2025", sortOrder: 1, status: "approved" as const },
+    { name: "Priyantha Silva", role: "Secretary", email: "priyantha@ob-alloysius.lk", bio: "Class of 1981. Chartered accountant. Managed OB communications and record-keeping.", year: "2025", sortOrder: 2, status: "approved" as const },
+    { name: "New Member Request", role: "Committee Member", email: "newmember@ob-alloysius.lk", bio: "Pending approval for 2026 committee.", year: "2026", sortOrder: 8, status: "pending" as const },
   ];
   for (let i = 0; i < obMembers.length; i++) {
     const member = obMembers[i]!;
@@ -974,7 +974,6 @@ export async function seed() {
       name: member.name,
       role: member.role,
       email: member.email,
-      adminEmail: member.adminEmail || null,
       photo: faker.helpers.arrayElement(coverImages),
       bio: member.bio,
       year: member.year,

@@ -186,7 +186,6 @@ export const obMembersRouter = {
         name: z.string().min(1),
         role: z.string().min(1),
         email: z.string().email().optional().nullable(),
-        adminEmail: z.string().email().optional().nullable(),
         photo: z.string().optional().nullable(),
         bio: z.string().optional().nullable(),
         year: z.string().default(""),
@@ -214,7 +213,6 @@ export const obMembersRouter = {
           name: input.name,
           role: input.role,
           email: input.email,
-          adminEmail: input.adminEmail ?? null,
           photo: input.photo,
           bio: input.bio,
           year: input.year,
@@ -230,16 +228,12 @@ export const obMembersRouter = {
       if (record.status === "approved") {
         await syncOBAdminMetadata(context.auth.userId);
       }
-      if (record.adminEmail) {
-        await syncOBAdminEmails();
-      }
       return {
         id: record.id,
         userId: record.userId,
         name: record.name,
         role: record.role,
         email: record.email,
-        adminEmail: record.adminEmail,
         photo: record.photo,
         bio: record.bio,
         year: record.year,
@@ -259,7 +253,6 @@ export const obMembersRouter = {
         name: z.string().min(1).optional(),
         role: z.string().min(1).optional(),
         email: z.string().email().optional().nullable(),
-        adminEmail: z.string().email().optional().nullable(),
         photo: z.string().optional().nullable(),
         bio: z.string().optional().nullable(),
         year: z.string().optional(),
@@ -287,7 +280,6 @@ export const obMembersRouter = {
       if (updateData.name !== undefined) setData.name = updateData.name;
       if (updateData.role !== undefined) setData.role = updateData.role;
       if (updateData.email !== undefined) setData.email = updateData.email;
-      if (updateData.adminEmail !== undefined) setData.adminEmail = updateData.adminEmail;
       if (updateData.photo !== undefined) setData.photo = updateData.photo;
       if (updateData.bio !== undefined) setData.bio = updateData.bio;
       if (updateData.year !== undefined) setData.year = updateData.year;
@@ -301,16 +293,12 @@ export const obMembersRouter = {
       if (record.userId && (existing.status !== "approved" && record.status === "approved")) {
         await syncOBAdminMetadata(record.userId);
       }
-      if (record.adminEmail !== existing.adminEmail) {
-        await syncOBAdminEmails();
-      }
       return {
         id: record.id,
         userId: record.userId,
         name: record.name,
         role: record.role,
         email: record.email,
-        adminEmail: record.adminEmail,
         photo: record.photo,
         bio: record.bio,
         year: record.year,
@@ -341,7 +329,6 @@ export const obMembersRouter = {
       if (existing.userId) {
         await syncOBAdminMetadata(existing.userId);
       }
-      await syncOBAdminEmails();
       return { success: true };
     }),
 
@@ -378,7 +365,6 @@ export const obMembersRouter = {
         name: z.string().min(1),
         role: z.string().min(1),
         email: z.string().email().optional().nullable(),
-        adminEmail: z.string().email().optional().nullable(),
         bio: z.string().optional().nullable(),
         year: z.string().default(""),
       }),
@@ -444,7 +430,6 @@ export const obMembersRouter = {
           name: input.name,
           role: input.role,
           email: input.email,
-          adminEmail: input.adminEmail ?? null,
           bio: input.bio,
           year: input.year,
           sortOrder: 0,
@@ -637,6 +622,65 @@ export const obMembersRouter = {
     }
     return syncOBAdminEmails();
   }),
+
+  /** Auto-sync current Principal as OB admin. Site admin only. */
+  syncPrincipalAsOBAdmin: protectedProcedure.handler(async ({ context }) => {
+    if (!context.auth?.userId) {
+      throw new ORPCError("UNAUTHORIZED");
+    }
+    const isSiteAdmin = context.auth?.adminCalled ?? false;
+    if (!isSiteAdmin) {
+      throw new ORPCError("FORBIDDEN", { message: "Site admin access required." });
+    }
+    return syncPrincipalAsOBAdmin();
+  }),
+
+  /** Set OB admin email for a specific year. Site admin only. */
+  setOBAdmin: protectedProcedure
+    .input(z.object({ year: z.string(), email: z.string().email().optional().nullable() }))
+    .handler(async ({ input, context }) => {
+      if (!context.auth?.userId) {
+        throw new ORPCError("UNAUTHORIZED");
+      }
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      if (!isSiteAdmin) {
+        throw new ORPCError("FORBIDDEN", { message: "Site admin access required." });
+      }
+      const db = createDb();
+      
+      const yearAdmins = await db.select().from(obMembers).where(and(eq(obMembers.year, input.year), eq(obMembers.status, "approved"))).all();
+      for (const admin of yearAdmins) {
+        if (admin.adminEmail) {
+          await db.update(obMembers).set({ adminEmail: null, updatedAt: new Date() }).where(eq(obMembers.id, admin.id)).run();
+        }
+      }
+
+      const president = await db.select().from(obMembers).where(and(eq(obMembers.year, input.year), eq(obMembers.role, "President"))).get();
+      if (!president) {
+        throw new ORPCError("NOT_FOUND", { message: `No President found for year ${input.year}` });
+      }
+
+      const record = await db.update(obMembers).set({ adminEmail: input.email, updatedAt: new Date() }).where(eq(obMembers.id, president.id)).returning().get();
+      await syncOBAdminEmails();
+      
+      return {
+        id: record.id,
+        userId: record.userId,
+        name: record.name,
+        role: record.role,
+        email: record.email,
+        adminEmail: record.adminEmail,
+        photo: record.photo,
+        bio: record.bio,
+        year: record.year,
+        sortOrder: record.sortOrder,
+        status: record.status,
+        decidedBy: record.decidedBy,
+        decidedAt: record.decidedAt?.toISOString() ?? null,
+        createdAt: record.createdAt.toISOString(),
+        updatedAt: record.updatedAt.toISOString(),
+      };
+    }),
 };
 
 // --- OB Events Router ---

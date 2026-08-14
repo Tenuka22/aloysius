@@ -9,7 +9,6 @@ import { Card, CardContent } from "@aloysius-web/ui/components/card";
 import {
   IconPlus,
   IconUsers,
-  IconShieldCheck,
 } from "@tabler/icons-react";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
@@ -50,8 +49,7 @@ function AdminOBMembers() {
     const yearMembers = approvedMembers.filter((m: any) => m.year === year);
     const headCommittee = yearMembers.filter((m: any) => isHeadRole(m.role));
     const regularMembers = yearMembers.filter((m: any) => !isHeadRole(m.role));
-    const admins = yearMembers.filter((m: any) => m.adminEmail);
-    return { total: yearMembers.length, headCommittee, regularMembers, admins, hasData: yearMembers.length > 0 };
+    return { total: yearMembers.length, headCommittee, regularMembers, hasData: yearMembers.length > 0 };
   };
 
   return (
@@ -84,12 +82,6 @@ function AdminOBMembers() {
                         <h3 className="text-xl font-bold font-heading text-green-dark">{year} Committee</h3>
                         <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">{data.total} members</span>
                       </div>
-                      {data.admins.length > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-gold mt-1">
-                          <IconShieldCheck className="size-3" />
-                          <span>{data.admins.length} admin{data.admins.length !== 1 ? "s" : ""}</span>
-                        </div>
-                      )}
                     </div>
                     <div className="p-5 space-y-3">
                       {data.headCommittee.length > 0 && (

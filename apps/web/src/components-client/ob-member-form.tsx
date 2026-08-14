@@ -1,12 +1,18 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { useStore } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
 import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
-import { IconX } from "@tabler/icons-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@aloysius-web/ui/components/select";
 import { cn } from "@aloysius-web/ui/lib/utils";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
@@ -36,7 +42,6 @@ const createMemberSchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, "Name is required")),
   role: v.pipe(v.string(), v.minLength(1, "Role is required")),
   email: v.optional(v.pipe(v.string(), v.email("Invalid email"))),
-  adminEmail: v.optional(v.pipe(v.string(), v.email("Invalid email"))),
   photo: v.optional(v.string()),
   bio: v.optional(v.string()),
   year: v.string(),
@@ -50,7 +55,6 @@ const updateMemberSchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, "Name is required")),
   role: v.pipe(v.string(), v.minLength(1, "Role is required")),
   email: v.optional(v.pipe(v.string(), v.email("Invalid email"))),
-  adminEmail: v.optional(v.pipe(v.string(), v.email("Invalid email"))),
   photo: v.optional(v.string()),
   bio: v.optional(v.string()),
   year: v.string(),
@@ -65,9 +69,11 @@ const fields: FieldEntry<CreateMemberValues | UpdateMemberValues>[] = [
   { name: "name", kind: "text", label: "Full Name", placeholder: "e.g. John Perera", required: true },
   {
     name: "role",
-    kind: "select",
+    kind: "custom",
     label: "Role / Position",
-    options: COMMITTEE_ROLES.map((r) => ({ value: r, label: r })),
+    customRenderer: ({ value, onChange, formValues, setFieldValue }) => (
+      <RoleField value={value} onChange={onChange} formValues={formValues as Record<string, unknown>} setFieldValue={setFieldValue} />
+    ),
     required: true,
   },
   {
@@ -78,7 +84,6 @@ const fields: FieldEntry<CreateMemberValues | UpdateMemberValues>[] = [
     required: true,
   },
   { name: "email", kind: "text", label: "Email", placeholder: "john@example.com", required: false },
-  { name: "adminEmail", kind: "text", label: "Admin Email (for OB admin privileges)", placeholder: "admin@example.com", required: false },
   {
     name: "bio",
     kind: "textarea",
@@ -89,6 +94,39 @@ const fields: FieldEntry<CreateMemberValues | UpdateMemberValues>[] = [
   { name: "sortOrder", kind: "number", label: "Sort Order", required: false },
   { name: "status", kind: "text", label: "Status", hidden: true, required: false },
 ];
+
+function RoleField({ value, onChange, formValues, setFieldValue }: { value: unknown; onChange: (val: unknown) => void; formValues: Record<string, unknown>; setFieldValue: (name: string, val: unknown) => void }) {
+  const [loading, setLoading] = useState(false);
+  const prevRole = useRef(value);
+
+  useEffect(() => {
+    if (value === "PRESIDENT" && prevRole.current !== "PRESIDENT") {
+      setLoading(true);
+      client.principals.getCurrent()
+        .then((principal) => {
+          if (principal?.name) {
+            setFieldValue("name", principal.name);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }
+    prevRole.current = value;
+  }, [value, setFieldValue]);
+
+  return (
+    <Select value={value as string} onValueChange={onChange} disabled={loading}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Select role" />
+      </SelectTrigger>
+      <SelectContent>
+        {COMMITTEE_ROLES.map((r) => (
+          <SelectItem key={r} value={r}>{r}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
 
 function PhotoFieldInline({ value, onChange }: { value: unknown; onChange: (val: unknown) => void }) {
   const form = useBuildForm();
@@ -198,7 +236,7 @@ export function OBMemberForm({
   const config: FormConfig<CreateMemberValues | UpdateMemberValues> = {
     fields,
     layout: [
-      { columns: [{ fields: ["photo"], span: 4 }, { fields: ["name", "role", "year", "email", "adminEmail"], span: 8 }] },
+      { columns: [{ fields: ["photo"], span: 4 }, { fields: ["name", "role", "year", "email"], span: 8 }] },
       { columns: [{ fields: ["sortOrder"] }] },
       { columns: [{ fields: ["bio"] }] },
     ],
@@ -230,7 +268,6 @@ export function OBMemberForm({
               name: member.name,
               role: member.role,
               email: member.email ?? "",
-              adminEmail: member.adminEmail ?? "",
               photo: member.photo ?? "",
               bio: member.bio ?? "",
               year: member.year ?? "",
@@ -241,7 +278,6 @@ export function OBMemberForm({
               name: "",
               role: "",
               email: "",
-              adminEmail: "",
               photo: "",
               bio: "",
               year: defaultYear ?? "",

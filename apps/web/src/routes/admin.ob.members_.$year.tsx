@@ -48,14 +48,12 @@ import {
   IconX,
   IconRotate,
   IconArrowLeft,
-  IconShieldCheck,
-  IconShieldX,
   IconPlus,
 } from "@tabler/icons-react";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const HEAD_ROLES = [
   "PRESIDENT",
@@ -121,11 +119,17 @@ function AdminOBMembersYear() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [obAdminEmail, setObAdminEmail] = useState("");
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["ob-members", { year }],
     queryFn: () => client.ob.obMembers.list({ year }),
   });
+
+  useEffect(() => {
+    const president = members.find((m: any) => m.role.toUpperCase().includes("PRESIDENT"));
+    setObAdminEmail(president?.adminEmail || "");
+  }, [members, year]);
 
   const deleteMutation = useMutation({
     mutationFn: () => { if (!deleteId) return Promise.resolve({ success: true }); return client.ob.obMembers.delete({ id: deleteId }); },
@@ -147,15 +151,23 @@ function AdminOBMembersYear() {
     onSuccess: () => { toast.success("Membership revoked"); },
   });
 
-  const grantAdminMutation = useMutation({
-    mutationFn: (id: string) => client.ob.obMembers.update({ id, adminEmail: members.find((m) => m.id === id)?.email || "" }),
-    onSuccess: () => { toast.success("OB admin privileges granted"); },
+  const saveAdminMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const president = members.find((m: any) => m.role.toUpperCase().includes("PRESIDENT"));
+      if (!president) throw new Error("No President found for this year");
+      const currentEmail = president.adminEmail;
+      if (currentEmail === email) return;
+      await client.ob.obMembers.setOBAdmin({ year, email: email || null });
+    },
+    onSuccess: () => {
+      toast.success("OB admin email saved");
+      queryClient.invalidateQueries({ queryKey: ["ob-members"] });
+    },
   });
 
-  const revokeAdminMutation = useMutation({
-    mutationFn: (id: string) => client.ob.obMembers.update({ id, adminEmail: null }),
-    onSuccess: () => { toast.success("OB admin privileges revoked"); },
-  });
+  const saveObAdmin = () => {
+    saveAdminMutation.mutate(obAdminEmail);
+  };
 
   const approvedMembers = members.filter((m: any) => m.status === "approved");
   const headCommittee = approvedMembers.filter((m: any) => isHeadRole(m.role));
@@ -197,22 +209,6 @@ function AdminOBMembersYear() {
       accessorKey: "email",
       header: "Email",
       cell: ({ row }) => <span className="text-muted-foreground">{row.original.email || "-"}</span>,
-    },
-    {
-      accessorKey: "adminEmail",
-      header: "Admin Email",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1.5">
-          {row.original.adminEmail ? (
-            <>
-              <IconShieldCheck className="size-3.5 text-gold" />
-              <span className="text-gold text-xs font-medium">{row.original.adminEmail}</span>
-            </>
-          ) : (
-            <span className="text-muted-foreground">-</span>
-          )}
-        </div>
-      ),
     },
     {
       accessorKey: "status",
@@ -259,16 +255,6 @@ function AdminOBMembersYear() {
                   <IconRotate className="size-4" /> Revoke
                 </DropdownMenuItem>
               )}
-              {m.status === "approved" && !m.adminEmail && (
-                <DropdownMenuItem onClick={() => grantAdminMutation.mutate(m.id)}>
-                  <IconShieldCheck className="size-4" /> Make OB Admin
-                </DropdownMenuItem>
-              )}
-              {m.status === "approved" && m.adminEmail && (
-                <DropdownMenuItem onClick={() => revokeAdminMutation.mutate(m.id)}>
-                  <IconShieldX className="size-4" /> Remove OB Admin
-                </DropdownMenuItem>
-              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onClick={() => { setDeleteId(m.id); setDeleteOpen(true); }}>
                 <IconTrash className="size-4" /> Delete
@@ -305,6 +291,27 @@ function AdminOBMembersYear() {
         </div>
       </header>
       <div className="flex-1 p-6 space-y-6">
+        {/* OB Admin */}
+        <section>
+          <h2 className="text-sm font-bold tracking-[0.2em] text-gold mb-3">OB ADMIN</h2>
+          <Card className="border-gold/20">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="flex-1">
+                <label className="text-xs text-muted-foreground block mb-1">Admin Email (President)</label>
+                <Input
+                  placeholder="admin@example.com"
+                  value={obAdminEmail}
+                  onChange={(e) => setObAdminEmail(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <Button size="sm" onClick={saveObAdmin} disabled={saveAdminMutation.isPending} className="self-end">
+                {saveAdminMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+
         {headCommittee.length > 0 && (
           <section>
             <h2 className="text-sm font-bold tracking-[0.2em] text-gold mb-4">HEAD COMMITTEE</h2>
@@ -323,12 +330,6 @@ function AdminOBMembersYear() {
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold text-sm text-green-dark truncate">{member.name}</div>
                         <div className="text-xs text-gold font-medium">{member.role}</div>
-                        {member.adminEmail && (
-                          <div className="flex items-center gap-1 text-[10px] text-gold mt-0.5">
-                            <IconShieldCheck className="size-3" />
-                            OB Admin
-                          </div>
-                        )}
                       </div>
                     </div>
                     {member.email && <div className="text-xs text-muted-foreground mt-2 truncate">{member.email}</div>}
