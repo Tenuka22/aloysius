@@ -25,6 +25,9 @@ import {
   IconClipboardCheck,
   IconUserPlus,
   IconUser,
+  IconReportAnalytics,
+  IconUsers,
+  IconHeart,
 } from "@tabler/icons-react";
 
 const overviewItems = [
@@ -37,15 +40,6 @@ const overviewItems = [
 ];
 
 const publishingItems = [
-  {
-    title: "News",
-    url: "/admin/news",
-    icon: <IconNews />,
-    items: [
-      { title: "All News", url: "/admin/news" },
-      { title: "New Article", url: "/admin/news/new" },
-    ],
-  },
   {
     title: "Announcements",
     url: "/admin/announcements",
@@ -134,6 +128,11 @@ const cmsItems = [
     icon: <IconChartBar />,
   },
   {
+    title: "Exam Results",
+    url: "/admin/exam-results",
+    icon: <IconReportAnalytics />,
+  },
+  {
     title: "Activities",
     url: "/admin/activities",
     icon: <IconDevices />,
@@ -147,6 +146,16 @@ const cmsItems = [
     title: "Principals",
     url: "/admin/principals",
     icon: <IconUser />,
+  },
+  {
+    title: "Old Boys",
+    url: "/admin/ob",
+    icon: <IconUsers />,
+    items: [
+      { title: "Members", url: "/admin/ob/members" },
+      { title: "Events", url: "/admin/ob/events" },
+      { title: "Donations", url: "/admin/ob/donations" },
+    ],
   },
 ];
 

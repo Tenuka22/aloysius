@@ -28,7 +28,7 @@ import {
 interface DateTimePickerProps {
   value: string | undefined;
   onChange: (value: string) => void;
-  label: string;
+  label?: string;
   required?: boolean;
   minDate?: Date;
   minTime?: { hours: number; minutes: number };
@@ -128,9 +128,11 @@ export function DateTimePicker({
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">
-        {label} {required && <span className="text-destructive ml-0.5">*</span>}
-      </label>
+      {label && (
+        <label className="text-sm font-medium leading-none">
+          {label} {required && <span className="text-destructive ml-0.5">*</span>}
+        </label>
+      )}
       <div className="flex gap-2 items-center">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger

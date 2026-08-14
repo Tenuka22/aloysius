@@ -14,9 +14,10 @@ const cloudflareWorkersShimPath = fileURLToPath(
   new URL("../../packages/env/src/cloudflare-local.ts", import.meta.url),
 );
 const cloudflareWorkersAlias = shouldUseAlchemy
-  ? {}
+  ? undefined
   : {
-      "cloudflare:workers": cloudflareWorkersShimPath,
+      find: "cloudflare:workers",
+      replacement: cloudflareWorkersShimPath,
     };
 
 export default defineConfig({

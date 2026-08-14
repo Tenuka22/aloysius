@@ -36,6 +36,41 @@
       "when": 1786620595676,
       "tag": "0004_ancient_mattie_franklin",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1786633317105,
+      "tag": "0005_strange_human_torch",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1786633628510,
+      "tag": "0006_fancy_johnny_blaze",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1786641963998,
+      "tag": "0007_new_mentor",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1786644491459,
+      "tag": "0008_slow_mongoose",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1786650021721,
+      "tag": "0009_green_mulholland_black",
+      "breakpoints": true
     }
   ]
 }

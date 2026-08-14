@@ -46,6 +46,7 @@
       "name": "web",
       "dependencies": {
         "@aloysius-web/api": "workspace:*",
+        "@aloysius-web/db": "workspace:*",
         "@aloysius-web/env": "workspace:*",
         "@aloysius-web/ui": "workspace:*",
         "@base-ui/react": "^1.6.0",

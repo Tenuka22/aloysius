@@ -79,11 +79,12 @@ export const announcementsRouter = {
                 : announcements.createdAt;
       const orderFn = sortDir === "asc" ? asc : desc;
 
-      const [{ total }] = await db
+      const [countRow] = await db
         .select({ total: count() })
         .from(announcements)
         .where(where)
         .all();
+      const total = countRow?.total ?? 0;
 
       const rows = await db
         .select()

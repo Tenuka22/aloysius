@@ -3,18 +3,20 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const DEFAULTS: Record<string, string> = {
-  founding_year: "1862",
-  heritage_intro:
-    "For generations, St. Aloysius' College has shaped the minds and character of young men in the Southern Province - grounded in faith, discipline, and the pursuit of excellence.",
-};
-
 function ArchivalImage({ src, className }: { src?: string; className?: string }) {
+  const ratioClass = aspectRatioClass(getAspectRatio(src)) || "aspect-[4/3]";
   if (src) {
-    return <img src={src} alt="" className={`w-full h-full object-cover ${className ?? ""}`} />;
+    return (
+      <img
+        src={src}
+        alt=""
+        className={`w-full ${ratioClass} object-cover ${className ?? ""}`}
+      />
+    );
   }
   return (
     <div
@@ -29,7 +31,7 @@ function ArchivalImage({ src, className }: { src?: string; className?: string })
 
 export function Heritage({ settings }: { settings?: Record<string, string> }) {
   const sectionRef = useRef<HTMLElement>(null);
-  const s = (key: string) => settings?.[key] || DEFAULTS[key] || "";
+  const s = (key: string) => settings?.[key] ?? "";
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -51,8 +53,12 @@ export function Heritage({ settings }: { settings?: Record<string, string> }) {
     return () => ctx.revert();
   }, []);
 
-  const foundingYear = Number.parseInt(s("founding_year"), 10) || 1862;
-  const tradition = new Date().getFullYear() - foundingYear;
+  const foundingYear = Number.parseInt(s("founding_year"), 10);
+  const tradition =
+    Number.isFinite(foundingYear) && foundingYear > 0
+      ? new Date().getFullYear() - foundingYear
+      : null;
+  const headingLines = s("heritage_heading").split("\n");
 
   return (
     <section ref={sectionRef} className="bg-cream py-24 sm:py-[120px] px-4 sm:px-6 lg:px-12">
@@ -63,41 +69,54 @@ export function Heritage({ settings }: { settings?: Record<string, string> }) {
           style={{ background: "linear-gradient(180deg, #FFB203, rgba(255,178,3,0.08))" }}
         />
         <div data-animate>
-          <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-5">
-            OUR HERITAGE
-          </div>
+          {s("heritage_eyebrow") && (
+            <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-5">
+              {s("heritage_eyebrow")}
+            </div>
+          )}
           <h2 className="font-heading font-semibold text-green-dark text-4xl sm:text-5xl lg:text-[58px] leading-[1.05] mb-7">
-            A Legacy of
-            <br />
-            Excellence
+            {headingLines.map((line: string, i: number) => (
+              <span key={i}>
+                {line}
+                {i < headingLines.length - 1 && <br />}
+              </span>
+            ))}
           </h2>
-          <p className="text-[16.5px] leading-[1.75] text-green-dark/80 max-w-[52ch] mb-4">
-            {s("heritage_intro")}
-          </p>
-          <div className="flex gap-11 my-11">
-            <div>
-              <div className="font-heading text-4xl font-semibold text-green-dark">
-                Est.&nbsp;{foundingYear}
+          {s("heritage_intro") && (
+            <p className="text-[16.5px] leading-[1.75] text-green-dark/80 max-w-[52ch] mb-4">
+              {s("heritage_intro")}
+            </p>
+          )}
+          {foundingYear > 0 && (
+            <div className="flex gap-11 my-11">
+              <div>
+                <div className="font-heading text-4xl font-semibold text-green-dark">
+                  Est.&nbsp;{foundingYear}
+                </div>
+                <div className="text-xs tracking-[0.14em] text-green-dark/60 mt-1">
+                  {s("heritage_founded_label")}
+                </div>
               </div>
-              <div className="text-xs tracking-[0.14em] text-green-dark/60 mt-1">
-                FOUNDED IN GALLE
-              </div>
+              {tradition !== null && (
+                <div>
+                  <div className="font-heading text-4xl font-semibold text-green-dark">
+                    {tradition}&nbsp;Years
+                  </div>
+                  <div className="text-xs tracking-[0.14em] text-green-dark/60 mt-1">
+                    {s("heritage_tradition_label")}
+                  </div>
+                </div>
+              )}
             </div>
-            <div>
-              <div className="font-heading text-4xl font-semibold text-green-dark">
-                {tradition}&nbsp;Years
-              </div>
-              <div className="text-xs tracking-[0.14em] text-green-dark/60 mt-1">
-                OF ALOYSIAN TRADITION
-              </div>
-            </div>
-          </div>
-          <a
-            href="/about"
-            className="inline-flex items-center gap-2.5 font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5"
-          >
-            Explore Our History <span>&rarr;</span>
-          </a>
+          )}
+          {s("heritage_cta_text") && (
+            <a
+              href={s("heritage_cta_url") || "/about"}
+              className="inline-flex items-center gap-2.5 font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5"
+            >
+              {s("heritage_cta_text")} <span>&rarr;</span>
+            </a>
+          )}
         </div>
         <div data-animate className="flex flex-col gap-4">
           <ArchivalImage src={settings?.heritage_image_1} className="h-[280px] sm:h-[320px]" />

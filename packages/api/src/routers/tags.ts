@@ -25,17 +25,21 @@ export const tagsRouter = {
 
       for (const table of tables) {
         try {
-          const rows = db
-            .prepare(`
+          const stmt = db.$client.prepare(`
             SELECT DISTINCT value as tag
             FROM ${table}, json_each(CASE WHEN json_array_length(${table}.tags) > 0 THEN ${table}.tags ELSE '[]' END)
             WHERE value IS NOT NULL AND value != ''
             ${search ? `AND value LIKE ?` : ""}
-          `)
-            .all(search ? `%${search}%` : undefined) as Array<{ tag: string }>;
+          `);
+          const result = search
+            ? await stmt.bind(`%${search}%`).all()
+            : await stmt.all();
 
-          for (const row of rows) {
-            allTags.add(row.tag);
+          for (const row of result.results ?? []) {
+            const tag = (row as { tag?: unknown }).tag;
+            if (typeof tag === "string" && tag !== "") {
+              allTags.add(tag);
+            }
           }
         } catch {
           // Skip tables that don't exist or have issues

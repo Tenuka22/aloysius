@@ -40,10 +40,9 @@ export function Achievements({
 }) {
   const sectionRef = useRef<HTMLElement>(null);
   const items = (initialData ?? []).slice(0, 3);
-  const heading = settings?.achievements_heading || "The Achievement Wall";
-  const description =
-    settings?.achievements_description ||
-    "Academic, sporting and national honours earned by Aloysians.";
+  const s = (key: string) => settings?.[key] ?? "";
+  const heading = s("achievements_heading");
+  const description = s("achievements_description");
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -76,15 +75,19 @@ export function Achievements({
         style={{ background: "linear-gradient(135deg, #000000, #013405)" }}
       />
       <div className="relative mx-auto max-w-295">
-        <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-gold mb-4.5">
-          HALL OF FAME
-        </div>
+        {s("achievements_eyebrow") && (
+          <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-gold mb-4.5">
+            {s("achievements_eyebrow")}
+          </div>
+        )}
         <h2 className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] mb-4">
           {heading}
         </h2>
-        <p data-animate className="text-[15px] text-cream/65 max-w-[60ch] mb-14">
-          {description}
-        </p>
+        {description && (
+          <p data-animate className="text-[15px] text-cream/65 max-w-[60ch] mb-14">
+            {description}
+          </p>
+        )}
 
         <div data-animate className="flex flex-wrap gap-3 mb-11">
           {categories.map((cat) => (

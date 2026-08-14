@@ -48,6 +48,7 @@ import {
   IconSend,
   IconArchive,
   IconRotate,
+  IconExternalLink,
 } from "@tabler/icons-react";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
@@ -55,6 +56,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 type PrincipalItem = {
   id: string;
+  slug: string;
   name: string;
   title: string;
   quote: string | null;
@@ -138,6 +140,16 @@ function ActionsMenu({ item }: { item: PrincipalItem }) {
             <IconPencil className="size-4" />
             Edit
           </DropdownMenuItem>
+          {item.slug && (
+            <DropdownMenuItem
+              render={
+                <a href={`/principals/${item.slug}`} target="_blank" rel="noreferrer" />
+              }
+            >
+              <IconExternalLink className="size-4" />
+              View Page
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           {item.status === "draft" && (
             <DropdownMenuItem onClick={() => statusMutation.mutate("published")}>

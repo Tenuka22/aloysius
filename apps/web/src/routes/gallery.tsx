@@ -6,14 +6,6 @@ import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
 
-type GalleryAlbum = {
-  id: string;
-  title: string;
-  description: string | null;
-  coverImage: string | null;
-  eventId: string | null;
-};
-
 export const Route = createFileRoute("/gallery")({
   component: GalleryPage,
 });
@@ -24,7 +16,7 @@ function GalleryPage() {
     queryFn: () => client.gallery.list({ page: 1, pageSize: 50, status: "published" }),
   });
 
-  const albums = (data?.rows ?? []) as GalleryAlbum[];
+  const albums = data?.rows ?? [];
 
   return (
     <div className="min-h-screen bg-background">

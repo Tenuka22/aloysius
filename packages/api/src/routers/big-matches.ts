@@ -8,7 +8,7 @@ import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 
 export const bigMatchesRouter = {
   list: publicProcedure
-    .input(z.object({ status: z.string().optional() }).optional())
+    .input(z.object({ status: z.enum(["draft", "published", "archived"]).optional() }).optional())
     .handler(async ({ input }) => {
       const db = createDb();
       let query = db.select().from(bigMatches).orderBy(asc(bigMatches.sortOrder));

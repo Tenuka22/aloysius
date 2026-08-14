@@ -17,16 +17,6 @@ const categoryColors: Record<string, string> = {
   other: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
 };
 
-type StudentWork = {
-  id: string;
-  title: string;
-  description: string | null;
-  category: string;
-  studentNames: string[];
-  studentGrade: string | null;
-  coverImage: string | null;
-};
-
 export const Route = createFileRoute("/student-works")({
   component: StudentWorksPage,
 });
@@ -37,7 +27,7 @@ function StudentWorksPage() {
     queryFn: () => client.studentWorks.list({ page: 1, pageSize: 50, status: "published" }),
   });
 
-  const items = (data?.rows ?? []) as StudentWork[];
+  const items = data?.rows ?? [];
 
   return (
     <div className="min-h-screen bg-background">

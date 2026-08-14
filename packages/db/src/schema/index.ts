@@ -444,26 +444,169 @@ export const clubAlbumImages = sqliteTable("club_album_images", {
     .$defaultFn(() => new Date()),
 });
 
+// --- Exam Results table (top scores per exam & year) ---
+
+export const examResults = sqliteTable(
+  "exam_results",
+  {
+    id: text("id").primaryKey(),
+    examType: text("exam_type", { enum: ["scholarship", "ol", "al"] }).notNull(),
+    examYear: integer("exam_year").notNull(),
+    resultsYear: integer("results_year").notNull(),
+    status: text("status", { enum: ["draft", "published", "archived"] })
+      .notNull()
+      .default("draft"),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    userId: text("user_id").notNull(),
+  },
+  (table) => [index("exam_results_type_year_idx").on(table.examType, table.examYear)],
+);
+
+// --- Exam Students table (top performers within an exam result) ---
+
+export const examStudents = sqliteTable(
+  "exam_students",
+  {
+    id: text("id").primaryKey(),
+    examResultId: text("exam_result_id")
+      .notNull()
+      .references(() => examResults.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    photo: text("photo"),
+    quote: text("quote"),
+    marks: integer("marks"),
+    stream: text("stream", { enum: ["art", "commerce", "bio", "maths"] }),
+    subjects: text("subjects", { mode: "json" })
+      .$type<{ subject: string; grade: string }[]>()
+      .default([]),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("exam_students_result_idx").on(table.examResultId)],
+);
+
 // --- Principals table (school principal profiles and messages) ---
 
-export const principals = sqliteTable("principals", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  title: text("title").notNull().default("Principal"),
-  quote: text("quote"),
-  portrait: text("portrait"),
-  sortOrder: integer("sort_order").notNull().default(0),
-  status: text("status", { enum: ["draft", "published", "archived"] })
-    .notNull()
-    .default("draft"),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .$defaultFn(() => new Date()),
-  userId: text("user_id").notNull(),
-});
+export const principals = sqliteTable(
+  "principals",
+  {
+    id: text("id").primaryKey(),
+    slug: text("slug").notNull().default(""),
+    name: text("name").notNull(),
+    title: text("title").notNull().default("Principal"),
+    quote: text("quote"),
+    message: text("message"),
+    bio: text("bio"),
+    education: text("education"),
+    tenure: text("tenure"),
+    portrait: text("portrait"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    status: text("status", { enum: ["draft", "published", "archived"] })
+      .notNull()
+      .default("draft"),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    userId: text("user_id").notNull(),
+  },
+  (table) => [uniqueIndex("principals_slug_idx").on(table.slug)],
+);
+
+// --- OB Members table (Old Boys' Association committee) ---
+
+export const obMembers = sqliteTable(
+  "ob_members",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id"),
+    name: text("name").notNull(),
+    role: text("role").notNull(),
+    email: text("email"),
+    photo: text("photo"),
+    bio: text("bio"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    status: text("status", { enum: ["pending", "approved", "rejected", "revoked"] })
+      .notNull()
+      .default("approved"),
+    decidedBy: text("decided_by"),
+    decidedAt: integer("decided_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("ob_members_role_idx").on(table.role), index("ob_members_user_idx").on(table.userId)],
+);
+
+// --- OB Events table (Old Boys' Association events) ---
+
+export const obEvents = sqliteTable(
+  "ob_events",
+  {
+    id: text("id").primaryKey(),
+    slug: text("slug").notNull().default(""),
+    title: text("title").notNull(),
+    description: text("description"),
+    coverImage: text("cover_image"),
+    location: text("location"),
+    eventDate: integer("event_date", { mode: "timestamp" }),
+    endDate: integer("end_date", { mode: "timestamp" }),
+    isAllDay: integer("is_all_day", { mode: "boolean" }).notNull().default(false),
+    status: text("status", { enum: ["draft", "published", "archived"] })
+      .notNull()
+      .default("draft"),
+    publishedAt: integer("published_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    userId: text("user_id").notNull(),
+  },
+  (table) => [uniqueIndex("ob_events_slug_idx").on(table.slug)],
+);
+
+// --- OB Donations table ---
+
+export const obDonations = sqliteTable(
+  "ob_donations",
+  {
+    id: text("id").primaryKey(),
+    donorName: text("donor_name").notNull(),
+    donorEmail: text("donor_email"),
+    amount: integer("amount"), // stored in cents
+    currency: text("currency").notNull().default("LKR"),
+    purpose: text("purpose"),
+    message: text("message"),
+    image: text("image"),
+    isAnonymous: integer("is_anonymous", { mode: "boolean" }).notNull().default(false),
+    status: text("status", { enum: ["pending", "confirmed", "cancelled"] })
+      .notNull()
+      .default("pending"),
+    donatedAt: integer("donated_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    userId: text("user_id").notNull(),
+  },
+  (table) => [index("ob_donations_status_idx").on(table.status)],
+);
 
 // --- Notifications table (in-app alerts for membership/content decisions) ---
 

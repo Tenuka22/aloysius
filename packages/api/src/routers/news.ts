@@ -73,7 +73,8 @@ export const newsRouter = {
               : news.createdAt;
       const orderFn = sortDir === "asc" ? asc : desc;
 
-      const [{ total }] = await db.select({ total: count() }).from(news).where(where).all();
+      const [countRow] = await db.select({ total: count() }).from(news).where(where).all();
+      const total = countRow?.total ?? 0;
 
       const rows = await db
         .select()

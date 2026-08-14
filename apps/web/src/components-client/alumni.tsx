@@ -3,22 +3,13 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const DEFAULTS: Record<string, string> = {
-  alumni_quote: "The Aloysian Legacy Continues.",
-  alumni_description:
-    "A global network of Aloysians in leadership, service and scholarship - connected by the crest they carried.",
-  alumni_cta1_text: "Old Boys' Association",
-  alumni_cta1_url: "/alumni",
-  alumni_cta2_text: "Distinguished Aloysians",
-  alumni_cta2_url: "/alumni#distinguished",
-};
-
 export function Alumni({ settings }: { settings?: Record<string, string> }) {
   const sectionRef = useRef<HTMLElement>(null);
-  const s = (key: string) => settings?.[key] || DEFAULTS[key] || "";
+  const s = (key: string) => settings?.[key] ?? "";
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -56,9 +47,11 @@ export function Alumni({ settings }: { settings?: Record<string, string> }) {
       />
       <div className="relative mx-auto max-w-270 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-14 lg:gap-20 items-center">
         <div data-animate>
-          <div className="text-[11px] tracking-[0.4em] font-bold text-gold mb-5">
-            OLD BOYS&rsquo; ASSOCIATION
-          </div>
+          {s("alumni_eyebrow") && (
+            <div className="text-[11px] tracking-[0.4em] font-bold text-gold mb-5">
+              {s("alumni_eyebrow")}
+            </div>
+          )}
           <h2 className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[56px] leading-[1.08] mb-6.5">
             &ldquo;{s("alumni_quote")}&rdquo;
           </h2>
@@ -66,23 +59,31 @@ export function Alumni({ settings }: { settings?: Record<string, string> }) {
             {s("alumni_description")}
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <a
-              href={s("alumni_cta1_url") || "#"}
-              className="inline-flex items-center justify-center bg-gold text-green-dark font-extrabold text-sm px-7.5 py-3.5 hover:bg-gold-light transition-colors"
-            >
-              {s("alumni_cta1_text")}
-            </a>
-            <a
-              href={s("alumni_cta2_url") || "#"}
-              className="inline-flex items-center justify-center border border-cream/50 text-cream font-bold text-sm px-7.5 py-3.5 hover:border-gold hover:text-gold transition-colors"
-            >
-              {s("alumni_cta2_text")}
-            </a>
+            {s("alumni_cta1_text") && (
+              <a
+                href={s("alumni_cta1_url") || "#"}
+                className="inline-flex items-center justify-center bg-gold text-green-dark font-extrabold text-sm px-7.5 py-3.5 hover:bg-gold-light transition-colors"
+              >
+                {s("alumni_cta1_text")}
+              </a>
+            )}
+            {s("alumni_cta2_text") && (
+              <a
+                href={s("alumni_cta2_url") || "#"}
+                className="inline-flex items-center justify-center border border-cream/50 text-cream font-bold text-sm px-7.5 py-3.5 hover:border-gold hover:text-gold transition-colors"
+              >
+                {s("alumni_cta2_text")}
+              </a>
+            )}
           </div>
         </div>
         <div data-animate>
           {photo ? (
-            <img src={photo} alt="" className="w-full h-[300px] sm:h-110 object-cover" />
+            <img
+              src={photo}
+              alt=""
+              className={`w-full ${aspectRatioClass(getAspectRatio(photo)) || "aspect-square"} object-cover`}
+            />
           ) : (
             <div className="w-full h-[300px] sm:h-110 flex items-center justify-center bg-cream/5">
               <span className="text-[11px] tracking-widest text-cream/40 font-semibold">

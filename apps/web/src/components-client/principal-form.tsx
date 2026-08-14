@@ -10,6 +10,7 @@ import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
 import { client } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
+import { withAspectRatio } from "@/lib/image-ratio";
 import { toast } from "sonner";
 import * as v from "valibot";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
@@ -18,6 +19,10 @@ const createPrincipalSchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, "Name is required")),
   title: v.optional(v.string()),
   quote: v.optional(v.string()),
+  message: v.optional(v.string()),
+  bio: v.optional(v.string()),
+  education: v.optional(v.string()),
+  tenure: v.optional(v.string()),
   portrait: v.optional(v.string()),
   sortOrder: v.optional(v.union([v.number(), v.string()])),
   publishNow: v.boolean(),
@@ -29,6 +34,10 @@ const updatePrincipalSchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, "Name is required")),
   title: v.optional(v.string()),
   quote: v.optional(v.string()),
+  message: v.optional(v.string()),
+  bio: v.optional(v.string()),
+  education: v.optional(v.string()),
+  tenure: v.optional(v.string()),
   portrait: v.optional(v.string()),
   sortOrder: v.optional(v.union([v.number(), v.string()])),
   publishNow: v.boolean(),
@@ -51,7 +60,7 @@ function PortraitField() {
       try {
         const webp = await convertToWebp(file);
         const result = await client.files.uploadFile(webp);
-        form.setFieldValue("portrait", result.url);
+        form.setFieldValue("portrait", withAspectRatio(result.url, 3 / 4));
       } catch {
         toast.error("Failed to upload image");
       } finally {
@@ -154,13 +163,85 @@ function QuoteField() {
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Message</label>
+      <label className="text-sm font-medium leading-none">Short Quote (homepage teaser)</label>
       <textarea
         value={value}
         onChange={(e) => form.setFieldValue("quote", e.target.value)}
-        placeholder="The principal's message to students and parents..."
+        placeholder="A short quote shown on the homepage..."
+        rows={3}
+        className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      />
+    </div>
+  );
+}
+
+function MessageField() {
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.message) as string;
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Full Message</label>
+      <textarea
+        value={value}
+        onChange={(e) => form.setFieldValue("message", e.target.value)}
+        placeholder="The principal's full message shown on the dedicated page..."
+        rows={8}
+        className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      />
+    </div>
+  );
+}
+
+function BioField() {
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.bio) as string;
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Bio / About</label>
+      <textarea
+        value={value}
+        onChange={(e) => form.setFieldValue("bio", e.target.value)}
+        placeholder="A short personal profile..."
         rows={4}
         className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      />
+    </div>
+  );
+}
+
+function EducationField() {
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.education) as string;
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Education &amp; Qualifications</label>
+      <textarea
+        value={value}
+        onChange={(e) => form.setFieldValue("education", e.target.value)}
+        placeholder={"e.g. B.A. (Hons) University of Peradeniya\nM.Ed. University of Colombo"}
+        rows={3}
+        className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      />
+    </div>
+  );
+}
+
+function TenureField() {
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.tenure) as string;
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Tenure / Years of Service</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => form.setFieldValue("tenure", e.target.value)}
+        placeholder="e.g. 2019 - Present"
+        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
       />
     </div>
   );
@@ -186,11 +267,15 @@ const fields: FieldEntry<CreatePrincipalValues | UpdatePrincipalValues>[] = [
   {
     name: "quote",
     kind: "textarea",
-    label: "Message",
-    placeholder: "The principal's message...",
+    label: "Short Quote",
+    placeholder: "The principal's short quote...",
     required: false,
     hidden: true,
   },
+  { name: "message", kind: "text", label: "Full Message", hidden: true, required: false },
+  { name: "bio", kind: "text", label: "Bio", hidden: true, required: false },
+  { name: "education", kind: "text", label: "Education", hidden: true, required: false },
+  { name: "tenure", kind: "text", label: "Tenure", hidden: true, required: false },
   { name: "portrait", kind: "text", label: "Portrait", hidden: true, required: false },
   {
     name: "sortOrder",
@@ -257,11 +342,19 @@ export function PrincipalForm({
         <div className="w-[200px] shrink-0">
           <PortraitField />
         </div>
-        <div className="flex-1 grid grid-cols-1 gap-4">
+        <div className="flex-1 grid grid-cols-2 gap-4">
           <NameField />
           <TitleField />
+          <TenureField />
           <QuoteField />
+          <EducationField />
+          <BioField />
         </div>
+      </div>
+    ),
+    renderBelowFields: () => (
+      <div className="grid grid-cols-1 gap-4">
+        <MessageField />
       </div>
     ),
   };
@@ -290,6 +383,10 @@ export function PrincipalForm({
               name: principal.name,
               title: principal.title ?? "",
               quote: principal.quote ?? "",
+              message: principal.message ?? "",
+              bio: principal.bio ?? "",
+              education: principal.education ?? "",
+              tenure: principal.tenure ?? "",
               portrait: principal.portrait ?? "",
               sortOrder: principal.sortOrder ?? 0,
               publishNow: principal.status === "published",
@@ -298,6 +395,10 @@ export function PrincipalForm({
               name: "",
               title: "Principal",
               quote: "",
+              message: "",
+              bio: "",
+              education: "",
+              tenure: "",
               portrait: "",
               sortOrder: 0,
               publishNow: false,

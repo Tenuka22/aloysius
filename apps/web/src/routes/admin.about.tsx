@@ -5,9 +5,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Dropzone } from "@/components/file-upload";
+import { uploadImageWithRatio } from "@/lib/upload-image";
 import { cn } from "@aloysius-web/ui/lib/utils";
 import { client } from "@/utils/orpc";
-import { convertToWebp } from "@/utils/convert-to-webp";
 import { toast } from "sonner";
 import { IconX } from "@tabler/icons-react";
 
@@ -164,16 +164,14 @@ function ImageField({
       if (!file) return;
       setUploading(true);
       try {
-        const webp = await convertToWebp(file);
-        const result = await client.files.uploadFile(webp);
-        onChange(result.url);
+        onChange(await uploadImageWithRatio(file, aspect ?? 4 / 3));
       } catch {
         toast.error("Failed to upload image");
       } finally {
         setUploading(false);
       }
     },
-    [onChange],
+    [onChange, aspect],
   );
 
   return (

@@ -4,6 +4,7 @@ import { useRef, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -11,10 +12,12 @@ interface EventsAnnouncementsProps {
   initialEvents?: any[];
   initialNews?: any[];
   initialAnnouncements?: any[];
+  initialClubs?: any[];
+  initialGallery?: any[];
   settings?: Record<string, string>;
 }
 
-type FeedSource = "news" | "events" | "announcements";
+type FeedSource = "news" | "events" | "announcements" | "clubs" | "gallery";
 
 type FeedItem = {
   id: string;
@@ -30,6 +33,8 @@ const sourceMeta: Record<FeedSource, { label: string; color: string; to: string 
   news: { label: "COLLEGE NEWS", color: "#013405", to: "/news/$slug" },
   events: { label: "EVENTS", color: "#013405", to: "/events/$slug" },
   announcements: { label: "ANNOUNCEMENTS", color: "#A51919", to: "/announcements/$slug" },
+  clubs: { label: "CLUBS", color: "#9A6700", to: "/clubs/$slug" },
+  gallery: { label: "GALLERY", color: "#0F766E", to: "/gallery/$slug" },
 };
 
 function formatDate(date: string) {
@@ -41,10 +46,13 @@ export function EventsAnnouncements({
   initialEvents = [],
   initialNews = [],
   initialAnnouncements = [],
+  initialClubs = [],
+  initialGallery = [],
   settings,
 }: EventsAnnouncementsProps) {
   const sectionRef = useRef<HTMLElement>(null);
-  const heading = settings?.events_heading || "Life at the College";
+  const s = (key: string) => settings?.[key] ?? "";
+  const heading = s("events_heading");
 
   const merged: FeedItem[] = [
     ...initialNews.map((n: any) => ({
@@ -74,10 +82,42 @@ export function EventsAnnouncements({
       date: a.publishedAt ?? a.createdAt ?? "",
       source: "announcements" as const,
     })),
+    ...initialClubs.map((c: any) => ({
+      id: c.id,
+      title: c.name,
+      slug: c.slug,
+      excerpt: c.description,
+      coverImage: c.coverImage,
+      date: c.createdAt ?? "",
+      source: "clubs" as const,
+    })),
+    ...initialGallery.map((g: any) => ({
+      id: g.id,
+      title: g.title,
+      slug: g.slug,
+      excerpt: g.description,
+      coverImage: g.coverImage,
+      date: g.publishedAt ?? g.createdAt ?? "",
+      source: "gallery" as const,
+    })),
   ].sort((a, b) => b.date.localeCompare(a.date));
 
-  const featured = merged[0];
-  const list = merged.slice(1, 5);
+  // Shuffle so the mix of clubs/events/gallery/news varies between refreshes,
+  // while keeping the newest items weighted toward the top.
+  function shuffled<T>(items: T[]): T[] {
+    const arr = [...items];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+    }
+    return arr;
+  }
+  const first = merged[0];
+  const rest = merged.slice(1);
+  const mixed = first ? [first, ...shuffled(rest)] : [];
+
+  const featured = mixed[0];
+  const list = mixed.slice(1, 5);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -97,7 +137,7 @@ export function EventsAnnouncements({
       );
     }, el);
     return () => ctx.revert();
-  }, [merged.length]);
+  }, [mixed.length]);
 
   const featuredMeta = featured ? sourceMeta[featured.source] : null;
 
@@ -112,19 +152,23 @@ export function EventsAnnouncements({
           className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14"
         >
           <div>
-            <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
-              NEWS &amp; EVENTS
-            </div>
+            {s("events_eyebrow") && (
+              <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
+                {s("events_eyebrow")}
+              </div>
+            )}
             <h2 className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] m-0">
               {heading}
             </h2>
           </div>
-          <a
-            href="/news-events"
-            className="font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5 whitespace-nowrap"
-          >
-            View All News &rarr;
-          </a>
+          {s("events_cta_text") && (
+            <a
+              href={s("events_cta_url") || "/news-events"}
+              className="font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5 whitespace-nowrap"
+            >
+              {s("events_cta_text")} &rarr;
+            </a>
+          )}
         </div>
 
         {!featured || !featuredMeta ? (
@@ -143,10 +187,10 @@ export function EventsAnnouncements({
               <img
                 src={featured.coverImage}
                 alt={featured.title}
-                className="w-full h-[280px] sm:h-[380px] object-cover"
+                className={`w-full ${aspectRatioClass(getAspectRatio(featured.coverImage)) || "aspect-video"} object-cover`}
               />
             ) : (
-              <div className="w-full h-[280px] sm:h-[380px] bg-gradient-to-br from-green-dark/10 to-green-dark/5" />
+              <div className="w-full aspect-video bg-gradient-to-br from-green-dark/10 to-green-dark/5" />
             )}
             <div className="flex gap-3.5 items-center mt-5 mb-2.5 text-[11px] tracking-[0.14em] font-bold">
               <span style={{ color: featuredMeta.color }}>{featuredMeta.label}</span>

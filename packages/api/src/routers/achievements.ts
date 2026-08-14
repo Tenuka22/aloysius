@@ -56,7 +56,8 @@ export const achievementsRouter = {
                   : achievements.createdAt;
       const orderFn = sortDir === "asc" ? asc : desc;
 
-      const [{ total }] = await db.select({ total: count() }).from(achievements).where(where).all();
+      const [countRow] = await db.select({ total: count() }).from(achievements).where(where).all();
+      const total = countRow?.total ?? 0;
 
       const rows = await db
         .select()

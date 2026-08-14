@@ -3,23 +3,13 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 
-const DEFAULTS: Record<string, string> = {
-  hero_badge: "Certa Viriliter",
-  hero_title: "St. Aloysius'\nCollege",
-  hero_tagline: "Tradition. Excellence. Leadership.",
-  hero_cta1_text: "Explore the College",
-  hero_cta1_url: "/about",
-  hero_cta2_text: "Admissions",
-  hero_cta2_url: "/admissions",
-};
-
 export function Hero({ settings }: { settings?: Record<string, string> }) {
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const taglineRef = useRef<HTMLParagraphElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
 
-  const s = (key: string) => settings?.[key] || DEFAULTS[key] || "";
+  const s = (key: string) => settings?.[key] ?? "";
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -76,9 +66,11 @@ export function Hero({ settings }: { settings?: Record<string, string> }) {
       />
 
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-cream px-6">
-        <div className="text-[11px] tracking-[0.5em] font-bold text-gold mb-6">
-          {s("hero_badge").toUpperCase()}
-        </div>
+        {s("hero_badge") && (
+          <div className="text-[11px] tracking-[0.5em] font-bold text-gold mb-6">
+            {s("hero_badge").toUpperCase()}
+          </div>
+        )}
         <h1
           ref={headingRef}
           className="font-heading font-semibold leading-[1.02] m-0"
@@ -91,35 +83,45 @@ export function Hero({ settings }: { settings?: Record<string, string> }) {
             </span>
           ))}
         </h1>
-        <div className="mt-4.5 text-[13px] tracking-[0.42em] font-semibold text-cream/85">
-          GALLE &bull; SRI LANKA
-        </div>
+        {s("hero_location_line") && (
+          <div className="mt-4.5 text-[13px] tracking-[0.42em] font-semibold text-cream/85">
+            {s("hero_location_line")}
+          </div>
+        )}
         <div className="w-14 h-0.5 bg-gold my-8.5" />
-        <p
-          ref={taglineRef}
-          className="font-heading italic text-[26px] m-0 text-cream/95"
-        >
-          {s("hero_tagline")}
-        </p>
+        {s("hero_tagline") && (
+          <p
+            ref={taglineRef}
+            className="font-heading italic text-[26px] m-0 text-cream/95"
+          >
+            {s("hero_tagline")}
+          </p>
+        )}
         <div ref={buttonsRef} className="flex flex-col sm:flex-row gap-4 mt-11">
-          <a
-            href={s("hero_cta1_url") || "/about"}
-            className="inline-flex items-center justify-center bg-gold text-green-dark font-extrabold text-sm tracking-wider px-8.5 py-3.75 hover:bg-gold-light transition-colors"
-          >
-            {s("hero_cta1_text") || "Explore the College"}
-          </a>
-          <a
-            href={s("hero_cta2_url") || "/admissions"}
-            className="inline-flex items-center justify-center border border-cream/60 text-cream font-bold text-sm tracking-wider px-8.5 py-3.75 hover:border-gold hover:text-gold transition-colors"
-          >
-            {s("hero_cta2_text") || "Admissions"}
-          </a>
+          {s("hero_cta1_text") && (
+            <a
+              href={s("hero_cta1_url") || "/about"}
+              className="inline-flex items-center justify-center bg-gold text-green-dark font-extrabold text-sm tracking-wider px-8.5 py-3.75 hover:bg-gold-light transition-colors"
+            >
+              {s("hero_cta1_text")}
+            </a>
+          )}
+          {s("hero_cta2_text") && (
+            <a
+              href={s("hero_cta2_url") || "/admissions"}
+              className="inline-flex items-center justify-center border border-cream/60 text-cream font-bold text-sm tracking-wider px-8.5 py-3.75 hover:border-gold hover:text-gold transition-colors"
+            >
+              {s("hero_cta2_text")}
+            </a>
+          )}
         </div>
       </div>
 
-      <div className="absolute bottom-6.5 left-1/2 -translate-x-1/2 text-cream/60 text-[10px] tracking-[0.3em] pointer-events-none">
-        SCROLL
-      </div>
+      {s("hero_scroll_text") && (
+        <div className="absolute bottom-6.5 left-1/2 -translate-x-1/2 text-cream/60 text-[10px] tracking-[0.3em] pointer-events-none">
+          {s("hero_scroll_text")}
+        </div>
+      )}
     </section>
   );
 }

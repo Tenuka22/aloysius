@@ -4,8 +4,29 @@ import { createDb } from "@aloysius-web/db";
 import { principals } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 
 const sortDirection = z.enum(["asc", "desc"]);
+
+function serializePrincipal(row: typeof principals.$inferSelect) {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    title: row.title,
+    quote: row.quote,
+    message: row.message,
+    bio: row.bio,
+    education: row.education,
+    tenure: row.tenure,
+    portrait: row.portrait,
+    sortOrder: row.sortOrder,
+    status: row.status,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    userId: row.userId,
+  };
+}
 
 export const principalsRouter = {
   list: publicProcedure
@@ -45,7 +66,8 @@ export const principalsRouter = {
                 : principals.sortOrder;
       const orderFn = sortDir === "asc" ? asc : desc;
 
-      const [{ total }] = await db.select({ total: count() }).from(principals).where(where).all();
+      const [countRow] = await db.select({ total: count() }).from(principals).where(where).all();
+      const total = countRow?.total ?? 0;
 
       const rows = await db
         .select()
@@ -57,18 +79,7 @@ export const principalsRouter = {
         .all();
 
       return {
-        rows: rows.map((row) => ({
-          id: row.id,
-          name: row.name,
-          title: row.title,
-          quote: row.quote,
-          portrait: row.portrait,
-          sortOrder: row.sortOrder,
-          status: row.status,
-          createdAt: row.createdAt.toISOString(),
-          updatedAt: row.updatedAt.toISOString(),
-          userId: row.userId,
-        })),
+        rows: rows.map(serializePrincipal),
         total,
         pageCount: Math.ceil(total / pageSize),
         page,
@@ -77,27 +88,19 @@ export const principalsRouter = {
     }),
 
   get: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
     .handler(async ({ input }) => {
       const db = createDb();
-      const row = await db.select().from(principals).where(eq(principals.id, input.id)).get();
+      const row =
+        "id" in input
+          ? await db.select().from(principals).where(eq(principals.id, input.id)).get()
+          : await db.select().from(principals).where(eq(principals.slug, input.slug)).get();
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Principal not found" });
       }
 
-      return {
-        id: row.id,
-        name: row.name,
-        title: row.title,
-        quote: row.quote,
-        portrait: row.portrait,
-        sortOrder: row.sortOrder,
-        status: row.status,
-        createdAt: row.createdAt.toISOString(),
-        updatedAt: row.updatedAt.toISOString(),
-        userId: row.userId,
-      };
+      return serializePrincipal(row);
     }),
 
   getCurrent: publicProcedure.handler(async () => {
@@ -114,18 +117,7 @@ export const principalsRouter = {
       return null;
     }
 
-    return {
-      id: row.id,
-      name: row.name,
-      title: row.title,
-      quote: row.quote,
-      portrait: row.portrait,
-      sortOrder: row.sortOrder,
-      status: row.status,
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
-      userId: row.userId,
-    };
+    return serializePrincipal(row);
   }),
 
   create: protectedProcedure
@@ -134,6 +126,10 @@ export const principalsRouter = {
         name: z.string().min(1),
         title: z.string().optional(),
         quote: z.string().optional(),
+        message: z.string().optional(),
+        bio: z.string().optional(),
+        education: z.string().optional(),
+        tenure: z.string().optional(),
         portrait: z.string().optional(),
         sortOrder: z.number().optional(),
         publishNow: z.boolean().optional(),
@@ -146,15 +142,21 @@ export const principalsRouter = {
 
       const id = crypto.randomUUID();
       const now = new Date();
+      const slug = await generateUniqueSlug(principals, input.name);
 
       const db = createDb();
       const record = await db
         .insert(principals)
         .values({
           id,
+          slug,
           name: input.name,
           title: input.title ?? "Principal",
           quote: input.quote ?? null,
+          message: input.message ?? null,
+          bio: input.bio ?? null,
+          education: input.education ?? null,
+          tenure: input.tenure ?? null,
           portrait: input.portrait ?? null,
           sortOrder: input.sortOrder ?? 0,
           status: input.publishNow ? "published" : "draft",
@@ -165,18 +167,7 @@ export const principalsRouter = {
         .returning()
         .get();
 
-      return {
-        id: record.id,
-        name: record.name,
-        title: record.title,
-        quote: record.quote,
-        portrait: record.portrait,
-        sortOrder: record.sortOrder,
-        status: record.status,
-        createdAt: record.createdAt.toISOString(),
-        updatedAt: record.updatedAt.toISOString(),
-        userId: record.userId,
-      };
+      return serializePrincipal(record);
     }),
 
   update: protectedProcedure
@@ -186,6 +177,10 @@ export const principalsRouter = {
         name: z.string().min(1).optional(),
         title: z.string().optional(),
         quote: z.string().optional(),
+        message: z.string().optional(),
+        bio: z.string().optional(),
+        education: z.string().optional(),
+        tenure: z.string().optional(),
         portrait: z.string().optional(),
         sortOrder: z.number().optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
@@ -213,9 +208,16 @@ export const principalsRouter = {
         updatedAt: now,
       };
 
-      if (input.name !== undefined) updateData.name = input.name;
+      if (input.name !== undefined) {
+        updateData.name = input.name;
+        updateData.slug = await generateUniqueSlug(principals, input.name, input.id);
+      }
       if (input.title !== undefined) updateData.title = input.title;
       if (input.quote !== undefined) updateData.quote = input.quote;
+      if (input.message !== undefined) updateData.message = input.message;
+      if (input.bio !== undefined) updateData.bio = input.bio;
+      if (input.education !== undefined) updateData.education = input.education;
+      if (input.tenure !== undefined) updateData.tenure = input.tenure;
       if (input.portrait !== undefined) updateData.portrait = input.portrait;
       if (input.sortOrder !== undefined) updateData.sortOrder = input.sortOrder;
       if (input.status !== undefined) {
@@ -231,18 +233,7 @@ export const principalsRouter = {
         .returning()
         .get();
 
-      return {
-        id: record.id,
-        name: record.name,
-        title: record.title,
-        quote: record.quote,
-        portrait: record.portrait,
-        sortOrder: record.sortOrder,
-        status: record.status,
-        createdAt: record.createdAt.toISOString(),
-        updatedAt: record.updatedAt.toISOString(),
-        userId: record.userId,
-      };
+      return serializePrincipal(record);
     }),
 
   delete: protectedProcedure
@@ -266,5 +257,11 @@ export const principalsRouter = {
       await db.delete(principals).where(eq(principals.id, input.id)).run();
 
       return { success: true };
+    }),
+
+  checkSlug: publicProcedure
+    .input(z.object({ slug: z.string(), excludeId: z.string().optional() }))
+    .handler(async ({ input }) => {
+      return checkSlugUnique(principals, input.slug, input.excludeId);
     }),
 };

@@ -6,10 +6,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@aloysius-web/ui/components/button";
 import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
 import { Dropzone } from "@/components/file-upload";
+import { uploadImageWithRatio } from "@/lib/upload-image";
 import { IconX, IconChevronDown } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
 import { client } from "@/utils/orpc";
-import { convertToWebp } from "@/utils/convert-to-webp";
 import { toast } from "sonner";
 import * as v from "valibot";
 import { Popover, PopoverTrigger, PopoverContent } from "@aloysius-web/ui/components/popover";
@@ -146,9 +146,7 @@ function CoverImageField() {
       if (!file) return;
       setUploading(true);
       try {
-        const webp = await convertToWebp(file);
-        const result = await client.files.uploadFile(webp);
-        form.setFieldValue("coverImage", result.url);
+        form.setFieldValue("coverImage", await uploadImageWithRatio(file, 16 / 9));
       } catch {
         toast.error("Failed to upload image");
       } finally {

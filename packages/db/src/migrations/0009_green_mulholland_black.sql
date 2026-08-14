@@ -1,0 +1,1 @@
+ALTER TABLE `ob_donations` ADD `image` text;

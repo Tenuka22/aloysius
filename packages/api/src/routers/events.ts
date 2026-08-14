@@ -78,7 +78,8 @@ export const eventsRouter = {
                 : events.createdAt;
       const orderFn = sortDir === "asc" ? asc : desc;
 
-      const [{ total }] = await db.select({ total: count() }).from(events).where(where).all();
+      const [countRow] = await db.select({ total: count() }).from(events).where(where).all();
+      const total = countRow?.total ?? 0;
 
       const rows = await db
         .select()

@@ -12,6 +12,7 @@ import { TagInput } from "@/components-client/tag-input";
 import { SlugFieldInline } from "@/components-client/slug-field";
 import { DateTimePicker, AllDayToggle } from "@/components-client/date-time-picker";
 import { Dropzone } from "@/components/file-upload";
+import { uploadImageWithRatio } from "@/lib/upload-image";
 import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
 import { client } from "@/utils/orpc";
@@ -167,9 +168,7 @@ function CoverImageField() {
       if (!file) return;
       setUploading(true);
       try {
-        const webp = await convertToWebp(file);
-        const result = await client.files.uploadFile(webp);
-        form.setFieldValue("coverImage", result.url);
+        form.setFieldValue("coverImage", await uploadImageWithRatio(file, 1));
       } catch {
         toast.error("Failed to upload image");
       } finally {
@@ -241,9 +240,7 @@ function BodyImageField() {
       if (!file) return;
       setUploading(true);
       try {
-        const webp = await convertToWebp(file);
-        const result = await client.files.uploadFile(webp);
-        form.setFieldValue("bodyImage", result.url);
+        form.setFieldValue("bodyImage", await uploadImageWithRatio(file, 16 / 9));
       } catch {
         toast.error("Failed to upload image");
       } finally {

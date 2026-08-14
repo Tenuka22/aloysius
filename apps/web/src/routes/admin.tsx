@@ -7,7 +7,7 @@ const requireAdmin = createServerFn({ method: "GET" }).handler(async () => {
   const { isAuthenticated, sessionClaims } = await auth();
 
   if (!isAuthenticated) {
-    throw redirect({ to: "/sign-in" });
+    throw redirect({ to: "/", hash: "signin" });
   }
 
   const role = (sessionClaims as any)?.metadata?.role;

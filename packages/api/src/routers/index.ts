@@ -17,6 +17,8 @@ import { clubsRouter } from "./clubs";
 import { notificationsRouter } from "./notifications";
 import { clubAlbumsRouter } from "./club-albums";
 import { principalsRouter } from "./principals";
+import { examResultsRouter } from "./exam-results";
+import { obRouter } from "./ob";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -44,6 +46,8 @@ export const appRouter = {
   notifications: notificationsRouter,
   clubAlbums: clubAlbumsRouter,
   principals: principalsRouter,
+  examResults: examResultsRouter,
+  ob: obRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/d1";
 import { faker } from "@faker-js/faker";
 import * as schema from "./schema";
+import { HOMEPAGE_DEFAULTS } from "./homepage-settings";
 import { env } from "@aloysius-web/env/server";
 
 function daysAgo(n: number): Date {
@@ -64,6 +65,9 @@ export async function seed() {
   console.log("Seeding database...");
 
   // Clear existing data (order matters for foreign keys)
+  await db.delete(schema.obDonations);
+  await db.delete(schema.obEvents);
+  await db.delete(schema.obMembers);
   await db.delete(schema.galleryImages);
   await db.delete(schema.gallery);
   await db.delete(schema.eventRecords);
@@ -74,6 +78,8 @@ export async function seed() {
   await db.delete(schema.news);
   await db.delete(schema.announcements);
   await db.delete(schema.activities);
+  await db.delete(schema.examStudents);
+  await db.delete(schema.examResults);
   await db.delete(schema.files);
   await db.delete(schema.stats);
   await db.delete(schema.principals);
@@ -106,16 +112,12 @@ export async function seed() {
 
   // ── Site Settings ──
   const settings = [
-    { key: "school_name", value: "St. Xavier's High School" },
-    { key: "school_motto", value: "Knowledge, Virtue, Service" },
-    { key: "contact_email", value: "info@stxaviers.edu" },
-    { key: "contact_phone", value: "+91 98765 43210" },
-    { key: "address", value: "14 MG Road, Bangalore, Karnataka 560001" },
     {
       key: "about",
       value:
-        "Founded in 1979, St. Xavier's High School has been a beacon of academic excellence and holistic development. Our campus spans 12 acres with state-of-the-art facilities for academics, sports, and the arts.",
+        "Founded in 1862 by the De La Salle Brothers, St. Aloysius' College has been a beacon of academic excellence and holistic development. Our campus in Galle provides state-of-the-art facilities for academics, sports, and the arts.",
     },
+    ...Object.entries(HOMEPAGE_DEFAULTS).map(([key, value]) => ({ key, value })),
   ];
   for (const s of settings) {
     await db.insert(schema.siteSettings).values({ key: s.key, value: s.value, updatedAt: now });
@@ -733,6 +735,88 @@ export async function seed() {
   }
   console.log(`Seeded ${bigMatches.length} big matches`);
 
+  // ── Exam Results ──
+  const examResultsData = [
+    {
+      examType: "scholarship" as const,
+      examYear: 2026,
+      resultsYear: 2026,
+      status: "published" as const,
+      students: [
+        { name: "Sandaru Perera", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "Hard work beats talent when talent doesn't work hard.", marks: 197 },
+        { name: "Tharindu Silva", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces", quote: "Dream big, study harder.", marks: 195 },
+        { name: "Dineth Fernando", photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces", quote: "Small steps every day.", marks: 193 },
+        { name: "Kavindu Jayasuriya", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "", marks: 192 },
+        { name: "Oshan Rathnayake", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "Focus on the goal.", marks: 190 },
+        { name: "Pasindu Wijesinghe", photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces", quote: "", marks: 189 },
+        { name: "Lahiru Gunaratne", photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces", quote: "Perseverance is key.", marks: 188 },
+        { name: "Ravindu Dissanayake", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "", marks: 187 },
+        { name: "Nethmi Jayawardena", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces", quote: "Learn something new every day.", marks: 186 },
+        { name: "Sachini Karunaratne", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces", quote: "", marks: 185 },
+      ],
+    },
+    {
+      examType: "ol" as const,
+      examYear: 2025,
+      resultsYear: 2026,
+      status: "published" as const,
+      students: [
+        { name: "Kavindu Jayasuriya", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "The future belongs to those who prepare for it.", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "A" }, { subject: "Mathematics", grade: "A" }, { subject: "Science", grade: "A" }, { subject: "History", grade: "A" }, { subject: "Religion", grade: "A" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "A" }] },
+        { name: "Oshan Rathnayake", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "A" }, { subject: "Mathematics", grade: "A" }, { subject: "Science", grade: "A" }, { subject: "History", grade: "A" }, { subject: "Religion", grade: "A" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "B" }] },
+        { name: "Dineth Fernando", photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces", quote: "Discipline is the bridge between goals and accomplishment.", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "A" }, { subject: "Mathematics", grade: "A" }, { subject: "Science", grade: "A" }, { subject: "History", grade: "B" }, { subject: "Religion", grade: "A" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "B" }] },
+        { name: "Tharindu Silva", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces", quote: "", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "A" }, { subject: "Mathematics", grade: "A" }, { subject: "Science", grade: "B" }, { subject: "History", grade: "A" }, { subject: "Religion", grade: "A" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "A" }] },
+        { name: "Sandaru Perera", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "Success is the sum of small efforts.", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "A" }, { subject: "Mathematics", grade: "B" }, { subject: "Science", grade: "A" }, { subject: "History", grade: "A" }, { subject: "Religion", grade: "A" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "A" }] },
+        { name: "Pasindu Wijesinghe", photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces", quote: "", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "A" }, { subject: "Mathematics", grade: "A" }, { subject: "Science", grade: "A" }, { subject: "History", grade: "A" }, { subject: "Religion", grade: "B" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "A" }] },
+        { name: "Ravindu Dissanayake", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "Strive for progress, not perfection.", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "B" }, { subject: "Mathematics", grade: "A" }, { subject: "Science", grade: "A" }, { subject: "History", grade: "A" }, { subject: "Religion", grade: "A" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "A" }] },
+      ],
+    },
+    {
+      examType: "al" as const,
+      examYear: 2025,
+      resultsYear: 2026,
+      status: "published" as const,
+      students: [
+        { name: "Nethmi Jayawardena", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces", quote: "The only way to do great work is to love what you do.", stream: "bio", subjects: [{ subject: "Biology", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "A" }] },
+        { name: "Sachini Karunaratne", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "bio", subjects: [{ subject: "Biology", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "B" }] },
+        { name: "Hiruni Bandara", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces", quote: "Believe you can and you're halfway there.", stream: "maths", subjects: [{ subject: "Combined Maths", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "A" }] },
+        { name: "Isuru Weerasinghe", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "maths", subjects: [{ subject: "Combined Maths", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "A" }] },
+        { name: "Malith De Silva", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "Commerce is the engine of the economy.", stream: "commerce", subjects: [{ subject: "Accounting", grade: "A" }, { subject: "Business Studies", grade: "A" }, { subject: "Economics", grade: "A" }] },
+        { name: "Chamath Liyanage", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "commerce", subjects: [{ subject: "Accounting", grade: "A" }, { subject: "Business Studies", grade: "A" }, { subject: "Economics", grade: "B" }] },
+        { name: "Yasas Wickramasinghe", photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces", quote: "Art is the most intense mode of individualism.", stream: "art", subjects: [{ subject: "Art", grade: "A" }, { subject: "Sinhala Literature", grade: "A" }, { subject: "History", grade: "A" }] },
+        { name: "Gayathri Herath", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "art", subjects: [{ subject: "Art", grade: "A" }, { subject: "Sinhala Literature", grade: "A" }, { subject: "History", grade: "B" }] },
+      ],
+    },
+  ];
+  for (const item of examResultsData) {
+    const resultId = faker.string.uuid();
+    await db.insert(schema.examResults).values({
+      id: resultId,
+      examType: item.examType,
+      examYear: item.examYear,
+      resultsYear: item.resultsYear,
+      status: item.status,
+      createdAt: now,
+      updatedAt: now,
+      userId,
+    });
+    for (let i = 0; i < item.students.length; i++) {
+      const s = item.students[i]!;
+      await db.insert(schema.examStudents).values({
+        id: faker.string.uuid(),
+        examResultId: resultId,
+        name: s.name,
+        photo: s.photo ?? null,
+        quote: s.quote ?? null,
+        marks: s.marks ?? null,
+        stream: (s as any).stream ?? null,
+        subjects: (s as any).subjects ?? [],
+        sortOrder: i,
+        createdAt: now,
+      });
+    }
+  }
+  console.log(`Seeded ${examResultsData.length} exam results`);
+
   // ── Principals ──
   const principalsData = [
     {
@@ -740,17 +824,42 @@ export async function seed() {
       title: "Principal",
       quote:
         "Every Aloysian carries forward a tradition of faith, discipline and excellence - certa viriliter. Our mission is to form men and women who will serve as a light to the world through knowledge, compassion and integrity.",
+      message:
+        "Dear Students, Parents, and Well-Wishers,\n\nIt is with great joy and humility that I welcome you to St. Aloysius' College, a school that has stood on the shores of Galle since 1862 as a beacon of faith, discipline, and academic excellence.\n\nEvery Aloysian carries forward a tradition of faith, discipline and excellence - certa viriliter, which means 'fight manfully'. These two words have guided generations of young men who have walked these corridors and gone on to serve as leaders in every field, both in Sri Lanka and across the world.\n\nOur mission is simple: to form men and women who will serve as a light to the world through knowledge, compassion and integrity. We believe that education is not merely the passing of examinations, but the formation of character. We strive to nurture young minds to think critically, act justly, and serve generously.\n\nTo our students, I say: make the most of every opportunity this great institution offers. Let your studies, your sports, your music and your service all be offered in the spirit of certa viriliter.\n\nTo our parents, I extend my heartfelt gratitude for your trust and partnership. Together, we will form the next generation of Aloysian gentlemen.\n\nMay God bless you all.\n\nCerta Viriliter.",
+      bio: "Fr. Jason Thomas was appointed Principal of St. Aloysius' College in 2019. A priest of the Society of Jesus with a deep commitment to Catholic education in Sri Lanka, he has served in Jesuit schools across the island for over two decades, championing holistic formation that balances academics, spirituality, and character.",
+      education:
+        "B.A. (Hons) - University of Peradeniya\nM.Phil. in Education - University of Colombo\nDiploma in Spiritual Direction - National Seminary, Ampitiya",
+      tenure: "2019 - Present",
       portrait: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=800&fit=crop&crop=faces",
       sortOrder: 0,
+      status: "published" as const,
+    },
+    {
+      name: "Rev. Fr. Joseph Perera",
+      title: "Rector",
+      quote:
+        "A good education is the foundation on which a nation is built; we must build it with faith and fear of God.",
+      message:
+        "It has been my privilege to walk alongside the young men of St. Aloysius' College during my years as Rector. I have seen the fire of curiosity in their eyes and the strength of character in their actions.\n\nEducation in our tradition is a partnership between the school, the family, and the Church. We must never forget that the child we form today will be the leader, the father, and the citizen of tomorrow. Let us form them with patience, with love, and with the fear of God.\n\nI thank every teacher, every parent, and every old boy who continues to uphold the values of this great college.",
+      bio: "Rev. Fr. Joseph Perera served as Rector of St. Aloysius' College from 2009 to 2019, leading the college through a decade of growth and renewal.",
+      education: "B.D. - National Seminary, Kandy",
+      tenure: "2009 - 2019",
+      portrait: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop&crop=faces",
+      sortOrder: 1,
       status: "published" as const,
     },
   ];
   for (const item of principalsData) {
     await db.insert(schema.principals).values({
       id: faker.string.uuid(),
+      slug: toSlug(item.name),
       name: item.name,
       title: item.title,
       quote: item.quote,
+      message: item.message,
+      bio: item.bio,
+      education: item.education,
+      tenure: item.tenure,
       portrait: item.portrait,
       sortOrder: item.sortOrder,
       status: item.status,
@@ -812,6 +921,115 @@ export async function seed() {
     });
   }
   console.log(`Seeded ${activities.length} activities`);
+
+  // ── OB Members ──
+  const obMembers = [
+    { name: "Ranil Wickramasinghe", role: "President", email: "ranil@ob-alloysius.lk", bio: "Class of 1978. Attorney-at-law and former President of the OB Association. Leading fundraising initiatives for the college infrastructure.", sortOrder: 0 },
+    { name: "Mahinda Rajapaksa", role: "Vice President", email: "mahinda@ob-alloysius.lk", bio: "Class of 1975. Retired senior government official. Active in mentoring current students and organizing career guidance programs.", sortOrder: 1 },
+    { name: "Chandrika Kumaratunga", role: "Secretary", email: "chandrika@ob-alloysius.lk", bio: "Class of 1980. Former diplomat. Manages OB communications and coordinates alumni events.", sortOrder: 2 },
+    { name: "Dinesh Gunawardena", role: "Treasurer", email: "dinesh@ob-alloysius.lk", bio: "Class of 1982. Chartered accountant. Oversees OB Association finances and donation management.", sortOrder: 3 },
+    { name: "Sajith Premadasa", role: "Committee Member", email: "sajith@ob-alloysius.lk", bio: "Class of 1985. Entrepreneur and philanthropist. Sponsors annual sports awards and student scholarships.", sortOrder: 4 },
+    { name: "Ranil Mathew", role: "Committee Member", email: "ranil.m@ob-alloysius.lk", bio: "Class of 1990. Software engineer based in Melbourne. Coordinates overseas alumni chapter activities.", sortOrder: 5 },
+    { name: "Nimal Fernando", role: "Committee Member", email: "nimal@ob-alloysius.lk", bio: "Class of 1988. Senior architect. Leads campus beautification and infrastructure projects.", sortOrder: 6 },
+    { name: "Kamal Perera", role: "Immediate Past President", email: "kamal@ob-alloysius.lk", bio: "Class of 1976. Retired school principal. Served as OB President from 2018-2024. Now an advisory board member.", sortOrder: 7 },
+  ];
+  for (let i = 0; i < obMembers.length; i++) {
+    await db.insert(schema.obMembers).values({
+      id: faker.string.uuid(),
+      ...obMembers[i],
+      photo: faker.helpers.arrayElement(coverImages),
+      status: "approved",
+      userId: `user_ob_${String(i).padStart(3, "0")}`,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  console.log(`Seeded ${obMembers.length} OB members`);
+
+  // ── OB Events ──
+  const obEvents = [
+    {
+      title: "Annual OB Reunion Dinner 2026",
+      description: "Join fellow old boys for an evening of nostalgia, fellowship, and celebration. Dinner, live music, and awards ceremony.",
+      coverImage: faker.helpers.arrayElement(imageUrls),
+      location: "Galle Face Hotel, Colombo",
+      eventDate: daysFromNow(30),
+      endDate: daysFromNow(30),
+      isAllDay: false,
+    },
+    {
+      title: "Career Guidance Workshop for Current Students",
+      description: "Old boys from various professions share their career journeys and provide guidance to students in grades 10-12. Sessions on medicine, engineering, law, IT, and business.",
+      coverImage: faker.helpers.arrayElement(imageUrls),
+      location: "College Auditorium",
+      eventDate: daysFromNow(14),
+      endDate: daysFromNow(14),
+      isAllDay: false,
+    },
+    {
+      title: "Sports Day - Old Boys vs Current Students",
+      description: "Annual friendly cricket and football matches between the old boys team and current students. Come cheer and enjoy the camaraderie.",
+      coverImage: faker.helpers.arrayElement(imageUrls),
+      location: "College Sports Ground",
+      eventDate: daysFromNow(45),
+      endDate: daysFromNow(45),
+      isAllDay: true,
+    },
+    {
+      title: "Fundraising Gala for Library Renovation",
+      description: "An evening gala to raise funds for the renovation of the college library. Silent auction, dinner, and entertainment.",
+      coverImage: faker.helpers.arrayElement(imageUrls),
+      location: "Mount Lavinia Hotel",
+      eventDate: daysFromNow(60),
+      endDate: daysFromNow(60),
+      isAllDay: false,
+    },
+    {
+      title: "Mentorship Program Kickoff",
+      description: "Launch of the 2026 OB Mentorship Program pairing old boys with current students for academic and career guidance throughout the year.",
+      coverImage: faker.helpers.arrayElement(imageUrls),
+      location: "College Conference Hall",
+      eventDate: daysFromNow(7),
+      endDate: daysFromNow(7),
+      isAllDay: false,
+    },
+  ];
+  for (let i = 0; i < obEvents.length; i++) {
+    await db.insert(schema.obEvents).values({
+      id: faker.string.uuid(),
+      slug: toSlug(obEvents[i]!.title),
+      ...obEvents[i],
+      status: i < 3 ? "published" : "draft",
+      publishedAt: i < 3 ? daysAgo(5) : null,
+      userId: `user_ob_000`,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  console.log(`Seeded ${obEvents.length} OB events`);
+
+  // ── OB Donations ──
+  const obDonations = [
+    { donorName: "Ranil Wickramasinghe", donorEmail: "ranil@ob-alloysius.lk", amount: 500000, currency: "LKR", purpose: "Library Renovation Fund", message: "Happy to contribute to the library project. Education is the foundation of our college.", isAnonymous: false, status: "confirmed" as const, donatedAt: daysAgo(15) },
+    { donorName: "Mahinda Rajapaksa", donorEmail: "mahinda@ob-alloysius.lk", amount: 250000, currency: "LKR", purpose: "Sports Equipment", message: "For the new cricket pavilion project.", isAnonymous: false, status: "confirmed" as const, donatedAt: daysAgo(10) },
+    { donorName: "Anonymous", donorEmail: null, amount: 1000000, currency: "LKR", purpose: "Scholarship Fund", message: "In memory of my late father, an old boy of 1965.", isAnonymous: true, status: "confirmed" as const, donatedAt: daysAgo(20) },
+    { donorName: "Nimal Fernando", donorEmail: "nimal@ob-alloysius.lk", amount: 150000, currency: "LKR", purpose: "Campus Beautification", message: "For the new garden project near the main hall.", isAnonymous: false, status: "confirmed" as const, donatedAt: daysAgo(5) },
+    { donorName: "Kamal Perera", donorEmail: "kamal@ob-alloysius.lk", amount: 300000, currency: "LKR", purpose: "Technology Upgrades", message: "For the new computer lab equipment.", isAnonymous: false, status: "confirmed" as const, donatedAt: daysAgo(8) },
+    { donorName: "Sajith Premadasa", donorEmail: "sajith@ob-alloysius.lk", amount: 200000, currency: "LKR", purpose: "Annual Sports Awards", message: "Sponsoring this year's sports day prizes.", isAnonymous: false, status: "pending" as const, donatedAt: daysAgo(2) },
+    { donorName: "Ranil Mathew", donorEmail: "ranil.m@ob-alloysius.lk", amount: 100, currency: "USD", purpose: "Library Renovation Fund", message: "Contributing from the Melbourne chapter.", isAnonymous: false, status: "confirmed" as const, donatedAt: daysAgo(12) },
+    { donorName: "Chandrika Kumaratunga", donorEmail: "chandrika@ob-alloysius.lk", amount: 100000, currency: "LKR", purpose: "Student Welfare", message: "For the student lunch program.", isAnonymous: false, status: "pending" as const, donatedAt: daysAgo(1) },
+  ];
+  for (let i = 0; i < obDonations.length; i++) {
+    await db.insert(schema.obDonations).values({
+      id: faker.string.uuid(),
+      ...obDonations[i],
+      image: null,
+      userId: `user_ob_${String(i).padStart(3, "0")}`,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  console.log(`Seeded ${obDonations.length} OB donations`);
 
   console.log("Database seeded successfully!");
 }

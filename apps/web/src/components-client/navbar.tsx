@@ -21,6 +21,7 @@ const navLinks = [
   { label: "Principals", to: "/principals" },
   { label: "Student Life", to: "/students" },
   { label: "Achievements", to: "/achievements" },
+  { label: "Exam Results", to: "/exam-results" },
   { label: "Gallery", to: "/gallery" },
   { label: "News & Events", to: "/news-events" },
   { label: "Alumni", to: "/alumni" },
@@ -81,7 +82,7 @@ export function Navbar() {
       ref={headerRef}
       className="sticky top-0 z-50 w-full bg-green-dark text-cream border-b border-gold/25"
     >
-      <div className="mx-auto flex h-[78px] max-w-7xl items-center gap-8 px-4 sm:px-6 lg:px-12">
+      <div className="mx-auto flex h-[78px] max-w-7xl items-center gap-8 px-4 sm:px-6 lg:px-12 flex-row justify-between">
         {/* Logo */}
         <a
           href="/"
@@ -110,7 +111,7 @@ export function Navbar() {
             <Link
               key={item.label}
               to={item.to}
-              className="py-1.5 border-b-2 border-transparent text-cream hover:text-gold transition-colors"
+              className="py-1.5 border-b-2 border-transparent text-cream hover:text-gold transition-colors whitespace-nowrap"
               activeProps={{
                 className: "!text-gold !border-gold",
               }}
@@ -125,7 +126,7 @@ export function Navbar() {
         <div ref={ctaRef} className="flex items-center gap-3 lg:ml-6">
           <Link
             to="/admissions"
-            className="hidden sm:inline-flex items-center bg-gold text-green-dark font-extrabold text-[13px] tracking-[0.05em] px-4 py-2 hover:bg-gold-light transition-colors"
+            className="hidden sm:inline-flex items-center bg-gold text-green-dark px-3 py-1.5 text-[12px] font-bold tracking-wider hover:bg-gold-light transition-colors whitespace-nowrap"
           >
             Admissions
           </Link>
@@ -199,7 +200,7 @@ export function Navbar() {
           <Link
             to="/admissions"
             onClick={() => setMobileMenuOpen(false)}
-            className="mt-2 inline-flex items-center justify-center bg-gold text-green-dark font-extrabold text-[13px] tracking-[0.05em] px-4 py-2"
+            className="mt-2 inline-flex items-center justify-center bg-gold text-green-dark px-4 py-2 text-[12px] font-bold tracking-wider hover:bg-gold-light transition-colors"
           >
             Admissions
           </Link>

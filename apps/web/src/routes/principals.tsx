@@ -3,7 +3,7 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
@@ -12,9 +12,14 @@ gsap.registerPlugin(ScrollTrigger);
 
 type Principal = {
   id: string;
+  slug: string;
   name: string;
   title: string | null;
   quote: string | null;
+  message: string | null;
+  bio: string | null;
+  education: string | null;
+  tenure: string | null;
   portrait: string | null;
   sortOrder: number;
   status: string;
@@ -174,6 +179,26 @@ function PrincipalCard({ principal, index }: { principal: Principal; index: numb
             ? `${principal.title.toUpperCase()}, ST. ALOYSIUS&rsquo; COLLEGE`
             : "PRINCIPAL, ST. ALOYSIUS&rsquo; COLLEGE"}
         </div>
+        {principal.slug ? (
+          <Link
+            to="/principals/$slug"
+            params={{ slug: principal.slug }}
+            className="inline-flex items-center gap-2.5 font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5 mt-6"
+          >
+            Read the Full Message <span>&rarr;</span>
+          </Link>
+        ) : (
+          principal.message && (
+            <div className="mt-6">
+              <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-3">
+                THE PRINCIPAL&rsquo;S MESSAGE
+              </div>
+              <p className="font-heading text-lg leading-[1.6] text-green-dark whitespace-pre-wrap">
+                {principal.message}
+              </p>
+            </div>
+          )
+        )}
       </div>
     </div>
   );

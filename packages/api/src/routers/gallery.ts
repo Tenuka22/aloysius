@@ -50,7 +50,8 @@ export const galleryRouter = {
                 : gallery.createdAt;
       const orderFn = sortDir === "asc" ? asc : desc;
 
-      const [{ total }] = await db.select({ total: count() }).from(gallery).where(where).all();
+      const [countRow] = await db.select({ total: count() }).from(gallery).where(where).all();
+      const total = countRow?.total ?? 0;
 
       const rows = await db
         .select()
@@ -321,11 +322,12 @@ export const galleryRouter = {
       const { galleryId, page, pageSize } = input;
       const offset = (page - 1) * pageSize;
 
-      const [{ total }] = await db
+      const [countRow] = await db
         .select({ total: count() })
         .from(galleryImages)
         .where(eq(galleryImages.galleryId, galleryId))
         .all();
+      const total = countRow?.total ?? 0;
 
       const rows = await db
         .select()

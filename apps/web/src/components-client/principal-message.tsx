@@ -3,19 +3,16 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const DEFAULTS: Record<string, string> = {
-  principal_quote:
-    "Every Aloysian carries forward a tradition of faith, discipline and excellence - certa viriliter.",
-  principal_name: "The Principal",
-};
-
 type Principal = {
+  slug: string | null;
   name: string;
   title: string | null;
   quote: string | null;
+  message: string | null;
   portrait: string | null;
 } | null;
 
@@ -27,11 +24,13 @@ export function PrincipalMessage({
   principal?: Principal;
 }) {
   const sectionRef = useRef<HTMLElement>(null);
-  const s = (key: string) => settings?.[key] || DEFAULTS[key] || "";
+  const s = (key: string) => settings?.[key] ?? "";
 
-  const displayName = principal?.name || s("principal_name") || DEFAULTS.principal_name;
-  const displayQuote = principal?.quote || s("principal_quote") || DEFAULTS.principal_quote;
+  const displayName = principal?.name || s("principal_name");
+  const displayQuote = principal?.quote || s("principal_quote");
   const photo = principal?.portrait || settings?.principal_photo;
+  const titleLine = (principal?.title ?? s("principal_title")).trim();
+  const schoolLine = s("school_name").trim();
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -62,7 +61,11 @@ export function PrincipalMessage({
         <div data-animate className="relative max-w-[340px] mx-auto lg:mx-0 w-full">
           <div className="absolute -right-3.5 -bottom-3.5 w-full h-full border border-gold -z-10 pointer-events-none" />
           {photo ? (
-            <img src={photo} alt={displayName} className="w-full h-[420px] object-cover" />
+            <img
+              src={photo}
+              alt={displayName}
+              className={`w-full ${aspectRatioClass(getAspectRatio(photo)) || "aspect-[3/4]"} object-cover`}
+            />
           ) : (
             <div className="w-full h-[420px] flex items-center justify-center bg-gradient-to-br from-green-dark/10 to-green-dark/5">
               <span className="text-[11px] tracking-widest text-green-dark/40 font-semibold">
@@ -72,26 +75,34 @@ export function PrincipalMessage({
           )}
         </div>
         <div data-animate>
-          <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
-            FROM THE PRINCIPAL
-          </div>
-          <p className="font-heading text-2xl sm:text-[32px] leading-[1.35] font-medium text-green-dark mb-6.5">
-            &ldquo;{displayQuote}&rdquo;
-          </p>
-          <div className="font-heading italic text-[28px] text-green-dark/50">
-            &mdash; {displayName}
-          </div>
-          <div className="text-xs tracking-[0.16em] text-green-dark/60 my-1.5 mb-7.5">
-            {principal?.title
-              ? `${principal.title.toUpperCase()}, ST. ALOYSIUS&rsquo; COLLEGE`
-              : "PRINCIPAL, ST. ALOYSIUS&rsquo; COLLEGE"}
-          </div>
-          <a
-            href="/principals"
-            className="inline-flex items-center gap-2.5 font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5"
-          >
-            Read the Full Message <span>&rarr;</span>
-          </a>
+          {s("principal_eyebrow") && (
+            <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
+              {s("principal_eyebrow")}
+            </div>
+          )}
+          {displayQuote && (
+            <p className="font-heading text-2xl sm:text-[32px] leading-[1.35] font-medium text-green-dark mb-6.5">
+              &ldquo;{displayQuote}&rdquo;
+            </p>
+          )}
+          {displayName && (
+            <div className="font-heading italic text-[28px] text-green-dark/50">
+              &mdash; {displayName}
+            </div>
+          )}
+          {(titleLine || schoolLine) && (
+            <div className="text-xs tracking-[0.16em] text-green-dark/60 my-1.5 mb-7.5">
+              {[titleLine, schoolLine].filter(Boolean).map((part) => part.toUpperCase()).join(", ")}
+            </div>
+          )}
+          {s("principal_cta_text") && (
+            <a
+              href={principal?.slug ? `/principals/${principal.slug}` : s("principal_cta_url") || "/principals"}
+              className="inline-flex items-center gap-2.5 font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5"
+            >
+              {s("principal_cta_text")} <span>&rarr;</span>
+            </a>
+          )}
         </div>
       </div>
     </section>
