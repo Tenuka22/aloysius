@@ -49,6 +49,8 @@ export function Footer({ settings }: { settings?: Record<string, string> } = {})
   const [newsletterEmail, setNewsletterEmail] = useState("");
 
   const s = (key: string) => settings?.[key] ?? "";
+  const schoolName = s("school_name") || "St. Aloysius\u2019 College";
+  const motto = s("school_motto");
   const address = s("address");
   const phone = s("contact_phone");
   const email = s("contact_email");
@@ -86,9 +88,9 @@ export function Footer({ settings }: { settings?: Record<string, string> } = {})
       <div className="relative mx-auto max-w-295 px-4 sm:px-6 lg:px-12 pt-24 sm:pt-32 pb-10">
         <div data-animate className="grid grid-cols-1 lg:grid-cols-[1.2fr_auto] gap-10 lg:gap-16 items-end pb-14 sm:pb-18 border-b border-cream/10">
           <div>
-            <img src="/logo.png" alt="St. Aloysius' College crest" className="h-16 w-auto object-contain mb-6" />
-            <h2 className="text-3xl sm:text-4xl lg:text-[44px] leading-[1.1]">St. Aloysius&rsquo; College</h2>
-            <p className="font-heading italic text-xl sm:text-2xl text-gold mt-2">Certa Viriliter</p>
+            <img src="/logo.png" alt={`${schoolName} crest`} className="h-16 w-auto object-contain mb-6" />
+            <h2 className="text-3xl sm:text-4xl lg:text-[44px] leading-[1.1]">{schoolName}</h2>
+            {motto && <p className="font-heading italic text-xl sm:text-2xl text-gold mt-2">{motto}</p>}
             <p className="text-sm text-cream/55 max-w-md mt-5 leading-relaxed">A Catholic institution of academic and moral excellence, forming young men of competence, conscience and compassion in Galle, Sri Lanka.</p>
           </div>
           <div className="w-full lg:w-90">
@@ -131,14 +133,14 @@ export function Footer({ settings }: { settings?: Record<string, string> } = {})
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-5 border-t border-cream/10 pt-7 text-[12.5px] text-cream/45">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-5 text-center sm:text-left">
-            <span>{copyright || `\u00A9 ${new Date().getFullYear()} St. Aloysius\u2019 College, Galle. All Rights Reserved.`}</span>
+            <span>{copyright || `\u00A9 ${new Date().getFullYear()} ${schoolName}, Galle. All Rights Reserved.`}</span>
             <span className="hidden sm:inline text-cream/25">&bull;</span>
             <a href="#" className="hover:text-cream/70 transition-colors">Privacy Policy</a>
             <span className="text-cream/25">&bull;</span>
             <a href="#" className="hover:text-cream/70 transition-colors">Terms of Use</a>
           </div>
           <div className="flex items-center gap-5">
-            <span className="tracking-[0.2em] text-cream/35">CERTA VIRILITER</span>
+            {motto && <span className="tracking-[0.2em] text-cream/35">{motto.toUpperCase()}</span>}
             <button type="button" onClick={scrollToTop} aria-label="Back to top" className="group flex size-9 items-center justify-center rounded-full border border-cream/20 transition-all duration-300 hover:border-gold hover:bg-gold">
               <IconArrowUp className="size-4 text-cream/70 transition-colors group-hover:text-green-dark" stroke={1.75} />
             </button>

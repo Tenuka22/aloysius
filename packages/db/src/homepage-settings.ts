@@ -137,14 +137,7 @@ export const HOMEPAGE_KEYS = [
   "gallery_cta_url",
 
   // Footer
-  "footer_heading",
-  "footer_location",
-  "footer_tagline",
-  "footer_college_heading",
-  "footer_community_heading",
-  "footer_contact_heading",
   "footer_copyright",
-  "footer_credit",
   "footer_social_facebook",
   "footer_social_instagram",
   "footer_social_youtube",
@@ -287,15 +280,8 @@ export const HOMEPAGE_DEFAULTS: Record<HomepageSettingKey, string> = {
   gallery_cta_url: "/gallery",
 
   // Footer
-  footer_heading: "ST. ALOYSIUS' COLLEGE",
-  footer_location: "GALLE, SRI LANKA",
-  footer_tagline: "Certa Viriliter",
-  footer_college_heading: "COLLEGE",
-  footer_community_heading: "COMMUNITY",
-  footer_contact_heading: "CONTACT",
   footer_copyright:
     "\u00A9 {year} St. Aloysius' College, Galle. All Rights Reserved.",
-  footer_credit: "CERTA VIRILITER",
   footer_social_facebook: "https://facebook.com/aloysiuscollege",
   footer_social_instagram: "https://instagram.com/aloysiuscollege",
   footer_social_youtube: "https://youtube.com/@aloysiuscollege",

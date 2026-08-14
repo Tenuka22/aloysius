@@ -16,6 +16,17 @@ export interface NavItem {
   href: string;
 }
 
+export const NAV_ITEMS: NavItem[] = [
+  { label: "Home", href: "/" },
+  { label: "About", href: "/about" },
+  { label: "Achievements", href: "/achievements" },
+  { label: "Education", href: "/exam-results" },
+  { label: "Gallery", href: "/gallery" },
+  { label: "News & Events", href: "/news-events" },
+  { label: "Contact", href: "/contact" },
+  { label: "Alumni", href: "/ob" },
+];
+
 export interface NavbarProps {
   logo?: React.ReactNode;
   items: NavItem[];

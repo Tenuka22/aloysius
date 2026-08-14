@@ -20,7 +20,6 @@ import { convertToWebp } from "@/utils/convert-to-webp";
 import { withAspectRatio, getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 import { toast } from "sonner";
 import { IconX } from "@tabler/icons-react";
-import { HOMEPAGE_KEYS, HOMEPAGE_DEFAULTS } from "@aloysius-web/db/homepage-settings";
 
 type SettingsRecord = Record<string, string>;
 
@@ -960,39 +959,6 @@ function HomepageEditor() {
       {/* Footer */}
       <section className="border bg-card p-6 space-y-4">
         <SectionHeader title="Footer" />
-        <div className="grid grid-cols-2 gap-4">
-          <Field
-            label="School Name Line"
-            value={getValue("footer_heading")}
-            onChange={(v) => setField("footer_heading", v)}
-          />
-          <Field
-            label="Location Line"
-            value={getValue("footer_location")}
-            onChange={(v) => setField("footer_location", v)}
-            placeholder="e.g. GALLE, SRI LANKA"
-          />
-          <Field
-            label="Tagline"
-            value={getValue("footer_tagline")}
-            onChange={(v) => setField("footer_tagline", v)}
-          />
-          <Field
-            label="College Column Heading"
-            value={getValue("footer_college_heading")}
-            onChange={(v) => setField("footer_college_heading", v)}
-          />
-          <Field
-            label="Community Column Heading"
-            value={getValue("footer_community_heading")}
-            onChange={(v) => setField("footer_community_heading", v)}
-          />
-          <Field
-            label="Contact Column Heading"
-            value={getValue("footer_contact_heading")}
-            onChange={(v) => setField("footer_contact_heading", v)}
-          />
-        </div>
         <Field
           label="Copyright Line"
           value={getValue("footer_copyright")}
@@ -1000,12 +966,6 @@ function HomepageEditor() {
           description="Use {year} as a placeholder for the current year"
         />
         <div className="grid grid-cols-2 gap-4">
-          <Field
-            label="Credit Line"
-            value={getValue("footer_credit")}
-            onChange={(v) => setField("footer_credit", v)}
-            placeholder="e.g. CERTA VIRILITER"
-          />
           <Field
             label="Facebook URL"
             value={getValue("footer_social_facebook")}

@@ -97,12 +97,6 @@ export function OBPage({ settings }: { settings?: Record<string, string> } = {})
   });
 
   const activeMembers = members.filter((m: any) => m.status === "approved");
-  const grouped = activeMembers.reduce((acc: Record<string, any[]>, m: any) => {
-    const role = m.role || "COMMITTEE MEMBER";
-    if (!acc[role]) acc[role] = [];
-    acc[role].push(m);
-    return acc;
-  }, {} as Record<string, any[]>);
 
   const publishedEvents = events.filter((e: any) => e.status === "published");
   const pendingEvents = events.filter((e: any) => e.status === "draft");

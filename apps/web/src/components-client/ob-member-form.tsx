@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
 import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
-import { IconUpload, IconX } from "@tabler/icons-react";
+import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
@@ -57,7 +57,7 @@ const updateMemberSchema = v.object({
 type UpdateMemberValues = v.InferOutput<typeof updateMemberSchema>;
 
 const fields: FieldEntry<CreateMemberValues | UpdateMemberValues>[] = [
-  { name: "photo", kind: "custom", label: "Photo", required: false, customRenderer: ({ onChange }) => <PhotoFieldInline value={onChange} /> },
+  { name: "photo", kind: "custom", label: "Photo", required: false, customRenderer: ({ value, onChange }) => <PhotoFieldInline value={value} onChange={onChange} /> },
   { name: "name", kind: "text", label: "Full Name", placeholder: "e.g. John Perera", required: true },
   {
     name: "role",

@@ -17,18 +17,15 @@ gsap.registerPlugin(ScrollTrigger);
 const navLinks = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about" },
-  { label: "Academics", to: "/academics" },
-  { label: "Principals", to: "/principals" },
-  { label: "Student Life", to: "/students" },
   { label: "Achievements", to: "/achievements" },
-  { label: "Exam Results", to: "/exam-results" },
+  { label: "Education", to: "/exam-results" },
   { label: "Gallery", to: "/gallery" },
   { label: "News & Events", to: "/news-events" },
-  { label: "Alumni", to: "/alumni" },
   { label: "Contact", to: "/contact" },
+  { label: "Alumni", to: "/ob" },
 ];
 
-export function Navbar() {
+export function Navbar({ settings }: { settings?: Record<string, string> } = {}) {
   const headerRef = useRef<HTMLElement>(null);
   const logoRef = useRef<HTMLAnchorElement>(null);
   const linksRef = useRef<HTMLDivElement>(null);
@@ -37,6 +34,8 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModal, setAuthModal] = useState<"signin" | "signup" | null>(null);
   const { isSignedIn } = useAuth();
+
+  const schoolName = settings?.school_name || "ST. ALOYSIUS\u2019 COLLEGE";
 
   useEffect(() => {
     const onHashChange = () => {
@@ -86,14 +85,14 @@ export function Navbar() {
         {/* Logo */}
         <a
           href="/"
-          aria-label="St. Aloysius' College - Home"
+          aria-label={`${schoolName} - Home`}
           ref={logoRef}
           className="flex items-center gap-3 shrink-0"
         >
-          <img src="/logo.png" alt="St. Aloysius' College crest" className="h-11 w-auto object-contain" />
+          <img src="/logo.png" alt={`${schoolName} crest`} className="h-11 w-auto object-contain" />
           <span className="leading-[1.15] hidden sm:block">
             <span className="block font-extrabold text-[15px] tracking-[0.06em]">
-              ST. ALOYSIUS&rsquo; COLLEGE
+              {schoolName}
             </span>
             <span className="block text-[10px] tracking-[0.28em] text-gold">
               GALLE &bull; SRI LANKA

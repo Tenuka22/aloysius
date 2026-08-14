@@ -150,7 +150,7 @@ function Home() {
         Skip to main content
       </a>
       <NoticeStrip settings={settings} />
-      <Navbar />
+      <Navbar settings={settings} />
       <main id="main-content">
         <Hero settings={settings} />
         <Heritage settings={settings} />
