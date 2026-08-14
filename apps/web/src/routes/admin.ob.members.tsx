@@ -62,8 +62,10 @@ type OBMember = {
   name: string;
   role: string;
   email: string | null;
+  adminEmail: string | null;
   photo: string | null;
   bio: string | null;
+  year: string;
   sortOrder: number;
   status: string;
   decidedBy: string | null;
@@ -149,6 +151,16 @@ function AdminOBMembers() {
       accessorKey: "email",
       header: "Email",
       cell: ({ row }) => <span className="text-muted-foreground">{row.original.email || "-"}</span>,
+    },
+    {
+      accessorKey: "adminEmail",
+      header: "Admin Email",
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.adminEmail || "-"}</span>,
+    },
+    {
+      accessorKey: "year",
+      header: "Year",
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.year || "-"}</span>,
     },
     {
       accessorKey: "status",
@@ -239,15 +251,23 @@ function AdminOBMembers() {
               <div className="flex items-center justify-between">
                 <div className="flex flex-1 items-center gap-2">
                   <Input placeholder="Filter by name..." value={(filters.find((f) => f.id === "name")?.value as string) ?? ""} onChange={(e) => setFilter("name", e.target.value)} className="h-8 w-[200px] lg:w-[250px]" />
-                  <Select value={(filters.find((f) => f.id === "status")?.value as string) ?? ""} onValueChange={(val) => setFilter("status", val ?? "")}>
-                    <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="All statuses" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                      <SelectItem value="revoked">Revoked</SelectItem>
-                    </SelectContent>
-                  </Select>
+                   <Select value={(filters.find((f) => f.id === "status")?.value as string) ?? ""} onValueChange={(val) => setFilter("status", val ?? "")}>
+                     <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="All statuses" /></SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="pending">Pending</SelectItem>
+                       <SelectItem value="approved">Approved</SelectItem>
+                       <SelectItem value="rejected">Rejected</SelectItem>
+                       <SelectItem value="revoked">Revoked</SelectItem>
+                     </SelectContent>
+                   </Select>
+                   <Select value={(filters.find((f) => f.id === "year")?.value as string) ?? ""} onValueChange={(val) => setFilter("year", val ?? "")}>
+                     <SelectTrigger className="h-8 w-[120px]"><SelectValue placeholder="All years" /></SelectTrigger>
+                     <SelectContent>
+                       {[...new Set(members.map((m) => m.year).filter(Boolean))].sort().reverse().map((year) => (
+                         <SelectItem key={year} value={year}>{year}</SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
                   {isFiltered && <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">Reset</Button>}
                 </div>
                 <DataTableViewOptions table={table} />

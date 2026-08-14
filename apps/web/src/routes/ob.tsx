@@ -152,37 +152,77 @@ export function OBPage() {
           </div>
         </section>
 
-        {/* Committee Section - clubs.tsx style */}
+        {/* Committee Section */}
         <section>
-          <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-green-dark mb-8">Our Committee</h2>
-          {membersLoading ? (
-            <div className="text-center text-muted-foreground py-8">Loading...</div>
-          ) : activeMembers.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">Committee members will be listed here.</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activeMembers.map((member: any) => (
-                <Card key={member.id} className="overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="flex gap-4 p-4">
-                      {member.photo ? (
-                        <img src={member.photo} alt={member.name} className="w-16 h-16 rounded-lg object-cover shrink-0" />
-                      ) : (
-                        <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center text-2xl font-bold text-muted-foreground shrink-0">
-                          {member.name.charAt(0)}
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <div className="font-semibold text-sm text-green-dark">{member.name}</div>
-                        <div className="text-xs text-muted-foreground">{member.role}</div>
-                        {member.bio && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{member.bio}</p>}
-                      </div>
+          {(() => {
+            const currentYear = String(new Date().getFullYear());
+            const yearMembers = activeMembers.filter((m: any) => m.year === currentYear || !m.year);
+            const headRoles = ["PATRON", "JESUIT REPRESENTATIVE", "PARISH PRIEST", "PRESIDENT", "VICE PRESIDENT - ADMINISTRATION", "VICE PRESIDENT - ACADEMICS", "VICE PRESIDENT - SOCIAL & CURRICULAR EVENTS", "VICE PRESIDENT - FUNDRAISING", "VICE PRESIDENT - MEMBERSHIP", "VICE PRESIDENT - PLAYGROUND & SPORTS", "SECRETARY", "ASSISTANT SECRETARY", "TREASURER", "ASSISTANT TREASURER"];
+            const headCommittee = yearMembers.filter((m: any) => headRoles.includes(m.role.toUpperCase()));
+            const regularMembers = yearMembers.filter((m: any) => !headRoles.includes(m.role.toUpperCase()));
+
+            return (
+              <>
+                {headCommittee.length > 0 && (
+                  <div className="mb-12">
+                    <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-green-dark mb-8">Head Committee</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {headCommittee.map((member: any) => (
+                        <Card key={member.id} className="overflow-hidden border-gold/30">
+                          <CardContent className="p-0">
+                            <div className="flex gap-4 p-4">
+                              {member.photo ? (
+                                <img src={member.photo} alt={member.name} className="w-16 h-16 rounded-lg object-cover shrink-0" />
+                              ) : (
+                                <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center text-2xl font-bold text-muted-foreground shrink-0">
+                                  {member.name.charAt(0)}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <div className="font-semibold text-sm text-green-dark">{member.name}</div>
+                                <div className="text-xs text-gold font-medium">{member.role}</div>
+                                {member.bio && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{member.bio}</p>}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+                  </div>
+                )}
+                {regularMembers.length > 0 && (
+                  <div>
+                    <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-green-dark mb-8">Members</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {regularMembers.map((member: any) => (
+                        <Card key={member.id} className="overflow-hidden">
+                          <CardContent className="p-0">
+                            <div className="flex gap-4 p-4">
+                              {member.photo ? (
+                                <img src={member.photo} alt={member.name} className="w-16 h-16 rounded-lg object-cover shrink-0" />
+                              ) : (
+                                <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center text-2xl font-bold text-muted-foreground shrink-0">
+                                  {member.name.charAt(0)}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <div className="font-semibold text-sm text-green-dark">{member.name}</div>
+                                <div className="text-xs text-muted-foreground">{member.role}</div>
+                                {member.bio && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{member.bio}</p>}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {yearMembers.length === 0 && (
+                  <div className="text-center text-muted-foreground py-8">No committee members for {currentYear} yet.</div>
+                )}
+              </>
+            );
+          })()}
         </section>
 
         {/* Membership Request Section */}

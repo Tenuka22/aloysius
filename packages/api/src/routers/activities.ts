@@ -106,12 +106,18 @@ export const activitiesRouter = {
         throw new ORPCError("UNAUTHORIZED");
       }
 
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
       const db = createDb();
       const now = new Date();
       const id = crypto.randomUUID();
       const slug = input.slug
         ? await generateUniqueSlug(activities, input.slug)
         : await generateUniqueSlug(activities, input.name);
+
+      let status = input.status;
+      if (!isSiteAdmin) {
+        status = "draft";
+      }
 
       const record = await db
         .insert(activities)
@@ -127,7 +133,7 @@ export const activitiesRouter = {
           type: input.type,
           adminEmail: input.adminEmail,
           sortOrder: input.sortOrder ?? 0,
-          status: input.status,
+          status,
           createdAt: now,
           updatedAt: now,
         })
@@ -174,6 +180,7 @@ export const activitiesRouter = {
         throw new ORPCError("UNAUTHORIZED");
       }
 
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
       const db = createDb();
       const existing = await db.select().from(activities).where(eq(activities.id, input.id)).get();
 
@@ -202,7 +209,13 @@ export const activitiesRouter = {
       if (input.type !== undefined) updateData.type = input.type;
       if (input.adminEmail !== undefined) updateData.adminEmail = input.adminEmail;
       if (input.sortOrder !== undefined) updateData.sortOrder = input.sortOrder;
-      if (input.status !== undefined) updateData.status = input.status;
+
+      if (input.status !== undefined) {
+        if (!isSiteAdmin && input.status === "published" && existing.status !== "published") {
+          throw new ORPCError("FORBIDDEN", { message: "Only site admin can publish activities." });
+        }
+        updateData.status = input.status;
+      }
 
       const record = await db
         .update(activities)

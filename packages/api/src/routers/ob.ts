@@ -18,7 +18,7 @@ async function syncOBAdminMetadata(userId: string): Promise<void> {
     const db = createDb();
     const rows = await db.select().from(obMembers).where(eq(obMembers.userId, userId)).all();
     const memberships = Object.fromEntries(
-      rows.map((r) => [r.id, { role: r.role, status: r.status }]),
+      rows.map((r) => [r.id, { role: r.role, status: r.status, year: r.year }]),
     );
     const user = await clerkClient.users.getUser(userId);
     const currentMetadata = (user.publicMetadata ?? {}) as Record<string, unknown>;
@@ -33,16 +33,76 @@ async function syncOBAdminMetadata(userId: string): Promise<void> {
   }
 }
 
+async function syncOBAdminEmails(): Promise<{ synced: number; errors: number; errorsList: string[] }> {
+  const db = createDb();
+  const rows = await db.select().from(obMembers).where(eq(obMembers.status, "approved")).all();
+  const adminRows = rows.filter((r) => r.adminEmail);
+
+  const emailToUserIds = new Map<string, string[]>();
+  for (const row of adminRows) {
+    const email = row.adminEmail!.toLowerCase();
+    const existing = emailToUserIds.get(email) ?? [];
+    if (!existing.includes(row.userId)) {
+      existing.push(row.userId);
+    }
+    emailToUserIds.set(email, existing);
+  }
+
+  const results = { synced: 0, errors: 0, errorsList: [] as string[] };
+
+  for (const [email, userIds] of emailToUserIds) {
+    try {
+      const users = await clerkClient.users.getUserList({ emailAddress: [email] });
+      const user = users.data[0];
+
+      if (!user) {
+        results.errorsList.push(`No Clerk user found for ${email}`);
+        results.errors++;
+        continue;
+      }
+
+      const currentMetadata = (user.publicMetadata ?? {}) as Record<string, unknown>;
+      const currentObAdminFor = (currentMetadata.obAdminFor as string[]) ?? [];
+
+      if (JSON.stringify(currentObAdminFor.sort()) !== JSON.stringify(userIds.sort())) {
+        await clerkClient.users.updateUser(user.id, {
+          publicMetadata: {
+            ...currentMetadata,
+            obAdminFor: userIds,
+          },
+        });
+        results.synced++;
+      }
+    } catch (err) {
+      results.errorsList.push(
+        `Error syncing ${email}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      results.errors++;
+    }
+  }
+
+  return results;
+}
+
 /**
- * Check if a user is an OB admin (approved OB member) or a site admin.
+ * Check if a user is an OB admin (approved OB member with admin email) or a site admin.
  * Used to gate create/update/delete operations on events and donations.
  */
 async function requireOBAdminOrSiteAdmin(userId: string, auth?: { adminCalled?: boolean }) {
   if (auth?.adminCalled) return true;
   const db = createDb();
   const row = await db.select().from(obMembers).where(eq(obMembers.userId, userId)).get();
-  if (row && row.status === "approved") return true;
+  if (row && row.status === "approved" && row.adminEmail) return true;
   throw new ORPCError("FORBIDDEN", { message: "OB admin or site admin access required." });
+}
+
+/**
+ * Check if a user is an OB admin (approved member with admin email).
+ */
+async function isOBAdmin(userId: string): Promise<boolean> {
+  const db = createDb();
+  const row = await db.select().from(obMembers).where(eq(obMembers.userId, userId)).get();
+  return !!(row && row.status === "approved" && row.adminEmail);
 }
 
 // --- OB Members Router ---
@@ -54,6 +114,7 @@ export const obMembersRouter = {
         search: z.string().optional(),
         role: z.string().optional(),
         status: z.enum(["pending", "approved", "rejected", "revoked"]).optional(),
+        year: z.string().optional(),
       }),
     )
     .handler(async ({ input }) => {
@@ -68,6 +129,9 @@ export const obMembersRouter = {
       if (input.status) {
         conditions.push(eq(obMembers.status, input.status));
       }
+      if (input.year) {
+        conditions.push(eq(obMembers.year, input.year));
+      }
       const where = conditions.length > 0 ? and(...conditions) : undefined;
       const rows = await db.select().from(obMembers).where(where).orderBy(asc(obMembers.sortOrder)).all();
       return rows.map((row) => ({
@@ -76,8 +140,10 @@ export const obMembersRouter = {
         name: row.name,
         role: row.role,
         email: row.email,
+        adminEmail: row.adminEmail,
         photo: row.photo,
         bio: row.bio,
+        year: row.year,
         sortOrder: row.sortOrder,
         status: row.status,
         decidedBy: row.decidedBy,
@@ -101,8 +167,10 @@ export const obMembersRouter = {
         name: row.name,
         role: row.role,
         email: row.email,
+        adminEmail: row.adminEmail,
         photo: row.photo,
         bio: row.bio,
+        year: row.year,
         sortOrder: row.sortOrder,
         status: row.status,
         decidedBy: row.decidedBy,
@@ -118,8 +186,10 @@ export const obMembersRouter = {
         name: z.string().min(1),
         role: z.string().min(1),
         email: z.string().email().optional().nullable(),
+        adminEmail: z.string().email().optional().nullable(),
         photo: z.string().optional().nullable(),
         bio: z.string().optional().nullable(),
+        year: z.string().default(""),
         sortOrder: z.number().default(0),
         status: z.enum(["pending", "approved", "rejected", "revoked"]).default("approved"),
       }),
@@ -128,7 +198,11 @@ export const obMembersRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      await requireOBAdminOrSiteAdmin(context.auth.userId, context.auth);
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const callerIsOBAdmin = await isOBAdmin(context.auth.userId);
+      if (!isSiteAdmin && !callerIsOBAdmin) {
+        throw new ORPCError("FORBIDDEN", { message: "OB admin or site admin access required." });
+      }
       const db = createDb();
       const id = crypto.randomUUID();
       const now = new Date();
@@ -140,8 +214,10 @@ export const obMembersRouter = {
           name: input.name,
           role: input.role,
           email: input.email,
+          adminEmail: input.adminEmail ?? null,
           photo: input.photo,
           bio: input.bio,
+          year: input.year,
           sortOrder: input.sortOrder,
           status: input.status,
           decidedBy: input.status === "approved" ? context.auth.userId : null,
@@ -154,14 +230,19 @@ export const obMembersRouter = {
       if (record.status === "approved") {
         await syncOBAdminMetadata(context.auth.userId);
       }
+      if (record.adminEmail) {
+        await syncOBAdminEmails();
+      }
       return {
         id: record.id,
         userId: record.userId,
         name: record.name,
         role: record.role,
         email: record.email,
+        adminEmail: record.adminEmail,
         photo: record.photo,
         bio: record.bio,
+        year: record.year,
         sortOrder: record.sortOrder,
         status: record.status,
         decidedBy: record.decidedBy,
@@ -178,8 +259,10 @@ export const obMembersRouter = {
         name: z.string().min(1).optional(),
         role: z.string().min(1).optional(),
         email: z.string().email().optional().nullable(),
+        adminEmail: z.string().email().optional().nullable(),
         photo: z.string().optional().nullable(),
         bio: z.string().optional().nullable(),
+        year: z.string().optional(),
         sortOrder: z.number().optional(),
         status: z.enum(["pending", "approved", "rejected", "revoked"]).optional(),
       }),
@@ -188,7 +271,11 @@ export const obMembersRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      await requireOBAdminOrSiteAdmin(context.auth.userId, context.auth);
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const callerIsOBAdmin = await isOBAdmin(context.auth.userId);
+      if (!isSiteAdmin && !callerIsOBAdmin) {
+        throw new ORPCError("FORBIDDEN", { message: "OB admin or site admin access required." });
+      }
       const db = createDb();
       const existing = await db.select().from(obMembers).where(eq(obMembers.id, input.id)).get();
       if (!existing) {
@@ -200,8 +287,10 @@ export const obMembersRouter = {
       if (updateData.name !== undefined) setData.name = updateData.name;
       if (updateData.role !== undefined) setData.role = updateData.role;
       if (updateData.email !== undefined) setData.email = updateData.email;
+      if (updateData.adminEmail !== undefined) setData.adminEmail = updateData.adminEmail;
       if (updateData.photo !== undefined) setData.photo = updateData.photo;
       if (updateData.bio !== undefined) setData.bio = updateData.bio;
+      if (updateData.year !== undefined) setData.year = updateData.year;
       if (updateData.sortOrder !== undefined) setData.sortOrder = updateData.sortOrder;
       if (updateData.status !== undefined) {
         setData.status = updateData.status;
@@ -212,14 +301,19 @@ export const obMembersRouter = {
       if (record.userId && (existing.status !== "approved" && record.status === "approved")) {
         await syncOBAdminMetadata(record.userId);
       }
+      if (record.adminEmail !== existing.adminEmail) {
+        await syncOBAdminEmails();
+      }
       return {
         id: record.id,
         userId: record.userId,
         name: record.name,
         role: record.role,
         email: record.email,
+        adminEmail: record.adminEmail,
         photo: record.photo,
         bio: record.bio,
+        year: record.year,
         sortOrder: record.sortOrder,
         status: record.status,
         decidedBy: record.decidedBy,
@@ -235,7 +329,11 @@ export const obMembersRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      await requireOBAdminOrSiteAdmin(context.auth.userId, context.auth);
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const callerIsOBAdmin = await isOBAdmin(context.auth.userId);
+      if (!isSiteAdmin && !callerIsOBAdmin) {
+        throw new ORPCError("FORBIDDEN", { message: "OB admin or site admin access required." });
+      }
       const db = createDb();
       const existing = await db.select().from(obMembers).where(eq(obMembers.id, input.id)).get();
       if (!existing) throw new ORPCError("NOT_FOUND", { message: "OB member not found" });
@@ -243,6 +341,7 @@ export const obMembersRouter = {
       if (existing.userId) {
         await syncOBAdminMetadata(existing.userId);
       }
+      await syncOBAdminEmails();
       return { success: true };
     }),
 
@@ -259,8 +358,10 @@ export const obMembersRouter = {
       name: row.name,
       role: row.role,
       email: row.email,
+      adminEmail: row.adminEmail,
       photo: row.photo,
       bio: row.bio,
+      year: row.year,
       sortOrder: row.sortOrder,
       status: row.status,
       decidedBy: row.decidedBy,
@@ -277,7 +378,9 @@ export const obMembersRouter = {
         name: z.string().min(1),
         role: z.string().min(1),
         email: z.string().email().optional().nullable(),
+        adminEmail: z.string().email().optional().nullable(),
         bio: z.string().optional().nullable(),
+        year: z.string().default(""),
       }),
     )
     .handler(async ({ input, context }) => {
@@ -294,8 +397,10 @@ export const obMembersRouter = {
             name: existing.name,
             role: existing.role,
             email: existing.email,
+            adminEmail: existing.adminEmail,
             photo: existing.photo,
             bio: existing.bio,
+            year: existing.year,
             sortOrder: existing.sortOrder,
             status: existing.status,
             decidedBy: existing.decidedBy,
@@ -317,8 +422,10 @@ export const obMembersRouter = {
           name: updated.name,
           role: updated.role,
           email: updated.email,
+          adminEmail: updated.adminEmail,
           photo: updated.photo,
           bio: updated.bio,
+          year: updated.year,
           sortOrder: updated.sortOrder,
           status: updated.status,
           decidedBy: updated.decidedBy,
@@ -337,7 +444,9 @@ export const obMembersRouter = {
           name: input.name,
           role: input.role,
           email: input.email,
+          adminEmail: input.adminEmail ?? null,
           bio: input.bio,
+          year: input.year,
           sortOrder: 0,
           status: "pending",
           createdAt: now,
@@ -351,8 +460,10 @@ export const obMembersRouter = {
         name: record.name,
         role: record.role,
         email: record.email,
+        adminEmail: record.adminEmail,
         photo: record.photo,
         bio: record.bio,
+        year: record.year,
         sortOrder: record.sortOrder,
         status: record.status,
         decidedBy: record.decidedBy,
@@ -390,8 +501,10 @@ export const obMembersRouter = {
         name: updated.name,
         role: updated.role,
         email: updated.email,
+        adminEmail: updated.adminEmail,
         photo: updated.photo,
         bio: updated.bio,
+        year: updated.year,
         sortOrder: updated.sortOrder,
         status: updated.status,
         decidedBy: updated.decidedBy,
@@ -429,8 +542,10 @@ export const obMembersRouter = {
         name: updated.name,
         role: updated.role,
         email: updated.email,
+        adminEmail: updated.adminEmail,
         photo: updated.photo,
         bio: updated.bio,
+        year: updated.year,
         sortOrder: updated.sortOrder,
         status: updated.status,
         decidedBy: updated.decidedBy,
@@ -468,8 +583,10 @@ export const obMembersRouter = {
         name: updated.name,
         role: updated.role,
         email: updated.email,
+        adminEmail: updated.adminEmail,
         photo: updated.photo,
         bio: updated.bio,
+        year: updated.year,
         sortOrder: updated.sortOrder,
         status: updated.status,
         decidedBy: updated.decidedBy,
@@ -507,6 +624,18 @@ export const obMembersRouter = {
       }
     }
     return { synced, errors, errorsList };
+  }),
+
+  /** Sync OB admin emails to Clerk metadata. Site admin only. */
+  syncOBAdminEmails: protectedProcedure.handler(async ({ context }) => {
+    if (!context.auth?.userId) {
+      throw new ORPCError("UNAUTHORIZED");
+    }
+    const isSiteAdmin = context.auth?.adminCalled ?? false;
+    if (!isSiteAdmin) {
+      throw new ORPCError("FORBIDDEN", { message: "Site admin access required." });
+    }
+    return syncOBAdminEmails();
   }),
 };
 
@@ -594,13 +723,23 @@ export const obEventsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      await requireOBAdminOrSiteAdmin(context.auth.userId, context.auth);
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const callerIsOBAdmin = await isOBAdmin(context.auth.userId);
+      if (!isSiteAdmin && !callerIsOBAdmin) {
+        throw new ORPCError("FORBIDDEN", { message: "OB admin or site admin access required." });
+      }
       const db = createDb();
       const slug = input.slug
         ? await generateUniqueSlug(obEvents, input.slug)
         : await generateUniqueSlug(obEvents, input.title);
-      const status = input.publishNow ? "published" : "draft";
-      const publishedAt = input.publishNow ? new Date() : null;
+      let status = input.publishNow ? "published" : "draft";
+      let publishedAt: Date | null = null;
+      if (input.publishNow && !isSiteAdmin) {
+        status = "draft";
+        publishedAt = null;
+      } else if (status === "published") {
+        publishedAt = new Date();
+      }
       const record = await db
         .insert(obEvents)
         .values({
@@ -656,7 +795,11 @@ export const obEventsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      await requireOBAdminOrSiteAdmin(context.auth.userId, context.auth);
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const callerIsOBAdmin = await isOBAdmin(context.auth.userId);
+      if (!isSiteAdmin && !callerIsOBAdmin) {
+        throw new ORPCError("FORBIDDEN", { message: "OB admin or site admin access required." });
+      }
       const db = createDb();
       const existing = await db.select().from(obEvents).where(eq(obEvents.id, input.id)).get();
       if (!existing) {
@@ -681,12 +824,18 @@ export const obEventsRouter = {
       if (updateData.endDate !== undefined) setData.endDate = updateData.endDate ? new Date(updateData.endDate) : null;
       if (updateData.isAllDay !== undefined) setData.isAllDay = updateData.isAllDay;
       if (updateData.status !== undefined) {
+        if (!isSiteAdmin && updateData.status === "published" && existing.status !== "published") {
+          throw new ORPCError("FORBIDDEN", { message: "Only site admin can publish OB events." });
+        }
         setData.status = updateData.status;
         if (updateData.status === "published" && existing.status !== "published") {
           setData.publishedAt = now;
         }
       }
       if (updateData.publishNow) {
+        if (!isSiteAdmin) {
+          throw new ORPCError("FORBIDDEN", { message: "Only site admin can publish OB events." });
+        }
         setData.status = "published";
         setData.publishedAt = now;
       }

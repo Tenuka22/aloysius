@@ -534,8 +534,10 @@ export const obMembers = sqliteTable(
     name: text("name").notNull(),
     role: text("role").notNull(),
     email: text("email"),
+    adminEmail: text("admin_email"),
     photo: text("photo"),
     bio: text("bio"),
+    year: text("year").notNull().default(""),
     sortOrder: integer("sort_order").notNull().default(0),
     status: text("status", { enum: ["pending", "approved", "rejected", "revoked"] })
       .notNull()
@@ -549,7 +551,7 @@ export const obMembers = sqliteTable(
       .notNull()
       .$defaultFn(() => new Date()),
   },
-  (table) => [index("ob_members_role_idx").on(table.role), index("ob_members_user_idx").on(table.userId)],
+  (table) => [index("ob_members_role_idx").on(table.role), index("ob_members_user_idx").on(table.userId), index("ob_members_year_idx").on(table.year)],
 );
 
 // --- OB Events table (Old Boys' Association events) ---

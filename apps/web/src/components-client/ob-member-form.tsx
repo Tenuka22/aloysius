@@ -36,8 +36,10 @@ const createMemberSchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, "Name is required")),
   role: v.pipe(v.string(), v.minLength(1, "Role is required")),
   email: v.optional(v.pipe(v.string(), v.email("Invalid email"))),
+  adminEmail: v.optional(v.pipe(v.string(), v.email("Invalid email"))),
   photo: v.optional(v.string()),
   bio: v.optional(v.string()),
+  year: v.string(),
   sortOrder: v.number(),
   status: v.picklist(["pending", "approved", "rejected", "revoked"]),
 });
@@ -48,8 +50,10 @@ const updateMemberSchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, "Name is required")),
   role: v.pipe(v.string(), v.minLength(1, "Role is required")),
   email: v.optional(v.pipe(v.string(), v.email("Invalid email"))),
+  adminEmail: v.optional(v.pipe(v.string(), v.email("Invalid email"))),
   photo: v.optional(v.string()),
   bio: v.optional(v.string()),
+  year: v.string(),
   sortOrder: v.number(),
   status: v.picklist(["pending", "approved", "rejected", "revoked"]),
 });
@@ -67,12 +71,14 @@ const fields: FieldEntry<CreateMemberValues | UpdateMemberValues>[] = [
     required: true,
   },
   {
-    name: "email",
+    name: "year",
     kind: "text",
-    label: "Email",
-    placeholder: "john@example.com",
-    required: false,
+    label: "Year",
+    placeholder: "e.g. 2026",
+    required: true,
   },
+  { name: "email", kind: "text", label: "Email", placeholder: "john@example.com", required: false },
+  { name: "adminEmail", kind: "text", label: "Admin Email (for OB admin privileges)", placeholder: "admin@example.com", required: false },
   {
     name: "bio",
     kind: "textarea",
@@ -190,7 +196,7 @@ export function OBMemberForm({
   const config: FormConfig<CreateMemberValues | UpdateMemberValues> = {
     fields,
     layout: [
-      { columns: [{ fields: ["photo"], span: 4 }, { fields: ["name", "role", "email"], span: 8 }] },
+      { columns: [{ fields: ["photo"], span: 4 }, { fields: ["name", "role", "year", "email", "adminEmail"], span: 8 }] },
       { columns: [{ fields: ["sortOrder"] }] },
       { columns: [{ fields: ["bio"] }] },
     ],
@@ -222,8 +228,10 @@ export function OBMemberForm({
               name: member.name,
               role: member.role,
               email: member.email ?? "",
+              adminEmail: member.adminEmail ?? "",
               photo: member.photo ?? "",
               bio: member.bio ?? "",
+              year: member.year ?? "",
               sortOrder: member.sortOrder ?? 0,
               status: member.status as any,
             }
@@ -231,8 +239,10 @@ export function OBMemberForm({
               name: "",
               role: "",
               email: "",
+              adminEmail: "",
               photo: "",
               bio: "",
+              year: "",
               sortOrder: 0,
               status: "approved" as const,
             }
