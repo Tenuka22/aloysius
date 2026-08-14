@@ -444,6 +444,27 @@ export const clubAlbumImages = sqliteTable("club_album_images", {
     .$defaultFn(() => new Date()),
 });
 
+// --- Principals table (school principal profiles and messages) ---
+
+export const principals = sqliteTable("principals", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  title: text("title").notNull().default("Principal"),
+  quote: text("quote"),
+  portrait: text("portrait"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  status: text("status", { enum: ["draft", "published", "archived"] })
+    .notNull()
+    .default("draft"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  userId: text("user_id").notNull(),
+});
+
 // --- Notifications table (in-app alerts for membership/content decisions) ---
 
 export const notifications = sqliteTable(

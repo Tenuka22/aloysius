@@ -24,6 +24,7 @@ import {
   IconDevices,
   IconClipboardCheck,
   IconUserPlus,
+  IconUser,
 } from "@tabler/icons-react";
 
 const overviewItems = [
@@ -141,6 +142,11 @@ const cmsItems = [
     title: "Big Matches",
     url: "/admin/big-matches",
     icon: <IconTrophy />,
+  },
+  {
+    title: "Principals",
+    url: "/admin/principals",
+    icon: <IconUser />,
   },
 ];
 

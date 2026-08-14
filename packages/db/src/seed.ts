@@ -76,6 +76,7 @@ export async function seed() {
   await db.delete(schema.activities);
   await db.delete(schema.files);
   await db.delete(schema.stats);
+  await db.delete(schema.principals);
   await db.delete(schema.siteSettings);
 
   const userId = "user_seed_001";
@@ -731,6 +732,34 @@ export async function seed() {
     });
   }
   console.log(`Seeded ${bigMatches.length} big matches`);
+
+  // ── Principals ──
+  const principalsData = [
+    {
+      name: "Fr. Jason Thomas",
+      title: "Principal",
+      quote:
+        "Every Aloysian carries forward a tradition of faith, discipline and excellence - certa viriliter. Our mission is to form men and women who will serve as a light to the world through knowledge, compassion and integrity.",
+      portrait: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=800&fit=crop&crop=faces",
+      sortOrder: 0,
+      status: "published" as const,
+    },
+  ];
+  for (const item of principalsData) {
+    await db.insert(schema.principals).values({
+      id: faker.string.uuid(),
+      name: item.name,
+      title: item.title,
+      quote: item.quote,
+      portrait: item.portrait,
+      sortOrder: item.sortOrder,
+      status: item.status,
+      createdAt: now,
+      updatedAt: now,
+      userId,
+    });
+  }
+  console.log(`Seeded ${principalsData.length} principals`);
 
   // ── Activities ──
   const activities = [
