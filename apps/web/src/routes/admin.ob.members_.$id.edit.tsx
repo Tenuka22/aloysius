@@ -1,6 +1,6 @@
 "use client";
 
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import {
   Dialog,
   DialogContent,
@@ -16,19 +16,21 @@ export const Route = createFileRoute("/admin/ob/members_/$id/edit")({
 function EditOBMemberDialog() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const search = useSearch({ from: "/admin/ob/members_/$id/edit" });
+  const returnTo = (search as any)?.returnTo as string | undefined;
 
   return (
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open) navigate({ to: "/admin/ob/members" });
+        if (!open) navigate({ to: returnTo || "/admin/ob/members" });
       }}
     >
       <DialogContent className="w-[min(90vw,700px)] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Committee Member</DialogTitle>
         </DialogHeader>
-        <OBMemberForm mode="edit" id={id} onSuccess={() => navigate({ to: "/admin/ob/members" })} />
+        <OBMemberForm mode="edit" id={id} onSuccess={() => navigate({ to: returnTo || "/admin/ob/members" })} />
       </DialogContent>
     </Dialog>
   );

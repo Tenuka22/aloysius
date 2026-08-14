@@ -161,10 +161,12 @@ export function OBMemberForm({
   mode,
   id,
   onSuccess,
+  defaultYear,
 }: {
   mode: "create" | "edit";
   id?: string;
   onSuccess?: () => void;
+  defaultYear?: string;
 }) {
   const queryClient = useQueryClient();
 
@@ -242,7 +244,7 @@ export function OBMemberForm({
               adminEmail: "",
               photo: "",
               bio: "",
-              year: "",
+              year: defaultYear ?? "",
               sortOrder: 0,
               status: "approved" as const,
             }
