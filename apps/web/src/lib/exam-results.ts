@@ -15,10 +15,11 @@ export const EXAM_TYPE_SHORT: Record<string, string> = {
 };
 
 export const STREAM_LABELS: Record<string, string> = {
-  art: "ART",
+  physical_science: "PHYSICAL SCIENCE",
+  biological_science: "BIOLOGICAL SCIENCE",
   commerce: "COMMERCE",
-  bio: "BIO",
-  maths: "MATHS",
+  arts: "ARTS",
+  technology: "TECHNOLOGY",
 };
 
 export type ExamStudent = {
@@ -27,6 +28,7 @@ export type ExamStudent = {
   photo: string | null;
   quote: string | null;
   marks: number | null;
+  overallGrade: string | null;
   stream: string | null;
   subjects: { subject: string; grade: string }[];
   sortOrder: number;
@@ -41,15 +43,21 @@ export type ExamResult = {
   students: ExamStudent[];
 };
 
-/** "2026 (2026)" — exam year first, results (release) year in brackets. */
+/** "2025 (Held 2026)" or just "2025" if held same year. */
 export function examYearLabel(result: { examYear: number; resultsYear: number }): string {
-  return `${result.examYear} (${result.resultsYear})`;
+  if (result.resultsYear && result.resultsYear !== result.examYear) {
+    return `${result.examYear} (Held ${result.resultsYear})`;
+  }
+  return `${result.examYear}`;
 }
 
-/** Compact grade summary e.g. "5A · 3B" or "195/200". */
+/** Compact grade summary e.g. "5A · 3B", "195/200", or "A" for OL overall grade. */
 export function gradeSummary(student: ExamStudent): string {
   if (student.marks != null) {
     return `${student.marks}/200`;
+  }
+  if (student.overallGrade) {
+    return student.overallGrade;
   }
   const subjects = student.subjects ?? [];
   if (subjects.length === 0) return "";

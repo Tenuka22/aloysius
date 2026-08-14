@@ -5,11 +5,6 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@clerk/tanstack-react-start";
-import { SignIn, SignUp } from "@clerk/tanstack-react-start";
-import {
-  Dialog,
-  DialogContent,
-} from "@aloysius-web/ui/components/dialog";
 import { UserMenu } from "@/components-client/user-menu";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -32,23 +27,9 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
   const ctaRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [authModal, setAuthModal] = useState<"signin" | "signup" | null>(null);
   const { isSignedIn } = useAuth();
 
   const schoolName = settings?.school_name || "ST. ALOYSIUS\u2019 COLLEGE";
-
-  useEffect(() => {
-    const onHashChange = () => {
-      const hash = window.location.hash;
-      if (hash === "#signup" || hash === "#/sign-up") {
-        setAuthModal("signup");
-      } else if (hash === "#signin" || hash === "#/sign-in") {
-        setAuthModal("signin");
-      }
-    };
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -129,22 +110,6 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
           >
             Admissions
           </Link>
-          {!isSignedIn && (
-            <>
-              <button
-                onClick={() => setAuthModal("signin")}
-                className="inline-flex items-center border border-gold/40 text-gold px-3 py-1.5 text-[12px] font-bold tracking-wider hover:bg-gold hover:text-green-dark transition-colors"
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => setAuthModal("signup")}
-                className="hidden sm:inline-flex items-center border border-gold/40 text-gold px-3 py-1.5 text-[12px] font-bold tracking-wider hover:bg-gold hover:text-green-dark transition-colors"
-              >
-                Sign Up
-              </button>
-            </>
-          )}
           <UserMenu />
           <button
             className="lg:hidden inline-flex size-8 items-center justify-center text-cream hover:text-gold transition-colors"
@@ -205,62 +170,24 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
           </Link>
           {!isSignedIn && (
             <div className="flex gap-2 mt-2">
-              <button
-                onClick={() => { setMobileMenuOpen(false); setAuthModal("signin"); }}
+              <Link
+                to="/sign-in"
+                onClick={() => setMobileMenuOpen(false)}
                 className="flex-1 inline-flex items-center justify-center border border-gold/40 text-gold px-3 py-2 text-[12px] font-bold tracking-wider"
               >
                 Sign In
-              </button>
-              <button
-                onClick={() => { setMobileMenuOpen(false); setAuthModal("signup"); }}
+              </Link>
+              <Link
+                to="/sign-up"
+                onClick={() => setMobileMenuOpen(false)}
                 className="flex-1 inline-flex items-center justify-center border border-gold/40 text-gold px-3 py-2 text-[12px] font-bold tracking-wider"
               >
                 Sign Up
-              </button>
+              </Link>
             </div>
           )}
         </nav>
       </div>
-
-      {/* Auth Modal */}
-      <Dialog
-        open={authModal !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setAuthModal(null);
-            window.location.hash = "";
-          }
-        }}
-      >
-        <DialogContent className="w-[min(90vw,440px)] p-0 gap-0 overflow-hidden">
-          {authModal === "signin" && (
-            <SignIn
-              routing="hash"
-              signUpUrl="#signup"
-              afterSignInUrl="/"
-              appearance={{
-                elements: {
-                  rootBox: "w-full",
-                  card: "shadow-none border-0",
-                },
-              }}
-            />
-          )}
-          {authModal === "signup" && (
-            <SignUp
-              routing="hash"
-              signInUrl="#signin"
-              afterSignUpUrl="/"
-              appearance={{
-                elements: {
-                  rootBox: "w-full",
-                  card: "shadow-none border-0",
-                },
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </header>
   );
 }

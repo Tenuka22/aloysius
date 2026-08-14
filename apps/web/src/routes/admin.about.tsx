@@ -40,18 +40,6 @@ const ABOUT_KEYS = [
   "about_anthem_title",
   "about_anthem_desc",
   "about_administration_heading",
-  "staff1_name",
-  "staff1_role",
-  "staff1_photo",
-  "staff2_name",
-  "staff2_role",
-  "staff2_photo",
-  "staff3_name",
-  "staff3_role",
-  "staff3_photo",
-  "staff4_name",
-  "staff4_role",
-  "staff4_photo",
 ];
 
 const DEFAULTS: Record<string, string> = {
@@ -91,18 +79,6 @@ const DEFAULTS: Record<string, string> = {
   about_anthem_desc:
     "Sung with pride by generations of Aloysians, our anthem embodies the spirit and values of St. Aloysius' College.",
   about_administration_heading: "College Leadership",
-  staff1_name: "",
-  staff1_role: "PRINCIPAL",
-  staff1_photo: "",
-  staff2_name: "",
-  staff2_role: "VICE PRINCIPAL",
-  staff2_photo: "",
-  staff3_name: "",
-  staff3_role: "VICE PRINCIPAL",
-  staff3_photo: "",
-  staff4_name: "",
-  staff4_role: "SECTIONAL HEAD",
-  staff4_photo: "",
 };
 
 function Field({
@@ -388,28 +364,10 @@ function AboutEditor() {
           value={getValue("about_administration_heading")}
           onChange={(v) => setField("about_administration_heading", v)}
         />
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="border rounded-lg p-4 space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <Field
-                label={`Staff ${i} Name`}
-                value={getValue(`staff${i}_name`)}
-                onChange={(v) => setField(`staff${i}_name`, v)}
-              />
-              <Field
-                label={`Staff ${i} Role`}
-                value={getValue(`staff${i}_role`)}
-                onChange={(v) => setField(`staff${i}_role`, v)}
-              />
-            </div>
-            <ImageField
-              label={`Staff ${i} Photo`}
-              value={getValue(`staff${i}_photo`)}
-              onChange={(v) => setField(`staff${i}_photo`, v)}
-              aspect={3 / 4}
-            />
-          </div>
-        ))}
+        <p className="text-sm text-muted-foreground">
+          Staff members are managed in the <a href="/admin/principals" className="underline text-primary">Staff</a> admin page.
+          Add staff with their role, academic year, and portrait there.
+        </p>
       </section>
     </div>
   );

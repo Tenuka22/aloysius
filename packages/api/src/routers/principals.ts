@@ -19,6 +19,7 @@ function serializePrincipal(row: typeof principals.$inferSelect) {
     bio: row.bio,
     education: row.education,
     tenure: row.tenure,
+    year: row.year,
     portrait: row.portrait,
     sortOrder: row.sortOrder,
     status: row.status,
@@ -130,6 +131,7 @@ export const principalsRouter = {
         bio: z.string().optional(),
         education: z.string().optional(),
         tenure: z.string().optional(),
+        year: z.string().optional(),
         portrait: z.string().optional(),
         sortOrder: z.number().optional(),
         publishNow: z.boolean().optional(),
@@ -157,6 +159,7 @@ export const principalsRouter = {
           bio: input.bio ?? null,
           education: input.education ?? null,
           tenure: input.tenure ?? null,
+          year: input.year ?? "",
           portrait: input.portrait ?? null,
           sortOrder: input.sortOrder ?? 0,
           status: input.publishNow ? "published" : "draft",
@@ -181,6 +184,7 @@ export const principalsRouter = {
         bio: z.string().optional(),
         education: z.string().optional(),
         tenure: z.string().optional(),
+        year: z.string().optional(),
         portrait: z.string().optional(),
         sortOrder: z.number().optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
@@ -218,6 +222,7 @@ export const principalsRouter = {
       if (input.bio !== undefined) updateData.bio = input.bio;
       if (input.education !== undefined) updateData.education = input.education;
       if (input.tenure !== undefined) updateData.tenure = input.tenure;
+      if (input.year !== undefined) updateData.year = input.year;
       if (input.portrait !== undefined) updateData.portrait = input.portrait;
       if (input.sortOrder !== undefined) updateData.sortOrder = input.sortOrder;
       if (input.status !== undefined) {

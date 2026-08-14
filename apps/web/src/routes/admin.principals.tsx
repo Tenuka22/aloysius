@@ -61,6 +61,7 @@ type PrincipalItem = {
   title: string;
   quote: string | null;
   portrait: string | null;
+  year: string;
   sortOrder: number;
   status: string;
   createdAt: string;
@@ -81,7 +82,7 @@ function DeleteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Principal</DialogTitle>
+          <DialogTitle>Delete Staff Member</DialogTitle>
           <DialogDescription>
             Are you sure you want to delete <strong>{title}</strong>? This action cannot be undone.
           </DialogDescription>
@@ -106,7 +107,7 @@ function ActionsMenu({ item }: { item: PrincipalItem }) {
   const deleteMutation = useMutation({
     mutationFn: () => client.principals.delete({ id: item.id }),
     onSuccess: () => {
-      toast.success("Principal deleted");
+      toast.success("Staff member deleted");
       queryClient.invalidateQueries({ queryKey: ["principals"] });
       setDeleteOpen(false);
     },
@@ -305,11 +306,11 @@ function AdminPrincipalsList() {
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <h1 className="text-lg font-semibold">Principals</h1>
+        <h1 className="text-lg font-semibold">Staff</h1>
         <div className="ml-auto">
           <Button size="sm" render={<Link to="/admin/principals/new" />} nativeButton={false}>
             <IconPlus className="mr-1 size-4" />
-            New Principal
+            New Staff Member
           </Button>
         </div>
       </header>

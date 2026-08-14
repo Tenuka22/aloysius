@@ -143,7 +143,7 @@ const cmsItems = [
     icon: <IconTrophy />,
   },
   {
-    title: "Principals",
+    title: "Staff",
     url: "/admin/principals",
     icon: <IconUser />,
   },

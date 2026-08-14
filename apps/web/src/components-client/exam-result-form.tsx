@@ -23,33 +23,33 @@ const EXAM_TYPES = [
 const GRADES = ["A", "B", "C", "D", "S", "F"] as const;
 
 const STREAMS = [
-  { value: "art", label: "ART" },
+  { value: "physical_science", label: "PHYSICAL SCIENCE" },
+  { value: "biological_science", label: "BIOLOGICAL SCIENCE" },
   { value: "commerce", label: "COMMERCE" },
-  { value: "bio", label: "BIO" },
-  { value: "maths", label: "MATHS" },
+  { value: "arts", label: "ARTS" },
+  { value: "technology", label: "TECHNOLOGY" },
 ] as const;
 
+/** AL subjects by stream */
+const AL_SUBJECTS: Record<string, string[]> = {
+  physical_science: ["Combined Mathematics", "Physics", "Chemistry", "ICT"],
+  biological_science: ["Biology", "Chemistry", "Physics", "Agricultural Science"],
+  commerce: ["Accounting", "Business Studies", "Economics", "Business Statistics", "ICT"],
+  arts: [
+    "Sinhala", "Tamil", "English", "History", "Political Science",
+    "Geography", "Logic & Scientific Method", "Economics",
+    "Buddhist Civilization", "Christian Culture", "Art",
+  ],
+  technology: ["Engineering Technology", "Science for Technology", "ICT", "Bio Systems Technology"],
+};
+
 /** Default subject rows per exam type (editable). */
-function defaultSubjects(examType: string): { subject: string; grade: string }[] {
+function defaultSubjects(examType: string, stream?: string): { subject: string; grade: string }[] {
   if (examType === "ol") {
-    return [
-      "Sinhala",
-      "English",
-      "Mathematics",
-      "Science",
-      "History",
-      "Religion",
-      "Commerce",
-      "ICT",
-      "Art",
-    ].map((subject) => ({ subject, grade: "" }));
+    return [];
   }
-  if (examType === "al") {
-    return [
-      { subject: "Biology", grade: "" },
-      { subject: "Chemistry", grade: "" },
-      { subject: "Physics", grade: "" },
-    ];
+  if (examType === "al" && stream && AL_SUBJECTS[stream]) {
+    return AL_SUBJECTS[stream].slice(0, 3).map((subject) => ({ subject, grade: "" }));
   }
   return [];
 }
@@ -61,8 +61,9 @@ function blankStudent(examType: string, index: number) {
     photo: "",
     quote: "",
     marks: examType === "scholarship" ? 0 : undefined,
-    stream: examType === "al" ? "bio" : undefined,
-    subjects: defaultSubjects(examType),
+    overallGrade: examType === "ol" ? "" : undefined,
+    stream: examType === "al" ? "physical_science" : undefined,
+    subjects: defaultSubjects(examType, examType === "al" ? "physical_science" : undefined),
     sortOrder: index,
   };
 }
@@ -78,6 +79,7 @@ const studentSchema = v.object({
   photo: v.optional(v.string()),
   quote: v.optional(v.string()),
   marks: v.optional(v.union([v.number(), v.string()])),
+  overallGrade: v.optional(v.string()),
   stream: v.optional(v.string()),
   subjects: v.array(subjectRowSchema),
   sortOrder: v.optional(v.union([v.number(), v.string()])),
@@ -86,7 +88,7 @@ const studentSchema = v.object({
 const createExamResultSchema = v.object({
   examType: v.pipe(v.string(), v.minLength(1, "Exam type is required")),
   examYear: v.pipe(v.string(), v.minLength(1, "Exam year is required")),
-  resultsYear: v.pipe(v.string(), v.minLength(1, "Results year is required")),
+  resultsYear: v.pipe(v.string(), v.minLength(1, "Exam held year is required")),
   publishNow: v.boolean(),
   students: v.array(studentSchema),
 });
@@ -96,7 +98,7 @@ type CreateExamResultValues = v.InferOutput<typeof createExamResultSchema>;
 const updateExamResultSchema = v.object({
   examType: v.pipe(v.string(), v.minLength(1, "Exam type is required")),
   examYear: v.pipe(v.string(), v.minLength(1, "Exam year is required")),
-  resultsYear: v.pipe(v.string(), v.minLength(1, "Results year is required")),
+  resultsYear: v.pipe(v.string(), v.minLength(1, "Exam held year is required")),
   publishNow: v.boolean(),
   students: v.array(studentSchema),
 });
@@ -106,7 +108,7 @@ type UpdateExamResultValues = v.InferOutput<typeof updateExamResultSchema>;
 const fields: FieldEntry<CreateExamResultValues | UpdateExamResultValues>[] = [
   { name: "examType", kind: "text", label: "Exam Type", hidden: true, required: true },
   { name: "examYear", kind: "text", label: "Exam Year", hidden: true, required: true },
-  { name: "resultsYear", kind: "text", label: "Results Year", hidden: true, required: true },
+  { name: "resultsYear", kind: "text", label: "Exam Held Year", hidden: true, required: true },
   { name: "publishNow", kind: "checkbox", label: "Publish immediately", required: false },
   { name: "students", kind: "text", label: "Students", hidden: true, required: false },
 ];
@@ -132,14 +134,14 @@ function ExamTypeField() {
         onChange={(e) => {
           const next = e.target.value;
           form.setFieldValue("examType", next);
-          // Re-seed subject rows whenever the exam type changes.
           form.setFieldValue(
             "students",
             students.map((s) => ({
               ...s,
               marks: next === "scholarship" ? (s.marks ?? 0) : undefined,
-              stream: next === "al" ? (s.stream ?? "bio") : undefined,
-              subjects: next === "ol" || next === "al" ? defaultSubjects(next) : [],
+              overallGrade: next === "ol" ? (s.overallGrade ?? "") : undefined,
+              stream: next === "al" ? (s.stream ?? "physical_science") : undefined,
+              subjects: next === "al" ? defaultSubjects(next, s.stream ?? "physical_science") : [],
             })),
           );
         }}
@@ -152,7 +154,7 @@ function ExamTypeField() {
         ))}
       </select>
       <p className="text-xs text-muted-foreground">
-        G5 Scholarship uses marks /200. O/L uses 9 subjects. A/L uses 3 subjects across a stream.
+        G5 Scholarship uses marks /200. O/L uses overall grade. A/L uses 3 subjects across a stream.
       </p>
     </div>
   );
@@ -173,14 +175,14 @@ function YearFields() {
           type="number"
           value={examYear}
           onChange={(e) => form.setFieldValue("examYear", e.target.value)}
-          placeholder="e.g. 2026"
+          placeholder="e.g. 2025"
           className={inputClass}
         />
-        <p className="text-xs text-muted-foreground">The year the exam was held</p>
+        <p className="text-xs text-muted-foreground">Year the exam was scheduled / registered for</p>
       </div>
       <div className="space-y-1.5">
         <label className="text-sm font-medium leading-none">
-          Results Year <span className="text-destructive">*</span>
+          Exam Held Year <span className="text-destructive">*</span>
         </label>
         <input
           type="number"
@@ -189,7 +191,7 @@ function YearFields() {
           placeholder="e.g. 2026"
           className={inputClass}
         />
-        <p className="text-xs text-muted-foreground">The year results were released (shown in brackets)</p>
+        <p className="text-xs text-muted-foreground">Year the exam was actually held (if different)</p>
       </div>
     </div>
   );
@@ -336,48 +338,74 @@ function StudentCard({
             </div>
           )}
 
-          {examType === "al" && (
+          {examType === "ol" && (
             <div className="space-y-1.5">
-              <label className="text-sm font-medium leading-none">Stream</label>
+              <label className="text-sm font-medium leading-none">Overall Grade</label>
               <select
-                value={student.stream ?? "bio"}
-                onChange={(e) => onChange({ ...student, stream: e.target.value })}
+                value={student.overallGrade ?? ""}
+                onChange={(e) => onChange({ ...student, overallGrade: e.target.value })}
                 className={inputClass}
               >
-                {STREAMS.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
+                <option value="">Select grade...</option>
+                {GRADES.map((g) => (
+                  <option key={g} value={g}>{g}</option>
                 ))}
               </select>
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium leading-none">
-              Subjects &amp; Grades
-              {examType === "ol" && <span className="text-muted-foreground font-normal"> (9 subjects)</span>}
-              {examType === "al" && <span className="text-muted-foreground font-normal"> (3 subjects)</span>}
-            </label>
-            {(student.subjects ?? []).length > 0 ? (
+          {examType === "al" && (
+            <>
               <div className="space-y-1.5">
-                {(student.subjects ?? []).map((s: any, i: number) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={s.subject}
-                      onChange={(e) => setSubject(i, { subject: e.target.value })}
-                      placeholder={`Subject ${i + 1}`}
-                      className={inputClass}
-                    />
-                    <GradeSelect value={s.grade} onChange={(g) => setSubject(i, { grade: g })} />
-                  </div>
-                ))}
+                <label className="text-sm font-medium leading-none">Stream</label>
+                <select
+                  value={student.stream ?? "physical_science"}
+                  onChange={(e) => {
+                    const newStream = e.target.value;
+                    onChange({
+                      ...student,
+                      stream: newStream,
+                      subjects: defaultSubjects("al", newStream),
+                    });
+                  }}
+                  className={inputClass}
+                >
+                  {STREAMS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">No subjects for this exam type.</p>
-            )}
-          </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium leading-none">
+                  Subjects &amp; Grades <span className="text-muted-foreground font-normal">(3 subjects)</span>
+                </label>
+                {(student.subjects ?? []).length > 0 ? (
+                  <div className="space-y-1.5">
+                    {(student.subjects ?? []).map((s: any, i: number) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <select
+                          value={s.subject}
+                          onChange={(e) => setSubject(i, { subject: e.target.value })}
+                          className={cn(inputClass, "flex-1")}
+                        >
+                          <option value="">Subject {i + 1}</option>
+                          {(AL_SUBJECTS[student.stream ?? "physical_science"] ?? []).map((subj) => (
+                            <option key={subj} value={subj}>{subj}</option>
+                          ))}
+                        </select>
+                        <GradeSelect value={s.grade} onChange={(g) => setSubject(i, { grade: g })} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No subjects for this stream.</p>
+                )}
+              </div>
+            </>
+          )}
 
           <div className="space-y-1.5">
             <label className="text-sm font-medium leading-none">Quote (optional)</label>
@@ -502,6 +530,7 @@ export function ExamResultForm({
         photo: s.photo || undefined,
         quote: s.quote || undefined,
         marks: typeof s.marks === "number" ? s.marks : s.marks ? Number(s.marks) : undefined,
+        overallGrade: s.overallGrade || undefined,
         stream: (s.stream as any) || undefined,
         subjects: (s.subjects ?? []).filter((x: any) => x.subject.trim()),
         sortOrder: s.sortOrder == null || s.sortOrder === "" ? undefined : Number(s.sortOrder),
@@ -546,11 +575,12 @@ export function ExamResultForm({
                 photo: s.photo ?? "",
                 quote: s.quote ?? "",
                 marks: s.marks ?? (result.examType === "scholarship" ? 0 : undefined),
-                stream: s.stream ?? (result.examType === "al" ? "bio" : undefined),
+                overallGrade: s.overallGrade ?? (result.examType === "ol" ? "" : undefined),
+                stream: s.stream ?? (result.examType === "al" ? "physical_science" : undefined),
                 subjects:
                   s.subjects && s.subjects.length > 0
                     ? s.subjects
-                    : defaultSubjects(result.examType),
+                    : defaultSubjects(result.examType, s.stream ?? "physical_science"),
                 sortOrder: s.sortOrder ?? i,
               })),
             }

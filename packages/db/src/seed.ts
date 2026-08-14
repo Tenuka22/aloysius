@@ -761,13 +761,13 @@ export async function seed() {
       resultsYear: 2026,
       status: "published" as const,
       students: [
-        { name: "Kavindu Jayasuriya", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "The future belongs to those who prepare for it.", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "A" }, { subject: "Mathematics", grade: "A" }, { subject: "Science", grade: "A" }, { subject: "History", grade: "A" }, { subject: "Religion", grade: "A" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "A" }] },
-        { name: "Oshan Rathnayake", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "A" }, { subject: "Mathematics", grade: "A" }, { subject: "Science", grade: "A" }, { subject: "History", grade: "A" }, { subject: "Religion", grade: "A" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "B" }] },
-        { name: "Dineth Fernando", photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces", quote: "Discipline is the bridge between goals and accomplishment.", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "A" }, { subject: "Mathematics", grade: "A" }, { subject: "Science", grade: "A" }, { subject: "History", grade: "B" }, { subject: "Religion", grade: "A" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "B" }] },
-        { name: "Tharindu Silva", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces", quote: "", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "A" }, { subject: "Mathematics", grade: "A" }, { subject: "Science", grade: "B" }, { subject: "History", grade: "A" }, { subject: "Religion", grade: "A" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "A" }] },
-        { name: "Sandaru Perera", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "Success is the sum of small efforts.", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "A" }, { subject: "Mathematics", grade: "B" }, { subject: "Science", grade: "A" }, { subject: "History", grade: "A" }, { subject: "Religion", grade: "A" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "A" }] },
-        { name: "Pasindu Wijesinghe", photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces", quote: "", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "A" }, { subject: "Mathematics", grade: "A" }, { subject: "Science", grade: "A" }, { subject: "History", grade: "A" }, { subject: "Religion", grade: "B" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "A" }] },
-        { name: "Ravindu Dissanayake", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "Strive for progress, not perfection.", subjects: [{ subject: "Sinhala", grade: "A" }, { subject: "English", grade: "B" }, { subject: "Mathematics", grade: "A" }, { subject: "Science", grade: "A" }, { subject: "History", grade: "A" }, { subject: "Religion", grade: "A" }, { subject: "Commerce", grade: "A" }, { subject: "ICT", grade: "A" }, { subject: "Art", grade: "A" }] },
+        { name: "Kavindu Jayasuriya", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "The future belongs to those who prepare for it.", overallGrade: "A" },
+        { name: "Oshan Rathnayake", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "", overallGrade: "A" },
+        { name: "Dineth Fernando", photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces", quote: "Discipline is the bridge between goals and accomplishment.", overallGrade: "A" },
+        { name: "Tharindu Silva", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces", quote: "", overallGrade: "A" },
+        { name: "Sandaru Perera", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "Success is the sum of small efforts.", overallGrade: "B" },
+        { name: "Pasindu Wijesinghe", photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces", quote: "", overallGrade: "A" },
+        { name: "Ravindu Dissanayake", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "Strive for progress, not perfection.", overallGrade: "B" },
       ],
     },
     {
@@ -776,14 +776,14 @@ export async function seed() {
       resultsYear: 2026,
       status: "published" as const,
       students: [
-        { name: "Nethmi Jayawardena", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces", quote: "The only way to do great work is to love what you do.", stream: "bio", subjects: [{ subject: "Biology", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "A" }] },
-        { name: "Sachini Karunaratne", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "bio", subjects: [{ subject: "Biology", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "B" }] },
-        { name: "Hiruni Bandara", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces", quote: "Believe you can and you're halfway there.", stream: "maths", subjects: [{ subject: "Combined Maths", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "A" }] },
-        { name: "Isuru Weerasinghe", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "maths", subjects: [{ subject: "Combined Maths", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "A" }] },
+        { name: "Nethmi Jayawardena", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces", quote: "The only way to do great work is to love what you do.", stream: "biological_science", subjects: [{ subject: "Biology", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "A" }] },
+        { name: "Sachini Karunaratne", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "biological_science", subjects: [{ subject: "Biology", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "B" }] },
+        { name: "Hiruni Bandara", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces", quote: "Believe you can and you're halfway there.", stream: "physical_science", subjects: [{ subject: "Combined Mathematics", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "A" }] },
+        { name: "Isuru Weerasinghe", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "physical_science", subjects: [{ subject: "Combined Mathematics", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "A" }] },
         { name: "Malith De Silva", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "Commerce is the engine of the economy.", stream: "commerce", subjects: [{ subject: "Accounting", grade: "A" }, { subject: "Business Studies", grade: "A" }, { subject: "Economics", grade: "A" }] },
         { name: "Chamath Liyanage", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "commerce", subjects: [{ subject: "Accounting", grade: "A" }, { subject: "Business Studies", grade: "A" }, { subject: "Economics", grade: "B" }] },
-        { name: "Yasas Wickramasinghe", photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces", quote: "Art is the most intense mode of individualism.", stream: "art", subjects: [{ subject: "Art", grade: "A" }, { subject: "Sinhala Literature", grade: "A" }, { subject: "History", grade: "A" }] },
-        { name: "Gayathri Herath", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "art", subjects: [{ subject: "Art", grade: "A" }, { subject: "Sinhala Literature", grade: "A" }, { subject: "History", grade: "B" }] },
+        { name: "Yasas Wickramasinghe", photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces", quote: "Art is the most intense mode of individualism.", stream: "arts", subjects: [{ subject: "Art", grade: "A" }, { subject: "Sinhala Literature", grade: "A" }, { subject: "History", grade: "A" }] },
+        { name: "Gayathri Herath", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "arts", subjects: [{ subject: "Art", grade: "A" }, { subject: "Sinhala Literature", grade: "A" }, { subject: "History", grade: "B" }] },
       ],
     },
   ];
@@ -808,6 +808,7 @@ export async function seed() {
         photo: s.photo ?? null,
         quote: s.quote ?? null,
         marks: s.marks ?? null,
+        overallGrade: (s as any).overallGrade ?? null,
         stream: (s as any).stream ?? null,
         subjects: (s as any).subjects ?? [],
         sortOrder: i,
@@ -817,11 +818,12 @@ export async function seed() {
   }
   console.log(`Seeded ${examResultsData.length} exam results`);
 
-  // ── Principals ──
+  // ── Staff ──
   const principalsData = [
     {
       name: "Fr. Jason Thomas",
       title: "Principal",
+      year: "2025",
       quote:
         "Every Aloysian carries forward a tradition of faith, discipline and excellence - certa viriliter. Our mission is to form men and women who will serve as a light to the world through knowledge, compassion and integrity.",
       message:
@@ -836,7 +838,8 @@ export async function seed() {
     },
     {
       name: "Rev. Fr. Joseph Perera",
-      title: "Rector",
+      title: "Vice Principal",
+      year: "2025",
       quote:
         "A good education is the foundation on which a nation is built; we must build it with faith and fear of God.",
       message:
@@ -855,6 +858,7 @@ export async function seed() {
       slug: toSlug(item.name),
       name: item.name,
       title: item.title,
+      year: item.year,
       quote: item.quote,
       message: item.message,
       bio: item.bio,
@@ -868,7 +872,7 @@ export async function seed() {
       userId,
     });
   }
-  console.log(`Seeded ${principalsData.length} principals`);
+  console.log(`Seeded ${principalsData.length} staff members`);
 
   // ── Activities ──
   const activities = [

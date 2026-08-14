@@ -1,0 +1,1 @@
+ALTER TABLE `principals` ADD `year` text DEFAULT '' NOT NULL;

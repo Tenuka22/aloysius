@@ -23,6 +23,7 @@ const createPrincipalSchema = v.object({
   bio: v.optional(v.string()),
   education: v.optional(v.string()),
   tenure: v.optional(v.string()),
+  year: v.optional(v.string()),
   portrait: v.optional(v.string()),
   sortOrder: v.optional(v.union([v.number(), v.string()])),
   publishNow: v.boolean(),
@@ -38,6 +39,7 @@ const updatePrincipalSchema = v.object({
   bio: v.optional(v.string()),
   education: v.optional(v.string()),
   tenure: v.optional(v.string()),
+  year: v.optional(v.string()),
   portrait: v.optional(v.string()),
   sortOrder: v.optional(v.union([v.number(), v.string()])),
   publishNow: v.boolean(),
@@ -247,6 +249,61 @@ function TenureField() {
   );
 }
 
+const STAFF_ROLES = [
+  { value: "PRINCIPAL", label: "Principal" },
+  { value: "VICE PRINCIPAL", label: "Vice Principal" },
+  { value: "DEPUTY PRINCIPAL", label: "Deputy Principal" },
+  { value: "SECTIONAL HEAD - PRIMARY (1-5)", label: "Sectional Head - Primary (1-5)" },
+  { value: "SECTIONAL HEAD - JUNIOR (6-9)", label: "Sectional Head - Junior (6-9)" },
+  { value: "SECTIONAL HEAD - SENIOR (9-11)", label: "Sectional Head - Senior (9-11)" },
+  { value: "SECTIONAL HEAD - COLLEGE (12-13)", label: "Sectional Head - College (12-13)" },
+  { value: "BURSAR", label: "Bursar" },
+  { value: "DIRECTOR OF STUDIES", label: "Director of Studies" },
+  { value: "SPORTS DIRECTOR", label: "Sports Director" },
+] as const;
+
+function RoleField() {
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.title) as string;
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Role</label>
+      <select
+        value={value}
+        onChange={(e) => form.setFieldValue("title", e.target.value)}
+        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <option value="">Select role...</option>
+        {STAFF_ROLES.map((r) => (
+          <option key={r.value} value={r.value}>
+            {r.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function YearField() {
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.year) as string;
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium leading-none">Academic Year</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => form.setFieldValue("year", e.target.value)}
+        placeholder="e.g. 2026"
+        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      />
+      <p className="text-xs text-muted-foreground">The academic year this staff member served in</p>
+    </div>
+  );
+}
+
 const fields: FieldEntry<CreatePrincipalValues | UpdatePrincipalValues>[] = [
   {
     name: "name",
@@ -276,6 +333,7 @@ const fields: FieldEntry<CreatePrincipalValues | UpdatePrincipalValues>[] = [
   { name: "bio", kind: "text", label: "Bio", hidden: true, required: false },
   { name: "education", kind: "text", label: "Education", hidden: true, required: false },
   { name: "tenure", kind: "text", label: "Tenure", hidden: true, required: false },
+  { name: "year", kind: "text", label: "Year", hidden: true, required: false },
   { name: "portrait", kind: "text", label: "Portrait", hidden: true, required: false },
   {
     name: "sortOrder",
@@ -312,7 +370,7 @@ export function PrincipalForm({
       return client.principals.update({ id: id!, ...values } as any);
     },
     onSuccess: () => {
-      toast.success(mode === "create" ? "Principal created" : "Principal updated");
+      toast.success(mode === "create" ? "Staff member created" : "Staff member updated");
       queryClient.invalidateQueries({ queryKey: ["principals"] });
       onSuccess?.();
     },
@@ -329,7 +387,7 @@ export function PrincipalForm({
       { columns: [{ fields: ["sortOrder"] }] },
       { columns: [{ fields: ["publishNow"] }] },
     ],
-    submitLabel: mode === "create" ? "Create Principal" : "Save Changes",
+    submitLabel: mode === "create" ? "Create Staff Member" : "Save Changes",
     onCancel: () => onSuccess?.(),
     hooks: {
       beforeSubmit: (values) => ({
@@ -344,7 +402,8 @@ export function PrincipalForm({
         </div>
         <div className="flex-1 grid grid-cols-2 gap-4">
           <NameField />
-          <TitleField />
+          <RoleField />
+          <YearField />
           <TenureField />
           <QuoteField />
           <EducationField />
@@ -387,18 +446,20 @@ export function PrincipalForm({
               bio: principal.bio ?? "",
               education: principal.education ?? "",
               tenure: principal.tenure ?? "",
+              year: principal.year ?? "",
               portrait: principal.portrait ?? "",
               sortOrder: principal.sortOrder ?? 0,
               publishNow: principal.status === "published",
             }
           : {
               name: "",
-              title: "Principal",
+              title: "PRINCIPAL",
               quote: "",
               message: "",
               bio: "",
               education: "",
               tenure: "",
+              year: String(new Date().getFullYear()),
               portrait: "",
               sortOrder: 0,
               publishNow: false,

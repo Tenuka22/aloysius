@@ -9,12 +9,19 @@ import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 import { IconCalendarEvent, IconHeart, IconUserPlus, IconCheck, IconX, IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { Navbar } from "@/components-client/navbar";
+import { Footer } from "@/components-client/footer";
 
 export const Route = createFileRoute("/ob")({
+  beforeLoad: async () => {
+    const settings = await client.settings.getAll();
+    return { settings };
+  },
   component: OBPage,
 });
 
-export function OBPage({ settings }: { settings?: Record<string, string> } = {}) {
+export function OBPage() {
+  const { settings } = Route.useRouteContext();
   const { isSignedIn } = useAuth();
   const queryClient = useQueryClient();
 
@@ -106,6 +113,7 @@ export function OBPage({ settings }: { settings?: Record<string, string> } = {})
 
   return (
     <div className="min-h-screen bg-cream">
+      <Navbar settings={settings} />
       <header className="bg-green-dark text-cream py-16 px-4 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-[1180px] grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div>
@@ -373,6 +381,7 @@ export function OBPage({ settings }: { settings?: Record<string, string> } = {})
           )}
         </section>
       </main>
+      <Footer settings={settings} />
     </div>
   );
 }

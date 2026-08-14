@@ -25,7 +25,7 @@ function CreatePrincipalDialog() {
     >
       <DialogContent className="w-[min(90vw,800px)] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>New Principal</DialogTitle>
+          <DialogTitle>New Staff Member</DialogTitle>
         </DialogHeader>
         <PrincipalForm mode="create" onSuccess={() => navigate({ to: "/admin/principals" })} />
       </DialogContent>

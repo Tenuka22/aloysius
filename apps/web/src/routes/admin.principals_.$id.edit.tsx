@@ -26,7 +26,7 @@ function EditPrincipalDialog() {
     >
       <DialogContent className="w-[min(90vw,800px)] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Principal</DialogTitle>
+          <DialogTitle>Edit Staff Member</DialogTitle>
         </DialogHeader>
         <PrincipalForm
           mode="edit"

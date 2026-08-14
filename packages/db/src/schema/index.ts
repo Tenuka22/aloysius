@@ -480,7 +480,8 @@ export const examStudents = sqliteTable(
     photo: text("photo"),
     quote: text("quote"),
     marks: integer("marks"),
-    stream: text("stream", { enum: ["art", "commerce", "bio", "maths"] }),
+    overallGrade: text("overall_grade"),
+    stream: text("stream", { enum: ["physical_science", "biological_science", "commerce", "arts", "technology"] }),
     subjects: text("subjects", { mode: "json" })
       .$type<{ subject: string; grade: string }[]>()
       .default([]),
@@ -506,6 +507,7 @@ export const principals = sqliteTable(
     bio: text("bio"),
     education: text("education"),
     tenure: text("tenure"),
+    year: text("year").notNull().default(""),
     portrait: text("portrait"),
     sortOrder: integer("sort_order").notNull().default(0),
     status: text("status", { enum: ["draft", "published", "archived"] })

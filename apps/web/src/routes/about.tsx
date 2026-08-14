@@ -46,18 +46,6 @@ const DEFAULTS: Record<string, string> = {
   about_anthem_desc:
     "Sung with pride by generations of Aloysians, our anthem embodies the spirit and values of St. Aloysius' College.",
   about_administration_heading: "College Leadership",
-  staff1_name: "",
-  staff1_role: "PRINCIPAL",
-  staff1_photo: "",
-  staff2_name: "",
-  staff2_role: "VICE PRINCIPAL",
-  staff2_photo: "",
-  staff3_name: "",
-  staff3_role: "VICE PRINCIPAL",
-  staff3_photo: "",
-  staff4_name: "",
-  staff4_role: "SECTIONAL HEAD",
-  staff4_photo: "",
 };
 
 const anthemLyrics: Record<string, { label: string; stanzas: string[][] }> = {
@@ -209,11 +197,12 @@ const jumpLinks = [
 
 export const Route = createFileRoute("/about")({
   loader: async () => {
-    const [settings, principalData] = await Promise.all([
+    const [settings, principalData, staffData] = await Promise.all([
       client.settings.getAll(),
       client.principals.getCurrent(),
+      client.principals.list({ page: 1, pageSize: 100, status: "published", sort: "sortOrder", sortDir: "asc" }),
     ]);
-    return { settings, principal: principalData };
+    return { settings, principal: principalData, staff: staffData.rows };
   },
   staleTime: 5 * 60_000,
   component: AboutPage,
@@ -233,7 +222,11 @@ function ArchivalImage({ src, className }: { src?: string; className?: string })
 }
 
 function AboutPage() {
-  const { settings: settingsRaw, principal } = Route.useLoaderData();
+  const { settings: settingsRaw, principal, staff } = Route.useLoaderData() as {
+    settings: Record<string, string>;
+    principal: any;
+    staff: { id: string; name: string; title: string; portrait: string | null; year: string; sortOrder: number }[];
+  };
   const settings = settingsRaw as Record<string, string>;
   const s = (key: string) => settings[key] || DEFAULTS[key] || "";
 
@@ -278,11 +271,22 @@ function AboutPage() {
     image: settings[`history${i}_image`],
   }));
 
-  const staff = [1, 2, 3, 4].map((i) => ({
-    name: s(`staff${i}_name`) || "Staff Member",
-    role: s(`staff${i}_role`),
-    photo: settings[`staff${i}_photo`],
-  }));
+  // Group staff by year, sorted descending (most recent first)
+  const staffByYear = staff.reduce((acc: Record<string, typeof staff>, member) => {
+    const y = member.year || "Unknown";
+    if (!acc[y]) acc[y] = [];
+    acc[y].push(member);
+    return acc;
+  }, {} as Record<string, typeof staff>);
+  const sortedYears = Object.keys(staffByYear).sort((a, b) => b.localeCompare(a));
+
+  // Role display order
+  const roleOrder = [
+    "PRINCIPAL", "VICE PRINCIPAL", "DEPUTY PRINCIPAL",
+    "DIRECTOR OF STUDIES", "BURSAR", "SPORTS DIRECTOR",
+    "SECTIONAL HEAD - PRIMARY (1-5)", "SECTIONAL HEAD - JUNIOR (6-9)",
+    "SECTIONAL HEAD - SENIOR (9-11)", "SECTIONAL HEAD - COLLEGE (12-13)",
+  ];
 
   return (
     <div className="min-h-screen bg-cream">
@@ -655,23 +659,43 @@ function AboutPage() {
             >
               {s("about_administration_heading")}
             </h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-7">
-              {staff.map((member, i) => (
-                <div key={i} data-animate>
-                  {member.photo ? (
-                    <img src={member.photo} alt={member.name} className="w-full h-70 object-cover" />
-                  ) : (
-                    <div className="w-full h-70 flex items-center justify-center bg-[#FFF8E7]/5">
-                      <span className="text-[10px] tracking-widest text-[#FFF8E7]/40 font-semibold">
-                        PORTRAIT
-                      </span>
+            {sortedYears.length === 0 ? (
+              <p data-animate className="text-[#FFF8E7]/50 text-sm">No staff members added yet.</p>
+            ) : (
+              <div className="space-y-16">
+                {sortedYears.map((year) => {
+                  const yearMembers = staffByYear[year].sort((a, b) => {
+                    const ai = roleOrder.indexOf(a.title);
+                    const bi = roleOrder.indexOf(b.title);
+                    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi) || a.sortOrder - b.sortOrder;
+                  });
+                  return (
+                    <div key={year} data-animate>
+                      <div className="text-[11px] tracking-[0.3em] font-bold text-[#FFB203] mb-6 border-b border-[#FFB203]/20 pb-3">
+                        {year}
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-7">
+                        {yearMembers.map((member) => (
+                          <div key={member.id} data-animate>
+                            {member.portrait ? (
+                              <img src={member.portrait} alt={member.name} className="w-full h-70 object-cover" />
+                            ) : (
+                              <div className="w-full h-70 flex items-center justify-center bg-[#FFF8E7]/5">
+                                <span className="text-[10px] tracking-widest text-[#FFF8E7]/40 font-semibold">
+                                  PORTRAIT
+                                </span>
+                              </div>
+                            )}
+                            <div className="font-bold text-base mt-4.5 mb-1">{member.name}</div>
+                            <div className="text-xs tracking-[0.12em] text-[#FFB203]">{member.title}</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  )}
-                  <div className="font-bold text-base mt-4.5 mb-1">{member.name}</div>
-                  <div className="text-xs tracking-[0.12em] text-[#FFB203]">{member.role}</div>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
       </main>
