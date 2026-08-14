@@ -9,13 +9,16 @@ gsap.registerPlugin(ScrollTrigger);
 
 const collegeLinks = [
   { label: "About", to: "/about" },
-  { label: "Student Works", to: "/student-works" },
+  { label: "Academics", to: "/academics" },
+  { label: "Student Life", to: "/students" },
   { label: "Achievements", to: "/achievements" },
   { label: "Admissions", to: "/admissions" },
 ];
 const communityLinks = [
   { label: "Gallery", to: "/gallery" },
   { label: "News & Events", to: "/news-events" },
+  { label: "Alumni", to: "/alumni" },
+  { label: "Contact", to: "/contact" },
   { label: "Admin", to: "/admin" },
 ];
 

@@ -17,11 +17,14 @@ gsap.registerPlugin(ScrollTrigger);
 const navLinks = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about" },
+  { label: "Academics", to: "/academics" },
   { label: "Principals", to: "/principals" },
-  { label: "Student Works", to: "/student-works" },
+  { label: "Student Life", to: "/students" },
   { label: "Achievements", to: "/achievements" },
   { label: "Gallery", to: "/gallery" },
   { label: "News & Events", to: "/news-events" },
+  { label: "Alumni", to: "/alumni" },
+  { label: "Contact", to: "/contact" },
 ];
 
 export function Navbar() {

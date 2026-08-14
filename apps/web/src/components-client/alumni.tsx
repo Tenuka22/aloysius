@@ -11,9 +11,9 @@ const DEFAULTS: Record<string, string> = {
   alumni_description:
     "A global network of Aloysians in leadership, service and scholarship - connected by the crest they carried.",
   alumni_cta1_text: "Old Boys' Association",
-  alumni_cta1_url: "#",
+  alumni_cta1_url: "/alumni",
   alumni_cta2_text: "Distinguished Aloysians",
-  alumni_cta2_url: "#",
+  alumni_cta2_url: "/alumni#distinguished",
 };
 
 export function Alumni({ settings }: { settings?: Record<string, string> }) {

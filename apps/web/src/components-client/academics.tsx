@@ -67,7 +67,7 @@ export function Academics({
             </h2>
           </div>
           <a
-            href="/about"
+            href="/academics"
             className="text-gold font-bold text-sm border-b-2 border-gold pb-1.5 whitespace-nowrap hover:text-gold-light transition-colors"
           >
             All Departments &rarr;

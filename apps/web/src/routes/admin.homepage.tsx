@@ -98,9 +98,9 @@ const DEFAULTS: Record<string, string> = {
     "A global network of Aloysians in leadership, service and scholarship - connected by the crest they carried.",
   alumni_photo: "",
   alumni_cta1_text: "Old Boys' Association",
-  alumni_cta1_url: "#",
+  alumni_cta1_url: "/alumni",
   alumni_cta2_text: "Distinguished Aloysians",
-  alumni_cta2_url: "#",
+  alumni_cta2_url: "/alumni#distinguished",
   gallery_heading: "Gallery",
 };
 
