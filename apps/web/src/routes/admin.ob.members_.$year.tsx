@@ -7,7 +7,6 @@ import {
   type PaginationState,
   type SortingState,
 } from "@tanstack/react-table";
-import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Input } from "@aloysius-web/ui/components/input";
@@ -19,41 +18,18 @@ import {
   DataTableViewOptions,
 } from "@aloysius-web/ui/components/data-table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@aloysius-web/ui/components/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@aloysius-web/ui/components/dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@aloysius-web/ui/components/select";
-import {
-  IconDotsVertical,
-  IconPencil,
-  IconTrash,
-  IconCheck,
-  IconX,
-  IconRotate,
-  IconArrowLeft,
-  IconPlus,
-} from "@tabler/icons-react";
+import { IconArrowLeft, IconShieldCheck } from "@tabler/icons-react";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { OBCommitteeEditor, type OBMember } from "@/components-client/ob-committee-editor";
 
 const HEAD_ROLES = [
   "PRESIDENT",
@@ -72,52 +48,16 @@ function isHeadRole(role: string): boolean {
   return HEAD_ROLES.some((r) => upper.includes(r));
 }
 
-type OBMember = {
-  id: string;
-  userId: string | null;
-  name: string;
-  role: string;
-  email: string | null;
-  adminEmail: string | null;
-  photo: string | null;
-  bio: string | null;
-  year: string;
-  sortOrder: number;
-  status: string;
-  decidedBy: string | null;
-  decidedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-function DeleteMemberDialog({ open, onOpenChange, onConfirm, name }: { open: boolean; onOpenChange: (open: boolean) => void; onConfirm: () => void; name: string }) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete Member</DialogTitle>
-          <DialogDescription>Are you sure you want to delete <strong>{name}</strong>? This action cannot be undone.</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button variant="destructive" onClick={onConfirm}>Delete</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export const Route = createFileRoute("/admin/ob/members_/$year")({
   component: AdminOBMembersYear,
 });
 
 function AdminOBMembersYear() {
   const { year } = Route.useParams();
+  const queryClient = useQueryClient();
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [obAdminEmail, setObAdminEmail] = useState("");
 
@@ -126,55 +66,40 @@ function AdminOBMembersYear() {
     queryFn: () => client.ob.obMembers.list({ year }),
   });
 
+  const { data: allMembers = [] } = useQuery({
+    queryKey: ["ob-members", "all"],
+    queryFn: () => client.ob.obMembers.list({}),
+  });
+
+  const visibleMembers = useMemo(() => members.filter((m: any) => m.role !== "ADMINISTRATOR"), [members]);
+  const visibleAllMembers = useMemo(() => allMembers.filter((m: any) => m.role !== "ADMINISTRATOR"), [allMembers]);
+
+  // The OB admin is any member of this year whose row carries the admin email —
+  // not necessarily the President.
   useEffect(() => {
-    const president = members.find((m: any) => m.role.toUpperCase().includes("PRESIDENT"));
-    setObAdminEmail(president?.adminEmail || "");
-  }, [members, year]);
-
-  const deleteMutation = useMutation({
-    mutationFn: () => { if (!deleteId) return Promise.resolve({ success: true }); return client.ob.obMembers.delete({ id: deleteId }); },
-    onSuccess: () => { toast.success("Member removed"); setDeleteOpen(false); setDeleteId(null); },
-  });
-
-  const approveMutation = useMutation({
-    mutationFn: (id: string) => client.ob.obMembers.approveMember({ id }),
-    onSuccess: () => { toast.success("Member approved"); },
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: (id: string) => client.ob.obMembers.rejectMember({ id }),
-    onSuccess: () => { toast.success("Membership rejected"); },
-  });
-
-  const revokeMutation = useMutation({
-    mutationFn: (id: string) => client.ob.obMembers.revokeMember({ id }),
-    onSuccess: () => { toast.success("Membership revoked"); },
-  });
+    const admin = visibleMembers.find((m: any) => m.adminEmail);
+    setObAdminEmail(admin?.adminEmail || "");
+  }, [visibleMembers, year]);
 
   const saveAdminMutation = useMutation({
-    mutationFn: async (email: string) => {
-      const president = members.find((m: any) => m.role.toUpperCase().includes("PRESIDENT"));
-      if (!president) throw new Error("No President found for this year");
-      const currentEmail = president.adminEmail;
-      if (currentEmail === email) return;
-      await client.ob.obMembers.setOBAdmin({ year, email: email || null });
-    },
+    mutationFn: (email: string) => client.ob.obMembers.setOBAdmin({ year, email: email || null }),
     onSuccess: () => {
       toast.success("OB admin email saved");
       queryClient.invalidateQueries({ queryKey: ["ob-members"] });
     },
+    onError: (err) => toast.error(err.message),
   });
 
-  const saveObAdmin = () => {
-    saveAdminMutation.mutate(obAdminEmail);
-  };
+  const approvedMembers = visibleMembers.filter((m: any) => m.status === "approved");
+  const pendingMembers = visibleMembers.filter((m: any) => m.status === "pending");
+  const pool = visibleAllMembers.filter((m: any) => m.status === "approved");
 
-  const approvedMembers = members.filter((m: any) => m.status === "approved");
-  const headCommittee = approvedMembers.filter((m: any) => isHeadRole(m.role));
-  const regularMembers = approvedMembers.filter((m: any) => !isHeadRole(m.role));
-  const pendingMembers = members.filter((m: any) => m.status === "pending");
-
-  const filteredMembers = roleFilter === "all" ? members : roleFilter === "head" ? members.filter((m: any) => isHeadRole(m.role)) : members.filter((m: any) => !isHeadRole(m.role));
+  const filteredMembers =
+    roleFilter === "all"
+      ? visibleMembers
+      : roleFilter === "head"
+        ? visibleMembers.filter((m: any) => isHeadRole(m.role))
+        : visibleMembers.filter((m: any) => !isHeadRole(m.role));
 
   const columns: ColumnDef<OBMember, any>[] = [
     {
@@ -183,13 +108,22 @@ function AdminOBMembersYear() {
       cell: ({ row }) => {
         const url = row.original.photo;
         if (!url) return <span className="text-muted-foreground">-</span>;
-        return <img src={url} alt="" className="h-10 w-10 rounded-md object-cover" />;
+        return <img src={url} alt="" className="h-10 w-10 rounded-full object-cover" />;
       },
       size: 60,
     },
     {
       accessorKey: "name",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
+      cell: ({ row }) => {
+        const m = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <span>{m.name}</span>
+            {m.adminEmail && <IconShieldCheck className="size-3.5 text-gold shrink-0" title="OB Admin" />}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "role",
@@ -226,44 +160,6 @@ function AdminOBMembersYear() {
       },
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        const m = row.original;
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
-              <IconDotsVertical className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem render={<Link to={`/admin/ob/members/${m.id}/edit?returnTo=${encodeURIComponent(`/admin/ob/members/${year}`)}`} />}>
-                <IconPencil className="size-4" /> Edit
-              </DropdownMenuItem>
-              {m.status === "pending" && (
-                <>
-                  <DropdownMenuItem onClick={() => approveMutation.mutate(m.id)}>
-                    <IconCheck className="size-4" /> Approve
-                  </DropdownMenuItem>
-                  <DropdownMenuItem variant="destructive" onClick={() => rejectMutation.mutate(m.id)}>
-                    <IconX className="size-4" /> Reject
-                  </DropdownMenuItem>
-                </>
-              )}
-              {m.status === "approved" && (
-                <DropdownMenuItem variant="destructive" onClick={() => revokeMutation.mutate(m.id)}>
-                  <IconRotate className="size-4" /> Revoke
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onClick={() => { setDeleteId(m.id); setDeleteOpen(true); }}>
-                <IconTrash className="size-4" /> Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
   ];
 
   return (
@@ -277,78 +173,54 @@ function AdminOBMembersYear() {
         <div>
           <h1 className="text-lg font-semibold">{year} Committee</h1>
           <div className="text-xs text-muted-foreground">
-            {headCommittee.length > 0 && <span>{headCommittee.length} head committee</span>}
-            {headCommittee.length > 0 && regularMembers.length > 0 && <span> &bull; </span>}
-            {regularMembers.length > 0 && <span>{regularMembers.length} members</span>}
+            {approvedMembers.length > 0 && <span>{approvedMembers.length} members</span>}
             {pendingMembers.length > 0 && <span className="text-yellow-600"> &bull; {pendingMembers.length} pending</span>}
           </div>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" render={<Link to={`/admin/ob/members/new?year=${encodeURIComponent(year)}`} />} nativeButton={false}>
-            <IconPlus className="mr-1 size-4" />
-            Add Member
-          </Button>
-        </div>
       </header>
       <div className="flex-1 p-6 space-y-6">
-        {/* OB Admin */}
+        {/* OB Admin — the only thing the site admin can change here */}
         <section>
           <h2 className="text-sm font-bold tracking-[0.2em] text-gold mb-3">OB ADMIN</h2>
           <Card className="border-gold/20">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="flex-1">
-                <label className="text-xs text-muted-foreground block mb-1">Admin Email (President)</label>
+            <CardContent className="p-4 flex flex-wrap items-center gap-4">
+              <div className="flex-1 min-w-[240px]">
+                <label className="text-xs text-muted-foreground block mb-1">
+                  OB Admin Email <span className="text-muted-foreground/70">(the member who manages the committee)</span>
+                </label>
                 <Input
                   placeholder="admin@example.com"
                   value={obAdminEmail}
                   onChange={(e) => setObAdminEmail(e.target.value)}
                   className="h-9"
                 />
+                <p className="text-[11px] text-muted-foreground mt-1.5">
+                  Must match the email of an approved member in {year} — the admin is not necessarily the President.
+                </p>
               </div>
-              <Button size="sm" onClick={saveObAdmin} disabled={saveAdminMutation.isPending} className="self-end">
-                {saveAdminMutation.isPending ? "Saving..." : "Save"}
-              </Button>
+              <div className="flex items-end gap-2">
+                <Button size="sm" onClick={() => saveAdminMutation.mutate(obAdminEmail)} disabled={saveAdminMutation.isPending} className="self-end">
+                  {saveAdminMutation.isPending ? "Saving..." : "Save"}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </section>
 
-        {headCommittee.length > 0 && (
-          <section>
-            <h2 className="text-sm font-bold tracking-[0.2em] text-gold mb-4">HEAD COMMITTEE</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {headCommittee.map((member: any) => (
-                <Card key={member.id} className="overflow-hidden border-gold/20">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground shrink-0 overflow-hidden">
-                        {member.photo ? (
-                          <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
-                        ) : (
-                          member.name.charAt(0)
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-semibold text-sm text-green-dark truncate">{member.name}</div>
-                        <div className="text-xs text-gold font-medium">{member.role}</div>
-                      </div>
-                    </div>
-                    {member.email && <div className="text-xs text-muted-foreground mt-2 truncate">{member.email}</div>}
-                    <div className="flex gap-2 mt-3">
-                      <Button variant="outline" size="sm" className="flex-1" render={<Link to={`/admin/ob/members/${member.id}/edit?returnTo=${encodeURIComponent(`/admin/ob/members/${year}`)}`} />}>
-                        <IconPencil className="size-3 mr-1" /> Edit
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* Committee — read-only for the site admin */}
+        <section>
+          {isLoading ? (
+            <div className="text-center text-muted-foreground py-8">Loading...</div>
+          ) : (
+            <OBCommitteeEditor year={year} members={approvedMembers as OBMember[]} pool={pool as OBMember[]} readOnly />
+          )}
+        </section>
 
-        {regularMembers.length > 0 && (
+        {/* All members — read-only view */}
+        {members.length > 0 && (
           <section>
-            <h2 className="text-sm font-bold tracking-[0.2em] text-muted-foreground mb-4">MEMBERS</h2>
-            <div className="bg-white rounded-lg border">
+            <h2 className="text-sm font-bold tracking-[0.2em] text-muted-foreground mb-4">ALL MEMBERS</h2>
+            <div className="bg-white rounded-lg border p-2">
               <DataTable
                 columns={columns}
                 data={filteredMembers}
@@ -372,7 +244,7 @@ function AdminOBMembersYear() {
                     <div className="flex items-center justify-between">
                       <div className="flex flex-1 items-center gap-2">
                         <Input placeholder="Filter by name..." value={(filters.find((f) => f.id === "name")?.value as string) ?? ""} onChange={(e) => setFilter("name", e.target.value)} className="h-8 w-[200px] lg:w-[250px]" />
-                        <Select value={roleFilter} onValueChange={setRoleFilter}>
+                        <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v ?? "all")}>
                           <SelectTrigger className="h-8 w-[140px]">
                             <SelectValue placeholder="All roles" />
                           </SelectTrigger>
@@ -393,39 +265,7 @@ function AdminOBMembersYear() {
             </div>
           </section>
         )}
-
-        {pendingMembers.length > 0 && (
-          <section>
-            <h2 className="text-sm font-bold tracking-[0.2em] text-yellow-600 mb-4">PENDING APPROVAL ({pendingMembers.length})</h2>
-            <div className="space-y-3">
-              {pendingMembers.map((member: any) => (
-                <Card key={member.id} className="border-yellow-500/30">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground overflow-hidden">
-                        {member.photo ? <img src={member.photo} alt={member.name} className="w-full h-full object-cover" /> : member.name.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="font-medium text-sm text-green-dark">{member.name}</div>
-                        <div className="text-xs text-muted-foreground">{member.role} &bull; {member.email || "No email"}</div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => approveMutation.mutate(member.id)} className="bg-green-dark text-cream hover:bg-green-darker">
-                        <IconCheck className="size-4 mr-1" /> Approve
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => rejectMutation.mutate(member.id)}>
-                        <IconX className="size-4 mr-1" /> Reject
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
       </div>
-      <DeleteMemberDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={() => deleteMutation.mutate()} name={deleteId ? members.find((m) => m.id === deleteId)?.name || "" : ""} />
     </div>
   );
 }

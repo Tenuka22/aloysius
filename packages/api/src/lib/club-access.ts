@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
-import { clubMembers } from "@aloysius-web/db/schema";
+import { clubMembers, activities } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { createClerkClient } from "@clerk/backend";
 import { env } from "@aloysius-web/env/server";
@@ -41,6 +41,18 @@ export function serializeMembership(row: MembershipRow) {
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+/** The user's primary (or first) email from Clerk, lowercased, or null. */
+export async function getUserEmail(userId: string): Promise<string | null> {
+  try {
+    const user = await clerkClient.users.getUser(userId);
+    const email =
+      user.primaryEmailAddress?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress;
+    return email?.toLowerCase() ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getMembership(
@@ -105,53 +117,11 @@ export function assertClubAdmin(
 }
 
 /**
- * Syncs a user's club memberships into their Clerk publicMetadata
- * under `clubMemberships` as a map of activityId -> { role, status }.
- * This is what makes the "My Clubs" nav link and club info show up automatically.
- */
-export async function syncClubMembershipsMetadata(userId: string): Promise<void> {
-  try {
-    const db = createDb();
-    const rows = await db.select().from(clubMembers).where(eq(clubMembers.userId, userId)).all();
-
-    const memberships = Object.fromEntries(
-      rows.map((r) => [r.activityId, { role: r.role, status: r.status }]),
-    );
-
-    const user = await clerkClient.users.getUser(userId);
-    const currentMetadata = (user.publicMetadata ?? {}) as Record<string, unknown>;
-
-    await clerkClient.users.updateUser(userId, {
-      publicMetadata: {
-        ...currentMetadata,
-        clubMemberships: memberships,
-      },
-    });
-  } catch (err) {
-    // Metadata sync should never break the primary operation.
-    console.error(`[club-access] failed to sync metadata for ${userId}:`, err);
-  }
-}
-
-/** Reads a user's adminActivities list from Clerk publicMetadata (no DB hit). */
-async function getAdminActivitiesFromMetadata(
-  userId: string,
-): Promise<string[]> {
-  try {
-    const user = await clerkClient.users.getUser(userId);
-    const metadata = (user.publicMetadata ?? {}) as Record<string, unknown>;
-    return (metadata.adminActivities as string[]) ?? [];
-  } catch {
-    return [];
-  }
-}
-
-/**
  * Resolves a user's effective access to a club:
  * - site admins can do everything
- * - club admins come from the DB row (role=admin + approved) OR the adminActivities
- *   metadata that the activity's adminEmail sync writes (fallback when the
- *   admin hasn't been seeded into club_members yet).
+ * - club admins come from the DB row (role=admin + approved)
+ * - otherwise the activity's `adminEmail` is compared against the user's Clerk
+ *   email, so an admin designated by email gets access without any metadata sync.
  */
 export async function resolveClubAccess(
   db: ReturnType<typeof createDb>,
@@ -164,25 +134,19 @@ export async function resolveClubAccess(
   let isClubAdmin =
     isSiteAdmin || (membership?.role === "admin" && membership?.status === "approved");
 
-  if (!isClubAdmin && !isApprovedMember(membership)) {
-    const adminActivities = await getAdminActivitiesFromMetadata(userId);
-    if (adminActivities.includes(activityId)) {
-      isClubAdmin = true;
+  if (!isClubAdmin) {
+    const activity = await db
+      .select()
+      .from(activities)
+      .where(eq(activities.id, activityId))
+      .get();
+    if (activity?.adminEmail) {
+      const userEmail = await getUserEmail(userId);
+      if (userEmail && userEmail === activity.adminEmail.toLowerCase()) {
+        isClubAdmin = true;
+      }
     }
   }
 
   return { membership, isClubAdmin };
-}
-
-/** Reads a user's clubMemberships map from Clerk publicMetadata (no DB hit). */
-export async function getClubMembershipsFromMetadata(
-  userId: string,
-): Promise<Record<string, { role: string; status: string }>> {
-  try {
-    const user = await clerkClient.users.getUser(userId);
-    const metadata = (user.publicMetadata ?? {}) as Record<string, unknown>;
-    return (metadata.clubMemberships as Record<string, { role: string; status: string }>) ?? {};
-  } catch {
-    return {};
-  }
 }

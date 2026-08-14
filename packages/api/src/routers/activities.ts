@@ -5,7 +5,7 @@ import { activities, clubMembers } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
-import { syncClubMembershipsMetadata } from "../lib/club-access";
+import { getUserEmail } from "../lib/club-access";
 import { createClerkClient } from "@clerk/backend";
 import { env } from "@aloysius-web/env/server";
 
@@ -261,9 +261,19 @@ export const activitiesRouter = {
       return { success: true };
     }),
 
+  /**
+   * Sync activity admins from the DB: for every activity's `adminEmail`, find the
+   * Clerk user and seed a `club_members` row (role=admin, approved) so they appear
+   * as admins in the DB. Also downgrades system-seeded admin rows whose email no
+   * longer matches the activity's `adminEmail`. No Clerk metadata is written.
+   * Site admin only.
+   */
   syncAdminMetadata: protectedProcedure.handler(async ({ context }) => {
     if (!context.auth?.userId) {
       throw new ORPCError("UNAUTHORIZED");
+    }
+    if (!context.auth?.adminCalled) {
+      throw new ORPCError("FORBIDDEN", { message: "Site admin access required." });
     }
 
     const db = createDb();
@@ -285,6 +295,7 @@ export const activitiesRouter = {
 
     const results = { updated: 0, cleared: 0, errors: 0, errorsList: [] as string[] };
 
+    // (1) Seed club_members rows (role=admin, approved) for each admin email.
     for (const [email, activityIds] of emailToActivityIds) {
       try {
         const users = await clerkClient.users.getUserList({ emailAddress: [email] });
@@ -296,23 +307,6 @@ export const activitiesRouter = {
           continue;
         }
 
-        const currentMetadata = (user.publicMetadata ?? {}) as Record<string, unknown>;
-        const currentAdminActivities = (currentMetadata.adminActivities as string[]) ?? [];
-
-        const sortedNew = [...activityIds].sort();
-        const sortedOld = [...currentAdminActivities].sort();
-
-        if (JSON.stringify(sortedNew) !== JSON.stringify(sortedOld)) {
-          await clerkClient.users.updateUser(user.id, {
-            publicMetadata: {
-              ...currentMetadata,
-              adminActivities: activityIds,
-            },
-          });
-          results.updated++;
-        }
-
-        // Seed club_members rows (role=admin, approved) for this admin's clubs
         for (const activityId of activityIds) {
           const existingMember = await db
             .select()
@@ -339,9 +333,9 @@ export const activitiesRouter = {
                 updatedAt: now,
               })
               .run();
+            results.updated++;
           }
         }
-        await syncClubMembershipsMetadata(user.id);
       } catch (err) {
         results.errorsList.push(
           `Error syncing ${email}: ${err instanceof Error ? err.message : String(err)}`,
@@ -350,33 +344,39 @@ export const activitiesRouter = {
       }
     }
 
-    const allAdminEmails = new Set(emailToActivityIds.keys());
+    // (2) Downgrade system-seeded admin rows whose email no longer matches the
+    // activity's adminEmail, so removed admins stop being treated as admins.
+    const systemAdminRows = await db
+      .select()
+      .from(clubMembers)
+      .where(
+        and(
+          eq(clubMembers.role, "admin"),
+          eq(clubMembers.status, "approved"),
+          eq(clubMembers.decidedBy, "system"),
+        ),
+      )
+      .all();
 
-    const usersWithAdminMeta = await clerkClient.users.getUserList({
-      limit: 500,
-    });
-
-    for (const user of usersWithAdminMeta.data) {
+    for (const row of systemAdminRows) {
       try {
-        const metadata = (user.publicMetadata ?? {}) as Record<string, unknown>;
-        const adminActivities = metadata.adminActivities as string[] | undefined;
-
-        if (adminActivities && adminActivities.length > 0) {
-          const userEmail = user.emailAddresses.find((e) => e.emailAddress.toLowerCase());
-
-          if (userEmail && !allAdminEmails.has(userEmail.emailAddress.toLowerCase())) {
-            await clerkClient.users.updateUser(user.id, {
-              publicMetadata: {
-                ...metadata,
-                adminActivities: [],
-              },
-            });
-            results.cleared++;
-          }
-        }
+        const userEmail = await getUserEmail(row.userId);
+        if (!userEmail) continue;
+        const activity = await db
+          .select()
+          .from(activities)
+          .where(eq(activities.id, row.activityId))
+          .get();
+        if (activity?.adminEmail?.toLowerCase() === userEmail) continue;
+        await db
+          .update(clubMembers)
+          .set({ role: "member", updatedAt: new Date() })
+          .where(eq(clubMembers.id, row.id))
+          .run();
+        results.cleared++;
       } catch (err) {
         results.errorsList.push(
-          `Error clearing ${user.id}: ${err instanceof Error ? err.message : String(err)}`,
+          `Error clearing admin row ${row.id}: ${err instanceof Error ? err.message : String(err)}`,
         );
         results.errors++;
       }

@@ -13,6 +13,7 @@ type MyClub = {
     role: "admin" | "member";
     status: "pending" | "approved" | "rejected" | "revoked";
     reason: string | null;
+    isAdmin: boolean;
   };
   activity: {
     id: string;
@@ -143,7 +144,7 @@ function MyClubsPage() {
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{typeLabels[activity.type] ?? activity.type}</span>
-                        {membership.role === "admin" && (
+                        {membership.isAdmin && (
                           <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                             Club Admin
                           </span>

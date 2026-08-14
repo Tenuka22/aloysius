@@ -48,7 +48,10 @@ export function OBPage({ settings }: { settings?: Record<string, string> } = {})
     enabled: isSignedIn,
   });
 
-  const isOBAdmin = (myMembership?.status === "approved") || members.some((m: any) => m.userId === myMembership?.userId && m.status === "approved");
+  // Admin rights come from the server: the OB admin is the approved member whose
+  // Clerk email matches the adminEmail stored on their OB member row.
+  const isOBAdmin = myMembership?.isAdmin === true;
+  const isOBAdminPanel = myMembership?.isAdmin === true;
 
   const [eventForm, setEventForm] = useState({ title: "", description: "", location: "", eventDate: "" });
   const [donationForm, setDonationForm] = useState({ donorName: "", amount: "", purpose: "", message: "" });
@@ -105,7 +108,7 @@ export function OBPage({ settings }: { settings?: Record<string, string> } = {})
     },
   });
 
-  const activeMembers = members.filter((m: any) => m.status === "approved");
+  const activeMembers = members.filter((m: any) => m.status === "approved" && m.role !== "ADMINISTRATOR");
 
   const publishedEvents = events.filter((e: any) => e.status === "published");
   const pendingEvents = events.filter((e: any) => e.status === "draft");
@@ -239,8 +242,18 @@ export function OBPage({ settings }: { settings?: Record<string, string> } = {})
                 Are you an alumnus of St. Aloysius&apos; College? Request membership to stay connected with the OB community.
               </p>
               {myMembership?.status === "approved" ? (
-                <div className="bg-green-dark/50 border border-gold/30 rounded-lg p-4 text-center">
+                <div className="bg-green-dark/50 border border-gold/30 rounded-lg p-4 text-center space-y-3">
                   <p className="text-gold font-semibold">You are an approved OB member.</p>
+                  {isOBAdminPanel && (
+                    <div>
+                      <Button
+                        render={<a href="/ob-admin" />}
+                        className="bg-gold text-green-dark hover:bg-gold-light font-bold"
+                      >
+                        Open OB Admin Panel
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : myMembership?.status === "pending" ? (
                 <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center">

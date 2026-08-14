@@ -30,6 +30,7 @@ type Membership = {
   role: "admin" | "member";
   status: "pending" | "approved" | "rejected" | "revoked";
   reason: string | null;
+  isAdmin?: boolean;
   decidedBy: string | null;
   decidedAt: string | null;
   createdAt: string;
@@ -129,9 +130,8 @@ function ClubPage() {
   });
 
   const myStatus = myMembership?.status ?? null;
-  const myRole = myMembership?.role ?? null;
   const isApproved = myStatus === "approved";
-  const isClubAdmin = isSiteAdmin || (myRole === "admin" && myStatus === "approved");
+  const isClubAdmin = isSiteAdmin || myMembership?.isAdmin === true;
 
   const { data: members, isLoading: membersLoading } = useQuery({
     queryKey: ["clubs", "members", id],

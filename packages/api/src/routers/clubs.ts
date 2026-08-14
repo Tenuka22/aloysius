@@ -12,7 +12,7 @@ import {
   serializeMembership,
   isApprovedMember,
   resolveClubAccess,
-  syncClubMembershipsMetadata,
+  getUserEmail,
   type MembershipRow,
 } from "../lib/club-access";
 import { createNotification, createNotifications } from "../lib/notifications";
@@ -61,12 +61,20 @@ export const clubsRouter = {
 
     const activityMap = new Map(allActivities.map((a) => [a.id, a]));
 
+    const userEmail = await getUserEmail(userId);
+
     return rows
       .filter((r) => activityMap.has(r.activityId))
-      .map((r) => ({
-        membership: serializeMembership(r as MembershipRow),
-        activity: serializeActivity(activityMap.get(r.activityId)!),
-      }));
+      .map((r) => {
+        const activity = activityMap.get(r.activityId)!;
+        const isAdmin =
+          (r.role === "admin" && r.status === "approved") ||
+          (!!userEmail && !!activity.adminEmail && userEmail === activity.adminEmail.toLowerCase());
+        return {
+          membership: { ...serializeMembership(r as MembershipRow), isAdmin },
+          activity: serializeActivity(activity),
+        };
+      });
   }),
 
   /** The current user's membership for a single club (or null if none). */
@@ -78,7 +86,22 @@ export const clubsRouter = {
 
       const db = createDb();
       const membership = await getMembership(db, input.activityId, userId);
-      return membership ? serializeMembership(membership) : null;
+      if (!membership) return null;
+
+      let isAdmin = membership.role === "admin" && membership.status === "approved";
+      if (!isAdmin) {
+        const activity = await db
+          .select()
+          .from(activities)
+          .where(eq(activities.id, input.activityId))
+          .get();
+        if (activity?.adminEmail) {
+          const userEmail = await getUserEmail(userId);
+          isAdmin = !!userEmail && userEmail === activity.adminEmail.toLowerCase();
+        }
+      }
+
+      return { ...serializeMembership(membership), isAdmin };
     }),
 
   /** Members of a club. Club admins/site admins see everything; members see approved only. */
@@ -149,7 +172,6 @@ export const clubsRouter = {
           .where(eq(clubMembers.id, existing.id))
           .returning()
           .get();
-        await syncClubMembershipsMetadata(userId);
         return serializeMembership(updated as MembershipRow);
       }
 
@@ -181,8 +203,6 @@ export const clubsRouter = {
         })
         .returning()
         .get();
-
-      await syncClubMembershipsMetadata(userId);
 
       // Notify the club's admins about the new request
       const adminRows = await db
@@ -242,8 +262,6 @@ export const clubsRouter = {
         .returning()
         .get();
 
-      await syncClubMembershipsMetadata(membership.userId);
-
       const activity = await db
         .select()
         .from(activities)
@@ -297,8 +315,6 @@ export const clubsRouter = {
         .returning()
         .get();
 
-      await syncClubMembershipsMetadata(membership.userId);
-
       const activity = await db
         .select()
         .from(activities)
@@ -351,8 +367,6 @@ export const clubsRouter = {
         .where(eq(clubMembers.id, input.id))
         .returning()
         .get();
-
-      await syncClubMembershipsMetadata(membership.userId);
 
       const activity = await db
         .select()
@@ -673,30 +687,4 @@ export const clubsRouter = {
       return { success: true };
     }),
 
-  /** Bulk re-sync club memberships into Clerk metadata for all members. Site admin only. */
-  syncClubMetadata: protectedProcedure.handler(async ({ context }) => {
-    if (!context.auth?.adminCalled) {
-      throw new ORPCError("UNAUTHORIZED", { message: "Site admin access required." });
-    }
-
-    const db = createDb();
-    const rows = await db.select().from(clubMembers).all();
-    const userIds = [...new Set(rows.map((r) => r.userId))];
-
-    let synced = 0;
-    let errors = 0;
-    const errorsList: string[] = [];
-
-    for (const userId of userIds) {
-      try {
-        await syncClubMembershipsMetadata(userId);
-        synced++;
-      } catch (err) {
-        errors++;
-        errorsList.push(`Error syncing ${userId}: ${err instanceof Error ? err.message : String(err)}`);
-      }
-    }
-
-    return { synced, errors, errorsList };
-  }),
 };
