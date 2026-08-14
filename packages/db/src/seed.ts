@@ -68,6 +68,10 @@ export async function seed() {
   await db.delete(schema.obDonations);
   await db.delete(schema.obEvents);
   await db.delete(schema.obMembers);
+  await db.delete(schema.notifications);
+  await db.delete(schema.clubAlbumImages);
+  await db.delete(schema.clubAlbums);
+  await db.delete(schema.clubMembers);
   await db.delete(schema.galleryImages);
   await db.delete(schema.gallery);
   await db.delete(schema.eventRecords);
@@ -78,6 +82,7 @@ export async function seed() {
   await db.delete(schema.news);
   await db.delete(schema.announcements);
   await db.delete(schema.activities);
+  await db.delete(schema.staffMembers);
   await db.delete(schema.examStudents);
   await db.delete(schema.examResults);
   await db.delete(schema.files);
@@ -111,14 +116,13 @@ export async function seed() {
   console.log(`Seeded ${stats.length} stats`);
 
   // ── Site Settings ──
-  const settings = [
-    {
-      key: "about",
-      value:
-        "Founded in 1862 by the De La Salle Brothers, St. Aloysius' College has been a beacon of academic excellence and holistic development. Our campus in Galle provides state-of-the-art facilities for academics, sports, and the arts.",
-    },
-    ...Object.entries(HOMEPAGE_DEFAULTS).map(([key, value]) => ({ key, value })),
-  ];
+  const settingsMap = new Map<string, string>();
+  settingsMap.set("about", "Founded in 1862 by the De La Salle Brothers, St. Aloysius' College has been a beacon of academic excellence and holistic development. Our campus in Galle provides state-of-the-art facilities for academics, sports, and the arts.");
+  for (const [key, value] of Object.entries(HOMEPAGE_DEFAULTS)) {
+    settingsMap.set(key, value);
+  }
+  settingsMap.set("ob_admin_email", "obadmin@aloysiuscollege.lk");
+  const settings = Array.from(settingsMap.entries()).map(([key, value]) => ({ key, value }));
   for (const s of settings) {
     await db.insert(schema.siteSettings).values({ key: s.key, value: s.value, updatedAt: now });
   }
@@ -932,9 +936,11 @@ export async function seed() {
       status: "published" as const,
     },
   ];
+  const activitiesData: { id: string; name: string }[] = [];
   for (let i = 0; i < activities.length; i++) {
+    const id = faker.string.uuid();
     await db.insert(schema.activities).values({
-      id: faker.string.uuid(),
+      id,
       slug: toSlug(activities[i]!.name),
       name: activities[i]!.name,
       description: activities[i]!.description,
@@ -949,12 +955,140 @@ export async function seed() {
       createdAt: now,
       updatedAt: now,
     });
+    activitiesData.push({ id, name: activities[i]!.name });
   }
-  console.log(`Seeded ${activities.length} activities (${activities.filter((_, i) => i < 3).length} published, ${activities.filter((_, i) => i >= 3).length} draft)`);
+  console.log(`Seeded ${activitiesData.length} activities (${activitiesData.filter((_, i) => i < 3).length} published, ${activitiesData.filter((_, i) => i >= 3).length} draft)`);
 
-  // ── OB Members ──
+  // ── Staff Members ──
+  const staffMembers = [
+    { name: "Rev. Fr. Joseph Perera", role: "Vice Principal", email: "viceprincipal@aloysiuscollege.lk", bio: "Supports the Principal in academic and disciplinary affairs.", year: "2026", sortOrder: 0 },
+    { name: "Mr. Sanjay Mishra", role: "Head of Sports", email: "sports@aloysiuscollege.lk", bio: "Coordinates all sports programs and inter-school tournaments.", year: "2026", sortOrder: 1 },
+    { name: "Mrs. Priya Kapoor", role: "Head of Science", email: "science@aloysiuscollege.lk", bio: "Leads the Science department and oversees laboratory resources.", year: "2026", sortOrder: 2 },
+    { name: "Mrs. Deepa Nair", role: "Head of Arts", email: "arts@aloysiuscollege.lk", bio: "Directs cultural programs, drama, and music activities.", year: "2026", sortOrder: 3 },
+    { name: "Mr. Rajesh Menon", role: "Senior Teacher - Mathematics", email: "rajesh.menon@aloysiuscollege.lk", bio: "Teaches Advanced Mathematics and coaches the Olympiad team.", year: "2026", sortOrder: 4 },
+    { name: "Mrs. Kavitha Rao", role: "Senior Teacher - English", email: "kavitha.rao@aloysiuscollege.lk", bio: "Leads English language programs and literary activities.", year: "2026", sortOrder: 5 },
+    { name: "Mr. Anil Deshmukh", role: "Administrative Officer", email: "admin@aloysiuscollege.lk", bio: "Manages day-to-day administrative operations.", year: "2026", sortOrder: 6 },
+    { name: "Dr. Amit Saxena", role: "Counselor", email: "counselor@aloysiuscollege.lk", bio: "Student counselor and career guidance advisor.", year: "2026", sortOrder: 7 },
+    { name: "Rev. Fr. Joseph Perera", role: "Vice Principal", email: "viceprincipal@aloysiuscollege.lk", bio: "Supports the Principal in academic and disciplinary affairs.", year: "2025", sortOrder: 0 },
+    { name: "Mr. Sanjay Mishra", role: "Head of Sports", email: "sports@aloysiuscollege.lk", bio: "Coordinates all sports programs and inter-school tournaments.", year: "2025", sortOrder: 1 },
+    { name: "Mrs. Priya Kapoor", role: "Head of Science", email: "science@aloysiuscollege.lk", bio: "Leads the Science department and oversees laboratory resources.", year: "2025", sortOrder: 2 },
+    { name: "Mrs. Deepa Nair", role: "Head of Arts", email: "arts@aloysiuscollege.lk", bio: "Directs cultural programs, drama, and music activities.", year: "2025", sortOrder: 3 },
+  ];
+  for (const member of staffMembers) {
+    await db.insert(schema.staffMembers).values({
+      id: faker.string.uuid(),
+      name: member.name,
+      role: member.role,
+      email: member.email,
+      photo: faker.helpers.arrayElement(coverImages),
+      bio: member.bio,
+      year: member.year,
+      sortOrder: member.sortOrder,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  console.log(`Seeded ${staffMembers.length} staff members`);
+
+  // ── Club Members ──
+  const clubMembersData: { activityId: string; userId: string; name: string; role: "admin" | "member"; status: "pending" | "approved" | "rejected" | "revoked" }[] = [];
+  const clubMemberNames = [
+    "Arjun Nair", "Diya Sharma", "Kabir Singh", "Ishita Verma", "Aditya Kumar", "Navya Pillai",
+    "Rohan Patel", "Vivaan Joshi", "Myra Joshi", "Saanvi Das", "Prisha Iyer", "Ananya Gupta",
+    "Reyansh Bhat", "Arnav Tiwari", "Dhruv Malhotro",
+  ];
+  const activityIds = activitiesData.map((a) => a.id);
+  for (let i = 0; i < clubMemberNames.length; i++) {
+    const activityId = activityIds[i % activityIds.length];
+    clubMembersData.push({
+      id: faker.string.uuid(),
+      activityId,
+      userId: `user_club_${String(i).padStart(3, "0")}`,
+      name: clubMemberNames[i]!,
+      role: i % 5 === 0 ? "admin" : "member",
+      status: "approved",
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  for (const member of clubMembersData) {
+    await db.insert(schema.clubMembers).values(member);
+  }
+  console.log(`Seeded ${clubMembersData.length} club members`);
+
+  // ── Club Albums ──
+  const clubAlbumsData: { id: string; activityId: string; title: string; description: string; coverImage: string | null; status: "draft" | "published" | "archived"; reviewStatus: "pending" | "approved" | "rejected"; featuredOnHome: boolean; userId: string }[] = [];
+  const albumTitles = [
+    "Robotics Workshop 2025", "Cricket Tournament Highlights", "Debate Finals",
+    "Music Ensemble Performance", "Eco Warriors Tree Plantation",
+  ];
+  for (let i = 0; i < albumTitles.length; i++) {
+    const activityId = activityIds[i % activityIds.length];
+    clubAlbumsData.push({
+      id: faker.string.uuid(),
+      activityId,
+      title: albumTitles[i]!,
+      description: `Photo album from ${albumTitles[i]!}.`,
+      coverImage: faker.helpers.arrayElement(coverImages),
+      status: i < 3 ? "published" : "draft",
+      reviewStatus: "approved",
+      featuredOnHome: i === 0,
+      userId: `user_club_${String(i).padStart(3, "0")}`,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  for (const album of clubAlbumsData) {
+    await db.insert(schema.clubAlbums).values(album);
+  }
+  console.log(`Seeded ${clubAlbumsData.length} club albums`);
+
+  // ── Club Album Images ──
+  let clubImageCount = 0;
+  for (const album of clubAlbumsData) {
+    const count = faker.number.int({ min: 3, max: 6 });
+    for (let i = 0; i < count; i++) {
+      await db.insert(schema.clubAlbumImages).values({
+        id: faker.string.uuid(),
+        albumId: album.id,
+        url: faker.helpers.arrayElement(galleryPhotoUrls),
+        caption: faker.helpers.arrayElement([
+          "Group photo after the event",
+          "Action shot during the activity",
+          "Award ceremony moment",
+          "Team celebration",
+          "Behind the scenes",
+        ]),
+        sortOrder: i,
+        createdAt: now,
+      });
+      clubImageCount++;
+    }
+  }
+  console.log(`Seeded ${clubImageCount} club album images`);
+
+  // ── Notifications ──
+  const notificationsData = [
+    { userId: "user_ob_000", type: "membership_approved" as const, title: "OB Membership Approved", body: "Your Old Boys' Association membership has been approved.", link: "/ob", read: false },
+    { userId: "user_ob_001", type: "membership_pending" as const, title: "OB Membership Pending", body: "Your OB membership request is awaiting approval.", link: "/ob", read: false },
+    { userId: "user_ob_000", type: "content_approved" as const, title: "Event Published", body: "Your OB event 'Annual OB Reunion Dinner 2026' has been published.", link: "/ob", read: true },
+    { userId: "user_ob_000", type: "content_rejected" as const, title: "Event Rejected", body: "Your event submission did not meet the guidelines.", link: "/ob", read: true },
+  ];
+  for (const n of notificationsData) {
+    await db.insert(schema.notifications).values({
+      id: faker.string.uuid(),
+      userId: n.userId,
+      type: n.type,
+      title: n.title,
+      body: n.body,
+      link: n.link,
+      read: n.read,
+      createdAt: daysAgo(faker.number.int({ min: 0, max: 7 })),
+    });
+  }
+  console.log(`Seeded ${notificationsData.length} notifications`);
   const obMembers = [
-    { name: "Ranil Wickramasinghe", role: "President", email: "ranil@ob-alloysius.lk", bio: "Class of 1978. Attorney-at-law and former President of the OB Association. Leading fundraising initiatives for the college infrastructure.", year: "2026", sortOrder: 0, status: "approved" as const },
+    { name: "Ranil Wickramasinghe", role: "President", email: "ranil@ob-alloysius.lk", adminEmail: "obadmin@aloysiuscollege.lk", bio: "Class of 1978. Attorney-at-law and former President of the OB Association. Leading fundraising initiatives for the college infrastructure.", year: "2026", sortOrder: 0, status: "approved" as const },
     { name: "Mahinda Rajapaksa", role: "Vice President", email: "mahinda@ob-alloysius.lk", bio: "Class of 1975. Retired senior government official. Active in mentoring current students and organizing career guidance programs.", year: "2026", sortOrder: 1, status: "approved" as const },
     { name: "Chandrika Kumaratunga", role: "Secretary", email: "chandrika@ob-alloysius.lk", bio: "Class of 1980. Former diplomat. Manages OB communications and coordinates alumni events.", year: "2026", sortOrder: 2, status: "approved" as const },
     { name: "Dinesh Gunawardena", role: "Treasurer", email: "dinesh@ob-alloysius.lk", bio: "Class of 1982. Chartered accountant. Oversees OB Association finances and donation management.", year: "2026", sortOrder: 3, status: "approved" as const },
@@ -974,6 +1108,7 @@ export async function seed() {
       name: member.name,
       role: member.role,
       email: member.email,
+      adminEmail: member.adminEmail ?? null,
       photo: faker.helpers.arrayElement(coverImages),
       bio: member.bio,
       year: member.year,

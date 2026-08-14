@@ -7,7 +7,8 @@ import { createClerkClient } from "@clerk/backend";
 import { env } from "@aloysius-web/env/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { generateUniqueSlug } from "../lib/slug";
-import { getUserEmail } from "../lib/club-access";
+import { isOBAdmin } from "../lib/ob-admin";
+import { ensurePrincipalAsStaffAndPresident } from "../lib/principal-sync";
 
 const clerkClient = createClerkClient({
   secretKey: env.CLERK_SECRET_KEY,
@@ -129,17 +130,6 @@ async function requireOBAdminOrSiteAdmin(userId: string, auth?: { adminCalled?: 
   throw new ORPCError("FORBIDDEN", { message: "OB admin or site admin access required." });
 }
 
-/**
- * Check if a user is an OB admin: an approved OB member whose Clerk email matches
- * the `adminEmail` stored on their OB member row.
- */
-async function isOBAdmin(userId: string): Promise<boolean> {
-  const db = createDb();
-  const row = await db.select().from(obMembers).where(eq(obMembers.userId, userId)).get();
-  if (!row || row.status !== "approved" || !row.adminEmail) return false;
-  const userEmail = await getUserEmail(userId);
-  return !!userEmail && userEmail === row.adminEmail.toLowerCase();
-}
 
 // --- OB Members Router ---
 
@@ -154,6 +144,8 @@ export const obMembersRouter = {
       }),
     )
     .handler(async ({ input }) => {
+      // Auto-sync the current published principal into the current year's President slot.
+      await ensurePrincipalAsStaffAndPresident();
       const db = createDb();
       const conditions = [];
       if (input.search) {
@@ -364,11 +356,30 @@ export const obMembersRouter = {
     const userId = context.auth?.userId;
     if (!userId) return null;      const db = createDb();
       const row = await db.select().from(obMembers).where(eq(obMembers.userId, userId)).get();
-      if (!row) return null;
-      const isAdmin =
-        row.status === "approved" && !!row.adminEmail
-          ? (await getUserEmail(userId))?.toLowerCase() === row.adminEmail.toLowerCase()
-          : false;
+      const isAdmin = await isOBAdmin(userId);
+      if (!row) {
+        // Designated OB admin by email but no member row of their own yet
+        // (e.g. the site admin set the OB admin email for a year with no members).
+        if (!isAdmin) return null;
+        return {
+          id: null,
+          userId,
+          name: null,
+          role: "ADMINISTRATOR",
+          email: null,
+          adminEmail: null,
+          isAdmin,
+          photo: null,
+          bio: null,
+          year: "",
+          sortOrder: 0,
+          status: "approved",
+          decidedBy: null,
+          decidedAt: null,
+          createdAt: null,
+          updatedAt: null,
+        };
+      }
       return {
         id: row.id,
         userId: row.userId,

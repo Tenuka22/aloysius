@@ -1,9 +1,9 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { auth } from "@clerk/tanstack-react-start/server";
+import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
 import { createDb } from "@aloysius-web/db";
 import { obMembers } from "@aloysius-web/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { OBAdminLayout } from "@/components-client/ob-admin-layout";
 
 const requireOBAdmin = createServerFn({ method: "GET" }).handler(async () => {
@@ -17,14 +17,36 @@ const requireOBAdmin = createServerFn({ method: "GET" }).handler(async () => {
     throw redirect({ to: "/" });
   }
 
-  // Only an approved OB member whose row carries the admin email is an OB admin.
+  // The OB admin is designated by email: the signed-in user's Clerk email must
+  // match the adminEmail stored on an approved OB member row.
+  let email: string | null = null;
+  try {
+    const user = await clerkClient().users.getUser(userId);
+    email =
+      user.primaryEmailAddress?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress ?? null;
+    email = email?.toLowerCase() ?? null;
+  } catch {
+    // fall through to the redirect below
+  }
+
   const db = createDb();
-  const row = await db.select().from(obMembers).where(eq(obMembers.userId, userId)).get();
-  if (!row || row.status !== "approved" || !row.adminEmail) {
+  const adminMatch = email
+    ? await db
+        .select({ id: obMembers.id })
+        .from(obMembers)
+        .where(
+          and(eq(obMembers.status, "approved"), sql`lower(${obMembers.adminEmail}) = ${email}`),
+        )
+        .limit(1)
+        .get()
+    : undefined;
+
+  if (!adminMatch) {
     throw redirect({ to: "/ob" });
   }
 
-  return { name: row.name, year: row.year };
+  const row = await db.select().from(obMembers).where(eq(obMembers.userId, userId)).get();
+  return { name: row?.name ?? "", year: row?.year ?? "" };
 });
 
 export const Route = createFileRoute("/ob-admin")({

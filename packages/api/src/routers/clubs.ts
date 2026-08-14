@@ -63,6 +63,33 @@ export const clubsRouter = {
 
     const userEmail = await getUserEmail(userId);
 
+    // Include activities where the user is the designated admin by email even if
+    // they don't have a club_members row yet, so the admin UI and navbar show up.
+    if (userEmail) {
+      const adminActivities = await db
+        .select()
+        .from(activities)
+        .where(sql`lower(${activities.adminEmail}) = ${userEmail}`)
+        .all();
+      for (const a of adminActivities) {
+        if (activityMap.has(a.id)) continue;
+        activityMap.set(a.id, a);
+        rows.push({
+          id: `email-admin:${a.id}`,
+          activityId: a.id,
+          userId,
+          name: null,
+          role: "admin" as const,
+          status: "approved" as const,
+          reason: null,
+          decidedBy: "system",
+          decidedAt: null,
+          createdAt: a.createdAt,
+          updatedAt: a.updatedAt,
+        });
+      }
+    }
+
     return rows
       .filter((r) => activityMap.has(r.activityId))
       .map((r) => {

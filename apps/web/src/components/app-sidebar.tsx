@@ -144,7 +144,7 @@ const cmsItems = [
   },
   {
     title: "Staff",
-    url: "/admin/principals",
+    url: "/admin/staff",
     icon: <IconUser />,
   },
   {

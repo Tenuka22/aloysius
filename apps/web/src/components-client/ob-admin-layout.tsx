@@ -22,7 +22,7 @@ export function OBAdminLayout() {
           <Separator orientation="vertical" className="mr-2 h-4 bg-cream/20" />
           <div className="flex items-center gap-1">
             <IconUserShield className="size-5 text-gold" />
-            <span className="font-heading font-semibold text-cream">OB Admin</span>
+            <span className="font-heading font-semibold text-cream">OB</span>
           </div>
           <nav className="ml-auto flex items-center gap-1">
             <Button

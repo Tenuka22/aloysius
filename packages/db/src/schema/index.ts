@@ -524,6 +524,31 @@ export const principals = sqliteTable(
   (table) => [uniqueIndex("principals_slug_idx").on(table.slug)],
 );
 
+// --- Staff Members table (school staff roster, year by year) ---
+// The principal is stored separately in `principals`; this table holds the
+// rest of the staff (vice principals, heads, teachers, admin staff) per year.
+
+export const staffMembers = sqliteTable(
+  "staff_members",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    role: text("role").notNull(),
+    email: text("email"),
+    photo: text("photo"),
+    bio: text("bio"),
+    year: text("year").notNull().default(""),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("staff_members_year_idx").on(table.year)],
+);
+
 // --- OB Members table (Old Boys' Association committee) ---
 
 export const obMembers = sqliteTable(

@@ -10,7 +10,7 @@ import { EventsAnnouncements } from "@/components-client/events-announcements";
 import { Achievements } from "@/components-client/achievements";
 import { Alumni } from "@/components-client/alumni";
 import { Gallery } from "@/components-client/gallery";
-import { OBPage } from "@/routes/ob";
+import { OBHomeSection } from "@/routes/ob";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
 import type { LifeTile } from "@/components-client/student-life";
@@ -167,7 +167,7 @@ function Home() {
         />
         <Achievements initialData={achievements} settings={settings} />
         <Alumni settings={settings} />
-        <OBPage settings={settings} />
+        <OBHomeSection settings={settings} />
         <Gallery initialImages={galleryImages} settings={settings} />
       </main>
       <Footer settings={settings} />

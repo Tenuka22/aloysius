@@ -17,6 +17,7 @@ import { clubsRouter } from "./clubs";
 import { notificationsRouter } from "./notifications";
 import { clubAlbumsRouter } from "./club-albums";
 import { principalsRouter } from "./principals";
+import { staffRouter } from "./staff";
 import { examResultsRouter } from "./exam-results";
 import { obRouter } from "./ob";
 
@@ -46,6 +47,7 @@ export const appRouter = {
   notifications: notificationsRouter,
   clubAlbums: clubAlbumsRouter,
   principals: principalsRouter,
+  staff: staffRouter,
   examResults: examResultsRouter,
   ob: obRouter,
 };

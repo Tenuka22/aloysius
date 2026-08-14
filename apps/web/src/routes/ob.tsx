@@ -23,7 +23,7 @@ export const Route = createFileRoute("/ob")({
   },
 });
 
-export function OBPage({ settings }: { settings?: Record<string, string> } = {}) {
+export function OBFullContent({ settings }: { settings?: Record<string, string> } = {}) {
   const { isSignedIn } = useAuth();
   const queryClient = useQueryClient();
 
@@ -48,10 +48,7 @@ export function OBPage({ settings }: { settings?: Record<string, string> } = {})
     enabled: isSignedIn,
   });
 
-  // Admin rights come from the server: the OB admin is the approved member whose
-  // Clerk email matches the adminEmail stored on their OB member row.
   const isOBAdmin = myMembership?.isAdmin === true;
-  const isOBAdminPanel = myMembership?.isAdmin === true;
 
   const [eventForm, setEventForm] = useState({ title: "", description: "", location: "", eventDate: "" });
   const [donationForm, setDonationForm] = useState({ donorName: "", amount: "", purpose: "", message: "" });
@@ -118,7 +115,6 @@ export function OBPage({ settings }: { settings?: Record<string, string> } = {})
 
   return (
     <div className="min-h-screen bg-cream">
-      <Navbar settings={settings} />
       <header className="bg-green-dark text-cream py-16 px-4 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-[1180px] grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div>
@@ -244,13 +240,13 @@ export function OBPage({ settings }: { settings?: Record<string, string> } = {})
               {myMembership?.status === "approved" ? (
                 <div className="bg-green-dark/50 border border-gold/30 rounded-lg p-4 text-center space-y-3">
                   <p className="text-gold font-semibold">You are an approved OB member.</p>
-                  {isOBAdminPanel && (
+                  {isOBAdmin && (
                     <div>
                       <Button
                         render={<a href="/ob-admin" />}
                         className="bg-gold text-green-dark hover:bg-gold-light font-bold"
                       >
-                        Open OB Admin Panel
+                        Open OB Panel
                       </Button>
                     </div>
                   )}
@@ -436,7 +432,51 @@ export function OBPage({ settings }: { settings?: Record<string, string> } = {})
           )}
         </section>
       </main>
+    </div>
+  );
+}
+
+export function OBPage({ settings }: { settings?: Record<string, string> } = {}) {
+  return (
+    <div className="min-h-screen bg-cream">
+      <Navbar settings={settings} />
+      <OBFullContent settings={settings} />
       <Footer settings={settings} />
     </div>
+  );
+}
+
+export function OBHomeSection({ settings }: { settings?: Record<string, string> } = {}) {
+  return (
+    <section className="bg-green-dark text-cream py-16 px-4 sm:px-6 lg:px-12">
+      <div className="mx-auto max-w-[1180px] grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div>
+          <div className="text-[11px] tracking-[0.4em] font-bold text-gold mb-4">ST. ALOYSIUS&rsquo; COLLEGE</div>
+          <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-cream mb-4">
+            OLD BOYS&rsquo; ASSOCIATION
+          </h2>
+          <p className="text-cream/80 mb-6 max-w-xl">
+            The Aloysian Legacy Continues. Stay connected with fellow alumni, explore upcoming events, and support the college community.
+          </p>
+          <a
+            href="/ob"
+            className="inline-flex items-center gap-2 bg-gold text-green-dark px-6 py-3 rounded-lg font-bold hover:bg-gold-light transition-colors"
+          >
+            Explore Old Boys&apos; Association
+          </a>
+        </div>
+        <div className="overflow-hidden rounded-xl bg-cream/10 aspect-[16/10] hidden lg:flex items-center justify-center">
+          {settings?.ob_archival_image_1 ? (
+            <img
+              src={settings.ob_archival_image_1}
+              alt="Old Boys Association"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="text-cream/30 text-sm">Archival Photo</div>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
