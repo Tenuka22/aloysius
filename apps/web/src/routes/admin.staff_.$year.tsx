@@ -105,8 +105,8 @@ function AdminStaffYear() {
       <div className="flex-1 p-6 space-y-6">
         {/* Principal — chosen per year from the principals table, never part of the roster */}
         <section>
-          <h2 className="text-sm font-bold tracking-[0.2em] text-gold mb-3">PRINCIPAL</h2>
-          <Card className="border-gold/20">
+          <h2 className="text-sm font-bold tracking-[0.2em] text-foreground mb-3">PRINCIPAL</h2>
+          <Card className="border-secondary/20">
             <CardContent className="p-4 space-y-4">
               {principal ? (
                 <div className="flex items-center gap-4">
@@ -118,8 +118,8 @@ function AdminStaffYear() {
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 font-semibold text-green-dark">
-                      <IconCrown className="size-4 text-gold shrink-0" />
+                    <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                      <IconCrown className="size-4 text-primary shrink-0" />
                       <span className="truncate">{principal.name}</span>
                     </div>
                     <div className="text-xs text-muted-foreground mt-0.5">

@@ -1,19 +1,27 @@
 "use client";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnFiltersState,
   type PaginationState,
   type SortingState,
 } from "@tanstack/react-table";
-import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Input } from "@aloysius-web/ui/components/input";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@aloysius-web/ui/components/dialog";
+import {
   DataTable,
   DataTableColumnHeader,
+  DataTablePagination,
   DataTableViewOptions,
 } from "@aloysius-web/ui/components/data-table";
 import {
@@ -23,14 +31,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@aloysius-web/ui/components/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@aloysius-web/ui/components/dialog";
 import {
   Select,
   SelectContent,
@@ -44,13 +44,12 @@ import {
   IconTrash,
   IconCheck,
   IconX,
-  IconUpload,
+  IconPlus,
 } from "@tabler/icons-react";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
-import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 
 type OBDonation = {
   id: string;
@@ -60,7 +59,6 @@ type OBDonation = {
   currency: string;
   purpose: string | null;
   message: string | null;
-  image: string | null;
   isAnonymous: boolean;
   status: string;
   donatedAt: string | null;
@@ -85,11 +83,11 @@ function DeleteDonationDialog({ open, onOpenChange, onConfirm, name }: { open: b
   );
 }
 
-export const Route = createFileRoute("/admin/ob/donations")({
-  component: AdminOBDonations,
+export const Route = createFileRoute("/ob-admin/donations")({
+  component: OBAdminDonations,
 });
 
-function AdminOBDonations() {
+function OBAdminDonations() {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -125,17 +123,6 @@ function AdminOBDonations() {
           {row.original.isAnonymous ? "Anonymous" : row.original.donorName}
         </span>
       ),
-    },
-    {
-      accessorKey: "image",
-      header: "Cover Image",
-      cell: ({ row }) => {
-        const url = row.original.image;
-        if (!url) return <span className="text-muted-foreground">-</span>;
-        const ratioClass = aspectRatioClass(getAspectRatio(url)) || "aspect-video";
-        return <img src={url} alt="" className={`w-16 ${ratioClass} rounded-md object-cover`} />;
-      },
-      size: 80,
     },
     {
       accessorKey: "amount",
@@ -217,12 +204,11 @@ function AdminOBDonations() {
   return (
     <div className="flex flex-col">
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-        <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <h1 className="text-lg font-semibold">OB Donations</h1>
         <div className="ml-auto">
           <Button size="sm" render={<Link to="/admin/ob/donations/new" />} nativeButton={false}>
-            <IconUpload className="mr-1 size-4" />
+            <IconPlus className="mr-1 size-4" />
             Record Donation
           </Button>
         </div>
@@ -261,9 +247,15 @@ function AdminOBDonations() {
               </div>
             );
           }}
+          paginationBar={(table) => <DataTablePagination table={table} />}
         />
       </div>
-      <DeleteDonationDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={() => deleteMutation.mutate()} name={deleteId ? donations.find((d) => d.id === deleteId)?.donorName || "" : ""} />
+      <DeleteDonationDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={() => deleteMutation.mutate()}
+        name={donations.find((d) => d.id === deleteId)?.donorName || ""}
+      />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Input } from "@aloysius-web/ui/components/input";
-import { Card, CardContent } from "@aloysius-web/ui/components/card";
+import { Card } from "@aloysius-web/ui/components/card";
 import {
   Dialog,
   DialogContent,
@@ -74,15 +74,9 @@ function AdminStaff() {
         </div>
       </header>
       <div className="flex-1 p-6">
-        <div className="mb-6 rounded-lg border border-gold/20 bg-muted/30 p-4">
-          <p className="text-sm text-muted-foreground">
-            Manage the school staff <strong>year by year</strong>. The principal is stored separately and is pinned to
-            each year&apos;s page; every other staff member (vice principals, heads, teachers, admin staff) lives in the
-            year&apos;s roster. Principal profiles are managed on the{" "}
-            <Link to="/admin/principals" className="underline text-primary">
-              Principal profiles
-            </Link>{" "}
-            page.
+        <div className="mb-6 rounded-lg border border-secondary/20 bg-secondary/10 p-4">
+          <p className="text-sm text-secondary-foreground">
+            Manage the school staff year by year. The principal is stored separately and is pinned to each year&apos;s page; every other staff member (vice principals, heads, teachers, admin staff) lives in the year&apos;s roster. Principal profiles are managed on the Principal profiles page.
           </p>
         </div>
         {isLoading ? (
@@ -97,74 +91,72 @@ function AdminStaff() {
               const yearStaff = staff.filter((m: any) => m.year === year);
               const principal = principalByYear.get(year);
               return (
-                <Card key={year} className="overflow-hidden hover:shadow-md transition-shadow">
-                  <CardContent className="p-0">
-                    <div className="p-5 border-b">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="text-xl font-bold font-heading text-green-dark">{year} Staff</h3>
-                        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                          {yearStaff.length} members
-                        </span>
-                      </div>
-                      {principal && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0 overflow-hidden">
-                            {principal.portrait ? (
-                              <img src={principal.portrait} alt={principal.name} className="w-full h-full object-cover" />
-                            ) : (
-                              principal.name.charAt(0)
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-medium text-gold flex items-center gap-1">
-                              <IconCrown className="size-3.5 shrink-0" />
-                              <span className="truncate">{principal.name}</span>
-                            </div>
-                            <div className="text-[11px] text-muted-foreground truncate">{principal.title}</div>
-                          </div>
-                        </div>
-                      )}
+                <Card key={year} className="flex flex-col overflow-hidden hover:shadow-md transition-shadow py-0">
+                  <div className="p-5 border-b">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-xl font-bold text-foreground">{year} Staff</h3>
+                      <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                        {yearStaff.length} members
+                      </span>
                     </div>
-                    <div className="p-5 space-y-3">
-                      {yearStaff.length > 0 ? (
-                        <div className="space-y-2">
-                          {yearStaff.slice(0, 4).map((m: any) => (
-                            <div key={m.id} className="flex items-center gap-2.5">
-                              <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0 overflow-hidden">
-                                {m.photo ? (
-                                  <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
-                                ) : (
-                                  m.name.charAt(0)
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="text-sm text-green-dark truncate">{m.name}</div>
-                                <div className="text-[11px] text-muted-foreground truncate">{m.role}</div>
-                              </div>
-                            </div>
-                          ))}
-                          {yearStaff.length > 4 && (
-                            <div className="text-xs text-muted-foreground pl-9">+{yearStaff.length - 4} more</div>
+                    {principal && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0 overflow-hidden">
+                          {principal.portrait ? (
+                            <img src={principal.portrait} alt={principal.name} className="w-full h-full object-cover" />
+                          ) : (
+                            principal.name.charAt(0)
                           )}
                         </div>
-                      ) : (
-                        <div className="text-xs text-muted-foreground">
-                          No staff assigned yet. Open this year to build the roster.
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-medium text-primary flex items-center gap-1">
+                            <IconCrown className="size-3.5 shrink-0" />
+                            <span className="truncate">{principal.name}</span>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground truncate">{principal.title}</div>
                         </div>
-                      )}
-                    </div>
-                    <div className="px-5 py-3 border-t bg-muted/30">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-center"
-                        render={<Link to="/admin/staff/$year" params={{ year }} />}
-                      >
-                        <IconUsers className="mr-1.5 size-4" />
-                        Manage {year} Staff
-                      </Button>
-                    </div>
-                  </CardContent>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 p-5 space-y-3">
+                    {yearStaff.length > 0 ? (
+                      <div className="space-y-2">
+                        {yearStaff.slice(0, 4).map((m: any) => (
+                          <div key={m.id} className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0 overflow-hidden">
+                              {m.photo ? (
+                                <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+                              ) : (
+                                m.name.charAt(0)
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm text-foreground truncate">{m.name}</div>
+                              <div className="text-[11px] text-muted-foreground truncate">{m.role}</div>
+                            </div>
+                          </div>
+                        ))}
+                        {yearStaff.length > 4 && (
+                          <div className="text-xs text-muted-foreground pl-9">+{yearStaff.length - 4} more</div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground">
+                        No staff assigned yet. Open this year to build the roster.
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-5 py-3 border-t bg-secondary/10">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-center"
+                      render={<Link to="/admin/staff/$year" params={{ year }} />}
+                    >
+                      <IconUsers className="mr-1.5 size-4" />
+                      Manage {year} Staff
+                    </Button>
+                  </div>
                 </Card>
               );
             })}

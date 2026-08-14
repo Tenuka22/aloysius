@@ -181,8 +181,8 @@ function AdminOBMembersYear() {
       <div className="flex-1 p-6 space-y-6">
         {/* OB Admin — the only thing the site admin can change here */}
         <section>
-          <h2 className="text-sm font-bold tracking-[0.2em] text-gold mb-3">OB ADMIN</h2>
-          <Card className="border-gold/20">
+          <h2 className="text-sm font-bold tracking-[0.2em] text-foreground mb-3">OB ADMIN</h2>
+          <Card className="border-secondary/20">
             <CardContent className="p-4 flex flex-wrap items-center gap-4">
               <div className="flex-1 min-w-[240px]">
                 <label className="text-xs text-muted-foreground block mb-1">
@@ -207,64 +207,67 @@ function AdminOBMembersYear() {
           </Card>
         </section>
 
-        {/* Committee — read-only for the site admin */}
-        <section>
-          {isLoading ? (
-            <div className="text-center text-muted-foreground py-8">Loading...</div>
-          ) : (
-            <OBCommitteeEditor year={year} members={approvedMembers as OBMember[]} pool={pool as OBMember[]} readOnly />
-          )}
-        </section>
-
-        {/* All members — read-only view */}
-        {members.length > 0 && (
+        {/* Committee + All members side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Committee — read-only for the site admin */}
           <section>
-            <h2 className="text-sm font-bold tracking-[0.2em] text-muted-foreground mb-4">ALL MEMBERS</h2>
-            <div className="bg-white rounded-lg border p-2">
-              <DataTable
-                columns={columns}
-                data={filteredMembers}
-                loading={isLoading}
-                pageCount={0}
-                pagination={pagination}
-                onPaginationChange={setPagination}
-                sorting={sorting}
-                columnFilters={columnFilters}
-                onSortingChange={setSorting}
-                onColumnFiltersChange={setColumnFilters}
-                toolbar={(table) => {
-                  const filters = table.getState().columnFilters;
-                  const isFiltered = filters.length > 0;
-                  const setFilter = (id: string, value: string) => {
-                    const next = filters.filter((f) => f.id !== id);
-                    if (value) next.push({ id, value });
-                    table.setColumnFilters(next);
-                  };
-                  return (
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-1 items-center gap-2">
-                        <Input placeholder="Filter by name..." value={(filters.find((f) => f.id === "name")?.value as string) ?? ""} onChange={(e) => setFilter("name", e.target.value)} className="h-8 w-[200px] lg:w-[250px]" />
-                        <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v ?? "all")}>
-                          <SelectTrigger className="h-8 w-[140px]">
-                            <SelectValue placeholder="All roles" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All roles</SelectItem>
-                            <SelectItem value="head">Head Committee</SelectItem>
-                            <SelectItem value="regular">Members</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {isFiltered && <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">Reset</Button>}
-                      </div>
-                      <DataTableViewOptions table={table} />
-                    </div>
-                  );
-                }}
-                paginationBar={(table) => <DataTablePagination table={table} />}
-              />
-            </div>
+            {isLoading ? (
+              <div className="text-center text-muted-foreground py-8">Loading...</div>
+            ) : (
+              <OBCommitteeEditor year={year} members={approvedMembers as OBMember[]} pool={pool as OBMember[]} readOnly />
+            )}
           </section>
-        )}
+
+          {/* All members — read-only view */}
+          {members.length > 0 && (
+            <section>
+              <h2 className="text-sm font-bold tracking-[0.2em] text-foreground mb-4">ALL MEMBERS</h2>
+              <div className="rounded-lg border border-foreground/15 p-2 bg-card">
+                <DataTable
+                  columns={columns}
+                  data={filteredMembers}
+                  loading={isLoading}
+                  pageCount={0}
+                  pagination={pagination}
+                  onPaginationChange={setPagination}
+                  sorting={sorting}
+                  columnFilters={columnFilters}
+                  onSortingChange={setSorting}
+                  onColumnFiltersChange={setColumnFilters}
+                  toolbar={(table) => {
+                    const filters = table.getState().columnFilters;
+                    const isFiltered = filters.length > 0;
+                    const setFilter = (id: string, value: string) => {
+                      const next = filters.filter((f) => f.id !== id);
+                      if (value) next.push({ id, value });
+                      table.setColumnFilters(next);
+                    };
+                    return (
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-1 items-center gap-2">
+                          <Input placeholder="Filter by name..." value={(filters.find((f) => f.id === "name")?.value as string) ?? ""} onChange={(e) => setFilter("name", e.target.value)} className="h-8 w-[200px] lg:w-[250px]" />
+                          <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v ?? "all")}>
+                            <SelectTrigger className="h-8 w-[140px]">
+                              <SelectValue placeholder="All roles" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All roles</SelectItem>
+                              <SelectItem value="head">Head Committee</SelectItem>
+                              <SelectItem value="regular">Members</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {isFiltered && <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">Reset</Button>}
+                        </div>
+                        <DataTableViewOptions table={table} />
+                      </div>
+                    );
+                  }}
+                  paginationBar={(table) => <DataTablePagination table={table} />}
+                />
+              </div>
+            </section>
+          )}
+        </div>
       </div>
     </div>
   );

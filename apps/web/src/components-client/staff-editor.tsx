@@ -11,7 +11,13 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@aloysius-web/ui/components/combobox";
-import { IconPlus, IconTrash, IconUpload, IconX } from "@tabler/icons-react";
+import { Input } from "@aloysius-web/ui/components/input";
+import { Textarea } from "@aloysius-web/ui/components/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@aloysius-web/ui/components/avatar";
+import { Card } from "@aloysius-web/ui/components/card";
+import { Field, FieldLabel, FieldContent } from "@aloysius-web/ui/components/field";
+import { cn } from "@aloysius-web/ui/lib/utils";
+import { IconPlus, IconTrash, IconUpload, IconUser, IconX } from "@tabler/icons-react";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
 import { uploadImageWithRatio } from "@/lib/upload-image";
@@ -66,6 +72,47 @@ function buildSlots(members: StaffMember[]): Slot[] {
     photo: m.photo ?? "",
     bio: m.bio ?? "",
   }));
+}
+
+function MemberAvatar({
+  name,
+  photo,
+  size = "default",
+}: {
+  name: string;
+  photo: string;
+  size?: "sm" | "default" | "lg";
+}) {
+  return (
+    <Avatar size={size} className="shrink-0">
+      {photo ? (
+        <AvatarImage src={photo} alt={name || "Staff member"} />
+      ) : (
+        <AvatarFallback className="bg-muted">
+          {name ? (
+            name.trim().charAt(0).toUpperCase()
+          ) : (
+            <IconUser className="size-3.5 text-muted-foreground" />
+          )}
+        </AvatarFallback>
+      )}
+    </Avatar>
+  );
+}
+
+function StatusBadge({ isExisting }: { isExisting: boolean }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
+        isExisting
+          ? "bg-muted text-muted-foreground"
+          : "bg-primary/10 text-primary",
+      )}
+    >
+      {isExisting ? "Existing" : "New"}
+    </span>
+  );
 }
 
 function NamePickField({
@@ -148,13 +195,15 @@ function SlotPhoto({ value, onChange }: { value: string; onChange: (v: string) =
 
   return (
     <div className="flex items-center gap-2">
-      <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-muted">
+      <Avatar size="lg" className="shrink-0">
         {value ? (
-          <img src={value} alt="" className="size-full object-cover" />
+          <AvatarImage src={value} alt="" />
         ) : (
-          <span className="flex size-full items-center justify-center text-xs text-muted-foreground">—</span>
+          <AvatarFallback className="bg-muted">
+            <IconUser className="size-4 text-muted-foreground" />
+          </AvatarFallback>
         )}
-      </div>
+      </Avatar>
       <input
         ref={inputRef}
         type="file"
@@ -168,7 +217,7 @@ function SlotPhoto({ value, onChange }: { value: string; onChange: (v: string) =
       <Button
         type="button"
         variant="outline"
-        size="icon-sm"
+        size="sm"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
         title="Upload photo"
@@ -178,6 +227,7 @@ function SlotPhoto({ value, onChange }: { value: string; onChange: (v: string) =
         ) : (
           <IconUpload className="size-3.5" />
         )}
+        {value ? "Replace" : "Upload"}
       </Button>
       {value && (
         <Button type="button" variant="ghost" size="icon-sm" onClick={() => onChange("")} title="Remove photo">
@@ -237,111 +287,155 @@ export function StaffEditor({
     onError: (err) => toast.error(err.message),
   });
 
+  const filledCount = slots.filter((s) => s.name.trim()).length;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-bold tracking-[0.2em] text-muted-foreground">STAFF ROSTER</h2>
-          <p className="text-xs text-muted-foreground mt-1">
+          <h2 className="text-sm font-bold tracking-[0.2em] text-foreground">STAFF ROSTER</h2>
+          <p className="text-xs text-foreground/70 mt-1">
             Assign the {year} staff. Pick an existing staff member or type a new name — the whole roster saves at once.
           </p>
         </div>
         {!readOnly && (
-          <Button
-            size="sm"
-            onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
-            className="bg-green-dark text-cream hover:bg-green-darker"
-          >
-            {saveMutation.isPending ? "Saving..." : "Save Roster"}
-          </Button>
+          <div className="flex items-center gap-3">
+            <span className="hidden text-xs text-muted-foreground sm:inline">
+              {filledCount} member{filledCount === 1 ? "" : "s"}
+            </span>
+            <Button
+              size="sm"
+              onClick={() => saveMutation.mutate()}
+              disabled={saveMutation.isPending}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {saveMutation.isPending ? "Saving..." : "Save Roster"}
+            </Button>
+          </div>
         )}
       </div>
 
-      <div className="rounded-lg border bg-white">
+      <div className="space-y-4">
         {slots.map((slot, index) => (
-          <div key={slot.key} className={`p-4 ${index > 0 ? "border-t" : ""}`}>
-            <div className="flex items-start gap-3">
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="min-w-[220px] flex-[2]">
-                    <NamePickField
-                      name={slot.name}
-                      pool={pool}
-                      onNameChange={(name) => {
-                        const picked = slot.id ? pool.find((m) => m.id === slot.id) : undefined;
-                        if (picked && picked.name !== name) {
-                          updateSlot(slot.key, { name, id: undefined });
-                        } else {
-                          updateSlot(slot.key, { name });
-                        }
-                      }}
-                      onPick={(m) =>
-                        updateSlot(slot.key, {
-                          id: m.id,
-                          name: m.name,
-                          role: m.role || slot.role,
-                          email: m.email ?? "",
-                          photo: m.photo ?? "",
-                          bio: m.bio ?? "",
-                        })
-                      }
-                    />
+          <Card key={slot.key} className="py-0">
+            {/* Member summary header */}
+            <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <MemberAvatar name={slot.name} photo={slot.photo} />
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium text-foreground">
+                    {slot.name.trim() || `Member ${index + 1}`}
                   </div>
-                  <div className="min-w-[160px] flex-1">
-                    <input
-                      type="text"
-                      value={slot.role}
-                      onChange={(e) => updateSlot(slot.key, { role: e.target.value })}
-                      placeholder="Role (e.g. Head of Science)"
-                      list="staff-role-suggestions"
-                      className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:border-ring"
-                    />
-                    <datalist id="staff-role-suggestions">
-                      {SUGGESTED_ROLES.map((r) => (
-                        <option key={r} value={r} />
-                      ))}
-                    </datalist>
+                  <div className="truncate text-xs text-muted-foreground">
+                    {slot.role.trim() || "Role not set"}
                   </div>
-                  {!readOnly && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => removeSlot(slot.key)}
-                      disabled={slots.length <= 1}
-                      title="Remove"
-                      className="shrink-0 self-start"
-                    >
-                      <IconTrash className="size-3.5" />
-                    </Button>
-                  )}
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <input
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <StatusBadge isExisting={!!slot.id} />
+                {!readOnly && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => removeSlot(slot.key)}
+                    disabled={slots.length <= 1}
+                    title="Remove"
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <IconTrash className="size-3.5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Editable fields */}
+            <div className="grid gap-4 p-4 sm:grid-cols-2">
+              <Field>
+                <FieldLabel>Name</FieldLabel>
+                <FieldContent>
+                  <NamePickField
+                    name={slot.name}
+                    pool={pool}
+                    onNameChange={(name) => {
+                      const picked = slot.id ? pool.find((m) => m.id === slot.id) : undefined;
+                      if (picked && picked.name !== name) {
+                        updateSlot(slot.key, { name, id: undefined });
+                      } else {
+                        updateSlot(slot.key, { name });
+                      }
+                    }}
+                    onPick={(m) =>
+                      updateSlot(slot.key, {
+                        id: m.id,
+                        name: m.name,
+                        role: m.role || slot.role,
+                        email: m.email ?? "",
+                        photo: m.photo ?? "",
+                        bio: m.bio ?? "",
+                      })
+                    }
+                  />
+                </FieldContent>
+              </Field>
+
+              <Field>
+                <FieldLabel>Role</FieldLabel>
+                <FieldContent>
+                  <Input
+                    type="text"
+                    value={slot.role}
+                    onChange={(e) => updateSlot(slot.key, { role: e.target.value })}
+                    placeholder="e.g. Head of Science"
+                    list="staff-role-suggestions"
+                  />
+                  <datalist id="staff-role-suggestions">
+                    {SUGGESTED_ROLES.map((r) => (
+                      <option key={r} value={r} />
+                    ))}
+                  </datalist>
+                </FieldContent>
+              </Field>
+
+              <Field>
+                <FieldLabel>Email</FieldLabel>
+                <FieldContent>
+                  <Input
                     type="email"
                     value={slot.email}
                     onChange={(e) => updateSlot(slot.key, { email: e.target.value })}
                     placeholder="Email (optional)"
-                    className="h-8 w-full max-w-[260px] rounded-md border border-input bg-transparent px-2 text-xs outline-none focus:border-ring"
                   />
+                </FieldContent>
+              </Field>
+
+              <Field>
+                <FieldLabel>Photo</FieldLabel>
+                <FieldContent>
                   <SlotPhoto value={slot.photo} onChange={(v) => updateSlot(slot.key, { photo: v })} />
-                </div>
-                <input
-                  type="text"
-                  value={slot.bio}
-                  onChange={(e) => updateSlot(slot.key, { bio: e.target.value })}
-                  placeholder="Short bio / subject area (optional)"
-                  className="h-8 w-full rounded-md border border-input bg-transparent px-2 text-xs outline-none focus:border-ring"
-                />
+                </FieldContent>
+              </Field>
+
+              <div className="sm:col-span-2">
+                <Field>
+                  <FieldLabel>Bio</FieldLabel>
+                  <FieldContent>
+                    <Textarea
+                      value={slot.bio}
+                      onChange={(e) => updateSlot(slot.key, { bio: e.target.value })}
+                      placeholder="Short bio / subject area (optional)"
+                      className="min-h-16"
+                    />
+                  </FieldContent>
+                </Field>
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
       {!readOnly && (
-        <Button type="button" variant="ghost" size="sm" onClick={addSlot} className="text-muted-foreground">
+        <Button type="button" variant="ghost" size="sm" onClick={addSlot} className="text-foreground">
           <IconPlus className="size-3.5 mr-1" /> Add Staff Member
         </Button>
       )}

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, desc, asc, like, and } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
-import { obMembers, obEvents, obDonations, principals } from "@aloysius-web/db/schema";
+import { obMembers, obEvents, obDonations, principals, gallery } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { createClerkClient } from "@clerk/backend";
 import { env } from "@aloysius-web/env/server";
@@ -1248,8 +1248,145 @@ export const obDonationsRouter = {
     }),
 };
 
+// --- OB Event Galleries Router ---
+
+export const obEventGalleriesRouter = {
+  list: publicProcedure
+    .input(z.object({ obEventId: z.string() }))
+    .handler(async ({ input }) => {
+      const db = createDb();
+      const rows = await db.select().from(gallery).where(eq(gallery.obEventId, input.obEventId)).orderBy(desc(gallery.createdAt)).all();
+      return rows.map((row) => ({
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        description: row.description,
+        coverImage: row.coverImage,
+        status: row.status,
+        publishedAt: row.publishedAt?.toISOString() ?? null,
+        createdAt: row.createdAt.toISOString(),
+        updatedAt: row.updatedAt.toISOString(),
+      }));
+    }),
+
+  create: protectedProcedure
+    .input(
+      z.object({
+        obEventId: z.string(),
+        title: z.string().min(1),
+        description: z.string().optional().nullable(),
+        coverImage: z.string().optional().nullable(),
+      }),
+    )
+    .handler(async ({ input, context }) => {
+      if (!context.auth?.userId) {
+        throw new ORPCError("UNAUTHORIZED");
+      }
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const callerIsOBAdmin = await isOBAdmin(context.auth.userId);
+      if (!isSiteAdmin && !callerIsOBAdmin) {
+        throw new ORPCError("FORBIDDEN", { message: "OB admin or site admin access required." });
+      }
+      const db = createDb();
+      const event = await db.select().from(obEvents).where(eq(obEvents.id, input.obEventId)).get();
+      if (!event) {
+        throw new ORPCError("NOT_FOUND", { message: "OB event not found" });
+      }
+      const slug = await generateUniqueSlug(gallery, event.title);
+      const now = new Date();
+      const record = await db
+        .insert(gallery)
+        .values({
+          id: crypto.randomUUID(),
+          slug,
+          title: input.title,
+          description: input.description ?? null,
+          coverImage: input.coverImage ?? null,
+          obEventId: input.obEventId,
+          status: "draft",
+          userId: context.auth.userId,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning()
+        .get();
+      return {
+        id: record.id,
+        slug: record.slug,
+        title: record.title,
+        description: record.description,
+        coverImage: record.coverImage,
+        status: record.status,
+        publishedAt: record.publishedAt?.toISOString() ?? null,
+        createdAt: record.createdAt.toISOString(),
+        updatedAt: record.updatedAt.toISOString(),
+      };
+    }),
+
+  release: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .handler(async ({ input, context }) => {
+      if (!context.auth?.userId) {
+        throw new ORPCError("UNAUTHORIZED");
+      }
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      if (!isSiteAdmin) {
+        throw new ORPCError("FORBIDDEN", { message: "Only site admin can release galleries." });
+      }
+      const db = createDb();
+      const existing = await db.select().from(gallery).where(eq(gallery.id, input.id)).get();
+      if (!existing) {
+        throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
+      }
+      const now = new Date();
+      const record = await db.update(gallery).set({ status: "published", publishedAt: now, updatedAt: now }).where(eq(gallery.id, input.id)).returning().get();
+      return {
+        id: record.id,
+        slug: record.slug,
+        title: record.title,
+        description: record.description,
+        coverImage: record.coverImage,
+        status: record.status,
+        publishedAt: record.publishedAt?.toISOString() ?? null,
+        createdAt: record.createdAt.toISOString(),
+        updatedAt: record.updatedAt.toISOString(),
+      };
+    }),
+
+  unrelease: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .handler(async ({ input, context }) => {
+      if (!context.auth?.userId) {
+        throw new ORPCError("UNAUTHORIZED");
+      }
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      if (!isSiteAdmin) {
+        throw new ORPCError("FORBIDDEN", { message: "Only site admin can unrelease galleries." });
+      }
+      const db = createDb();
+      const existing = await db.select().from(gallery).where(eq(gallery.id, input.id)).get();
+      if (!existing) {
+        throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
+      }
+      const now = new Date();
+      const record = await db.update(gallery).set({ status: "archived", publishedAt: null, updatedAt: now }).where(eq(gallery.id, input.id)).returning().get();
+      return {
+        id: record.id,
+        slug: record.slug,
+        title: record.title,
+        description: record.description,
+        coverImage: record.coverImage,
+        status: record.status,
+        publishedAt: record.publishedAt?.toISOString() ?? null,
+        createdAt: record.createdAt.toISOString(),
+        updatedAt: record.updatedAt.toISOString(),
+      };
+    }),
+};
+
 export const obRouter = {
   obMembers: obMembersRouter,
   obEvents: obEventsRouter,
   obDonations: obDonationsRouter,
+  obEventGalleries: obEventGalleriesRouter,
 };

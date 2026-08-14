@@ -24,9 +24,9 @@ function EditPrincipalDialog() {
         if (!open) navigate({ to: "/admin/principals" });
       }}
     >
-      <DialogContent className="w-[min(90vw,800px)] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[min(90vw,1000px)] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Staff Member</DialogTitle>
+          <DialogTitle>Edit Principal</DialogTitle>
         </DialogHeader>
         <PrincipalForm
           mode="edit"

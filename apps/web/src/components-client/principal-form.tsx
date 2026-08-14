@@ -5,6 +5,17 @@ import { useStore } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@aloysius-web/ui/components/button";
 import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
+import { MinimalTiptapEditor } from "@aloysius-web/ui/components/minimal-tiptap";
+import { Input } from "@aloysius-web/ui/components/input";
+import { Textarea } from "@aloysius-web/ui/components/textarea";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@aloysius-web/ui/components/select";
+import { Field, FieldLabel, FieldContent, FieldDescription } from "@aloysius-web/ui/components/field";
 import { Dropzone } from "@/components/file-upload";
 import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
@@ -82,42 +93,44 @@ function PortraitField() {
   );
 
   return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Portrait (3:4)</label>
-      {portrait ? (
-        <div className="relative overflow-hidden rounded-xl border w-[200px]">
-          <img
-            src={portrait}
-            alt="Portrait"
-            className="w-full aspect-[3/4] object-cover pointer-events-none"
+    <Field>
+      <FieldLabel>Portrait (3:4)</FieldLabel>
+      <FieldContent>
+        {portrait ? (
+          <div className="relative overflow-hidden rounded-xl border w-[200px]">
+            <img
+              src={portrait}
+              alt="Portrait"
+              className="w-full aspect-[3/4] object-cover pointer-events-none"
+            />
+            <Button
+              variant="destructive"
+              size="sm"
+              type="button"
+              className="absolute top-2 right-2 z-10 gap-1.5"
+              onClick={handleRemove}
+            >
+              <IconX className="size-4" />
+              Remove
+            </Button>
+          </div>
+        ) : (
+          <Dropzone
+            onFilesSelected={handleFilesSelected}
+            maxFiles={1}
+            maxSize={10 * 1024 * 1024}
+            disabled={uploading}
+            crop
+            aspect={3 / 4}
+            cropTitle="Crop Portrait"
+            className={cn(
+              "w-[200px] aspect-[3/4] justify-center",
+              uploading && "opacity-50 pointer-events-none",
+            )}
           />
-          <Button
-            variant="destructive"
-            size="sm"
-            type="button"
-            className="absolute top-2 right-2 z-10 gap-1.5"
-            onClick={handleRemove}
-          >
-            <IconX className="size-4" />
-            Remove
-          </Button>
-        </div>
-      ) : (
-        <Dropzone
-          onFilesSelected={handleFilesSelected}
-          maxFiles={1}
-          maxSize={10 * 1024 * 1024}
-          disabled={uploading}
-          crop
-          aspect={3 / 4}
-          cropTitle="Crop Portrait"
-          className={cn(
-            "w-[200px] aspect-[3/4] justify-center",
-            uploading && "opacity-50 pointer-events-none",
-          )}
-        />
-      )}
-    </div>
+        )}
+      </FieldContent>
+    </Field>
   );
 }
 
@@ -126,126 +139,18 @@ function NameField() {
   const value = useStore(form.store, (state: any) => state.values.name) as string;
 
   return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">
+    <Field>
+      <FieldLabel>
         Name <span className="text-destructive">*</span>
-      </label>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => form.setFieldValue("name", e.target.value)}
-        placeholder="e.g. Fr. Jason Thomas"
-        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-      />
-    </div>
-  );
-}
-
-function TitleField() {
-  const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.title) as string;
-
-  return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Title</label>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => form.setFieldValue("title", e.target.value)}
-        placeholder="e.g. Principal"
-        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-      />
-    </div>
-  );
-}
-
-function QuoteField() {
-  const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.quote) as string;
-
-  return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Short Quote (homepage teaser)</label>
-      <textarea
-        value={value}
-        onChange={(e) => form.setFieldValue("quote", e.target.value)}
-        placeholder="A short quote shown on the homepage..."
-        rows={3}
-        className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-      />
-    </div>
-  );
-}
-
-function MessageField() {
-  const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.message) as string;
-
-  return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Full Message</label>
-      <textarea
-        value={value}
-        onChange={(e) => form.setFieldValue("message", e.target.value)}
-        placeholder="The principal's full message shown on the dedicated page..."
-        rows={8}
-        className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-      />
-    </div>
-  );
-}
-
-function BioField() {
-  const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.bio) as string;
-
-  return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Bio / About</label>
-      <textarea
-        value={value}
-        onChange={(e) => form.setFieldValue("bio", e.target.value)}
-        placeholder="A short personal profile..."
-        rows={4}
-        className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-      />
-    </div>
-  );
-}
-
-function EducationField() {
-  const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.education) as string;
-
-  return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Education &amp; Qualifications</label>
-      <textarea
-        value={value}
-        onChange={(e) => form.setFieldValue("education", e.target.value)}
-        placeholder={"e.g. B.A. (Hons) University of Peradeniya\nM.Ed. University of Colombo"}
-        rows={3}
-        className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-      />
-    </div>
-  );
-}
-
-function TenureField() {
-  const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.tenure) as string;
-
-  return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Tenure / Years of Service</label>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => form.setFieldValue("tenure", e.target.value)}
-        placeholder="e.g. 2019 - Present"
-        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-      />
-    </div>
+      </FieldLabel>
+      <FieldContent>
+        <Input
+          value={value}
+          onChange={(e) => form.setFieldValue("name", e.target.value)}
+          placeholder="e.g. Fr. Jason Thomas"
+        />
+      </FieldContent>
+    </Field>
   );
 }
 
@@ -262,26 +167,34 @@ const STAFF_ROLES = [
   { value: "SPORTS DIRECTOR", label: "Sports Director" },
 ] as const;
 
+type RoleValue = (typeof STAFF_ROLES)[number]["value"];
+
 function RoleField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.title) as string;
+  const value = useStore(form.store, (state: any) => state.values.title) as RoleValue | "";
 
   return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Role</label>
-      <select
-        value={value}
-        onChange={(e) => form.setFieldValue("title", e.target.value)}
-        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <option value="">Select role...</option>
-        {STAFF_ROLES.map((r) => (
-          <option key={r.value} value={r.value}>
-            {r.label}
-          </option>
-        ))}
-      </select>
-    </div>
+    <Field>
+      <FieldLabel>Role</FieldLabel>
+      <FieldContent>
+        <Select
+          value={value}
+          onValueChange={(val) => form.setFieldValue("title", val ?? "")}
+          items={STAFF_ROLES}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select role..." />
+          </SelectTrigger>
+          <SelectContent>
+            {STAFF_ROLES.map((r) => (
+              <SelectItem key={r.value} value={r.value}>
+                {r.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FieldContent>
+    </Field>
   );
 }
 
@@ -290,17 +203,124 @@ function YearField() {
   const value = useStore(form.store, (state: any) => state.values.year) as string;
 
   return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Academic Year</label>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => form.setFieldValue("year", e.target.value)}
-        placeholder="e.g. 2026"
-        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-      />
-      <p className="text-xs text-muted-foreground">The academic year this staff member served in</p>
-    </div>
+    <Field>
+      <FieldLabel>Academic Year</FieldLabel>
+      <FieldContent>
+        <Input
+          value={value}
+          onChange={(e) => form.setFieldValue("year", e.target.value)}
+          placeholder="e.g. 2026"
+        />
+        <FieldDescription>The academic year this staff member served in.</FieldDescription>
+      </FieldContent>
+    </Field>
+  );
+}
+
+function TenureField() {
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.tenure) as string;
+
+  return (
+    <Field>
+      <FieldLabel>Tenure / Years of Service</FieldLabel>
+      <FieldContent>
+        <Input
+          value={value}
+          onChange={(e) => form.setFieldValue("tenure", e.target.value)}
+          placeholder="e.g. 2019 - Present"
+        />
+      </FieldContent>
+    </Field>
+  );
+}
+
+function QuoteField() {
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.quote) as string;
+
+  return (
+    <Field>
+      <FieldLabel>Short Quote</FieldLabel>
+      <FieldContent>
+        <Textarea
+          value={value}
+          onChange={(e) => form.setFieldValue("quote", e.target.value)}
+          placeholder="A short quote shown on the homepage teaser..."
+          className="min-h-[88px]"
+        />
+        <FieldDescription>Shown as the teaser on the homepage and principals list.</FieldDescription>
+      </FieldContent>
+    </Field>
+  );
+}
+
+function EducationField() {
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.education) as string;
+
+  return (
+    <Field>
+      <FieldLabel>Education &amp; Qualifications</FieldLabel>
+      <FieldContent>
+        <Textarea
+          value={value}
+          onChange={(e) => form.setFieldValue("education", e.target.value)}
+          placeholder={"e.g. B.A. (Hons) University of Peradeniya\nM.Ed. University of Colombo"}
+          className="min-h-[112px]"
+        />
+        <FieldDescription>One qualification per line.</FieldDescription>
+      </FieldContent>
+    </Field>
+  );
+}
+
+function BioField() {
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.bio) as string;
+
+  return (
+    <Field>
+      <FieldLabel>Bio / About</FieldLabel>
+      <FieldContent>
+        <Textarea
+          value={value}
+          onChange={(e) => form.setFieldValue("bio", e.target.value)}
+          placeholder="A short personal profile..."
+          className="min-h-[104px]"
+        />
+        <FieldDescription>Shown under the &ldquo;About&rdquo; heading on the principal&rsquo;s page.</FieldDescription>
+      </FieldContent>
+    </Field>
+  );
+}
+
+function MessageField() {
+  const form = useBuildForm();
+  const value = useStore(form.store, (state: any) => state.values.message) as string;
+
+  const handleImageUpload = useCallback(async (file: File) => {
+    const webp = await convertToWebp(file);
+    const result = await client.files.uploadFile(webp);
+    return result.url;
+  }, []);
+
+  return (
+    <Field>
+      <FieldLabel>Full Message</FieldLabel>
+      <FieldContent>
+        <MinimalTiptapEditor
+          value={value}
+          onChange={(val) => form.setFieldValue("message", val)}
+          onImageUpload={handleImageUpload}
+          className="min-h-[300px]"
+          placeholder="The principal's full message shown on the dedicated page..."
+        />
+        <FieldDescription>
+          Rich text message — shown on the principal&rsquo;s dedicated page.
+        </FieldDescription>
+      </FieldContent>
+    </Field>
   );
 }
 
@@ -370,7 +390,7 @@ export function PrincipalForm({
       return client.principals.update({ id: id!, ...values } as any);
     },
     onSuccess: () => {
-      toast.success(mode === "create" ? "Staff member created" : "Staff member updated");
+      toast.success(mode === "create" ? "Principal created" : "Principal updated");
       queryClient.invalidateQueries({ queryKey: ["principals"] });
       onSuccess?.();
     },
@@ -387,7 +407,7 @@ export function PrincipalForm({
       { columns: [{ fields: ["sortOrder"] }] },
       { columns: [{ fields: ["publishNow"] }] },
     ],
-    submitLabel: mode === "create" ? "Create Staff Member" : "Save Changes",
+    submitLabel: mode === "create" ? "Create Principal" : "Save Changes",
     onCancel: () => onSuccess?.(),
     hooks: {
       beforeSubmit: (values) => ({
@@ -400,22 +420,22 @@ export function PrincipalForm({
         <div className="w-[200px] shrink-0">
           <PortraitField />
         </div>
-        <div className="flex-1 grid grid-cols-2 gap-4">
-          <NameField />
-          <RoleField />
-          <YearField />
-          <TenureField />
-          <QuoteField />
-          <EducationField />
+        <div className="flex-1 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <NameField />
+            <RoleField />
+            <YearField />
+            <TenureField />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <QuoteField />
+            <EducationField />
+          </div>
           <BioField />
         </div>
       </div>
     ),
-    renderBelowFields: () => (
-      <div className="grid grid-cols-1 gap-4">
-        <MessageField />
-      </div>
-    ),
+    renderBelowFields: () => <MessageField />,
   };
 
   if (mode === "edit" && existingPrincipal.isLoading) {

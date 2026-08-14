@@ -201,6 +201,7 @@ export const gallery = sqliteTable(
     title: text("title").notNull(),
     description: text("description"),
     eventId: text("event_id").references(() => events.id, { onDelete: "set null" }),
+    obEventId: text("ob_event_id").references(() => obEvents.id, { onDelete: "set null" }),
     studentWorkId: text("student_work_id").references(() => studentWorks.id, {
       onDelete: "set null",
     }),

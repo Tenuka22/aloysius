@@ -17,8 +17,6 @@ const requireOBAdmin = createServerFn({ method: "GET" }).handler(async () => {
     throw redirect({ to: "/" });
   }
 
-  // The OB admin is designated by email: the signed-in user's Clerk email must
-  // match the adminEmail stored on an approved OB member row.
   let email: string | null = null;
   try {
     const user = await clerkClient().users.getUser(userId);
@@ -50,11 +48,8 @@ const requireOBAdmin = createServerFn({ method: "GET" }).handler(async () => {
 });
 
 export const Route = createFileRoute("/ob-admin")({
-  beforeLoad: async ({ location }) => {
+  beforeLoad: async () => {
     await requireOBAdmin();
-    if (location.pathname === "/ob-admin" || location.pathname === "/ob-admin/") {
-      throw redirect({ to: "/ob-admin/members" });
-    }
   },
   component: OBAdminLayout,
 });
