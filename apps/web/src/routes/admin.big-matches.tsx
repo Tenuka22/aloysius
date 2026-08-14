@@ -1,16 +1,45 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { ColumnFiltersState, PaginationState, SortingState } from "@tanstack/react-table";
 import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
-import { Input } from "@aloysius-web/ui/components/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@aloysius-web/ui/components/card";
+import {
+  DataTable,
+  DataTableColumnHeader,
+  DataTablePagination,
+  DataTableViewOptions,
+} from "@aloysius-web/ui/components/data-table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@aloysius-web/ui/components/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@aloysius-web/ui/components/dialog";
+import {
+  EntityDialog,
+  useBuildForm,
+} from "@aloysius-web/ui/lib/form-builder";
+import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@aloysius-web/ui/components/select";
+import { IconPlus, IconDotsVertical, IconPencil, IconTrash } from "@tabler/icons-react";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Dropzone } from "@/components/file-upload";
+import { uploadImageWithRatio } from "@/lib/upload-image";
 import { cn } from "@aloysius-web/ui/lib/utils";
 
 type BigMatch = {
@@ -26,61 +55,142 @@ type BigMatch = {
   status: string;
 };
 
-export const Route = createFileRoute("/admin/big-matches")({
-  component: AdminBigMatches,
-});
+type BigMatchFormValues = {
+  name: string;
+  opponent: string;
+  coverImage: string;
+  type: string;
+  year: string;
+  sortOrder: number;
+  status: "draft" | "published" | "archived";
+};
 
-function BigMatchCard({ match }: { match: BigMatch }) {
-  const queryClient = useQueryClient();
-  const [name, setName] = useState(match.name);
-  const [opponent, setOpponent] = useState(match.opponent);
-  const [coverImage, setCoverImage] = useState(match.coverImage ?? "");
-  const [type, setType] = useState(match.type);
-  const [year, setYear] = useState(match.year?.toString() ?? "");
-  const [sortOrder, setSortOrder] = useState(match.sortOrder);
-  const [status, setStatus] = useState(match.status);
+function CoverImageField({ value, onChange }: { value: unknown; onChange: (val: unknown) => void }) {
+  const form = useBuildForm();
+  const coverImage = value as string | undefined;
   const [uploading, setUploading] = useState(false);
 
-  const handleImageUpload = useCallback(async (files: File[]) => {
+  const handleFilesSelected = async (files: File[]) => {
     if (files.length === 0) return;
     setUploading(true);
     try {
       const result = await client.files.uploadFile(files[0]!);
-      setCoverImage(result.url);
+      form.setFieldValue("coverImage", result.url);
       toast.success("Image uploaded");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } catch {
+      toast.error("Failed to upload image");
     } finally {
       setUploading(false);
     }
-  }, []);
+  };
 
-  const updateMutation = useMutation({
-    mutationFn: () =>
-      client.bigMatches.update({
-        id: match.id,
-        name,
-        opponent,
-        coverImage: coverImage || null,
-        type,
-        year: year ? Number(year) : null,
-        sortOrder,
-        status: status as "draft" | "published" | "archived",
-      }),
-    onSuccess: () => {
-      toast.success("Big match updated");
-      queryClient.invalidateQueries({ queryKey: ["bigMatches"] });
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  return (
+    <div>
+      {coverImage ? (
+        <div className="relative aspect-video rounded-lg overflow-hidden border">
+          <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+          <Button
+            variant="destructive"
+            size="sm"
+            className="absolute top-2 right-2"
+            onClick={() => form.setFieldValue("coverImage", "")}
+          >
+            Remove
+          </Button>
+        </div>
+      ) : (
+        <Dropzone
+          onFilesSelected={handleFilesSelected}
+          maxFiles={1}
+          maxSize={5 * 1024 * 1024}
+          disabled={uploading}
+          aspect={16 / 9}
+          crop={false}
+          className={cn("aspect-video justify-center", uploading && "opacity-50 pointer-events-none")}
+        />
+      )}
+    </div>
+  );
+}
+
+const bigMatchFields: FieldEntry<BigMatchFormValues>[] = [
+  {
+    name: "coverImage",
+    kind: "custom",
+    label: "Cover Image",
+    required: false,
+    customRenderer: ({ value, onChange }) => <CoverImageField value={value} onChange={onChange} />,
+  },
+  { name: "name", kind: "text", label: "Match Name", placeholder: "e.g. Battle of the Two Cities", required: true },
+  { name: "opponent", kind: "text", label: "Opponent", placeholder: "e.g. Rahula College, Matara", required: true },
+  { name: "type", kind: "text", label: "Type", placeholder: "e.g. Cricket", required: true },
+  { name: "year", kind: "text", label: "Year", placeholder: "e.g. 2024" },
+  { name: "sortOrder", kind: "number", label: "Sort Order" },
+  {
+    name: "status",
+    kind: "select",
+    label: "Status",
+    options: [
+      { value: "draft", label: "Draft" },
+      { value: "published", label: "Published" },
+      { value: "archived", label: "Archived" },
+    ],
+  },
+];
+
+const bigMatchConfig: FormConfig<BigMatchFormValues> = {
+  fields: bigMatchFields,
+  layout: [
+    { columns: [{ fields: ["name", "opponent"], span: 6 }] },
+    { columns: [{ fields: ["coverImage"], span: 12 }] },
+    { columns: [{ fields: ["type", "year"], span: 6 }] },
+    { columns: [{ fields: ["sortOrder", "status"], span: 6 }] },
+  ],
+};
+
+function DeleteDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+  title,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  title: string;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Big Match</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete <strong>{title}</strong>? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={onConfirm}>
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ActionsMenu({ item, onEdit }: { item: BigMatch; onEdit: () => void }) {
+  const queryClient = useQueryClient();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const deleteMutation = useMutation({
-    mutationFn: () => client.bigMatches.delete({ id: match.id }),
+    mutationFn: () => client.bigMatches.delete({ id: item.id }),
     onSuccess: () => {
       toast.success("Big match deleted");
       queryClient.invalidateQueries({ queryKey: ["bigMatches"] });
+      setDeleteOpen(false);
     },
     onError: (err) => {
       toast.error(err.message);
@@ -88,168 +198,128 @@ function BigMatchCard({ match }: { match: BigMatch }) {
   });
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium">{match.name || "Untitled Match"}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Match Name</label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Battle of the Two Cities"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Opponent</label>
-            <Input
-              value={opponent}
-              onChange={(e) => setOpponent(e.target.value)}
-              placeholder="e.g. Rahula College, Matara"
-            />
-          </div>
-          <div className="space-y-1.5 col-span-2">
-            <label className="text-xs font-medium">Cover Image</label>
-            {coverImage ? (
-              <div className="relative aspect-video rounded-lg overflow-hidden border">
-                <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-2 right-2"
-                  onClick={() => setCoverImage("")}
-                >
-                  Remove
-                </Button>
-              </div>
-            ) : (
-              <Dropzone
-                onFilesSelected={handleImageUpload}
-                maxFiles={1}
-                maxSize={5 * 1024 * 1024}
-                disabled={uploading}
-                aspect={16 / 9}
-                crop={false}
-                className={cn(uploading && "opacity-50 pointer-events-none")}
-              />
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Type</label>
-            <Input
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              placeholder="e.g. Cricket"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Year</label>
-            <Input
-              type="number"
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              placeholder="e.g. 2024"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Sort Order</label>
-            <Input
-              type="number"
-              value={sortOrder}
-              onChange={(e) => setSortOrder(Number(e.target.value))}
-              min={0}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Status</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => deleteMutation.mutate()}
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending ? "Deleting..." : "Delete"}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => updateMutation.mutate()}
-            disabled={updateMutation.isPending}
-          >
-            {updateMutation.isPending ? "Saving..." : "Save"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+          <IconDotsVertical className="size-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onEdit}>
+            <IconPencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
+            <IconTrash className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={() => deleteMutation.mutate()}
+        title={item.name}
+      />
+    </>
   );
 }
 
+export const Route = createFileRoute("/admin/big-matches")({
+  component: AdminBigMatches,
+});
+
 function AdminBigMatches() {
   const queryClient = useQueryClient();
-  const [showNew, setShowNew] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newOpponent, setNewOpponent] = useState("");
-  const [newCoverImage, setNewCoverImage] = useState("");
-  const [newType, setNewType] = useState("Cricket");
-  const [newYear, setNewYear] = useState("");
-  const [newUploading, setNewUploading] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<BigMatch | null>(null);
+
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
+  const rawStatus = columnFilters.find((f) => f.id === "status")?.value;
+  const status =
+    typeof rawStatus === "string" && rawStatus.length > 0
+      ? (rawStatus as "draft" | "published" | "archived")
+      : undefined;
 
   const { data: bigMatches, isLoading } = useQuery({
-    queryKey: ["bigMatches"],
-    queryFn: () => client.bigMatches.list(),
+    queryKey: ["bigMatches", status],
+    queryFn: () => client.bigMatches.list({ status }),
   });
 
-  const handleNewImageUpload = useCallback(async (files: File[]) => {
-    if (files.length === 0) return;
-    setNewUploading(true);
-    try {
-      const result = await client.files.uploadFile(files[0]!);
-      setNewCoverImage(result.url);
-      toast.success("Image uploaded");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setNewUploading(false);
-    }
-  }, []);
+  const allItems = bigMatches ?? [];
+  const totalItems = allItems.length;
+  const pageCount = Math.max(1, Math.ceil(totalItems / pagination.pageSize));
+  const pageStart = pagination.pageIndex * pagination.pageSize;
+  const items = allItems.slice(pageStart, pageStart + pagination.pageSize);
 
-  const createMutation = useMutation({
-    mutationFn: () =>
-      client.bigMatches.create({
-        name: newName,
-        opponent: newOpponent,
-        coverImage: newCoverImage || undefined,
-        type: newType,
-        year: newYear ? Number(newYear) : undefined,
-        status: "published",
-      }),
-    onSuccess: () => {
-      toast.success("Big match created");
-      queryClient.invalidateQueries({ queryKey: ["bigMatches"] });
-      setShowNew(false);
-      setNewName("");
-      setNewOpponent("");
-      setNewCoverImage("");
-      setNewType("Cricket");
-      setNewYear("");
+  const columns: ColumnDef<BigMatch, any>[] = [
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
     },
-    onError: (err) => {
-      toast.error(err.message);
+    {
+      accessorKey: "opponent",
+      header: "Opponent",
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.opponent}</span>,
     },
-  });
+    {
+      accessorKey: "type",
+      header: "Type",
+      cell: ({ row }) => (
+        <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+          {row.original.type}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "year",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Year" />,
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.year ?? "-"}</span>,
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+      cell: ({ row }) => (
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+            row.original.status === "published"
+              ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+              : row.original.status === "archived"
+                ? "bg-gray-50 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                : "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+          }`}
+        >
+          {row.original.status === "published"
+            ? "Published"
+            : row.original.status === "archived"
+              ? "Archived"
+              : "Draft"}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <ActionsMenu
+          item={row.original}
+          onEdit={() => {
+            setEditingItem(row.original);
+            setEditOpen(true);
+          }}
+        />
+      ),
+    },
+  ];
 
   return (
     <div className="flex flex-col">
@@ -258,109 +328,146 @@ function AdminBigMatches() {
         <Separator orientation="vertical" className="mr-2 h-4" />
         <h1 className="text-lg font-semibold">Big Matches</h1>
         <div className="ml-auto">
-          <Button size="sm" onClick={() => setShowNew(!showNew)}>
-            {showNew ? "Cancel" : "Add Match"}
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <IconPlus className="mr-1 size-4" />
+            Add Match
           </Button>
         </div>
       </header>
-      <div className="flex-1 p-6 space-y-6">
-        {showNew && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">New Big Match</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium">Match Name</label>
-                  <Input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    placeholder="e.g. Battle of the Two Cities"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium">Opponent</label>
-                  <Input
-                    value={newOpponent}
-                    onChange={(e) => setNewOpponent(e.target.value)}
-                    placeholder="e.g. Rahula College, Matara"
-                  />
-                </div>
-                <div className="space-y-1.5 col-span-2">
-                  <label className="text-xs font-medium">Cover Image</label>
-                  {newCoverImage ? (
-                    <div className="relative aspect-video rounded-lg overflow-hidden border">
-                      <img src={newCoverImage} alt="Cover" className="w-full h-full object-cover" />
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-2 right-2"
-                        onClick={() => setNewCoverImage("")}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ) : (
-                    <Dropzone
-                      onFilesSelected={handleNewImageUpload}
-                      maxFiles={1}
-                      maxSize={5 * 1024 * 1024}
-                      disabled={newUploading}
-                      aspect={16 / 9}
-                      crop={false}
-                      className={cn(newUploading && "opacity-50 pointer-events-none")}
-                    />
+      <div className="flex-1 p-6">
+        <DataTable
+          columns={columns}
+          data={items}
+          pageCount={pageCount}
+          loading={isLoading}
+          pagination={pagination}
+          sorting={sorting}
+          columnFilters={columnFilters}
+          onPaginationChange={setPagination}
+          onSortingChange={setSorting}
+          onColumnFiltersChange={setColumnFilters}
+          toolbar={(table) => {
+            const filters = table.getState().columnFilters;
+            const isFiltered = filters.length > 0;
+            const setFilter = (id: string, value: string) => {
+              const next = filters.filter((f) => f.id !== id);
+              if (value) next.push({ id, value });
+              table.setColumnFilters(next);
+            };
+            return (
+              <div className="flex items-center justify-between">
+                <div className="flex flex-1 items-center gap-2">
+                  <Select
+                    value={(filters.find((f) => f.id === "status")?.value as string) ?? ""}
+                    onValueChange={(val) => setFilter("status", val ?? "")}
+                  >
+                    <SelectTrigger className="h-8 w-[140px]">
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {isFiltered && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => table.resetColumnFilters()}
+                      className="h-8 px-2 lg:px-3"
+                    >
+                      Reset
+                    </Button>
                   )}
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium">Type</label>
-                  <Input
-                    value={newType}
-                    onChange={(e) => setNewType(e.target.value)}
-                    placeholder="e.g. Cricket"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium">Year</label>
-                  <Input
-                    type="number"
-                    value={newYear}
-                    onChange={(e) => setNewYear(e.target.value)}
-                    placeholder="e.g. 2024"
-                  />
-                </div>
+                <DataTableViewOptions table={table} />
               </div>
-              <div className="flex justify-end">
-                <Button
-                  size="sm"
-                  onClick={() => createMutation.mutate()}
-                  disabled={createMutation.isPending || !newName || !newOpponent}
-                >
-                  {createMutation.isPending ? "Creating..." : "Create"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            );
+          }}
+          paginationBar={(table) => <DataTablePagination table={table} />}
+        />
 
-        {isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-48 rounded-lg bg-muted animate-pulse" />
-            ))}
-          </div>
-        ) : !bigMatches || bigMatches.length === 0 ? (
-          <div className="text-center text-muted-foreground py-12">
-            No big matches found. Add one to get started.
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {bigMatches.map((match) => (
-              <BigMatchCard key={match.id} match={match} />
-            ))}
-          </div>
-        )}
+        <EntityDialog<BigMatchFormValues>
+          open={editOpen}
+          onOpenChange={(open) => {
+            setEditOpen(open);
+            if (!open) setEditingItem(null);
+          }}
+          title="Edit Big Match"
+          description={editingItem ? `Editing: ${editingItem.name}` : undefined}
+          config={bigMatchConfig}
+          defaultValues={
+            editingItem
+              ? {
+                  name: editingItem.name,
+                  opponent: editingItem.opponent,
+                  coverImage: editingItem.coverImage ?? "",
+                  type: editingItem.type,
+                  year: editingItem.year?.toString() ?? "",
+                  sortOrder: editingItem.sortOrder,
+                  status: editingItem.status as "draft" | "published" | "archived",
+                }
+              : {
+                  name: "",
+                  opponent: "",
+                  coverImage: "",
+                  type: "Cricket",
+                  year: "",
+                  sortOrder: 0,
+                  status: "published",
+                }
+          }
+          onSubmit={async (values) => {
+            if (!editingItem) return;
+            await client.bigMatches.update({
+              id: editingItem.id,
+              name: values.name,
+              opponent: values.opponent,
+              coverImage: values.coverImage || null,
+              type: values.type,
+              year: values.year ? Number(values.year) : null,
+              sortOrder: values.sortOrder,
+              status: values.status,
+            });
+            toast.success("Big match updated");
+            queryClient.invalidateQueries({ queryKey: ["bigMatches"] });
+            setEditOpen(false);
+            setEditingItem(null);
+          }}
+          queryKeysToInvalidate={["bigMatches"]}
+          size="full"
+        />
+
+        <EntityDialog<BigMatchFormValues>
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          title="New Big Match"
+          config={bigMatchConfig}
+          defaultValues={{
+            name: "",
+            opponent: "",
+            coverImage: "",
+            type: "Cricket",
+            year: "",
+            sortOrder: 0,
+            status: "published",
+          }}
+          onSubmit={async (values) => {
+            await client.bigMatches.create({
+              name: values.name,
+              opponent: values.opponent,
+              coverImage: values.coverImage || undefined,
+              type: values.type,
+              year: values.year ? Number(values.year) : undefined,
+              status: values.status,
+            });
+            toast.success("Big match created");
+            queryClient.invalidateQueries({ queryKey: ["bigMatches"] });
+            setCreateOpen(false);
+          }}
+          queryKeysToInvalidate={["bigMatches"]}
+          size="full"
+        />
       </div>
     </div>
   );

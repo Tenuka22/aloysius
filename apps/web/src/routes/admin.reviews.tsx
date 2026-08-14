@@ -7,13 +7,9 @@ import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@aloysius-web/ui/components/dialog";
+  EntityDialog,
+} from "@aloysius-web/ui/lib/form-builder";
+import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
@@ -48,6 +44,21 @@ const typeStyles: Record<string, string> = {
   album: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
 };
 
+type RejectFormValues = {
+  reason: string;
+};
+
+const rejectFields: FieldEntry<RejectFormValues>[] = [
+  { name: "reason", kind: "textarea", label: "Rejection Reason", placeholder: "Why is this being rejected?" },
+];
+
+const rejectConfig: FormConfig<RejectFormValues> = {
+  fields: rejectFields,
+  layout: [
+    { columns: [{ fields: ["reason"], span: 12 }] },
+  ],
+};
+
 export const Route = createFileRoute("/admin/reviews")({
   component: AdminReviews,
 });
@@ -55,7 +66,6 @@ export const Route = createFileRoute("/admin/reviews")({
 function AdminReviews() {
   const queryClient = useQueryClient();
   const [rejectItem, setRejectItem] = useState<PendingItem | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
 
   const { data: items, isLoading } = useQuery({
     queryKey: ["reviews", "pending"],
@@ -78,7 +88,6 @@ function AdminReviews() {
       toast.success("Review submitted");
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
       setRejectItem(null);
-      setRejectReason("");
     },
     onError: (err) => toast.error(err.message),
   });
@@ -196,10 +205,7 @@ function AdminReviews() {
                     size="sm"
                     variant="outline"
                     className="text-destructive"
-                    onClick={() => {
-                      setRejectItem(item);
-                      setRejectReason("");
-                    }}
+                    onClick={() => setRejectItem(item)}
                     disabled={reviewMutation.isPending}
                   >
                     <IconX className="mr-1 size-4" />
@@ -210,44 +216,26 @@ function AdminReviews() {
             ))}
           </div>
         )}
-      </div>
 
-      <Dialog open={!!rejectItem} onOpenChange={(open) => !open && setRejectItem(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject {rejectItem ? typeLabels[rejectItem.type] : "Content"}</DialogTitle>
-            <DialogDescription>
-              The author will see this reason on their club page.
-            </DialogDescription>
-          </DialogHeader>
-          <textarea
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="Why is this being rejected?"
-            className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectItem(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() =>
-                rejectItem &&
-                reviewMutation.mutate({
-                  type: rejectItem.type,
-                  id: rejectItem.id,
-                  action: "reject",
-                  reason: rejectReason || undefined,
-                })
-              }
-              disabled={reviewMutation.isPending}
-            >
-              Reject
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        <EntityDialog<RejectFormValues>
+          open={!!rejectItem}
+          onOpenChange={(open) => !open && setRejectItem(null)}
+          title={`Reject ${rejectItem ? typeLabels[rejectItem.type] : "Content"}`}
+          description="The author will see this reason on their club page."
+          config={rejectConfig}
+          defaultValues={{ reason: "" }}
+          onSubmit={async (values) => {
+            if (!rejectItem) return;
+            await reviewMutation.mutateAsync({
+              type: rejectItem.type,
+              id: rejectItem.id,
+              action: "reject",
+              reason: values.reason || undefined,
+            });
+          }}
+          actionLabel="Reject"
+        />
+      </div>
     </div>
   );
 }
