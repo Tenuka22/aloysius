@@ -17,11 +17,13 @@ export const Route = createFileRoute("/ob")({
     const settings = await client.settings.getAll();
     return { settings };
   },
-  component: OBPage,
+  component: () => {
+    const { settings } = Route.useRouteContext({ from: "/ob" });
+    return <OBPage settings={settings} />;
+  },
 });
 
-export function OBPage() {
-  const { settings } = Route.useRouteContext();
+export function OBPage({ settings }: { settings?: Record<string, string> } = {}) {
   const { isSignedIn } = useAuth();
   const queryClient = useQueryClient();
 

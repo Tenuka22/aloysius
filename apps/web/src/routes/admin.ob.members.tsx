@@ -47,6 +47,8 @@ import {
   IconX,
   IconRotate,
   IconUpload,
+  IconShieldCheck,
+  IconShieldX,
 } from "@tabler/icons-react";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
@@ -127,6 +129,16 @@ function AdminOBMembers() {
     onSuccess: () => { toast.success("Membership revoked"); },
   });
 
+  const grantAdminMutation = useMutation({
+    mutationFn: (id: string) => client.ob.obMembers.update({ id, adminEmail: members.find((m) => m.id === id)?.email || "" }),
+    onSuccess: () => { toast.success("OB admin privileges granted"); },
+  });
+
+  const revokeAdminMutation = useMutation({
+    mutationFn: (id: string) => client.ob.obMembers.update({ id, adminEmail: null }),
+    onSuccess: () => { toast.success("OB admin privileges revoked"); },
+  });
+
   const columns: ColumnDef<OBMember, any>[] = [
     {
       accessorKey: "photo",
@@ -205,6 +217,16 @@ function AdminOBMembers() {
               {m.status === "approved" && (
                 <DropdownMenuItem variant="destructive" onClick={() => revokeMutation.mutate(m.id)}>
                   <IconRotate className="size-4" /> Revoke
+                </DropdownMenuItem>
+              )}
+              {m.status === "approved" && !m.adminEmail && (
+                <DropdownMenuItem onClick={() => grantAdminMutation.mutate(m.id)}>
+                  <IconShieldCheck className="size-4" /> Make OB Admin
+                </DropdownMenuItem>
+              )}
+              {m.status === "approved" && m.adminEmail && (
+                <DropdownMenuItem onClick={() => revokeAdminMutation.mutate(m.id)}>
+                  <IconShieldX className="size-4" /> Remove OB Admin
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
