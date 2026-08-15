@@ -28,7 +28,11 @@ function EditOBDonationDialog() {
         <DialogHeader>
           <DialogTitle>Edit Donation</DialogTitle>
         </DialogHeader>
-        <OBDonationForm mode="edit" id={id} onSuccess={() => navigate({ to: "/admin/ob/donations" })} />
+        <OBDonationForm
+          mode="edit"
+          id={id}
+          onSuccess={() => navigate({ to: "/admin/ob/donations" })}
+        />
       </DialogContent>
     </Dialog>
   );

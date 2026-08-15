@@ -41,6 +41,7 @@ import {
   IconX,
   IconShieldCheck,
 } from "@tabler/icons-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@aloysius-web/ui/components/avatar";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -87,25 +88,38 @@ function OBAdminMembers() {
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => client.ob.obMembers.approveMember({ id }),
-    onSuccess: () => { toast.success("Member approved"); invalidate(); },
+    onSuccess: () => {
+      toast.success("Member approved");
+      invalidate();
+    },
     onError: (err) => toast.error(err.message),
   });
 
   const rejectMutation = useMutation({
     mutationFn: (id: string) => client.ob.obMembers.rejectMember({ id }),
-    onSuccess: () => { toast.success("Membership rejected"); invalidate(); },
+    onSuccess: () => {
+      toast.success("Membership rejected");
+      invalidate();
+    },
     onError: (err) => toast.error(err.message),
   });
 
   const revokeMutation = useMutation({
     mutationFn: (id: string) => client.ob.obMembers.revokeMember({ id }),
-    onSuccess: () => { toast.success("Membership revoked"); invalidate(); },
+    onSuccess: () => {
+      toast.success("Membership revoked");
+      invalidate();
+    },
     onError: (err) => toast.error(err.message),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => client.ob.obMembers.delete({ id }),
-    onSuccess: () => { toast.success("Member removed"); setDeleting(null); invalidate(); },
+    onSuccess: () => {
+      toast.success("Member removed");
+      setDeleting(null);
+      invalidate();
+    },
     onError: (err) => toast.error(err.message),
   });
 
@@ -119,7 +133,12 @@ function OBAdminMembers() {
       cell: ({ row }) => {
         const url = row.original.photo;
         if (!url) return <span className="text-muted-foreground">-</span>;
-        return <img src={url} alt="" className="h-10 w-10 rounded-full object-cover" />;
+        return (
+          <Avatar size="sm">
+            <AvatarImage src={url} alt={row.original.name} />
+            <AvatarFallback>{row.original.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+        );
       },
       size: 60,
     },
@@ -131,7 +150,9 @@ function OBAdminMembers() {
         return (
           <div className="flex items-center gap-2">
             <span>{m.name}</span>
-            {m.adminEmail && <IconShieldCheck className="size-3.5 text-gold shrink-0" title="OB Admin" />}
+            {m.adminEmail && (
+              <IconShieldCheck className="size-3.5 text-gold shrink-0" title="OB Admin" />
+            )}
           </div>
         );
       },
@@ -162,8 +183,19 @@ function OBAdminMembers() {
           rejected: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
           revoked: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
         };
-        const labels: Record<string, string> = { approved: "Approved", pending: "Pending", rejected: "Rejected", revoked: "Revoked" };
-        return <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${styles[status] ?? styles.pending}`}>{labels[status] ?? status}</span>;
+        const labels: Record<string, string> = {
+          approved: "Approved",
+          pending: "Pending",
+          rejected: "Rejected",
+          revoked: "Revoked",
+        };
+        return (
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${styles[status] ?? styles.pending}`}
+          >
+            {labels[status] ?? status}
+          </span>
+        );
       },
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
@@ -186,7 +218,10 @@ function OBAdminMembers() {
                   <DropdownMenuItem onClick={() => approveMutation.mutate(m.id)}>
                     <IconCheck className="size-4" /> Approve
                   </DropdownMenuItem>
-                  <DropdownMenuItem variant="destructive" onClick={() => rejectMutation.mutate(m.id)}>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => rejectMutation.mutate(m.id)}
+                  >
                     <IconX className="size-4" /> Reject
                   </DropdownMenuItem>
                 </>
@@ -216,32 +251,50 @@ function OBAdminMembers() {
             Manage every OB member — add, edit, and approve membership requests.
           </p>
         </div>
-        <Button size="sm" onClick={() => setFormOpen(true)} className="bg-green-dark text-cream hover:bg-green-darker">
+        <Button
+          size="sm"
+          onClick={() => setFormOpen(true)}
+          className="bg-green-dark text-cream hover:bg-green-darker"
+        >
           <IconPlus className="mr-1 size-4" /> Add Member
         </Button>
       </div>
 
       {pendingMembers.length > 0 && (
         <section>
-          <h2 className="text-sm font-bold tracking-[0.2em] text-yellow-600 mb-4">PENDING APPROVAL ({pendingMembers.length})</h2>
+          <h2 className="text-sm font-bold tracking-[0.2em] text-yellow-600 mb-4">
+            PENDING APPROVAL ({pendingMembers.length})
+          </h2>
           <div className="space-y-3">
             {pendingMembers.map((member: any) => (
               <Card key={member.id} className="border-yellow-500/30">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground overflow-hidden">
-                      {member.photo ? <img src={member.photo} alt={member.name} className="w-full h-full object-cover" /> : member.name.charAt(0)}
-                    </div>
+                    <Avatar size="default">
+                      <AvatarImage src={member.photo ?? undefined} alt={member.name} />
+                      <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
                     <div>
                       <div className="font-medium text-sm text-green-dark">{member.name}</div>
-                      <div className="text-xs text-muted-foreground">{member.role} &bull; {member.year || "No year"} &bull; {member.email || "No email"}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {member.role} &bull; {member.year || "No year"} &bull;{" "}
+                        {member.email || "No email"}
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => approveMutation.mutate(member.id)} className="bg-green-dark text-cream hover:bg-green-darker">
+                    <Button
+                      size="sm"
+                      onClick={() => approveMutation.mutate(member.id)}
+                      className="bg-green-dark text-cream hover:bg-green-darker"
+                    >
                       <IconCheck className="size-4 mr-1" /> Approve
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => rejectMutation.mutate(member.id)}>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => rejectMutation.mutate(member.id)}
+                    >
                       <IconX className="size-4 mr-1" /> Reject
                     </Button>
                   </div>
@@ -253,7 +306,9 @@ function OBAdminMembers() {
       )}
 
       <section>
-        <h2 className="text-sm font-bold tracking-[0.2em] text-muted-foreground mb-4">ALL MEMBERS ({visibleMembers.length})</h2>
+        <h2 className="text-sm font-bold tracking-[0.2em] text-muted-foreground mb-4">
+          ALL MEMBERS ({visibleMembers.length})
+        </h2>
         <div className="bg-white rounded-lg border p-2">
           <DataTable
             columns={columns}
@@ -277,8 +332,21 @@ function OBAdminMembers() {
               return (
                 <div className="flex items-center justify-between">
                   <div className="flex flex-1 items-center gap-2">
-                    <Input placeholder="Filter by name..." value={(filters.find((f) => f.id === "name")?.value as string) ?? ""} onChange={(e) => setFilter("name", e.target.value)} className="h-8 w-[200px] lg:w-[250px]" />
-                    {isFiltered && <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">Reset</Button>}
+                    <Input
+                      placeholder="Filter by name..."
+                      value={(filters.find((f) => f.id === "name")?.value as string) ?? ""}
+                      onChange={(e) => setFilter("name", e.target.value)}
+                      className="h-8 w-[200px] lg:w-[250px]"
+                    />
+                    {isFiltered && (
+                      <Button
+                        variant="ghost"
+                        onClick={() => table.resetColumnFilters()}
+                        className="h-8 px-2 lg:px-3"
+                      >
+                        Reset
+                      </Button>
+                    )}
                   </div>
                   <DataTableViewOptions table={table} />
                 </div>
@@ -290,12 +358,22 @@ function OBAdminMembers() {
       </section>
 
       {/* Add / Edit member */}
-      <Dialog open={formOpen || !!editing} onOpenChange={(open) => { if (!open) { setFormOpen(false); setEditing(null); } }}>
+      <Dialog
+        open={formOpen || !!editing}
+        onOpenChange={(open) => {
+          if (!open) {
+            setFormOpen(false);
+            setEditing(null);
+          }
+        }}
+      >
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Member" : "Add Member"}</DialogTitle>
             <DialogDescription>
-              {editing ? `Update ${editing.name}` : "Create a new OB member. The OB admin approves pending requests."}
+              {editing
+                ? `Update ${editing.name}`
+                : "Create a new OB member. The OB admin approves pending requests."}
             </DialogDescription>
           </DialogHeader>
           {formOpen || editing ? (
@@ -304,24 +382,39 @@ function OBAdminMembers() {
               mode={editing ? "edit" : "create"}
               id={editing?.id}
               defaultYear={String(new Date().getFullYear())}
-              onSuccess={() => { setFormOpen(false); setEditing(null); }}
+              onSuccess={() => {
+                setFormOpen(false);
+                setEditing(null);
+              }}
             />
           ) : null}
         </DialogContent>
       </Dialog>
 
       {/* Delete confirm */}
-      <Dialog open={!!deleting} onOpenChange={(open) => { if (!open) setDeleting(null); }}>
+      <Dialog
+        open={!!deleting}
+        onOpenChange={(open) => {
+          if (!open) setDeleting(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Member</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete <strong>{deleting?.name}</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong>{deleting?.name}</strong>? This action cannot
+              be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleting(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => deleting && deleteMutation.mutate(deleting.id)} disabled={deleteMutation.isPending}>
+            <Button variant="outline" onClick={() => setDeleting(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleting && deleteMutation.mutate(deleting.id)}
+              disabled={deleteMutation.isPending}
+            >
               Delete
             </Button>
           </DialogFooter>

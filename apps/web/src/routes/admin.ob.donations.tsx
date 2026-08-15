@@ -68,17 +68,34 @@ type OBDonation = {
   updatedAt: string;
 };
 
-function DeleteDonationDialog({ open, onOpenChange, onConfirm, name }: { open: boolean; onOpenChange: (open: boolean) => void; onConfirm: () => void; name: string }) {
+function DeleteDonationDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+  name,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  name: string;
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Donation</DialogTitle>
-          <DialogDescription>Are you sure you want to delete the donation from <strong>{name}</strong>? This action cannot be undone.</DialogDescription>
+          <DialogDescription>
+            Are you sure you want to delete the donation from <strong>{name}</strong>? This action
+            cannot be undone.
+          </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button variant="destructive" onClick={onConfirm}>Delete</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={onConfirm}>
+            Delete
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -102,8 +119,15 @@ function AdminOBDonations() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => { if (!deleteId) return Promise.resolve({ success: true }); return client.ob.obDonations.delete({ id: deleteId }); },
-    onSuccess: () => { toast.success("Donation deleted"); setDeleteOpen(false); setDeleteId(null); },
+    mutationFn: () => {
+      if (!deleteId) return Promise.resolve({ success: true });
+      return client.ob.obDonations.delete({ id: deleteId });
+    },
+    onSuccess: () => {
+      toast.success("Donation deleted");
+      setDeleteOpen(false);
+      setDeleteId(null);
+    },
   });
 
   const confirmMutation = useMutation({
@@ -151,16 +175,16 @@ function AdminOBDonations() {
     {
       accessorKey: "purpose",
       header: "Purpose",
-      cell: ({ row }) => <span className="text-muted-foreground line-clamp-1">{row.original.purpose || "-"}</span>,
+      cell: ({ row }) => (
+        <span className="text-muted-foreground line-clamp-1">{row.original.purpose || "-"}</span>
+      ),
     },
     {
       accessorKey: "donatedAt",
       header: "Date",
       cell: ({ row }) => (
         <span className="text-muted-foreground">
-          {row.original.donatedAt
-            ? new Date(row.original.donatedAt).toLocaleDateString()
-            : "-"}
+          {row.original.donatedAt ? new Date(row.original.donatedAt).toLocaleDateString() : "-"}
         </span>
       ),
     },
@@ -174,8 +198,18 @@ function AdminOBDonations() {
           pending: "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
           cancelled: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
         };
-        const labels: Record<string, string> = { confirmed: "Confirmed", pending: "Pending", cancelled: "Cancelled" };
-        return <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${styles[status] ?? styles.pending}`}>{labels[status] ?? status}</span>;
+        const labels: Record<string, string> = {
+          confirmed: "Confirmed",
+          pending: "Pending",
+          cancelled: "Cancelled",
+        };
+        return (
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${styles[status] ?? styles.pending}`}
+          >
+            {labels[status] ?? status}
+          </span>
+        );
       },
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
@@ -190,7 +224,9 @@ function AdminOBDonations() {
               <IconDotsVertical className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem render={<Link to={`/admin/ob/donations/$id/edit`} params={{ id: d.id }} />}>
+              <DropdownMenuItem
+                render={<Link to={`/admin/ob/donations/$id/edit`} params={{ id: d.id }} />}
+              >
                 <IconPencil className="size-4" /> Edit
               </DropdownMenuItem>
               {d.status === "pending" && (
@@ -198,13 +234,22 @@ function AdminOBDonations() {
                   <DropdownMenuItem onClick={() => confirmMutation.mutate(d.id)}>
                     <IconCheck className="size-4" /> Confirm
                   </DropdownMenuItem>
-                  <DropdownMenuItem variant="destructive" onClick={() => cancelMutation.mutate(d.id)}>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => cancelMutation.mutate(d.id)}
+                  >
                     <IconX className="size-4" /> Cancel
                   </DropdownMenuItem>
                 </>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onClick={() => { setDeleteId(d.id); setDeleteOpen(true); }}>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => {
+                  setDeleteId(d.id);
+                  setDeleteOpen(true);
+                }}
+              >
                 <IconTrash className="size-4" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -246,16 +291,34 @@ function AdminOBDonations() {
             return (
               <div className="flex items-center justify-between">
                 <div className="flex flex-1 items-center gap-2">
-                  <Input placeholder="Filter by donor..." value={(filters.find((f) => f.id === "donorName")?.value as string) ?? ""} onChange={(e) => setFilter("donorName", e.target.value)} className="h-8 w-[200px] lg:w-[250px]" />
-                  <Select value={(filters.find((f) => f.id === "status")?.value as string) ?? ""} onValueChange={(val) => setFilter("status", val ?? "")}>
-                    <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="All statuses" /></SelectTrigger>
+                  <Input
+                    placeholder="Filter by donor..."
+                    value={(filters.find((f) => f.id === "donorName")?.value as string) ?? ""}
+                    onChange={(e) => setFilter("donorName", e.target.value)}
+                    className="h-8 w-[200px] lg:w-[250px]"
+                  />
+                  <Select
+                    value={(filters.find((f) => f.id === "status")?.value as string) ?? ""}
+                    onValueChange={(val) => setFilter("status", val ?? "")}
+                  >
+                    <SelectTrigger className="h-8 w-[140px]">
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="confirmed">Confirmed</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
-                  {isFiltered && <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">Reset</Button>}
+                  {isFiltered && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => table.resetColumnFilters()}
+                      className="h-8 px-2 lg:px-3"
+                    >
+                      Reset
+                    </Button>
+                  )}
                 </div>
                 <DataTableViewOptions table={table} />
               </div>
@@ -263,7 +326,12 @@ function AdminOBDonations() {
           }}
         />
       </div>
-      <DeleteDonationDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={() => deleteMutation.mutate()} name={deleteId ? donations.find((d) => d.id === deleteId)?.donorName || "" : ""} />
+      <DeleteDonationDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={() => deleteMutation.mutate()}
+        name={deleteId ? donations.find((d) => d.id === deleteId)?.donorName || "" : ""}
+      />
     </div>
   );
 }

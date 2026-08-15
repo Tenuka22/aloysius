@@ -57,8 +57,7 @@ function AdminStaffYear() {
     (currentPrincipal && principalRows.some((p: any) => p.id === currentPrincipal.id)
       ? currentPrincipal
       : principalRows[0]) ?? null;
-  const principal =
-    principalRows.find((p: any) => p.id === selectedId) ?? assigned ?? fallback;
+  const principal = principalRows.find((p: any) => p.id === selectedId) ?? assigned ?? fallback;
 
   const filteredPrincipals = useMemo(() => {
     const q = principalInput.trim().toLowerCase();
@@ -112,7 +111,11 @@ function AdminStaffYear() {
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center text-xl font-bold text-muted-foreground shrink-0 overflow-hidden">
                     {principal.portrait ? (
-                      <img src={principal.portrait} alt={principal.name} className="w-full h-full object-cover" />
+                      <img
+                        src={principal.portrait}
+                        alt={principal.name}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       principal.name.charAt(0)
                     )}
@@ -126,7 +129,11 @@ function AdminStaffYear() {
                       {principal.title}
                       {principal.tenure && ` • ${principal.tenure}`}
                     </div>
-                    {principal.bio && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{principal.bio}</p>}
+                    {principal.bio && (
+                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                        {principal.bio}
+                      </p>
+                    )}
                   </div>
                   <Button
                     variant="outline"
@@ -140,7 +147,10 @@ function AdminStaffYear() {
               ) : (
                 <div className="text-sm text-muted-foreground">
                   No principal profile yet. Create one on the{" "}
-                  <Link to="/admin/principals" className="underline text-primary">Principal profiles</Link> page.
+                  <Link to="/admin/principals" className="underline text-primary">
+                    Principal profiles
+                  </Link>{" "}
+                  page.
                 </div>
               )}
               <div className="border-t pt-4 space-y-2">
@@ -157,7 +167,11 @@ function AdminStaffYear() {
                     <ComboboxInput placeholder="Select principal..." showClear className="w-full">
                       {principal?.portrait && (
                         <InputGroupAddon align="inline-start">
-                          <img src={principal.portrait} alt="" className="size-5 rounded-full object-cover" />
+                          <img
+                            src={principal.portrait}
+                            alt=""
+                            className="size-5 rounded-full object-cover"
+                          />
                         </InputGroupAddon>
                       )}
                     </ComboboxInput>
@@ -166,25 +180,35 @@ function AdminStaffYear() {
                         {filteredPrincipals.map((p: any) => (
                           <ComboboxItem key={p.id} value={p.name}>
                             {p.portrait ? (
-                              <img src={p.portrait} alt="" className="size-5 rounded-full object-cover" />
+                              <img
+                                src={p.portrait}
+                                alt=""
+                                className="size-5 rounded-full object-cover"
+                              />
                             ) : (
                               <span className="flex size-5 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
                                 {p.name.charAt(0)}
                               </span>
                             )}
                             <span className="truncate">{p.name}</span>
-                            <span className="ml-auto shrink-0 text-xs text-muted-foreground">{p.title || "—"}</span>
+                            <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                              {p.title || "—"}
+                            </span>
                           </ComboboxItem>
                         ))}
                       </ComboboxList>
                       <ComboboxEmpty>
-                        {principalInput.trim() ? `No principal matching "${principalInput.trim()}"` : "Type to search principals"}
+                        {principalInput.trim()
+                          ? `No principal matching "${principalInput.trim()}"`
+                          : "Type to search principals"}
                       </ComboboxEmpty>
                     </ComboboxContent>
                   </Combobox>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {assignMutation.isPending ? "Saving…" : "Changing the principal updates this year instantly."}
+                  {assignMutation.isPending
+                    ? "Saving…"
+                    : "Changing the principal updates this year instantly."}
                 </p>
               </div>
             </CardContent>
@@ -196,7 +220,11 @@ function AdminStaffYear() {
           {isLoading ? (
             <div className="text-center text-muted-foreground py-8">Loading...</div>
           ) : (
-            <StaffEditor year={year} members={yearMembers as StaffMember[]} pool={allStaff as StaffMember[]} />
+            <StaffEditor
+              year={year}
+              members={yearMembers as StaffMember[]}
+              pool={allStaff as StaffMember[]}
+            />
           )}
         </section>
       </div>

@@ -21,7 +21,11 @@ const clerkClient = createClerkClient({
  * OB member row, so this sync only reports whether the designated emails belong
  * to real Clerk users. No Clerk metadata is written.
  */
-async function syncOBAdminEmails(): Promise<{ synced: number; errors: number; errorsList: string[] }> {
+async function syncOBAdminEmails(): Promise<{
+  synced: number;
+  errors: number;
+  errorsList: string[];
+}> {
   const db = createDb();
   const rows = await db.select().from(obMembers).where(eq(obMembers.status, "approved")).all();
   const adminEmails = [
@@ -59,7 +63,11 @@ async function syncOBAdminEmails(): Promise<{ synced: number; errors: number; er
  * Auto-sync the current published principal into the current year's President slot
  * (name + portrait), so the OB committee always reflects the principal.
  */
-async function syncPrincipalAsOBAdmin(): Promise<{ synced: number; errors: number; errorsList: string[] }> {
+async function syncPrincipalAsOBAdmin(): Promise<{
+  synced: number;
+  errors: number;
+  errorsList: string[];
+}> {
   const db = createDb();
   const results = { synced: 0, errors: 0, errorsList: [] as string[] };
   try {
@@ -130,7 +138,6 @@ async function requireOBAdminOrSiteAdmin(userId: string, auth?: { adminCalled?: 
   throw new ORPCError("FORBIDDEN", { message: "OB admin or site admin access required." });
 }
 
-
 // --- OB Members Router ---
 
 export const obMembersRouter = {
@@ -161,7 +168,12 @@ export const obMembersRouter = {
         conditions.push(eq(obMembers.year, input.year));
       }
       const where = conditions.length > 0 ? and(...conditions) : undefined;
-      const rows = await db.select().from(obMembers).where(where).orderBy(asc(obMembers.sortOrder)).all();
+      const rows = await db
+        .select()
+        .from(obMembers)
+        .where(where)
+        .orderBy(asc(obMembers.sortOrder))
+        .all();
       return rows.map((row) => ({
         id: row.id,
         userId: row.userId,
@@ -181,32 +193,30 @@ export const obMembersRouter = {
       }));
     }),
 
-  get: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .handler(async ({ input }) => {
-      const db = createDb();
-      const row = await db.select().from(obMembers).where(eq(obMembers.id, input.id)).get();
-      if (!row) {
-        throw new ORPCError("NOT_FOUND", { message: "OB member not found" });
-      }
-      return {
-        id: row.id,
-        userId: row.userId,
-        name: row.name,
-        role: row.role,
-        email: row.email,
-        adminEmail: row.adminEmail,
-        photo: row.photo,
-        bio: row.bio,
-        year: row.year,
-        sortOrder: row.sortOrder,
-        status: row.status,
-        decidedBy: row.decidedBy,
-        decidedAt: row.decidedAt?.toISOString() ?? null,
-        createdAt: row.createdAt.toISOString(),
-        updatedAt: row.updatedAt.toISOString(),
-      };
-    }),
+  get: publicProcedure.input(z.object({ id: z.string() })).handler(async ({ input }) => {
+    const db = createDb();
+    const row = await db.select().from(obMembers).where(eq(obMembers.id, input.id)).get();
+    if (!row) {
+      throw new ORPCError("NOT_FOUND", { message: "OB member not found" });
+    }
+    return {
+      id: row.id,
+      userId: row.userId,
+      name: row.name,
+      role: row.role,
+      email: row.email,
+      adminEmail: row.adminEmail,
+      photo: row.photo,
+      bio: row.bio,
+      year: row.year,
+      sortOrder: row.sortOrder,
+      status: row.status,
+      decidedBy: row.decidedBy,
+      decidedAt: row.decidedAt?.toISOString() ?? null,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  }),
 
   create: protectedProcedure
     .input(
@@ -314,7 +324,12 @@ export const obMembersRouter = {
         setData.decidedBy = context.auth.userId;
         setData.decidedAt = now;
       }
-      const record = await db.update(obMembers).set(setData).where(eq(obMembers.id, id)).returning().get();
+      const record = await db
+        .update(obMembers)
+        .set(setData)
+        .where(eq(obMembers.id, id))
+        .returning()
+        .get();
       return {
         id: record.id,
         userId: record.userId,
@@ -354,51 +369,52 @@ export const obMembersRouter = {
   /** Current user's OB membership (or null). */
   myMembership: protectedProcedure.handler(async ({ context }) => {
     const userId = context.auth?.userId;
-    if (!userId) return null;      const db = createDb();
-      const row = await db.select().from(obMembers).where(eq(obMembers.userId, userId)).get();
-      const isAdmin = await isOBAdmin(userId);
-      if (!row) {
-        // Designated OB admin by email but no member row of their own yet
-        // (e.g. the site admin set the OB admin email for a year with no members).
-        if (!isAdmin) return null;
-        return {
-          id: null,
-          userId,
-          name: null,
-          role: "ADMINISTRATOR",
-          email: null,
-          adminEmail: null,
-          isAdmin,
-          photo: null,
-          bio: null,
-          year: "",
-          sortOrder: 0,
-          status: "approved",
-          decidedBy: null,
-          decidedAt: null,
-          createdAt: null,
-          updatedAt: null,
-        };
-      }
+    if (!userId) return null;
+    const db = createDb();
+    const row = await db.select().from(obMembers).where(eq(obMembers.userId, userId)).get();
+    const isAdmin = await isOBAdmin(userId);
+    if (!row) {
+      // Designated OB admin by email but no member row of their own yet
+      // (e.g. the site admin set the OB admin email for a year with no members).
+      if (!isAdmin) return null;
       return {
-        id: row.id,
-        userId: row.userId,
-        name: row.name,
-        role: row.role,
-        email: row.email,
-        adminEmail: row.adminEmail,
+        id: null,
+        userId,
+        name: null,
+        role: "ADMINISTRATOR",
+        email: null,
+        adminEmail: null,
         isAdmin,
-        photo: row.photo,
-        bio: row.bio,
-        year: row.year,
-        sortOrder: row.sortOrder,
-        status: row.status,
-        decidedBy: row.decidedBy,
-        decidedAt: row.decidedAt?.toISOString() ?? null,
-        createdAt: row.createdAt.toISOString(),
-        updatedAt: row.updatedAt.toISOString(),
+        photo: null,
+        bio: null,
+        year: "",
+        sortOrder: 0,
+        status: "approved",
+        decidedBy: null,
+        decidedAt: null,
+        createdAt: null,
+        updatedAt: null,
       };
-    }),
+    }
+    return {
+      id: row.id,
+      userId: row.userId,
+      name: row.name,
+      role: row.role,
+      email: row.email,
+      adminEmail: row.adminEmail,
+      isAdmin,
+      photo: row.photo,
+      bio: row.bio,
+      year: row.year,
+      sortOrder: row.sortOrder,
+      status: row.status,
+      decidedBy: row.decidedBy,
+      decidedAt: row.decidedAt?.toISOString() ?? null,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  }),
 
   /** Request OB membership (creates pending record). */
   requestMembership: protectedProcedure
@@ -416,7 +432,11 @@ export const obMembersRouter = {
         throw new ORPCError("UNAUTHORIZED");
       }
       const db = createDb();
-      const existing = await db.select().from(obMembers).where(eq(obMembers.userId, context.auth.userId)).get();
+      const existing = await db
+        .select()
+        .from(obMembers)
+        .where(eq(obMembers.userId, context.auth.userId))
+        .get();
       if (existing) {
         if (existing.status === "approved") {
           return {
@@ -672,7 +692,11 @@ export const obMembersRouter = {
         .all();
       for (const admin of yearAdmins) {
         if (admin.adminEmail) {
-          await db.update(obMembers).set({ adminEmail: null, updatedAt: now }).where(eq(obMembers.id, admin.id)).run();
+          await db
+            .update(obMembers)
+            .set({ adminEmail: null, updatedAt: now })
+            .where(eq(obMembers.id, admin.id))
+            .run();
         }
       }
 
@@ -703,7 +727,12 @@ export const obMembersRouter = {
         target = await db.insert(obMembers).values(values).returning().get();
       }
 
-      const record = await db.update(obMembers).set({ adminEmail: input.email, updatedAt: now }).where(eq(obMembers.id, target.id)).returning().get();
+      const record = await db
+        .update(obMembers)
+        .set({ adminEmail: input.email, updatedAt: now })
+        .where(eq(obMembers.id, target.id))
+        .returning()
+        .get();
       await syncOBAdminEmails();
 
       return { success: true, adminEmail: record.adminEmail };
@@ -747,7 +776,11 @@ export const obMembersRouter = {
 
       for (const entry of input.entries) {
         if (entry.id) {
-          const existing = await db.select().from(obMembers).where(eq(obMembers.id, entry.id)).get();
+          const existing = await db
+            .select()
+            .from(obMembers)
+            .where(eq(obMembers.id, entry.id))
+            .get();
           if (!existing) {
             throw new ORPCError("NOT_FOUND", { message: "OB member not found" });
           }
@@ -847,7 +880,12 @@ export const obEventsRouter = {
         conditions.push(like(obEvents.title, `%${input.search}%`));
       }
       const where = conditions.length > 0 ? and(...conditions) : undefined;
-      const rows = await db.select().from(obEvents).where(where).orderBy(desc(obEvents.eventDate)).all();
+      const rows = await db
+        .select()
+        .from(obEvents)
+        .where(where)
+        .orderBy(desc(obEvents.eventDate))
+        .all();
       return rows.map((row) => ({
         id: row.id,
         slug: row.slug,
@@ -1008,8 +1046,10 @@ export const obEventsRouter = {
       if (updateData.description !== undefined) setData.description = updateData.description;
       if (updateData.coverImage !== undefined) setData.coverImage = updateData.coverImage;
       if (updateData.location !== undefined) setData.location = updateData.location;
-      if (updateData.eventDate !== undefined) setData.eventDate = updateData.eventDate ? new Date(updateData.eventDate) : null;
-      if (updateData.endDate !== undefined) setData.endDate = updateData.endDate ? new Date(updateData.endDate) : null;
+      if (updateData.eventDate !== undefined)
+        setData.eventDate = updateData.eventDate ? new Date(updateData.eventDate) : null;
+      if (updateData.endDate !== undefined)
+        setData.endDate = updateData.endDate ? new Date(updateData.endDate) : null;
       if (updateData.isAllDay !== undefined) setData.isAllDay = updateData.isAllDay;
       if (updateData.status !== undefined) {
         if (!isSiteAdmin && updateData.status === "published" && existing.status !== "published") {
@@ -1027,7 +1067,12 @@ export const obEventsRouter = {
         setData.status = "published";
         setData.publishedAt = now;
       }
-      const record = await db.update(obEvents).set(setData).where(eq(obEvents.id, id)).returning().get();
+      const record = await db
+        .update(obEvents)
+        .set(setData)
+        .where(eq(obEvents.id, id))
+        .returning()
+        .get();
       return {
         id: record.id,
         slug: record.slug,
@@ -1078,7 +1123,12 @@ export const obDonationsRouter = {
         conditions.push(like(obDonations.donorName, `%${input.search}%`));
       }
       const where = conditions.length > 0 ? and(...conditions) : undefined;
-      const rows = await db.select().from(obDonations).where(where).orderBy(desc(obDonations.donatedAt)).all();
+      const rows = await db
+        .select()
+        .from(obDonations)
+        .where(where)
+        .orderBy(desc(obDonations.donatedAt))
+        .all();
       return rows.map((row) => ({
         id: row.id,
         donorName: row.donorName,
@@ -1096,30 +1146,28 @@ export const obDonationsRouter = {
       }));
     }),
 
-  get: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .handler(async ({ input }) => {
-      const db = createDb();
-      const row = await db.select().from(obDonations).where(eq(obDonations.id, input.id)).get();
-      if (!row) {
-        throw new ORPCError("NOT_FOUND", { message: "Donation not found" });
-      }
-      return {
-        id: row.id,
-        donorName: row.donorName,
-        donorEmail: row.donorEmail,
-        amount: row.amount,
-        currency: row.currency,
-        purpose: row.purpose,
-        message: row.message,
-        image: row.image,
-        isAnonymous: row.isAnonymous,
-        status: row.status,
-        donatedAt: row.donatedAt?.toISOString() ?? null,
-        createdAt: row.createdAt.toISOString(),
-        updatedAt: row.updatedAt.toISOString(),
-      };
-    }),
+  get: publicProcedure.input(z.object({ id: z.string() })).handler(async ({ input }) => {
+    const db = createDb();
+    const row = await db.select().from(obDonations).where(eq(obDonations.id, input.id)).get();
+    if (!row) {
+      throw new ORPCError("NOT_FOUND", { message: "Donation not found" });
+    }
+    return {
+      id: row.id,
+      donorName: row.donorName,
+      donorEmail: row.donorEmail,
+      amount: row.amount,
+      currency: row.currency,
+      purpose: row.purpose,
+      message: row.message,
+      image: row.image,
+      isAnonymous: row.isAnonymous,
+      status: row.status,
+      donatedAt: row.donatedAt?.toISOString() ?? null,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  }),
 
   create: protectedProcedure
     .input(
@@ -1199,7 +1247,11 @@ export const obDonationsRouter = {
       }
       await requireOBAdminOrSiteAdmin(context.auth.userId, context.auth);
       const db = createDb();
-      const existing = await db.select().from(obDonations).where(eq(obDonations.id, input.id)).get();
+      const existing = await db
+        .select()
+        .from(obDonations)
+        .where(eq(obDonations.id, input.id))
+        .get();
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Donation not found" });
       }
@@ -1217,7 +1269,12 @@ export const obDonationsRouter = {
       if (updateData.donatedAt !== undefined) {
         setData.donatedAt = updateData.donatedAt ? new Date(updateData.donatedAt) : null;
       }
-      const record = await db.update(obDonations).set(setData).where(eq(obDonations.id, id)).returning().get();
+      const record = await db
+        .update(obDonations)
+        .set(setData)
+        .where(eq(obDonations.id, id))
+        .returning()
+        .get();
       return {
         id: record.id,
         donorName: record.donorName,
@@ -1251,23 +1308,26 @@ export const obDonationsRouter = {
 // --- OB Event Galleries Router ---
 
 export const obEventGalleriesRouter = {
-  list: publicProcedure
-    .input(z.object({ obEventId: z.string() }))
-    .handler(async ({ input }) => {
-      const db = createDb();
-      const rows = await db.select().from(gallery).where(eq(gallery.obEventId, input.obEventId)).orderBy(desc(gallery.createdAt)).all();
-      return rows.map((row) => ({
-        id: row.id,
-        slug: row.slug,
-        title: row.title,
-        description: row.description,
-        coverImage: row.coverImage,
-        status: row.status,
-        publishedAt: row.publishedAt?.toISOString() ?? null,
-        createdAt: row.createdAt.toISOString(),
-        updatedAt: row.updatedAt.toISOString(),
-      }));
-    }),
+  list: publicProcedure.input(z.object({ obEventId: z.string() })).handler(async ({ input }) => {
+    const db = createDb();
+    const rows = await db
+      .select()
+      .from(gallery)
+      .where(eq(gallery.obEventId, input.obEventId))
+      .orderBy(desc(gallery.createdAt))
+      .all();
+    return rows.map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      description: row.description,
+      coverImage: row.coverImage,
+      status: row.status,
+      publishedAt: row.publishedAt?.toISOString() ?? null,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    }));
+  }),
 
   create: protectedProcedure
     .input(
@@ -1339,7 +1399,12 @@ export const obEventGalleriesRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
       }
       const now = new Date();
-      const record = await db.update(gallery).set({ status: "published", publishedAt: now, updatedAt: now }).where(eq(gallery.id, input.id)).returning().get();
+      const record = await db
+        .update(gallery)
+        .set({ status: "published", publishedAt: now, updatedAt: now })
+        .where(eq(gallery.id, input.id))
+        .returning()
+        .get();
       return {
         id: record.id,
         slug: record.slug,
@@ -1369,7 +1434,12 @@ export const obEventGalleriesRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
       }
       const now = new Date();
-      const record = await db.update(gallery).set({ status: "archived", publishedAt: null, updatedAt: now }).where(eq(gallery.id, input.id)).returning().get();
+      const record = await db
+        .update(gallery)
+        .set({ status: "archived", publishedAt: null, updatedAt: now })
+        .where(eq(gallery.id, input.id))
+        .returning()
+        .get();
       return {
         id: record.id,
         slug: record.slug,

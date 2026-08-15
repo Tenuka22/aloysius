@@ -3,7 +3,13 @@
 import { Outlet, Link, useLocation } from "@tanstack/react-router";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Separator } from "@aloysius-web/ui/components/separator";
-import { IconUsers, IconUserShield, IconArrowLeft, IconCalendarEvent, IconHeart } from "@tabler/icons-react";
+import {
+  IconUsers,
+  IconUserShield,
+  IconArrowLeft,
+  IconCalendarEvent,
+  IconHeart,
+} from "@tabler/icons-react";
 import { OBAdminDashboard } from "@/routes/ob-admin._dashboard";
 
 export function OBAdminLayout() {

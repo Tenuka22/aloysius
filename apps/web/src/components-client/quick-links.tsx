@@ -1,10 +1,35 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  IconSchool,
+  IconBook,
+  IconTrophy,
+  IconUsers,
+  IconCalendar,
+  IconStar,
+  IconAward,
+  IconBriefcase,
+  IconHeart,
+  IconArrowRight,
+} from "@tabler/icons-react";
 
 gsap.registerPlugin(ScrollTrigger);
+
+const iconMap: Record<string, React.ElementType> = {
+  school: IconSchool,
+  book: IconBook,
+  trophy: IconTrophy,
+  users: IconUsers,
+  calendar: IconCalendar,
+  star: IconStar,
+  award: IconAward,
+  briefcase: IconBriefcase,
+  heart: IconHeart,
+  "arrow-right": IconArrowRight,
+};
 
 export function QuickLinks({ settings }: { settings?: Record<string, string> }) {
   const sectionRef = useRef<HTMLElement>(null);
@@ -35,32 +60,23 @@ export function QuickLinks({ settings }: { settings?: Record<string, string> }) 
       num: `0${i}`,
       text: s(`quicklink${i}_text`),
       url: s(`quicklink${i}_url`),
+      iconKey: s(`quicklink${i}_icon`),
     }))
     .filter((l) => l.text.trim().length > 0);
 
   const heading = s("quicklinks_heading");
-  const eyebrow = s("quicklinks_eyebrow");
   const ctaText = s("quicklinks_cta_text");
   const ctaUrl = s("quicklinks_cta_url") || "/about";
 
   if (links.length === 0 && !heading) return null;
 
   return (
-    <section ref={sectionRef} className="bg-cream py-20 sm:py-24 px-4 sm:px-6 lg:px-12">
+    <section ref={sectionRef} className="bg-green-dark py-20 sm:py-28 lg:py-32 px-4 sm:px-6 lg:px-12">
       <div className="mx-auto max-w-[1180px]">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
-          <div>
-            {eyebrow && (
-              <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
-                {eyebrow}
-              </div>
-            )}
-            {heading && (
-              <h2 className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] m-0">
-                {heading}
-              </h2>
-            )}
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-10 lg:mb-14">
+          <h2 className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] text-cream m-0">
+            {heading}
+          </h2>
           {ctaText && (
             <a
               href={ctaUrl}
@@ -72,21 +88,25 @@ export function QuickLinks({ settings }: { settings?: Record<string, string> }) 
         </div>
 
         {links.length > 0 && (
-          <div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px border border-gold/20"
-            style={{ background: "rgba(255,178,3,0.2)" }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
             {links.map((link) => (
               <a
                 key={link.num}
                 href={link.url || "#"}
                 data-animate
-                className="group bg-white hover:bg-gold/10 transition-colors px-7 py-9 flex flex-col justify-between min-h-[170px]"
+                className="group bg-cream border-2 border-gold hover:bg-gold transition-colors duration-300 p-7 lg:p-8 flex flex-col justify-between min-h-[220px]"
               >
-                <div className="font-heading text-[38px] text-gold font-semibold">
-                  {link.num}
+                <div className="flex items-start justify-between">
+                  <div className="font-heading text-[56px] lg:text-[72px] text-gold group-hover:text-green-dark leading-none transition-colors duration-300">
+                    {link.num}
+                  </div>
+                  {link.iconKey && iconMap[link.iconKey] && (
+                    <div className="text-gold group-hover:text-green-dark transition-colors duration-300">
+                      {React.createElement(iconMap[link.iconKey], { size: 28, stroke: 1.5 })}
+                    </div>
+                  )}
                 </div>
-                <div className="font-bold text-[17px] text-green-dark mt-3.5 group-hover:underline">
+                <div className="font-bold text-[17px] text-green-dark group-hover:text-green-dark mt-4">
                   {link.text}
                 </div>
               </a>

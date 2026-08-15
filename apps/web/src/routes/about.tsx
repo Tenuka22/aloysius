@@ -200,7 +200,13 @@ export const Route = createFileRoute("/about")({
     const [settings, principalData, staffData] = await Promise.all([
       client.settings.getAll(),
       client.principals.getCurrent(),
-      client.principals.list({ page: 1, pageSize: 100, status: "published", sort: "sortOrder", sortDir: "asc" }),
+      client.principals.list({
+        page: 1,
+        pageSize: 100,
+        status: "published",
+        sort: "sortOrder",
+        sortDir: "asc",
+      }),
     ]);
     return { settings, principal: principalData, staff: staffData.rows };
   },
@@ -216,22 +222,37 @@ function ArchivalImage({ src, className }: { src?: string; className?: string })
     <div
       className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-green-dark/10 to-green-dark/5 ${className ?? ""}`}
     >
-      <span className="text-[10px] tracking-widest text-green-dark/40 font-semibold">ARCHIVE PHOTO</span>
+      <span className="text-[10px] tracking-widest text-green-dark/40 font-semibold">
+        ARCHIVE PHOTO
+      </span>
     </div>
   );
 }
 
 function AboutPage() {
-  const { settings: settingsRaw, principal, staff } = Route.useLoaderData() as {
+  const {
+    settings: settingsRaw,
+    principal,
+    staff,
+  } = Route.useLoaderData() as {
     settings: Record<string, string>;
     principal: any;
-    staff: { id: string; name: string; title: string; portrait: string | null; year: string; sortOrder: number }[];
+    staff: {
+      id: string;
+      name: string;
+      title: string;
+      portrait: string | null;
+      year: string;
+      sortOrder: number;
+    }[];
   };
   const settings = settingsRaw as Record<string, string>;
   const s = (key: string) => settings[key] || DEFAULTS[key] || "";
 
   const displayName = principal?.name || s("principal_name") || DEFAULTS.principal_name;
-  const displayHeading = principal?.quote ? "A Word from the Principal" : s("about_principal_heading");
+  const displayHeading = principal?.quote
+    ? "A Word from the Principal"
+    : s("about_principal_heading");
   const displayMessage = principal?.quote || s("about_principal_message");
   const photo = principal?.portrait || settings.principal_photo;
 
@@ -246,7 +267,14 @@ function AboutPage() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      for (const ref of [heroRef, historyRef, visionRef, principalRef, anthemRef, administrationRef]) {
+      for (const ref of [
+        heroRef,
+        historyRef,
+        visionRef,
+        principalRef,
+        anthemRef,
+        administrationRef,
+      ]) {
         gsap.fromTo(
           ref.current?.querySelectorAll("[data-animate]") ?? [],
           { opacity: 0, y: 24 },
@@ -272,20 +300,29 @@ function AboutPage() {
   }));
 
   // Group staff by year, sorted descending (most recent first)
-  const staffByYear = staff.reduce((acc: Record<string, typeof staff>, member) => {
-    const y = member.year || "Unknown";
-    if (!acc[y]) acc[y] = [];
-    acc[y].push(member);
-    return acc;
-  }, {} as Record<string, typeof staff>);
+  const staffByYear = staff.reduce(
+    (acc: Record<string, typeof staff>, member) => {
+      const y = member.year || "Unknown";
+      if (!acc[y]) acc[y] = [];
+      acc[y].push(member);
+      return acc;
+    },
+    {} as Record<string, typeof staff>,
+  );
   const sortedYears = Object.keys(staffByYear).sort((a, b) => b.localeCompare(a));
 
   // Role display order
   const roleOrder = [
-    "PRINCIPAL", "VICE PRINCIPAL", "DEPUTY PRINCIPAL",
-    "DIRECTOR OF STUDIES", "BURSAR", "SPORTS DIRECTOR",
-    "SECTIONAL HEAD - PRIMARY (1-5)", "SECTIONAL HEAD - JUNIOR (6-9)",
-    "SECTIONAL HEAD - SENIOR (9-11)", "SECTIONAL HEAD - COLLEGE (12-13)",
+    "PRINCIPAL",
+    "VICE PRINCIPAL",
+    "DEPUTY PRINCIPAL",
+    "DIRECTOR OF STUDIES",
+    "BURSAR",
+    "SPORTS DIRECTOR",
+    "SECTIONAL HEAD - PRIMARY (1-5)",
+    "SECTIONAL HEAD - JUNIOR (6-9)",
+    "SECTIONAL HEAD - SENIOR (9-11)",
+    "SECTIONAL HEAD - COLLEGE (12-13)",
   ];
 
   return (
@@ -323,7 +360,10 @@ function AboutPage() {
             >
               {s("about_hero_title")}
             </h1>
-            <p data-animate className="text-base sm:text-[17px] leading-[1.7] text-cream/75 max-w-[56ch]">
+            <p
+              data-animate
+              className="text-base sm:text-[17px] leading-[1.7] text-cream/75 max-w-[56ch]"
+            >
               {s("about_hero_intro")}
             </p>
             <div
@@ -350,7 +390,10 @@ function AboutPage() {
         {/* Founders */}
         <section className="bg-cream-warm border-t border-green-dark/[0.08] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
           <div className="mx-auto max-w-295">
-            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
+            <div
+              data-animate
+              className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5"
+            >
               OUR FOUNDATIONS
             </div>
             <h2
@@ -370,7 +413,9 @@ function AboutPage() {
                 </div>
                 <h3 className="font-bold text-lg mb-2">Bishop Joseph Van Reeth</h3>
                 <p className="text-sm leading-[1.7] text-[#013405]/75">
-                  Founded in 1895 by Belgian Jesuit missionaries under Bishop Joseph Van Reeth, the first bishop of Galle, St. Aloysius' College carries forward a 130-year tradition of forming young men of competence, conscience and compassion.
+                  Founded in 1895 by Belgian Jesuit missionaries under Bishop Joseph Van Reeth, the
+                  first bishop of Galle, St. Aloysius' College carries forward a 130-year tradition
+                  of forming young men of competence, conscience and compassion.
                 </p>
               </div>
               <div data-animate className="flex flex-col">
@@ -383,7 +428,8 @@ function AboutPage() {
                 </div>
                 <h3 className="font-bold text-lg mb-2">St. Aloysius Gonzaga</h3>
                 <p className="text-sm leading-[1.7] text-[#013405]/75">
-                  Named after St. Aloysius Gonzaga, the patron saint of youth, the college embodies the Jesuit values of academic excellence, moral integrity and service to others.
+                  Named after St. Aloysius Gonzaga, the patron saint of youth, the college embodies
+                  the Jesuit values of academic excellence, moral integrity and service to others.
                 </p>
               </div>
             </div>
@@ -391,9 +437,16 @@ function AboutPage() {
         </section>
 
         {/* History Timeline */}
-        <section id="history" ref={historyRef} className="bg-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
+        <section
+          id="history"
+          ref={historyRef}
+          className="bg-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
+        >
           <div className="mx-auto max-w-295">
-            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+            <div
+              data-animate
+              className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5"
+            >
               HISTORY
             </div>
             <h2
@@ -415,7 +468,9 @@ function AboutPage() {
                   <div className="hidden sm:block bg-[#FFB203] h-full min-h-20" />
                   <div>
                     <div className="font-bold text-lg sm:text-[19px] mb-2.5">{t.title}</div>
-                    <div className="text-sm sm:text-[15px] leading-[1.7] text-[#013405]/75">{t.body}</div>
+                    <div className="text-sm sm:text-[15px] leading-[1.7] text-[#013405]/75">
+                      {t.body}
+                    </div>
                   </div>
                   <div className="hidden lg:block h-42.5">
                     <ArchivalImage src={t.image} />
@@ -438,13 +493,17 @@ function AboutPage() {
             style={{ background: "rgba(255,178,3,0.25)" }}
           >
             <div data-animate className="bg-[#013405] px-8 sm:px-13 py-15">
-              <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-5.5">VISION</div>
+              <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-5.5">
+                VISION
+              </div>
               <p className="font-['Cormorant_Garamond'] text-2xl sm:text-[30px] leading-[1.4] font-medium m-0">
                 {s("about_vision_statement")}
               </p>
             </div>
             <div data-animate className="bg-[#013405] px-8 sm:px-13 py-15">
-              <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-5.5">MISSION</div>
+              <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-5.5">
+                MISSION
+              </div>
               <p className="font-['Cormorant_Garamond'] text-2xl sm:text-[30px] leading-[1.4] font-medium m-0">
                 {s("about_mission_statement")}
               </p>
@@ -482,16 +541,16 @@ function AboutPage() {
         </section>
 
         {/* Principal's Message */}
-        <section id="principal" ref={principalRef} className="bg-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
+        <section
+          id="principal"
+          ref={principalRef}
+          className="bg-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
+        >
           <div className="mx-auto max-w-270 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-10 lg:gap-18 items-center">
             <div data-animate className="relative max-w-[340px] mx-auto lg:mx-0 w-full">
               <div className="absolute -right-3.5 -bottom-3.5 w-full h-full border border-[#FFB203] -z-10 pointer-events-none" />
               {photo ? (
-                <img
-                  src={photo}
-                  alt={displayName}
-                  className="w-full h-105 object-cover"
-                />
+                <img src={photo} alt={displayName} className="w-full h-105 object-cover" />
               ) : (
                 <div className="w-full h-105 flex items-center justify-center bg-gradient-to-br from-[#013405]/10 to-[#013405]/5">
                   <span className="text-[11px] tracking-widest text-[#013405]/40 font-semibold">
@@ -507,9 +566,7 @@ function AboutPage() {
               <h2 className="font-['Cormorant_Garamond'] font-semibold text-3xl sm:text-[44px] mb-6">
                 {displayHeading}
               </h2>
-              <p className="text-base leading-[1.75] text-[#013405]/80 mb-6.5">
-                {displayMessage}
-              </p>
+              <p className="text-base leading-[1.75] text-[#013405]/80 mb-6.5">{displayMessage}</p>
               <div className="font-['Cormorant_Garamond'] italic text-2xl sm:text-[28px] text-[#013405]/50">
                 &mdash; {displayName}
               </div>
@@ -530,7 +587,10 @@ function AboutPage() {
           className="bg-[#fffdf6] border-t border-[#013405]/[0.08] py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
         >
           <div className="mx-auto max-w-190 text-center">
-            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+            <div
+              data-animate
+              className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5"
+            >
               COLLEGE ANTHEM
             </div>
             <h2
@@ -569,8 +629,8 @@ function AboutPage() {
                   />
                 </div>
                 <p className="text-xs text-[#013405]/50 text-center mt-2 italic">
-                  English: Words by D. Anghie &middot; Music by Strom Sidicinus, S.J. &middot; Sinhala:
-                  Lyrics by Rev. Fr. Moses Perera &middot; Music by Sunil Santha
+                  English: Words by D. Anghie &middot; Music by Strom Sidicinus, S.J. &middot;
+                  Sinhala: Lyrics by Rev. Fr. Moses Perera &middot; Music by Sunil Santha
                 </p>
               </div>
 
@@ -582,7 +642,9 @@ function AboutPage() {
                     {anthemLyrics[anthemTab]?.stanzas.map((stanza, si) => (
                       <div
                         key={si}
-                        className={si === 1 || si === 2 || si === 18 || si === 19 ? "text-center" : ""}
+                        className={
+                          si === 1 || si === 2 || si === 18 || si === 19 ? "text-center" : ""
+                        }
                       >
                         {stanza.map((line, li) => (
                           <p
@@ -607,7 +669,13 @@ function AboutPage() {
                     onClick={() => setShowScore(!showScore)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-[#013405]/70 hover:text-[#013405] border border-[#013405]/15 transition-colors"
                   >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-4">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="size-4"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -622,7 +690,11 @@ function AboutPage() {
                       strokeWidth="2"
                       className={`size-3 transition-transform ${showScore ? "rotate-180" : ""}`}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                      />
                     </svg>
                   </button>
 
@@ -650,7 +722,10 @@ function AboutPage() {
           className="bg-[#013405] text-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
         >
           <div className="mx-auto max-w-295">
-            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-4.5">
+            <div
+              data-animate
+              className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-4.5"
+            >
               ADMINISTRATION
             </div>
             <h2
@@ -660,14 +735,18 @@ function AboutPage() {
               {s("about_administration_heading")}
             </h2>
             {sortedYears.length === 0 ? (
-              <p data-animate className="text-[#FFF8E7]/50 text-sm">No staff members added yet.</p>
+              <p data-animate className="text-[#FFF8E7]/50 text-sm">
+                No staff members added yet.
+              </p>
             ) : (
               <div className="space-y-16">
                 {sortedYears.map((year) => {
                   const yearMembers = staffByYear[year].sort((a, b) => {
                     const ai = roleOrder.indexOf(a.title);
                     const bi = roleOrder.indexOf(b.title);
-                    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi) || a.sortOrder - b.sortOrder;
+                    return (
+                      (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi) || a.sortOrder - b.sortOrder
+                    );
                   });
                   return (
                     <div key={year} data-animate>
@@ -678,7 +757,11 @@ function AboutPage() {
                         {yearMembers.map((member) => (
                           <div key={member.id} data-animate>
                             {member.portrait ? (
-                              <img src={member.portrait} alt={member.name} className="w-full h-70 object-cover" />
+                              <img
+                                src={member.portrait}
+                                alt={member.name}
+                                className="w-full h-70 object-cover"
+                              />
                             ) : (
                               <div className="w-full h-70 flex items-center justify-center bg-[#FFF8E7]/5">
                                 <span className="text-[10px] tracking-widest text-[#FFF8E7]/40 font-semibold">
@@ -687,7 +770,9 @@ function AboutPage() {
                               </div>
                             )}
                             <div className="font-bold text-base mt-4.5 mb-1">{member.name}</div>
-                            <div className="text-xs tracking-[0.12em] text-[#FFB203]">{member.title}</div>
+                            <div className="text-xs tracking-[0.12em] text-[#FFB203]">
+                              {member.title}
+                            </div>
                           </div>
                         ))}
                       </div>

@@ -3,26 +3,18 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 
 gsap.registerPlugin(ScrollTrigger);
 
 function ArchivalImage({ src, className }: { src?: string; className?: string }) {
-  const ratioClass = aspectRatioClass(getAspectRatio(src)) || "aspect-[4/3]";
   if (src) {
-    return (
-      <img
-        src={src}
-        alt=""
-        className={`w-full ${ratioClass} object-cover ${className ?? ""}`}
-      />
-    );
+    return <img src={src} alt="" className={`w-full object-cover ${className ?? ""}`} />;
   }
   return (
     <div
-      className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-green-dark/10 to-green-dark/5 ${className ?? ""}`}
+      className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-green-dark/[0.07] to-green-dark/[0.02] ${className ?? ""}`}
     >
-      <span className="text-[11px] tracking-widest text-green-dark/40 font-semibold">
+      <span className="text-[11px] tracking-[0.18em] text-green-dark/50 font-semibold">
         ARCHIVE PHOTO
       </span>
     </div>
@@ -39,14 +31,14 @@ export function Heritage({ settings }: { settings?: Record<string, string> }) {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         el.querySelectorAll("[data-animate]"),
-        { opacity: 0, y: 24 },
+        { opacity: 0, y: 28 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.6,
-          stagger: 0.1,
+          duration: 0.85,
+          stagger: 0.14,
           ease: "power3.out",
-          scrollTrigger: { trigger: el, start: "top 85%", once: true },
+          scrollTrigger: { trigger: el, start: "top 82%", once: true },
         },
       );
     }, el);
@@ -59,71 +51,98 @@ export function Heritage({ settings }: { settings?: Record<string, string> }) {
       ? new Date().getFullYear() - foundingYear
       : null;
   const headingLines = s("heritage_heading").split("\n");
+  const bannerSrc = settings?.heritage_image_2;
+  const portraitSrc = settings?.heritage_image_1;
 
   return (
-    <section ref={sectionRef} className="bg-cream py-24 sm:py-[120px] px-4 sm:px-6 lg:px-12">
-      <div className="mx-auto max-w-[1180px] grid grid-cols-1 lg:grid-cols-[2px_minmax(0,1fr)_minmax(0,440px)] gap-10 lg:gap-14 items-start">
+    <section
+      ref={sectionRef}
+      className="relative bg-cream py-24 sm:py-32 px-4 sm:px-6 lg:px-12 overflow-hidden"
+    >
+      {foundingYear > 0 && (
+        <div
+          className="pointer-events-none absolute -left-2 lg:left-8 top-1/2 -translate-y-1/2 font-heading text-[150px] lg:text-[260px] font-bold text-green-dark/[0.04] leading-none select-none"
+          aria-hidden="true"
+        >
+          {foundingYear}
+        </div>
+      )}
+
+      <div className="relative mx-auto max-w-[1180px] grid grid-cols-1 lg:grid-cols-[2px_minmax(0,1fr)_minmax(0,400px)] gap-10 lg:gap-14 items-start">
         <div
           data-animate
           className="hidden lg:block h-full min-h-[420px]"
-          style={{ background: "linear-gradient(180deg, #FFB203, rgba(255,178,3,0.08))" }}
+          style={{ background: "linear-gradient(180deg, #FFB203 0%, rgba(255,178,3,0.06) 100%)" }}
         />
-        <div data-animate>
-          {s("heritage_eyebrow") && (
-            <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-5">
-              {s("heritage_eyebrow")}
-            </div>
-          )}
-          <h2 className="font-heading font-semibold text-green-dark text-4xl sm:text-5xl lg:text-[58px] leading-[1.05] mb-7">
-            {headingLines.map((line: string, i: number) => (
-              <span key={i}>
-                {line}
-                {i < headingLines.length - 1 && <br />}
-              </span>
-            ))}
-          </h2>
+        <div data-animate className="flex flex-col gap-8">
+          <div>
+            <h2 className="font-heading font-semibold text-green-dark text-4xl sm:text-5xl lg:text-[58px] leading-[1.05] mb-5">
+              {headingLines.map((line: string, i: number) => (
+                <span key={i}>
+                  {line}
+                  {i < headingLines.length - 1 && <br />}
+                </span>
+              ))}
+            </h2>
+            <div className="w-10 h-1 bg-gold" />
+          </div>
+
           {s("heritage_intro") && (
-            <p className="text-[16.5px] leading-[1.75] text-green-dark/80 max-w-[52ch] mb-4">
+            <p className="text-[15px] sm:text-base text-green-dark/75 leading-relaxed max-w-[62ch]">
               {s("heritage_intro")}
             </p>
           )}
+
+          {bannerSrc && (
+            <ArchivalImage
+              src={bannerSrc}
+              className="aspect-[16/9] shadow-xl shadow-green-dark/10"
+            />
+          )}
+
           {foundingYear > 0 && (
-            <div className="flex gap-11 my-11">
+            <div className="flex flex-wrap items-baseline gap-x-10 gap-y-3">
               <div>
-                <div className="font-heading text-4xl font-semibold text-green-dark">
+                <div className="font-heading text-4xl font-semibold text-green-dark tracking-tight">
                   Est.&nbsp;{foundingYear}
                 </div>
-                <div className="text-xs tracking-[0.14em] text-green-dark/60 mt-1">
+                <div className="text-[11px] tracking-[0.16em] text-green-dark/55 mt-1 font-semibold">
                   {s("heritage_founded_label")}
                 </div>
               </div>
               {tradition !== null && (
                 <div>
-                  <div className="font-heading text-4xl font-semibold text-green-dark">
+                  <div className="font-heading text-4xl font-semibold text-green-dark tracking-tight">
                     {tradition}&nbsp;Years
                   </div>
-                  <div className="text-xs tracking-[0.14em] text-green-dark/60 mt-1">
+                  <div className="text-[11px] tracking-[0.16em] text-green-dark/55 mt-1 font-semibold">
                     {s("heritage_tradition_label")}
                   </div>
                 </div>
               )}
             </div>
           )}
+
           {s("heritage_cta_text") && (
             <a
               href={s("heritage_cta_url") || "/about"}
-              className="inline-flex items-center gap-2.5 font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5"
+              className="inline-flex items-center gap-2.5 font-bold text-sm text-green-dark border-b-2 border-gold pb-1.5 hover:text-green-darker transition-colors"
             >
-              {s("heritage_cta_text")} <span>&rarr;</span>
+              {s("heritage_cta_text")} <span aria-hidden="true">&rarr;</span>
             </a>
           )}
         </div>
-        <div data-animate className="flex flex-col gap-4">
-          <ArchivalImage src={settings?.heritage_image_1} className="h-[280px] sm:h-[320px]" />
-          <ArchivalImage
-            src={settings?.heritage_image_2}
-            className="h-[170px] sm:h-[190px] w-3/4 self-end"
-          />
+        <div data-animate>
+          <div className="relative">
+            <ArchivalImage
+              src={portraitSrc}
+              className="aspect-[4/5] shadow-xl shadow-green-dark/10"
+            />
+            <div
+              className="absolute -bottom-1.5 -right-1.5 w-8 h-8 border-b-2 border-r-2 border-gold"
+              aria-hidden="true"
+            />
+          </div>
         </div>
       </div>
     </section>

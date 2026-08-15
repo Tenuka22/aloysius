@@ -111,25 +111,67 @@ function ImageInline({ onChange }: { onChange: (val: unknown) => void }) {
 }
 
 const fields: FieldEntry<CreateDonationValues | UpdateDonationValues>[] = [
-  { name: "image", kind: "custom", label: "Image", required: false, customRenderer: ({ onChange }) => <ImageInline onChange={onChange} /> },
-  { name: "donorName", kind: "text", label: "Donor Name", placeholder: "e.g. John Perera", required: true },
-  { name: "donorEmail", kind: "text", label: "Donor Email", placeholder: "john@example.com", required: false },
+  {
+    name: "image",
+    kind: "custom",
+    label: "Image",
+    required: false,
+    customRenderer: ({ onChange }) => <ImageInline onChange={onChange} />,
+  },
+  {
+    name: "donorName",
+    kind: "text",
+    label: "Donor Name",
+    placeholder: "e.g. John Perera",
+    required: true,
+  },
+  {
+    name: "donorEmail",
+    kind: "text",
+    label: "Donor Email",
+    placeholder: "john@example.com",
+    required: false,
+  },
   { name: "amount", kind: "number", label: "Amount", placeholder: "0.00", required: false },
-  { name: "currency", kind: "select", label: "Currency", options: [
-    { value: "LKR", label: "Sri Lankan Rupee (LKR)" },
-    { value: "USD", label: "US Dollar (USD)" },
-    { value: "GBP", label: "British Pound (GBP)" },
-    { value: "EUR", label: "Euro (EUR)" },
-  ], required: true },
-  { name: "purpose", kind: "text", label: "Purpose", placeholder: "e.g. Annual Fund, Building Project", required: false },
+  {
+    name: "currency",
+    kind: "select",
+    label: "Currency",
+    options: [
+      { value: "LKR", label: "Sri Lankan Rupee (LKR)" },
+      { value: "USD", label: "US Dollar (USD)" },
+      { value: "GBP", label: "British Pound (GBP)" },
+      { value: "EUR", label: "Euro (EUR)" },
+    ],
+    required: true,
+  },
+  {
+    name: "purpose",
+    kind: "text",
+    label: "Purpose",
+    placeholder: "e.g. Annual Fund, Building Project",
+    required: false,
+  },
   { name: "isAnonymous", kind: "checkbox", label: "Anonymous Donation", required: false },
-  { name: "status", kind: "select", label: "Status", options: [
-    { value: "pending", label: "Pending" },
-    { value: "confirmed", label: "Confirmed" },
-    { value: "cancelled", label: "Cancelled" },
-  ], required: true },
+  {
+    name: "status",
+    kind: "select",
+    label: "Status",
+    options: [
+      { value: "pending", label: "Pending" },
+      { value: "confirmed", label: "Confirmed" },
+      { value: "cancelled", label: "Cancelled" },
+    ],
+    required: true,
+  },
   { name: "donatedAt", kind: "date", label: "Donation Date", required: false },
-  { name: "message", kind: "textarea", label: "Message", placeholder: "Personal message from donor...", required: false },
+  {
+    name: "message",
+    kind: "textarea",
+    label: "Message",
+    placeholder: "Personal message from donor...",
+    required: false,
+  },
 ];
 
 export function OBDonationForm({
@@ -171,10 +213,30 @@ export function OBDonationForm({
   const config: FormConfig<CreateDonationValues | UpdateDonationValues> = {
     fields,
     layout: [
-      { columns: [{ fields: ["image"], span: 5 }, { fields: ["donorName", "donorEmail"], span: 7 }] },
-      { columns: [{ fields: ["amount"], span: 6 }, { fields: ["currency"], span: 6 }] },
-      { columns: [{ fields: ["purpose"], span: 6 }, { fields: ["isAnonymous"], span: 6 }] },
-      { columns: [{ fields: ["status"], span: 6 }, { fields: ["donatedAt"], span: 6 }] },
+      {
+        columns: [
+          { fields: ["image"], span: 5 },
+          { fields: ["donorName", "donorEmail"], span: 7 },
+        ],
+      },
+      {
+        columns: [
+          { fields: ["amount"], span: 6 },
+          { fields: ["currency"], span: 6 },
+        ],
+      },
+      {
+        columns: [
+          { fields: ["purpose"], span: 6 },
+          { fields: ["isAnonymous"], span: 6 },
+        ],
+      },
+      {
+        columns: [
+          { fields: ["status"], span: 6 },
+          { fields: ["donatedAt"], span: 6 },
+        ],
+      },
       { columns: [{ fields: ["message"] }] },
     ],
     submitLabel: mode === "create" ? "Record Donation" : "Save Changes",

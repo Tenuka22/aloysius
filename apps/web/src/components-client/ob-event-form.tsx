@@ -43,7 +43,9 @@ type UpdateEventValues = v.InferOutput<typeof updateEventSchema>;
 
 function CoverImageInline({ onChange }: { onChange: (val: unknown) => void }) {
   const form = useBuildForm();
-  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as string | undefined;
+  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as
+    | string
+    | undefined;
   const [uploading, setUploading] = useState(false);
 
   const handleFilesSelected = useCallback(
@@ -108,22 +110,17 @@ function CoverImageInline({ onChange }: { onChange: (val: unknown) => void }) {
   );
 }
 
-function DateTimeInline({
+function DateTimeInline({ value, onChange }: { value: unknown; onChange: (val: unknown) => void }) {
+  return <DateTimePicker value={(value as string) || ""} onChange={(v) => onChange(v)} />;
+}
+
+function ContentEditorInline({
   value,
   onChange,
 }: {
   value: unknown;
   onChange: (val: unknown) => void;
 }) {
-  return (
-    <DateTimePicker
-      value={(value as string) || ""}
-      onChange={(v) => onChange(v)}
-    />
-  );
-}
-
-function ContentEditorInline({ value, onChange }: { value: unknown; onChange: (val: unknown) => void }) {
   const form = useBuildForm();
   const handleImageUpload = useCallback(async (file: File) => {
     const result = await client.files.uploadFile(file);
@@ -143,14 +140,52 @@ function ContentEditorInline({ value, onChange }: { value: unknown; onChange: (v
 }
 
 const fields: FieldEntry<CreateEventValues | UpdateEventValues>[] = [
-  { name: "coverImage", kind: "custom", label: "Cover Image", required: false, customRenderer: ({ onChange }) => <CoverImageInline onChange={onChange} /> },
-  { name: "title", kind: "text", label: "Event Title", placeholder: "e.g. Annual General Meeting", required: true },
-  { name: "location", kind: "text", label: "Location", placeholder: "e.g. College Hall", required: false },
-  { name: "eventDate", kind: "custom", label: "Start Date & Time", required: false, customRenderer: ({ value, onChange }) => <DateTimeInline value={value} onChange={onChange} /> },
-  { name: "endDate", kind: "custom", label: "End Date & Time", required: false, customRenderer: ({ value, onChange }) => <DateTimeInline value={value} onChange={onChange} /> },
+  {
+    name: "coverImage",
+    kind: "custom",
+    label: "Cover Image",
+    required: false,
+    customRenderer: ({ onChange }) => <CoverImageInline onChange={onChange} />,
+  },
+  {
+    name: "title",
+    kind: "text",
+    label: "Event Title",
+    placeholder: "e.g. Annual General Meeting",
+    required: true,
+  },
+  {
+    name: "location",
+    kind: "text",
+    label: "Location",
+    placeholder: "e.g. College Hall",
+    required: false,
+  },
+  {
+    name: "eventDate",
+    kind: "custom",
+    label: "Start Date & Time",
+    required: false,
+    customRenderer: ({ value, onChange }) => <DateTimeInline value={value} onChange={onChange} />,
+  },
+  {
+    name: "endDate",
+    kind: "custom",
+    label: "End Date & Time",
+    required: false,
+    customRenderer: ({ value, onChange }) => <DateTimeInline value={value} onChange={onChange} />,
+  },
   { name: "isAllDay", kind: "checkbox", label: "All Day Event", required: false },
   { name: "publishNow", kind: "checkbox", label: "Publish immediately", required: false },
-  { name: "description", kind: "custom", label: "Description", required: false, customRenderer: ({ value, onChange }) => <ContentEditorInline value={value} onChange={onChange} /> },
+  {
+    name: "description",
+    kind: "custom",
+    label: "Description",
+    required: false,
+    customRenderer: ({ value, onChange }) => (
+      <ContentEditorInline value={value} onChange={onChange} />
+    ),
+  },
 ];
 
 export function OBEventForm({
@@ -192,9 +227,24 @@ export function OBEventForm({
   const config: FormConfig<CreateEventValues | UpdateEventValues> = {
     fields,
     layout: [
-      { columns: [{ fields: ["coverImage"], span: 5 }, { fields: ["title", "location"], span: 7 }] },
-      { columns: [{ fields: ["eventDate"], span: 6 }, { fields: ["endDate"], span: 6 }] },
-      { columns: [{ fields: ["isAllDay"], span: 6 }, { fields: ["publishNow"], span: 6 }] },
+      {
+        columns: [
+          { fields: ["coverImage"], span: 5 },
+          { fields: ["title", "location"], span: 7 },
+        ],
+      },
+      {
+        columns: [
+          { fields: ["eventDate"], span: 6 },
+          { fields: ["endDate"], span: 6 },
+        ],
+      },
+      {
+        columns: [
+          { fields: ["isAllDay"], span: 6 },
+          { fields: ["publishNow"], span: 6 },
+        ],
+      },
       { columns: [{ fields: ["description"] }] },
     ],
     submitLabel: mode === "create" ? "Create Event" : "Save Changes",

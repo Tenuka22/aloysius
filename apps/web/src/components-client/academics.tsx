@@ -94,24 +94,22 @@ export function Academics({
         </div>
 
         {departments.length > 0 && (
-        <div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px border border-gold/20"
-          style={{ background: "rgba(255,178,3,0.2)" }}
-        >
-          {departments.map((d) => (
-            <div
-              key={d.num}
-              data-dept
-              className="bg-green-dark hover:bg-green-darker transition-colors px-7 py-9"
-            >
-              <div className="font-heading text-[38px] text-gold font-semibold">
-                {d.num}
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px border border-gold/20"
+            style={{ background: "rgba(255,178,3,0.2)" }}
+          >
+            {departments.map((d) => (
+              <div
+                key={d.num}
+                data-dept
+                className="bg-green-dark hover:bg-green-darker transition-colors px-7 py-9"
+              >
+                <div className="font-heading text-[38px] text-gold font-semibold">{d.num}</div>
+                <div className="font-bold text-[17px] mt-3.5 mb-2">{d.name}</div>
+                <div className="text-[13px] leading-relaxed text-cream/65">{d.desc}</div>
               </div>
-              <div className="font-bold text-[17px] mt-3.5 mb-2">{d.name}</div>
-              <div className="text-[13px] leading-relaxed text-cream/65">{d.desc}</div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         )}
 
         {statRows.length > 0 && (
@@ -172,7 +170,10 @@ export function Academics({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px border border-gold/20" style={{ background: "rgba(255,178,3,0.2)" }}>
+                  <div
+                    className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px border border-gold/20"
+                    style={{ background: "rgba(255,178,3,0.2)" }}
+                  >
                     {performers.map((student) => (
                       <div key={student.id} className="bg-green-dark/90 p-4 sm:p-5 flex flex-col">
                         {student.photo ? (

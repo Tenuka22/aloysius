@@ -67,7 +67,15 @@ const DEFAULTS: StudentsFormValues = {
   prefects_cta_url: "#",
 };
 
-function SportsImageField({ value, onChange, name }: { value: unknown; onChange: (val: unknown) => void; name: string }) {
+function SportsImageField({
+  value,
+  onChange,
+  name,
+}: {
+  value: unknown;
+  onChange: (val: unknown) => void;
+  name: string;
+}) {
   const [uploading, setUploading] = useState(false);
 
   const handleFilesSelected = useCallback(
@@ -95,7 +103,11 @@ function SportsImageField({ value, onChange, name }: { value: unknown; onChange:
       <label className="text-sm font-medium leading-none">Photo</label>
       {imageUrl ? (
         <div className="relative overflow-hidden rounded-xl border">
-          <img src={imageUrl} alt="Photo" className="w-full aspect-video object-cover pointer-events-none" />
+          <img
+            src={imageUrl}
+            alt="Photo"
+            className="w-full aspect-video object-cover pointer-events-none"
+          />
           <Button
             variant="destructive"
             size="sm"
@@ -115,7 +127,10 @@ function SportsImageField({ value, onChange, name }: { value: unknown; onChange:
           crop
           aspect={4 / 3}
           cropTitle="Crop Photo"
-          className={cn("aspect-video justify-center", uploading && "opacity-50 pointer-events-none")}
+          className={cn(
+            "aspect-video justify-center",
+            uploading && "opacity-50 pointer-events-none",
+          )}
         />
       )}
     </div>
@@ -151,8 +166,17 @@ const studentsFields: FieldEntry<StudentsFormValues>[] = [
   },
   { name: "sports_more_text", kind: "text", label: "More Sports Text" },
   ...DEFAULT_HOUSES.flatMap((_, idx) => [
-    { name: `house${idx + 1}_name` as keyof StudentsFormValues, kind: "text" as const, label: `House ${idx + 1} Name` as const },
-    { name: `house${idx + 1}_color` as keyof StudentsFormValues, kind: "text" as const, label: `House ${idx + 1} Colour` as const, placeholder: "#RRGGBB" as const },
+    {
+      name: `house${idx + 1}_name` as keyof StudentsFormValues,
+      kind: "text" as const,
+      label: `House ${idx + 1} Name` as const,
+    },
+    {
+      name: `house${idx + 1}_color` as keyof StudentsFormValues,
+      kind: "text" as const,
+      label: `House ${idx + 1} Colour` as const,
+      placeholder: "#RRGGBB" as const,
+    },
   ]),
   { name: "prefects_title", kind: "text", label: "Title" },
   { name: "prefects_subtitle", kind: "text", label: "Subtitle" },
@@ -193,10 +217,25 @@ const studentsConfig: FormConfig<StudentsFormValues> = {
   ],
   layout: [
     { columns: [{ fields: ["students_title", "students_intro"], span: 12 }] },
-    { columns: [{ fields: ["sports_cricket_image", "sports_rugby_image", "sports_athletics_image"], span: 12 }] },
+    {
+      columns: [
+        {
+          fields: ["sports_cricket_image", "sports_rugby_image", "sports_athletics_image"],
+          span: 12,
+        },
+      ],
+    },
     { columns: [{ fields: ["sports_more_text"], span: 12 }] },
-    { columns: [{ fields: ["house1_name", "house1_color", "house2_name", "house2_color"], span: 12 }] },
-    { columns: [{ fields: ["house3_name", "house3_color", "house4_name", "house4_color"], span: 12 }] },
+    {
+      columns: [
+        { fields: ["house1_name", "house1_color", "house2_name", "house2_color"], span: 12 },
+      ],
+    },
+    {
+      columns: [
+        { fields: ["house3_name", "house3_color", "house4_name", "house4_color"], span: 12 },
+      ],
+    },
     { columns: [{ fields: ["house5_name", "house5_color"], span: 12 }] },
     { columns: [{ fields: ["prefects_title", "prefects_subtitle"], span: 12 }] },
     { columns: [{ fields: ["prefects_cta_text", "prefects_cta_url"], span: 12 }] },
@@ -269,7 +308,9 @@ function AdminStudents() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Students Page Content</h1>
-          <p className="text-sm text-muted-foreground mt-1">Customize every section of the students page</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Customize every section of the students page
+          </p>
         </div>
       </div>
       <FormBuilder<StudentsFormValues>

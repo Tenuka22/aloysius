@@ -142,9 +142,7 @@ function ActionsMenu({ item }: { item: ExamResultItem }) {
             <IconPencil className="size-4" />
             Edit
           </DropdownMenuItem>
-          <DropdownMenuItem
-            render={<a href="/exam-results" target="_blank" rel="noreferrer" />}
-          >
+          <DropdownMenuItem render={<a href="/exam-results" target="_blank" rel="noreferrer" />}>
             <IconExternalLink className="size-4" />
             View Page
           </DropdownMenuItem>

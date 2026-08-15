@@ -105,9 +105,7 @@ function StatusBadge({ isExisting }: { isExisting: boolean }) {
     <span
       className={cn(
         "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
-        isExisting
-          ? "bg-muted text-muted-foreground"
-          : "bg-primary/10 text-primary",
+        isExisting ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary",
       )}
     >
       {isExisting ? "Existing" : "New"}
@@ -131,7 +129,9 @@ function NamePickField({
 
   const filtered = useMemo(() => {
     const q = input.trim().toLowerCase();
-    return q ? pool.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 25) : pool.slice(0, 25);
+    return q
+      ? pool.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 25)
+      : pool.slice(0, 25);
   }, [input, pool]);
 
   const applyMember = (m: StaffMember) => {
@@ -152,7 +152,11 @@ function NamePickField({
       }}
       filter={null}
     >
-      <ComboboxInput placeholder="Search staff or type a new name..." showClear className="w-full" />
+      <ComboboxInput
+        placeholder="Search staff or type a new name..."
+        showClear
+        className="w-full"
+      />
       <ComboboxContent>
         <ComboboxList>
           {filtered.map((m) => (
@@ -165,7 +169,9 @@ function NamePickField({
                 </span>
               )}
               <span className="truncate">{m.name}</span>
-              <span className="ml-auto shrink-0 text-xs text-muted-foreground">{m.role || "—"}</span>
+              <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                {m.role || "—"}
+              </span>
             </ComboboxItem>
           ))}
         </ComboboxList>
@@ -230,7 +236,13 @@ function SlotPhoto({ value, onChange }: { value: string; onChange: (v: string) =
         {value ? "Replace" : "Upload"}
       </Button>
       {value && (
-        <Button type="button" variant="ghost" size="icon-sm" onClick={() => onChange("")} title="Remove photo">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => onChange("")}
+          title="Remove photo"
+        >
           <IconX className="size-3.5" />
         </Button>
       )}
@@ -257,7 +269,10 @@ export function StaffEditor({
   };
 
   const addSlot = () => {
-    setSlots((prev) => [...prev, { key: `new#${prev.length}`, name: "", role: "", email: "", photo: "", bio: "" }]);
+    setSlots((prev) => [
+      ...prev,
+      { key: `new#${prev.length}`, name: "", role: "", email: "", photo: "", bio: "" },
+    ]);
   };
 
   const removeSlot = (key: string) => {
@@ -281,7 +296,9 @@ export function StaffEditor({
           })),
       }),
     onSuccess: (res) => {
-      toast.success(`Staff saved (${res.saved} members${res.removed ? `, ${res.removed} removed` : ""})`);
+      toast.success(
+        `Staff saved (${res.saved} members${res.removed ? `, ${res.removed} removed` : ""})`,
+      );
       queryClient.invalidateQueries({ queryKey: ["staff"] });
     },
     onError: (err) => toast.error(err.message),
@@ -295,7 +312,8 @@ export function StaffEditor({
         <div>
           <h2 className="text-sm font-bold tracking-[0.2em] text-foreground">STAFF ROSTER</h2>
           <p className="text-xs text-foreground/70 mt-1">
-            Assign the {year} staff. Pick an existing staff member or type a new name — the whole roster saves at once.
+            Assign the {year} staff. Pick an existing staff member or type a new name — the whole
+            roster saves at once.
           </p>
         </div>
         {!readOnly && (
@@ -412,7 +430,10 @@ export function StaffEditor({
               <Field>
                 <FieldLabel>Photo</FieldLabel>
                 <FieldContent>
-                  <SlotPhoto value={slot.photo} onChange={(v) => updateSlot(slot.key, { photo: v })} />
+                  <SlotPhoto
+                    value={slot.photo}
+                    onChange={(v) => updateSlot(slot.key, { photo: v })}
+                  />
                 </FieldContent>
               </Field>
 
@@ -435,7 +456,13 @@ export function StaffEditor({
       </div>
 
       {!readOnly && (
-        <Button type="button" variant="ghost" size="sm" onClick={addSlot} className="text-foreground">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={addSlot}
+          className="text-foreground"
+        >
           <IconPlus className="size-3.5 mr-1" /> Add Staff Member
         </Button>
       )}

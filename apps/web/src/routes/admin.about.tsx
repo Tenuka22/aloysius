@@ -155,7 +155,11 @@ function ImageField({
       <label className="text-sm font-medium leading-none">{label}</label>
       {value ? (
         <div className="relative overflow-hidden rounded-xl border">
-          <img src={value} alt={label} className="w-full aspect-video object-cover pointer-events-none" />
+          <img
+            src={value}
+            alt={label}
+            className="w-full aspect-video object-cover pointer-events-none"
+          />
           <Button
             variant="destructive"
             size="sm"
@@ -176,7 +180,10 @@ function ImageField({
           crop
           aspect={aspect ?? 4 / 3}
           cropTitle={`Crop ${label}`}
-          className={cn("aspect-video justify-center", uploading && "opacity-50 pointer-events-none")}
+          className={cn(
+            "aspect-video justify-center",
+            uploading && "opacity-50 pointer-events-none",
+          )}
         />
       )}
     </div>
@@ -187,7 +194,9 @@ function SectionHeader({ title, description }: { title: string; description?: st
   return (
     <h2 className="text-lg font-semibold border-b pb-2 mb-2">
       {title}
-      {description && <p className="text-sm font-normal text-muted-foreground mt-1">{description}</p>}
+      {description && (
+        <p className="text-sm font-normal text-muted-foreground mt-1">{description}</p>
+      )}
     </h2>
   );
 }
@@ -239,7 +248,9 @@ function AboutEditor() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">About Page Content</h1>
-          <p className="text-sm text-muted-foreground mt-1">Customize every section of the about page</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Customize every section of the about page
+          </p>
         </div>
         <Button onClick={handleSave} disabled={mutation.isPending}>
           {mutation.isPending ? "Saving..." : "Save Changes"}
@@ -262,7 +273,10 @@ function AboutEditor() {
       </section>
 
       <section className="space-y-4">
-        <SectionHeader title="History Timeline" description="Four milestones shown in chronological order" />
+        <SectionHeader
+          title="History Timeline"
+          description="Four milestones shown in chronological order"
+        />
         <Field
           label="Section Title"
           value={getValue("about_history_title")}
@@ -365,8 +379,11 @@ function AboutEditor() {
           onChange={(v) => setField("about_administration_heading", v)}
         />
         <p className="text-sm text-muted-foreground">
-          Staff members are managed in the <a href="/admin/principals" className="underline text-primary">Staff</a> admin page.
-          Add staff with their role, academic year, and portrait there.
+          Staff members are managed in the{" "}
+          <a href="/admin/principals" className="underline text-primary">
+            Staff
+          </a>{" "}
+          admin page. Add staff with their role, academic year, and portrait there.
         </p>
       </section>
     </div>

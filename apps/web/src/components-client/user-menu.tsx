@@ -2,12 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Show, useAuth } from "@clerk/tanstack-react-start";
-import {
-  IconSettings,
-  IconShieldCheck,
-  IconUserShield,
-  IconUsers,
-} from "@tabler/icons-react";
+import { IconSettings, IconShieldCheck, IconUserShield, IconUsers } from "@tabler/icons-react";
 import { client } from "@/utils/orpc";
 
 /** Shared pill style for navbar admin / membership links on the dark-green header. */

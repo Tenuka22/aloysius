@@ -6,9 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
-import {
-  EntityDialog,
-} from "@aloysius-web/ui/lib/form-builder";
+import { EntityDialog } from "@aloysius-web/ui/lib/form-builder";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { client } from "@/utils/orpc";
@@ -49,14 +47,17 @@ type RejectFormValues = {
 };
 
 const rejectFields: FieldEntry<RejectFormValues>[] = [
-  { name: "reason", kind: "textarea", label: "Rejection Reason", placeholder: "Why is this being rejected?" },
+  {
+    name: "reason",
+    kind: "textarea",
+    label: "Rejection Reason",
+    placeholder: "Why is this being rejected?",
+  },
 ];
 
 const rejectConfig: FormConfig<RejectFormValues> = {
   fields: rejectFields,
-  layout: [
-    { columns: [{ fields: ["reason"], span: 12 }] },
-  ],
+  layout: [{ columns: [{ fields: ["reason"], span: 12 }] }],
 };
 
 export const Route = createFileRoute("/admin/reviews")({

@@ -26,7 +26,13 @@ const FILTERS: { value: Filter; label: string }[] = [
 export const Route = createFileRoute("/exam-results")({
   loader: async () => {
     const [resultsData, settings] = await Promise.all([
-      client.examResults.list({ page: 1, pageSize: 100, status: "published", sort: "resultsYear", sortDir: "desc" }),
+      client.examResults.list({
+        page: 1,
+        pageSize: 100,
+        status: "published",
+        sort: "resultsYear",
+        sortDir: "desc",
+      }),
       client.settings.getAll(),
     ]);
     const results = await Promise.all(
@@ -49,8 +55,7 @@ function ExamResultsPage() {
   const [filter, setFilter] = useState<Filter>("all");
 
   const filtered = useMemo(() => {
-    const list =
-      filter === "all" ? results : results.filter((r) => r.examType === filter);
+    const list = filter === "all" ? results : results.filter((r) => r.examType === filter);
     return [...list].sort((a, b) => b.resultsYear - a.resultsYear || b.examYear - a.examYear);
   }, [results, filter]);
 
@@ -73,15 +78,13 @@ function ExamResultsPage() {
             </a>
             &nbsp;/&nbsp;<span className="text-gold">EXAM RESULTS</span>
           </div>
-          <div className="text-[11px] tracking-[0.4em] font-bold text-gold mb-4">
-            TOP SCORES
-          </div>
+          <div className="text-[11px] tracking-[0.4em] font-bold text-gold mb-4">TOP SCORES</div>
           <h1 className="font-heading text-4xl sm:text-5xl lg:text-[56px] font-bold text-cream leading-[1.1] mb-5">
             Exam Results
           </h1>
           <p className="text-cream/70 text-lg sm:text-xl max-w-[600px] leading-relaxed">
-            The highest achievers of St. Aloysius&rsquo; College across the G5
-            Scholarship, G.C.E. O/L and G.C.E. A/L examinations.
+            The highest achievers of St. Aloysius&rsquo; College across the G5 Scholarship, G.C.E.
+            O/L and G.C.E. A/L examinations.
           </p>
 
           <div className="flex gap-3 flex-wrap mt-10">
@@ -110,9 +113,7 @@ function ExamResultsPage() {
       <main id="main-content" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-[1080px]">
           {filtered.length === 0 ? (
-            <div className="text-center py-16 text-green-dark/40">
-              No results published yet.
-            </div>
+            <div className="text-center py-16 text-green-dark/40">No results published yet.</div>
           ) : (
             <div className="space-y-16">
               {filtered.map((result) => (
@@ -151,7 +152,10 @@ function ResultSection({ result }: { result: ExamResult }) {
       {students.length === 0 ? (
         <p className="text-green-dark/40 text-sm py-8">No students recorded yet.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px border border-green-dark/15" style={{ background: "rgba(1,52,5,0.12)" }}>
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px border border-green-dark/15"
+          style={{ background: "rgba(1,52,5,0.12)" }}
+        >
           {students.map((student) => (
             <div key={student.id} className="bg-cream p-5 sm:p-6">
               <div className="flex items-center gap-4 mb-4">
@@ -196,9 +200,7 @@ function ResultSection({ result }: { result: ExamResult }) {
                       className="inline-flex items-center gap-1 rounded border border-green-dark/15 bg-white px-2 py-0.5 text-[11px]"
                     >
                       <span className="text-green-dark/70">{s.subject}</span>
-                      {s.grade && (
-                        <span className="font-extrabold text-gold">{s.grade}</span>
-                      )}
+                      {s.grade && <span className="font-extrabold text-gold">{s.grade}</span>}
                     </span>
                   ))}
                 </div>

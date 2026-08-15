@@ -32,7 +32,9 @@ function OBAdminCommittee() {
 
   const visibleMembers = allMembers.filter((m: any) => m.role !== "ADMINISTRATOR");
   const approved = visibleMembers.filter((m: any) => m.status === "approved");
-  const years = Array.from(new Set(approved.map((m: any) => m.year).filter(Boolean))).sort().reverse();
+  const years = Array.from(new Set(approved.map((m: any) => m.year).filter(Boolean)))
+    .sort()
+    .reverse();
   const yearOptions = years.includes(currentYear) ? years : [currentYear, ...years];
   const selectedYear = customYear.trim() || year;
 
@@ -43,8 +45,8 @@ function OBAdminCommittee() {
       <div>
         <h1 className="text-2xl font-bold font-heading text-green-dark">Committee Members</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Assign every role of the committee for a year. Pick an existing member or type a new name — the whole
-          committee saves at once.
+          Assign every role of the committee for a year. Pick an existing member or type a new name
+          — the whole committee saves at once.
         </p>
       </div>
 
@@ -52,13 +54,21 @@ function OBAdminCommittee() {
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-[200px]">
           <label className="text-xs text-muted-foreground block mb-1">Committee Year</label>
-          <Select value={customYear.trim() ? undefined : year} onValueChange={(v) => { setYear(v ?? currentYear); setCustomYear(""); }}>
+          <Select
+            value={customYear.trim() ? undefined : year}
+            onValueChange={(v) => {
+              setYear(v ?? currentYear);
+              setCustomYear("");
+            }}
+          >
             <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Select year" />
             </SelectTrigger>
             <SelectContent>
               {yearOptions.map((y) => (
-                <SelectItem key={y} value={y}>{y}</SelectItem>
+                <SelectItem key={y} value={y}>
+                  {y}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -73,12 +83,7 @@ function OBAdminCommittee() {
               className="h-9"
             />
             {customYear.trim() && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9"
-                onClick={() => setCustomYear("")}
-              >
+              <Button variant="outline" size="sm" className="h-9" onClick={() => setCustomYear("")}>
                 Clear
               </Button>
             )}
@@ -89,13 +94,17 @@ function OBAdminCommittee() {
       {isLoading ? (
         <div className="text-center text-muted-foreground py-8">Loading...</div>
       ) : (
-        <OBCommitteeEditor year={selectedYear} members={yearMembers as OBMember[]} pool={approved as OBMember[]} />
+        <OBCommitteeEditor
+          year={selectedYear}
+          members={yearMembers as OBMember[]}
+          pool={approved as OBMember[]}
+        />
       )}
 
       <p className="text-xs text-muted-foreground">
         <IconPlus className="inline size-3.5 mr-1" />
-        Multi-slot roles (Assistant Secretaries, Committee Members, Advisory Board) have an “Add” button to grow the
-        roster. Dropped slots are removed from the committee on save.
+        Multi-slot roles (Assistant Secretaries, Committee Members, Advisory Board) have an “Add”
+        button to grow the roster. Dropped slots are removed from the committee on save.
       </p>
     </div>
   );

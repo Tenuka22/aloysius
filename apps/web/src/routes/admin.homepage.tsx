@@ -203,7 +203,10 @@ function ImageField({
           crop
           aspect={aspect ?? 16 / 9}
           cropTitle={`Crop ${label}`}
-          className={cn("aspect-video justify-center", uploading && "opacity-50 pointer-events-none")}
+          className={cn(
+            "aspect-video justify-center",
+            uploading && "opacity-50 pointer-events-none",
+          )}
         />
       )}
     </div>
@@ -237,7 +240,8 @@ function HomepageEditor() {
     onError: (err) => toast.error(err.message),
   });
 
-  const getValue = (key: string) => form[key] ?? settings?.[key] ?? HOMEPAGE_DEFAULTS[key as keyof typeof HOMEPAGE_DEFAULTS] ?? "";
+  const getValue = (key: string) =>
+    form[key] ?? settings?.[key] ?? HOMEPAGE_DEFAULTS[key as keyof typeof HOMEPAGE_DEFAULTS] ?? "";
 
   const setField = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -362,7 +366,10 @@ function HomepageEditor() {
 
       {/* Hero Section */}
       <section className="border bg-card p-6 space-y-4">
-        <SectionHeader title="Hero Section" description="Full-bleed banner at the top of the homepage" />
+        <SectionHeader
+          title="Hero Section"
+          description="Full-bleed banner at the top of the homepage"
+        />
         <div className="grid grid-cols-2 gap-4">
           <Field
             label="Eyebrow Text"
@@ -712,7 +719,10 @@ function HomepageEditor() {
 
       {/* Student Life Section */}
       <section className="border bg-card p-6 space-y-4">
-        <SectionHeader title="Student Life Section" description="Photo tiles in the campus-life mosaic" />
+        <SectionHeader
+          title="Student Life Section"
+          description="Photo tiles in the campus-life mosaic"
+        />
         <div className="grid grid-cols-2 gap-4">
           <Field
             label="Eyebrow Text"

@@ -35,7 +35,14 @@ function AdminStaff() {
 
   const { data: principals } = useQuery({
     queryKey: ["principals", "published"],
-    queryFn: () => client.principals.list({ page: 1, pageSize: 100, status: "published", sort: "sortOrder", sortDir: "asc" }),
+    queryFn: () =>
+      client.principals.list({
+        page: 1,
+        pageSize: 100,
+        status: "published",
+        sort: "sortOrder",
+        sortDir: "asc",
+      }),
   });
 
   const principalRows = principals?.rows ?? [];
@@ -46,7 +53,9 @@ function AdminStaff() {
 
   const staffYears = new Set(staff.map((m: any) => m.year).filter(Boolean) as string[]);
   const principalYears = new Set(principalByYear.keys());
-  const years = Array.from(new Set([...staffYears, ...principalYears])).sort().reverse();
+  const years = Array.from(new Set([...staffYears, ...principalYears]))
+    .sort()
+    .reverse();
 
   const createYear = () => {
     const value = newYear.trim();
@@ -76,7 +85,10 @@ function AdminStaff() {
       <div className="flex-1 p-6">
         <div className="mb-6 rounded-lg border border-secondary/20 bg-secondary/10 p-4">
           <p className="text-sm text-secondary-foreground">
-            Manage the school staff year by year. The principal is stored separately and is pinned to each year&apos;s page; every other staff member (vice principals, heads, teachers, admin staff) lives in the year&apos;s roster. Principal profiles are managed on the Principal profiles page.
+            Manage the school staff year by year. The principal is stored separately and is pinned
+            to each year&apos;s page; every other staff member (vice principals, heads, teachers,
+            admin staff) lives in the year&apos;s roster. Principal profiles are managed on the
+            Principal profiles page.
           </p>
         </div>
         {isLoading ? (
@@ -91,7 +103,10 @@ function AdminStaff() {
               const yearStaff = staff.filter((m: any) => m.year === year);
               const principal = principalByYear.get(year);
               return (
-                <Card key={year} className="flex flex-col overflow-hidden hover:shadow-md transition-shadow py-0">
+                <Card
+                  key={year}
+                  className="flex flex-col overflow-hidden hover:shadow-md transition-shadow py-0"
+                >
                   <div className="p-5 border-b">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="text-xl font-bold text-foreground">{year} Staff</h3>
@@ -103,7 +118,11 @@ function AdminStaff() {
                       <div className="flex items-center gap-2 mt-2">
                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0 overflow-hidden">
                           {principal.portrait ? (
-                            <img src={principal.portrait} alt={principal.name} className="w-full h-full object-cover" />
+                            <img
+                              src={principal.portrait}
+                              alt={principal.name}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             principal.name.charAt(0)
                           )}
@@ -113,7 +132,9 @@ function AdminStaff() {
                             <IconCrown className="size-3.5 shrink-0" />
                             <span className="truncate">{principal.name}</span>
                           </div>
-                          <div className="text-[11px] text-muted-foreground truncate">{principal.title}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            {principal.title}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -125,19 +146,27 @@ function AdminStaff() {
                           <div key={m.id} className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0 overflow-hidden">
                               {m.photo ? (
-                                <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+                                <img
+                                  src={m.photo}
+                                  alt={m.name}
+                                  className="w-full h-full object-cover"
+                                />
                               ) : (
                                 m.name.charAt(0)
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="text-sm text-foreground truncate">{m.name}</div>
-                              <div className="text-[11px] text-muted-foreground truncate">{m.role}</div>
+                              <div className="text-[11px] text-muted-foreground truncate">
+                                {m.role}
+                              </div>
                             </div>
                           </div>
                         ))}
                         {yearStaff.length > 4 && (
-                          <div className="text-xs text-muted-foreground pl-9">+{yearStaff.length - 4} more</div>
+                          <div className="text-xs text-muted-foreground pl-9">
+                            +{yearStaff.length - 4} more
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -168,7 +197,8 @@ function AdminStaff() {
           <DialogHeader>
             <DialogTitle>Create New Staff Year</DialogTitle>
             <DialogDescription>
-              Enter the school year (e.g. 2026 or 2026/2027), then add the principal and staff roster for that year.
+              Enter the school year (e.g. 2026 or 2026/2027), then add the principal and staff
+              roster for that year.
             </DialogDescription>
           </DialogHeader>
           <Input
@@ -181,8 +211,12 @@ function AdminStaff() {
             }}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setNewYearOpen(false)}>Cancel</Button>
-            <Button onClick={createYear} disabled={!newYear.trim()}>Create Year</Button>
+            <Button variant="outline" onClick={() => setNewYearOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={createYear} disabled={!newYear.trim()}>
+              Create Year
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

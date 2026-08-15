@@ -53,7 +53,11 @@ async function getAlbumWithImages(db: ReturnType<typeof createDb>, id: string) {
     .orderBy(asc(clubAlbumImages.sortOrder))
     .all();
 
-  const activity = await db.select().from(activities).where(eq(activities.id, row.activityId)).get();
+  const activity = await db
+    .select()
+    .from(activities)
+    .where(eq(activities.id, row.activityId))
+    .get();
 
   return {
     album: serializeAlbum(row, images.length, activity?.name),
@@ -126,7 +130,11 @@ export const clubAlbumsRouter = {
           : [];
       const countMap = new Map(imageCounts.map((r) => [r.albumId, Number(r.count)]));
 
-      const activity = await db.select().from(activities).where(eq(activities.id, activityId)).get();
+      const activity = await db
+        .select()
+        .from(activities)
+        .where(eq(activities.id, activityId))
+        .get();
 
       return {
         rows: rows.map((row) => serializeAlbum(row, countMap.get(row.id) ?? 0, activity?.name)),
@@ -138,36 +146,34 @@ export const clubAlbumsRouter = {
     }),
 
   /** A single album with its images. Visibility: approved for public, all for members/admins/author. */
-  get: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .handler(async ({ input, context }) => {
-      const db = createDb();
-      const result = await getAlbumWithImages(db, input.id);
-      if (!result) {
+  get: publicProcedure.input(z.object({ id: z.string() })).handler(async ({ input, context }) => {
+    const db = createDb();
+    const result = await getAlbumWithImages(db, input.id);
+    if (!result) {
+      throw new ORPCError("NOT_FOUND", { message: "Album not found" });
+    }
+
+    if (result.album.reviewStatus !== "approved") {
+      const userId = context.auth?.userId ?? null;
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isAuthor = userId !== null && userId === result.album.userId;
+      let canView = isSiteAdmin || isAuthor;
+      if (!canView && userId) {
+        const { membership, isClubAdmin } = await resolveClubAccess(
+          db,
+          result.album.activityId,
+          userId,
+          isSiteAdmin,
+        );
+        canView = isClubAdmin || membership?.status === "approved";
+      }
+      if (!canView) {
         throw new ORPCError("NOT_FOUND", { message: "Album not found" });
       }
+    }
 
-      if (result.album.reviewStatus !== "approved") {
-        const userId = context.auth?.userId ?? null;
-        const isSiteAdmin = context.auth?.adminCalled ?? false;
-        const isAuthor = userId !== null && userId === result.album.userId;
-        let canView = isSiteAdmin || isAuthor;
-        if (!canView && userId) {
-          const { membership, isClubAdmin } = await resolveClubAccess(
-            db,
-            result.album.activityId,
-            userId,
-            isSiteAdmin,
-          );
-          canView = isClubAdmin || membership?.status === "approved";
-        }
-        if (!canView) {
-          throw new ORPCError("NOT_FOUND", { message: "Album not found" });
-        }
-      }
-
-      return result;
-    }),
+    return result;
+  }),
 
   /** Featured-on-homepage albums (approved only), for the public homepage. */
   listFeatured: publicProcedure.handler(async () => {
@@ -175,9 +181,7 @@ export const clubAlbumsRouter = {
     const rows = await db
       .select()
       .from(clubAlbums)
-      .where(
-        and(eq(clubAlbums.reviewStatus, "approved"), eq(clubAlbums.featuredOnHome, true)),
-      )
+      .where(and(eq(clubAlbums.reviewStatus, "approved"), eq(clubAlbums.featuredOnHome, true)))
       .orderBy(desc(clubAlbums.updatedAt))
       .limit(6)
       .all();
@@ -223,7 +227,11 @@ export const clubAlbumsRouter = {
       if (!userId) throw new ORPCError("UNAUTHORIZED");
 
       const db = createDb();
-      const activity = await db.select().from(activities).where(eq(activities.id, input.activityId)).get();
+      const activity = await db
+        .select()
+        .from(activities)
+        .where(eq(activities.id, input.activityId))
+        .get();
       if (!activity) {
         throw new ORPCError("NOT_FOUND", { message: "Club not found" });
       }
@@ -361,7 +369,11 @@ export const clubAlbumsRouter = {
       if (!userId) throw new ORPCError("UNAUTHORIZED");
 
       const db = createDb();
-      const album = await db.select().from(clubAlbums).where(eq(clubAlbums.id, input.albumId)).get();
+      const album = await db
+        .select()
+        .from(clubAlbums)
+        .where(eq(clubAlbums.id, input.albumId))
+        .get();
       if (!album) throw new ORPCError("NOT_FOUND", { message: "Album not found" });
 
       const { membership, isClubAdmin } = await resolveClubAccess(
@@ -434,10 +446,18 @@ export const clubAlbumsRouter = {
       if (!userId) throw new ORPCError("UNAUTHORIZED");
 
       const db = createDb();
-      const existing = await db.select().from(clubAlbumImages).where(eq(clubAlbumImages.id, input.id)).get();
+      const existing = await db
+        .select()
+        .from(clubAlbumImages)
+        .where(eq(clubAlbumImages.id, input.id))
+        .get();
       if (!existing) throw new ORPCError("NOT_FOUND", { message: "Image not found" });
 
-      const album = await db.select().from(clubAlbums).where(eq(clubAlbums.id, existing.albumId)).get();
+      const album = await db
+        .select()
+        .from(clubAlbums)
+        .where(eq(clubAlbums.id, existing.albumId))
+        .get();
       if (!album) throw new ORPCError("NOT_FOUND", { message: "Album not found" });
 
       const { membership, isClubAdmin } = await resolveClubAccess(

@@ -61,7 +61,10 @@ export function Gallery({
   return (
     <section ref={sectionRef} className="bg-cream py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
       <div className="mx-auto max-w-295">
-        <div data-animate className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14">
+        <div
+          data-animate
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14"
+        >
           <div>
             {s("gallery_eyebrow") && (
               <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
@@ -83,9 +86,11 @@ export function Gallery({
         </div>
 
         {items.length === 0 ? (
-          <div className="text-center text-green-dark/50 py-12">No gallery images published yet.</div>
+          <div className="text-center text-green-dark/50 py-12">
+            No gallery images published yet.
+          </div>
         ) : (
-          <div ref={gridRef} className="columns-[200px] gap-4">
+          <div ref={gridRef} className="columns-[320px] gap-4">
             {items.map((item) => (
               <div key={item.id} className="mb-4 break-inside-avoid overflow-hidden">
                 {item.slug ? (

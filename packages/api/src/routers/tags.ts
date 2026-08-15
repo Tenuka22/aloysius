@@ -31,9 +31,7 @@ export const tagsRouter = {
             WHERE value IS NOT NULL AND value != ''
             ${search ? `AND value LIKE ?` : ""}
           `);
-          const result = search
-            ? await stmt.bind(`%${search}%`).all()
-            : await stmt.all();
+          const result = search ? await stmt.bind(`%${search}%`).all() : await stmt.all();
 
           for (const row of result.results ?? []) {
             const tag = (row as { tag?: unknown }).tag;

@@ -71,8 +71,14 @@ function AdminOBMembersYear() {
     queryFn: () => client.ob.obMembers.list({}),
   });
 
-  const visibleMembers = useMemo(() => members.filter((m: any) => m.role !== "ADMINISTRATOR"), [members]);
-  const visibleAllMembers = useMemo(() => allMembers.filter((m: any) => m.role !== "ADMINISTRATOR"), [allMembers]);
+  const visibleMembers = useMemo(
+    () => members.filter((m: any) => m.role !== "ADMINISTRATOR"),
+    [members],
+  );
+  const visibleAllMembers = useMemo(
+    () => allMembers.filter((m: any) => m.role !== "ADMINISTRATOR"),
+    [allMembers],
+  );
 
   // The OB admin is any member of this year whose row carries the admin email —
   // not necessarily the President.
@@ -120,7 +126,9 @@ function AdminOBMembersYear() {
         return (
           <div className="flex items-center gap-2">
             <span>{m.name}</span>
-            {m.adminEmail && <IconShieldCheck className="size-3.5 text-gold shrink-0" title="OB Admin" />}
+            {m.adminEmail && (
+              <IconShieldCheck className="size-3.5 text-gold shrink-0" title="OB Admin" />
+            )}
           </div>
         );
       },
@@ -133,8 +141,14 @@ function AdminOBMembersYear() {
         const isHead = isHeadRole(role);
         return (
           <div className="flex items-center gap-2">
-            <span className={isHead ? "text-gold font-medium" : "text-muted-foreground"}>{role}</span>
-            {isHead && <span className="text-[10px] bg-gold/10 text-gold px-1.5 py-0.5 rounded-full font-bold tracking-wider">HEAD</span>}
+            <span className={isHead ? "text-gold font-medium" : "text-muted-foreground"}>
+              {role}
+            </span>
+            {isHead && (
+              <span className="text-[10px] bg-gold/10 text-gold px-1.5 py-0.5 rounded-full font-bold tracking-wider">
+                HEAD
+              </span>
+            )}
           </div>
         );
       },
@@ -155,8 +169,19 @@ function AdminOBMembersYear() {
           rejected: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
           revoked: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
         };
-        const labels: Record<string, string> = { approved: "Approved", pending: "Pending", rejected: "Rejected", revoked: "Revoked" };
-        return <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${styles[status] ?? styles.pending}`}>{labels[status] ?? status}</span>;
+        const labels: Record<string, string> = {
+          approved: "Approved",
+          pending: "Pending",
+          rejected: "Rejected",
+          revoked: "Revoked",
+        };
+        return (
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${styles[status] ?? styles.pending}`}
+          >
+            {labels[status] ?? status}
+          </span>
+        );
       },
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
@@ -174,7 +199,9 @@ function AdminOBMembersYear() {
           <h1 className="text-lg font-semibold">{year} Committee</h1>
           <div className="text-xs text-muted-foreground">
             {approvedMembers.length > 0 && <span>{approvedMembers.length} members</span>}
-            {pendingMembers.length > 0 && <span className="text-yellow-600"> &bull; {pendingMembers.length} pending</span>}
+            {pendingMembers.length > 0 && (
+              <span className="text-yellow-600"> &bull; {pendingMembers.length} pending</span>
+            )}
           </div>
         </div>
       </header>
@@ -186,7 +213,10 @@ function AdminOBMembersYear() {
             <CardContent className="p-4 flex flex-wrap items-center gap-4">
               <div className="flex-1 min-w-[240px]">
                 <label className="text-xs text-muted-foreground block mb-1">
-                  OB Admin Email <span className="text-muted-foreground/70">(the member who manages the committee)</span>
+                  OB Admin Email{" "}
+                  <span className="text-muted-foreground/70">
+                    (the member who manages the committee)
+                  </span>
                 </label>
                 <Input
                   placeholder="admin@example.com"
@@ -195,11 +225,17 @@ function AdminOBMembersYear() {
                   className="h-9"
                 />
                 <p className="text-[11px] text-muted-foreground mt-1.5">
-                  Must match the email of an approved member in {year} — the admin is not necessarily the President.
+                  Must match the email of an approved member in {year} — the admin is not
+                  necessarily the President.
                 </p>
               </div>
               <div className="flex items-end gap-2">
-                <Button size="sm" onClick={() => saveAdminMutation.mutate(obAdminEmail)} disabled={saveAdminMutation.isPending} className="self-end">
+                <Button
+                  size="sm"
+                  onClick={() => saveAdminMutation.mutate(obAdminEmail)}
+                  disabled={saveAdminMutation.isPending}
+                  className="self-end"
+                >
                   {saveAdminMutation.isPending ? "Saving..." : "Save"}
                 </Button>
               </div>
@@ -214,14 +250,21 @@ function AdminOBMembersYear() {
             {isLoading ? (
               <div className="text-center text-muted-foreground py-8">Loading...</div>
             ) : (
-              <OBCommitteeEditor year={year} members={approvedMembers as OBMember[]} pool={pool as OBMember[]} readOnly />
+              <OBCommitteeEditor
+                year={year}
+                members={approvedMembers as OBMember[]}
+                pool={pool as OBMember[]}
+                readOnly
+              />
             )}
           </section>
 
           {/* All members — read-only view */}
           {members.length > 0 && (
             <section>
-              <h2 className="text-sm font-bold tracking-[0.2em] text-foreground mb-4">ALL MEMBERS</h2>
+              <h2 className="text-sm font-bold tracking-[0.2em] text-foreground mb-4">
+                ALL MEMBERS
+              </h2>
               <div className="rounded-lg border border-foreground/15 p-2 bg-card">
                 <DataTable
                   columns={columns}
@@ -245,8 +288,16 @@ function AdminOBMembersYear() {
                     return (
                       <div className="flex items-center justify-between">
                         <div className="flex flex-1 items-center gap-2">
-                          <Input placeholder="Filter by name..." value={(filters.find((f) => f.id === "name")?.value as string) ?? ""} onChange={(e) => setFilter("name", e.target.value)} className="h-8 w-[200px] lg:w-[250px]" />
-                          <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v ?? "all")}>
+                          <Input
+                            placeholder="Filter by name..."
+                            value={(filters.find((f) => f.id === "name")?.value as string) ?? ""}
+                            onChange={(e) => setFilter("name", e.target.value)}
+                            className="h-8 w-[200px] lg:w-[250px]"
+                          />
+                          <Select
+                            value={roleFilter}
+                            onValueChange={(v) => setRoleFilter(v ?? "all")}
+                          >
                             <SelectTrigger className="h-8 w-[140px]">
                               <SelectValue placeholder="All roles" />
                             </SelectTrigger>
@@ -256,7 +307,15 @@ function AdminOBMembersYear() {
                               <SelectItem value="regular">Members</SelectItem>
                             </SelectContent>
                           </Select>
-                          {isFiltered && <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">Reset</Button>}
+                          {isFiltered && (
+                            <Button
+                              variant="ghost"
+                              onClick={() => table.resetColumnFilters()}
+                              className="h-8 px-2 lg:px-3"
+                            >
+                              Reset
+                            </Button>
+                          )}
                         </div>
                         <DataTableViewOptions table={table} />
                       </div>

@@ -15,7 +15,12 @@ import {
   SelectContent,
   SelectItem,
 } from "@aloysius-web/ui/components/select";
-import { Field, FieldLabel, FieldContent, FieldDescription } from "@aloysius-web/ui/components/field";
+import {
+  Field,
+  FieldLabel,
+  FieldContent,
+  FieldDescription,
+} from "@aloysius-web/ui/components/field";
 import { Dropzone } from "@/components/file-upload";
 import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
@@ -249,7 +254,9 @@ function QuoteField() {
           placeholder="A short quote shown on the homepage teaser..."
           className="min-h-[88px]"
         />
-        <FieldDescription>Shown as the teaser on the homepage and principals list.</FieldDescription>
+        <FieldDescription>
+          Shown as the teaser on the homepage and principals list.
+        </FieldDescription>
       </FieldContent>
     </Field>
   );
@@ -289,7 +296,9 @@ function BioField() {
           placeholder="A short personal profile..."
           className="min-h-[104px]"
         />
-        <FieldDescription>Shown under the &ldquo;About&rdquo; heading on the principal&rsquo;s page.</FieldDescription>
+        <FieldDescription>
+          Shown under the &ldquo;About&rdquo; heading on the principal&rsquo;s page.
+        </FieldDescription>
       </FieldContent>
     </Field>
   );
@@ -403,16 +412,16 @@ export function PrincipalForm({
 
   const config: FormConfig<CreatePrincipalValues | UpdatePrincipalValues> = {
     fields,
-    layout: [
-      { columns: [{ fields: ["sortOrder"] }] },
-      { columns: [{ fields: ["publishNow"] }] },
-    ],
+    layout: [{ columns: [{ fields: ["sortOrder"] }] }, { columns: [{ fields: ["publishNow"] }] }],
     submitLabel: mode === "create" ? "Create Principal" : "Save Changes",
     onCancel: () => onSuccess?.(),
     hooks: {
       beforeSubmit: (values) => ({
         ...values,
-        sortOrder: values.sortOrder === "" || values.sortOrder == null ? undefined : Number(values.sortOrder),
+        sortOrder:
+          values.sortOrder === "" || values.sortOrder == null
+            ? undefined
+            : Number(values.sortOrder),
       }),
     },
     renderAboveFields: () => (

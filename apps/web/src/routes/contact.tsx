@@ -171,12 +171,17 @@ function ContactPage() {
               </div>
             </div>
 
-            <div data-animate className="bg-cream-warm border border-green-dark/12 border-t-2 border-t-gold px-8 sm:px-12 py-13">
+            <div
+              data-animate
+              className="bg-cream-warm border border-green-dark/12 border-t-2 border-t-gold px-8 sm:px-12 py-13"
+            >
               <h2 className="text-2xl sm:text-[38px] mb-2.5">Send a Message</h2>
               <p className="text-sm text-green-dark/65 mb-9">{s("contact_form_note")}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5.5">
                 <label className="block">
-                  <span className="block text-[11px] tracking-[0.14em] font-bold mb-2">FULL NAME</span>
+                  <span className="block text-[11px] tracking-[0.14em] font-bold mb-2">
+                    FULL NAME
+                  </span>
                   <input
                     type="text"
                     value={name}
@@ -196,7 +201,9 @@ function ContactPage() {
                   />
                 </label>
                 <label className="block sm:col-span-2">
-                  <span className="block text-[11px] tracking-[0.14em] font-bold mb-2">SUBJECT</span>
+                  <span className="block text-[11px] tracking-[0.14em] font-bold mb-2">
+                    SUBJECT
+                  </span>
                   <input
                     type="text"
                     value={subject}
@@ -206,7 +213,9 @@ function ContactPage() {
                   />
                 </label>
                 <label className="block sm:col-span-2">
-                  <span className="block text-[11px] tracking-[0.14em] font-bold mb-2">MESSAGE</span>
+                  <span className="block text-[11px] tracking-[0.14em] font-bold mb-2">
+                    MESSAGE
+                  </span>
                   <textarea
                     rows={6}
                     value={message}
@@ -217,7 +226,9 @@ function ContactPage() {
                 </label>
               </div>
               <div className="flex items-center justify-between gap-5 mt-7.5 flex-wrap">
-                <span className="text-xs text-green-dark/50">Responses within school working days.</span>
+                <span className="text-xs text-green-dark/50">
+                  Responses within school working days.
+                </span>
                 <button
                   onClick={handleSend}
                   className="bg-green-dark text-gold font-extrabold text-sm tracking-wider px-9 py-3.5"

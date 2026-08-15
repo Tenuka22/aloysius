@@ -19,7 +19,15 @@ type Story = {
   source: StorySource;
 };
 
-const CATEGORIES = ["ALL", "COLLEGE NEWS", "ACADEMIC", "SPORTS", "EVENTS", "ANNOUNCEMENTS", "ACHIEVEMENTS"];
+const CATEGORIES = [
+  "ALL",
+  "COLLEGE NEWS",
+  "ACADEMIC",
+  "SPORTS",
+  "EVENTS",
+  "ANNOUNCEMENTS",
+  "ACHIEVEMENTS",
+];
 const GREEN = "#013405";
 const MAROON = "#A51919";
 const PAGE_SIZE = 9;
@@ -33,7 +41,11 @@ const routeFor: Record<StorySource, string> = {
 
 function formatDate(date: string) {
   if (!date) return "";
-  return new Date(date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(date).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function pageWindow(current: number, total: number): (number | "…")[] {
@@ -106,7 +118,12 @@ function NewsEventsPage() {
       source: "announcements",
     }));
     const fromAchievements: Story[] = (achievements as any[]).map((a) => {
-      const catLabel = a.category === "academic" ? "ACADEMIC" : a.category === "sports" ? "SPORTS" : "ACHIEVEMENTS";
+      const catLabel =
+        a.category === "academic"
+          ? "ACADEMIC"
+          : a.category === "sports"
+            ? "SPORTS"
+            : "ACHIEVEMENTS";
       return {
         id: a.id,
         slug: a.slug,
@@ -126,7 +143,8 @@ function NewsEventsPage() {
   const featured = allStories[0];
 
   const filtered = useMemo(() => {
-    const base = activeCat === "ALL" ? allStories : allStories.filter((s) => s.catLabel === activeCat);
+    const base =
+      activeCat === "ALL" ? allStories : allStories.filter((s) => s.catLabel === activeCat);
     return base.filter((s) => s.id !== featured?.id);
   }, [allStories, activeCat, featured]);
 
@@ -195,7 +213,11 @@ function NewsEventsPage() {
         {featured && (
           <section className="bg-[#FFF8E7] py-22.5 px-4 sm:px-6 lg:px-12">
             <div className="mx-auto max-w-295 grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-10 lg:gap-14 items-end">
-              <Link to={routeFor[featured.source]} params={{ slug: featured.slug }} className="block">
+              <Link
+                to={routeFor[featured.source]}
+                params={{ slug: featured.slug }}
+                className="block"
+              >
                 {featured.image ? (
                   <img
                     src={featured.image}
@@ -232,13 +254,24 @@ function NewsEventsPage() {
         <section className="bg-[#fffdf6] border-t border-[#013405]/[0.08] py-22.5 px-4 sm:px-6 lg:px-12">
           <div className="mx-auto max-w-295">
             {pageItems.length === 0 ? (
-              <div className="text-center text-[#013405]/50 py-16">No stories in this category yet.</div>
+              <div className="text-center text-[#013405]/50 py-16">
+                No stories in this category yet.
+              </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 gap-x-8">
                 {pageItems.map((story) => (
-                  <Link key={story.id} to={routeFor[story.source]} params={{ slug: story.slug }} className="block">
+                  <Link
+                    key={story.id}
+                    to={routeFor[story.source]}
+                    params={{ slug: story.slug }}
+                    className="block"
+                  >
                     {story.image ? (
-                      <img src={story.image} alt={story.title} className="w-full h-57.5 object-cover" />
+                      <img
+                        src={story.image}
+                        alt={story.title}
+                        className="w-full h-57.5 object-cover"
+                      />
                     ) : (
                       <div className="w-full h-57.5 bg-gradient-to-br from-[#013405]/10 to-[#013405]/5" />
                     )}
@@ -258,7 +291,10 @@ function NewsEventsPage() {
               <div className="flex justify-center gap-2.5 mt-20 text-sm font-bold">
                 {pageWindow(currentPage, totalPages).map((p, i) =>
                   p === "…" ? (
-                    <span key={`e${i}`} className="w-10 h-10 flex items-center justify-center text-[#013405]/40">
+                    <span
+                      key={`e${i}`}
+                      className="w-10 h-10 flex items-center justify-center text-[#013405]/40"
+                    >
                       …
                     </span>
                   ) : (
@@ -293,7 +329,9 @@ function NewsEventsPage() {
           <div className="mx-auto max-w-295">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14">
               <div>
-                <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-4.5">CALENDAR</div>
+                <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-4.5">
+                  CALENDAR
+                </div>
                 <h2 className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl m-0">
                   Upcoming Events
                 </h2>
@@ -306,10 +344,15 @@ function NewsEventsPage() {
                 upcomingEvents.map((event: any) => {
                   const eventDate = new Date(event.startDate);
                   const day = eventDate.getDate();
-                  const month = eventDate.toLocaleString("default", { month: "short" }).toUpperCase();
+                  const month = eventDate
+                    .toLocaleString("default", { month: "short" })
+                    .toUpperCase();
                   const time = event.isAllDay
                     ? "All day"
-                    : eventDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+                    : eventDate.toLocaleTimeString(undefined, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
 
                   return (
                     <div
@@ -320,7 +363,9 @@ function NewsEventsPage() {
                         <div className="font-['Cormorant_Garamond'] text-[34px] font-semibold text-[#FFB203] leading-none">
                           {day}
                         </div>
-                        <div className="text-[10px] tracking-[0.2em] text-[#FFF8E7]/60 mt-1.5">{month}</div>
+                        <div className="text-[10px] tracking-[0.2em] text-[#FFF8E7]/60 mt-1.5">
+                          {month}
+                        </div>
                       </div>
                       <div>
                         <div className="font-bold text-lg sm:text-[19px]">{event.title}</div>

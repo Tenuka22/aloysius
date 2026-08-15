@@ -200,9 +200,16 @@ function AdmissionsPage() {
         )}
 
         {/* Application Process */}
-        <section id="process" ref={processRef} className="bg-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
+        <section
+          id="process"
+          ref={processRef}
+          className="bg-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
+        >
           <div className="mx-auto max-w-295">
-            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+            <div
+              data-animate
+              className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5"
+            >
               HOW TO APPLY
             </div>
             <h2
@@ -226,7 +233,10 @@ function AdmissionsPage() {
         </section>
 
         {/* Requirements & Key Dates */}
-        <section ref={detailsRef} className="bg-[#fffdf6] border-t border-[#013405]/8 py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
+        <section
+          ref={detailsRef}
+          className="bg-[#fffdf6] border-t border-[#013405]/8 py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
+        >
           <div className="mx-auto max-w-295 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-start">
             <div data-animate>
               <div className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
@@ -270,9 +280,16 @@ function AdmissionsPage() {
         </section>
 
         {/* Downloads */}
-        <section id="downloads" ref={downloadsRef} className="bg-[#013405] text-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
+        <section
+          id="downloads"
+          ref={downloadsRef}
+          className="bg-[#013405] text-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
+        >
           <div className="mx-auto max-w-295">
-            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-4.5">
+            <div
+              data-animate
+              className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-4.5"
+            >
               DOWNLOADS
             </div>
             <h2
@@ -306,7 +323,10 @@ function AdmissionsPage() {
         {/* FAQs */}
         <section ref={faqRef} className="bg-[#FFF8E7] py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
           <div className="mx-auto max-w-215">
-            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
+            <div
+              data-animate
+              className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5"
+            >
               FAQS
             </div>
             <h2

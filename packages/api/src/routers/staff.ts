@@ -21,7 +21,9 @@ function serializeStaffMember(row: typeof staffMembers.$inferSelect) {
   };
 }
 
-async function requireSiteAdmin(context: { auth?: { adminCalled?: boolean; userId?: string | null } }) {
+async function requireSiteAdmin(context: {
+  auth?: { adminCalled?: boolean; userId?: string | null };
+}) {
   if (!context.auth?.userId) {
     throw new ORPCError("UNAUTHORIZED");
   }
@@ -75,16 +77,14 @@ export const staffRouter = {
       .sort((a, b) => (a.year > b.year ? -1 : 1));
   }),
 
-  get: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .handler(async ({ input }) => {
-      const db = createDb();
-      const row = await db.select().from(staffMembers).where(eq(staffMembers.id, input.id)).get();
-      if (!row) {
-        throw new ORPCError("NOT_FOUND", { message: "Staff member not found" });
-      }
-      return serializeStaffMember(row);
-    }),
+  get: publicProcedure.input(z.object({ id: z.string() })).handler(async ({ input }) => {
+    const db = createDb();
+    const row = await db.select().from(staffMembers).where(eq(staffMembers.id, input.id)).get();
+    if (!row) {
+      throw new ORPCError("NOT_FOUND", { message: "Staff member not found" });
+    }
+    return serializeStaffMember(row);
+  }),
 
   create: protectedProcedure
     .input(
@@ -137,7 +137,11 @@ export const staffRouter = {
     .handler(async ({ input, context }) => {
       await requireSiteAdmin(context);
       const db = createDb();
-      const existing = await db.select().from(staffMembers).where(eq(staffMembers.id, input.id)).get();
+      const existing = await db
+        .select()
+        .from(staffMembers)
+        .where(eq(staffMembers.id, input.id))
+        .get();
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Staff member not found" });
       }
@@ -150,7 +154,12 @@ export const staffRouter = {
       if (updateData.bio !== undefined) setData.bio = updateData.bio;
       if (updateData.year !== undefined) setData.year = updateData.year;
       if (updateData.sortOrder !== undefined) setData.sortOrder = updateData.sortOrder;
-      const record = await db.update(staffMembers).set(setData).where(eq(staffMembers.id, id)).returning().get();
+      const record = await db
+        .update(staffMembers)
+        .set(setData)
+        .where(eq(staffMembers.id, id))
+        .returning()
+        .get();
       return serializeStaffMember(record);
     }),
 
@@ -159,7 +168,11 @@ export const staffRouter = {
     .handler(async ({ input, context }) => {
       await requireSiteAdmin(context);
       const db = createDb();
-      const existing = await db.select().from(staffMembers).where(eq(staffMembers.id, input.id)).get();
+      const existing = await db
+        .select()
+        .from(staffMembers)
+        .where(eq(staffMembers.id, input.id))
+        .get();
       if (!existing) throw new ORPCError("NOT_FOUND", { message: "Staff member not found" });
       await db.delete(staffMembers).where(eq(staffMembers.id, input.id)).run();
       return { success: true };
@@ -195,7 +208,11 @@ export const staffRouter = {
 
       for (const entry of input.entries) {
         if (entry.id) {
-          const existing = await db.select().from(staffMembers).where(eq(staffMembers.id, entry.id)).get();
+          const existing = await db
+            .select()
+            .from(staffMembers)
+            .where(eq(staffMembers.id, entry.id))
+            .get();
           if (!existing) {
             throw new ORPCError("NOT_FOUND", { message: "Staff member not found" });
           }

@@ -10,8 +10,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const DEFAULTS: Record<string, string> = {
   academics_title: "Academic Excellence",
-  academics_intro:
-    "Curriculum, streams and departments - from primary years to Advanced Level.",
+  academics_intro: "Curriculum, streams and departments - from primary years to Advanced Level.",
   section1_grades: "GRADES 1-5",
   section1_name: "Primary Section",
   section1_desc: "Foundations in literacy, numeracy, faith and character.",
@@ -129,10 +128,16 @@ function AcademicsPage() {
               </a>
               &nbsp;/&nbsp;<span className="text-gold">ACADEMICS</span>
             </div>
-            <h1 data-animate className="text-5xl sm:text-6xl lg:text-[76px] leading-[1.02] mb-6 max-w-[14ch]">
+            <h1
+              data-animate
+              className="text-5xl sm:text-6xl lg:text-[76px] leading-[1.02] mb-6 max-w-[14ch]"
+            >
               {s("academics_title")}
             </h1>
-            <p data-animate className="text-base sm:text-[17px] leading-[1.7] text-cream/75 max-w-[56ch]">
+            <p
+              data-animate
+              className="text-base sm:text-[17px] leading-[1.7] text-cream/75 max-w-[56ch]"
+            >
               {s("academics_intro")}
             </p>
           </div>
@@ -141,7 +146,10 @@ function AcademicsPage() {
         {/* Sections of Study */}
         <section ref={sectionsRef} className="bg-cream py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
           <div className="mx-auto max-w-295">
-            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
+            <div
+              data-animate
+              className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5"
+            >
               THE COLLEGE
             </div>
             <h2 data-animate className="text-4xl sm:text-5xl lg:text-[54px] mb-16">
@@ -154,7 +162,9 @@ function AcademicsPage() {
                   data-animate
                   className="border border-green-dark/15 border-t-2 border-t-gold px-8.5 py-10 bg-cream-warm"
                 >
-                  <div className="text-[11px] tracking-[0.2em] font-bold text-red-brand">{sec.grades}</div>
+                  <div className="text-[11px] tracking-[0.2em] font-bold text-red-brand">
+                    {sec.grades}
+                  </div>
                   <div className="font-heading text-3xl font-semibold my-3.5">{sec.name}</div>
                   <div className="text-[14.5px] leading-[1.7] text-green-dark/75">{sec.desc}</div>
                 </div>
@@ -186,7 +196,9 @@ function AcademicsPage() {
                   data-animate
                   className="bg-green-dark hover:bg-green-darker transition-colors px-7 py-9"
                 >
-                  <div className="font-heading text-[38px] text-gold font-semibold">{stream.num}</div>
+                  <div className="font-heading text-[38px] text-gold font-semibold">
+                    {stream.num}
+                  </div>
                   <div className="font-bold text-[17px] mt-3.5 mb-2">{stream.name}</div>
                   <div className="text-[13px] leading-relaxed text-cream/65">{stream.desc}</div>
                 </div>
@@ -249,7 +261,9 @@ function AcademicsPage() {
         <section className="bg-green-dark text-cream py-20 sm:py-25 px-4 sm:px-6 lg:px-12">
           <div className="mx-auto max-w-270 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
             <div>
-              <div className="font-heading text-3xl sm:text-[36px] font-semibold">{s("results_cta_title")}</div>
+              <div className="font-heading text-3xl sm:text-[36px] font-semibold">
+                {s("results_cta_title")}
+              </div>
               <div className="text-sm text-cream/65 mt-2">{s("results_cta_subtitle")}</div>
             </div>
             <a

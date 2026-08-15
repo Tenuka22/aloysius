@@ -117,11 +117,22 @@ export async function seed() {
 
   // ── Site Settings ──
   const settingsMap = new Map<string, string>();
-  settingsMap.set("about", "Founded in 1862 by the De La Salle Brothers, St. Aloysius' College has been a beacon of academic excellence and holistic development. Our campus in Galle provides state-of-the-art facilities for academics, sports, and the arts.");
+  settingsMap.set(
+    "about",
+    "Founded in 1862 by the De La Salle Brothers, St. Aloysius' College has been a beacon of academic excellence and holistic development. Our campus in Galle provides state-of-the-art facilities for academics, sports, and the arts.",
+  );
   for (const [key, value] of Object.entries(HOMEPAGE_DEFAULTS)) {
     settingsMap.set(key, value);
   }
   settingsMap.set("ob_admin_email", "obadmin@aloysiuscollege.lk");
+  settingsMap.set(
+    "heritage_image_1",
+    "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&h=600&fit=crop",
+  );
+  settingsMap.set(
+    "heritage_image_2",
+    "https://images.unsplash.com/photo-1523050854058-8df90110c8f1?w=800&h=600&fit=crop",
+  );
   const settings = Array.from(settingsMap.entries()).map(([key, value]) => ({ key, value }));
   for (const s of settings) {
     await db.insert(schema.siteSettings).values({ key: s.key, value: s.value, updatedAt: now });
@@ -707,21 +718,24 @@ export async function seed() {
       opponent: "Rahula College, Matara",
       type: "Cricket",
       year: 2025,
-      coverImage: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&h=500&fit=crop",
+      coverImage:
+        "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&h=500&fit=crop",
     },
     {
       name: "Battle of the Glory of Galle",
       opponent: "Vidyaloka College, Galle",
       type: "Cricket",
       year: 2025,
-      coverImage: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=500&fit=crop",
+      coverImage:
+        "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=500&fit=crop",
     },
     {
       name: "The Battle of Dreams",
       opponent: "Holy Cross College, Kalutara",
       type: "Cricket",
       year: 2026,
-      coverImage: "https://images.unsplash.com/photo-1589801258579-18e091f4ca24?w=800&h=500&fit=crop",
+      coverImage:
+        "https://images.unsplash.com/photo-1589801258579-18e091f4ca24?w=800&h=500&fit=crop",
     },
   ];
   for (let i = 0; i < bigMatches.length; i++) {
@@ -747,16 +761,76 @@ export async function seed() {
       resultsYear: 2026,
       status: "published" as const,
       students: [
-        { name: "Sandaru Perera", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "Hard work beats talent when talent doesn't work hard.", marks: 197 },
-        { name: "Tharindu Silva", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces", quote: "Dream big, study harder.", marks: 195 },
-        { name: "Dineth Fernando", photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces", quote: "Small steps every day.", marks: 193 },
-        { name: "Kavindu Jayasuriya", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "", marks: 192 },
-        { name: "Oshan Rathnayake", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "Focus on the goal.", marks: 190 },
-        { name: "Pasindu Wijesinghe", photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces", quote: "", marks: 189 },
-        { name: "Lahiru Gunaratne", photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces", quote: "Perseverance is key.", marks: 188 },
-        { name: "Ravindu Dissanayake", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "", marks: 187 },
-        { name: "Nethmi Jayawardena", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces", quote: "Learn something new every day.", marks: 186 },
-        { name: "Sachini Karunaratne", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces", quote: "", marks: 185 },
+        {
+          name: "Sandaru Perera",
+          photo:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces",
+          quote: "Hard work beats talent when talent doesn't work hard.",
+          marks: 197,
+        },
+        {
+          name: "Tharindu Silva",
+          photo:
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces",
+          quote: "Dream big, study harder.",
+          marks: 195,
+        },
+        {
+          name: "Dineth Fernando",
+          photo:
+            "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces",
+          quote: "Small steps every day.",
+          marks: 193,
+        },
+        {
+          name: "Kavindu Jayasuriya",
+          photo:
+            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces",
+          quote: "",
+          marks: 192,
+        },
+        {
+          name: "Oshan Rathnayake",
+          photo:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces",
+          quote: "Focus on the goal.",
+          marks: 190,
+        },
+        {
+          name: "Pasindu Wijesinghe",
+          photo:
+            "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces",
+          quote: "",
+          marks: 189,
+        },
+        {
+          name: "Lahiru Gunaratne",
+          photo:
+            "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces",
+          quote: "Perseverance is key.",
+          marks: 188,
+        },
+        {
+          name: "Ravindu Dissanayake",
+          photo:
+            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces",
+          quote: "",
+          marks: 187,
+        },
+        {
+          name: "Nethmi Jayawardena",
+          photo:
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces",
+          quote: "Learn something new every day.",
+          marks: 186,
+        },
+        {
+          name: "Sachini Karunaratne",
+          photo:
+            "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces",
+          quote: "",
+          marks: 185,
+        },
       ],
     },
     {
@@ -765,13 +839,55 @@ export async function seed() {
       resultsYear: 2026,
       status: "published" as const,
       students: [
-        { name: "Kavindu Jayasuriya", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "The future belongs to those who prepare for it.", overallGrade: "A" },
-        { name: "Oshan Rathnayake", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "", overallGrade: "A" },
-        { name: "Dineth Fernando", photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces", quote: "Discipline is the bridge between goals and accomplishment.", overallGrade: "A" },
-        { name: "Tharindu Silva", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces", quote: "", overallGrade: "A" },
-        { name: "Sandaru Perera", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "Success is the sum of small efforts.", overallGrade: "B" },
-        { name: "Pasindu Wijesinghe", photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces", quote: "", overallGrade: "A" },
-        { name: "Ravindu Dissanayake", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "Strive for progress, not perfection.", overallGrade: "B" },
+        {
+          name: "Kavindu Jayasuriya",
+          photo:
+            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces",
+          quote: "The future belongs to those who prepare for it.",
+          overallGrade: "A",
+        },
+        {
+          name: "Oshan Rathnayake",
+          photo:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces",
+          quote: "",
+          overallGrade: "A",
+        },
+        {
+          name: "Dineth Fernando",
+          photo:
+            "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces",
+          quote: "Discipline is the bridge between goals and accomplishment.",
+          overallGrade: "A",
+        },
+        {
+          name: "Tharindu Silva",
+          photo:
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces",
+          quote: "",
+          overallGrade: "A",
+        },
+        {
+          name: "Sandaru Perera",
+          photo:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces",
+          quote: "Success is the sum of small efforts.",
+          overallGrade: "B",
+        },
+        {
+          name: "Pasindu Wijesinghe",
+          photo:
+            "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces",
+          quote: "",
+          overallGrade: "A",
+        },
+        {
+          name: "Ravindu Dissanayake",
+          photo:
+            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces",
+          quote: "Strive for progress, not perfection.",
+          overallGrade: "B",
+        },
       ],
     },
     {
@@ -780,14 +896,102 @@ export async function seed() {
       resultsYear: 2026,
       status: "published" as const,
       students: [
-        { name: "Nethmi Jayawardena", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces", quote: "The only way to do great work is to love what you do.", stream: "biological_science", subjects: [{ subject: "Biology", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "A" }] },
-        { name: "Sachini Karunaratne", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "biological_science", subjects: [{ subject: "Biology", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "B" }] },
-        { name: "Hiruni Bandara", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces", quote: "Believe you can and you're halfway there.", stream: "physical_science", subjects: [{ subject: "Combined Mathematics", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "A" }] },
-        { name: "Isuru Weerasinghe", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "physical_science", subjects: [{ subject: "Combined Mathematics", grade: "A" }, { subject: "Chemistry", grade: "A" }, { subject: "Physics", grade: "A" }] },
-        { name: "Malith De Silva", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces", quote: "Commerce is the engine of the economy.", stream: "commerce", subjects: [{ subject: "Accounting", grade: "A" }, { subject: "Business Studies", grade: "A" }, { subject: "Economics", grade: "A" }] },
-        { name: "Chamath Liyanage", photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "commerce", subjects: [{ subject: "Accounting", grade: "A" }, { subject: "Business Studies", grade: "A" }, { subject: "Economics", grade: "B" }] },
-        { name: "Yasas Wickramasinghe", photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces", quote: "Art is the most intense mode of individualism.", stream: "arts", subjects: [{ subject: "Art", grade: "A" }, { subject: "Sinhala Literature", grade: "A" }, { subject: "History", grade: "A" }] },
-        { name: "Gayathri Herath", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces", quote: "", stream: "arts", subjects: [{ subject: "Art", grade: "A" }, { subject: "Sinhala Literature", grade: "A" }, { subject: "History", grade: "B" }] },
+        {
+          name: "Nethmi Jayawardena",
+          photo:
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces",
+          quote: "The only way to do great work is to love what you do.",
+          stream: "biological_science",
+          subjects: [
+            { subject: "Biology", grade: "A" },
+            { subject: "Chemistry", grade: "A" },
+            { subject: "Physics", grade: "A" },
+          ],
+        },
+        {
+          name: "Sachini Karunaratne",
+          photo:
+            "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces",
+          quote: "",
+          stream: "biological_science",
+          subjects: [
+            { subject: "Biology", grade: "A" },
+            { subject: "Chemistry", grade: "A" },
+            { subject: "Physics", grade: "B" },
+          ],
+        },
+        {
+          name: "Hiruni Bandara",
+          photo:
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces",
+          quote: "Believe you can and you're halfway there.",
+          stream: "physical_science",
+          subjects: [
+            { subject: "Combined Mathematics", grade: "A" },
+            { subject: "Chemistry", grade: "A" },
+            { subject: "Physics", grade: "A" },
+          ],
+        },
+        {
+          name: "Isuru Weerasinghe",
+          photo:
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces",
+          quote: "",
+          stream: "physical_science",
+          subjects: [
+            { subject: "Combined Mathematics", grade: "A" },
+            { subject: "Chemistry", grade: "A" },
+            { subject: "Physics", grade: "A" },
+          ],
+        },
+        {
+          name: "Malith De Silva",
+          photo:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces",
+          quote: "Commerce is the engine of the economy.",
+          stream: "commerce",
+          subjects: [
+            { subject: "Accounting", grade: "A" },
+            { subject: "Business Studies", grade: "A" },
+            { subject: "Economics", grade: "A" },
+          ],
+        },
+        {
+          name: "Chamath Liyanage",
+          photo:
+            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces",
+          quote: "",
+          stream: "commerce",
+          subjects: [
+            { subject: "Accounting", grade: "A" },
+            { subject: "Business Studies", grade: "A" },
+            { subject: "Economics", grade: "B" },
+          ],
+        },
+        {
+          name: "Yasas Wickramasinghe",
+          photo:
+            "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=faces",
+          quote: "Art is the most intense mode of individualism.",
+          stream: "arts",
+          subjects: [
+            { subject: "Art", grade: "A" },
+            { subject: "Sinhala Literature", grade: "A" },
+            { subject: "History", grade: "A" },
+          ],
+        },
+        {
+          name: "Gayathri Herath",
+          photo:
+            "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces",
+          quote: "",
+          stream: "arts",
+          subjects: [
+            { subject: "Art", grade: "A" },
+            { subject: "Sinhala Literature", grade: "A" },
+            { subject: "History", grade: "B" },
+          ],
+        },
       ],
     },
   ];
@@ -836,7 +1040,8 @@ export async function seed() {
       education:
         "B.A. (Hons) - University of Peradeniya\nM.Phil. in Education - University of Colombo\nDiploma in Spiritual Direction - National Seminary, Ampitiya",
       tenure: "2019 - Present",
-      portrait: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=800&fit=crop&crop=faces",
+      portrait:
+        "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=800&fit=crop&crop=faces",
       sortOrder: 0,
       status: "published" as const,
     },
@@ -851,7 +1056,8 @@ export async function seed() {
       bio: "Rev. Fr. Joseph Perera served as Rector of St. Aloysius' College from 2009 to 2019, leading the college through a decade of growth and renewal.",
       education: "B.D. - National Seminary, Kandy",
       tenure: "2009 - 2019",
-      portrait: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop&crop=faces",
+      portrait:
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop&crop=faces",
       sortOrder: 1,
       status: "published" as const,
     },
@@ -882,55 +1088,76 @@ export async function seed() {
   const activities = [
     {
       name: "Robotics Club",
-      description: "Design, build, and program robots for competitions and demonstrations. Members learn mechanical engineering, electronics, and programming through hands-on projects.",
+      description:
+        "Design, build, and program robots for competitions and demonstrations. Members learn mechanical engineering, electronics, and programming through hands-on projects.",
       type: "club" as const,
-      coverImage: "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=800&h=400&fit=crop",
+      coverImage:
+        "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=800&h=400&fit=crop",
       logoUrl: "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=200&h=200&fit=crop",
-      bannerUrl: "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=1200&h=400&fit=crop",
-      images: ["https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=800&h=400&fit=crop", "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop"],
+      bannerUrl:
+        "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=1200&h=400&fit=crop",
+      images: [
+        "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=800&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop",
+      ],
       adminEmail: "robotics@aloysius.lk",
       status: "published" as const,
     },
     {
       name: "Cricket Team",
-      description: "Competitive cricket program with coaching from former state-level players. Teams compete in inter-school tournaments throughout the year.",
+      description:
+        "Competitive cricket program with coaching from former state-level players. Teams compete in inter-school tournaments throughout the year.",
       type: "sport" as const,
-      coverImage: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&h=400&fit=crop",
+      coverImage:
+        "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&h=400&fit=crop",
       logoUrl: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=200&h=200&fit=crop",
-      bannerUrl: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=1200&h=400&fit=crop",
-      images: ["https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&h=400&fit=crop", "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=400&fit=crop"],
+      bannerUrl:
+        "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=1200&h=400&fit=crop",
+      images: [
+        "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=400&fit=crop",
+      ],
       adminEmail: "cricket@aloysius.lk",
       status: "published" as const,
     },
     {
       name: "Debate Society",
-      description: "Weekly debate sessions, public speaking workshops, and participation in Model United Nations. Open to all grades with beginner and advanced tracks.",
+      description:
+        "Weekly debate sessions, public speaking workshops, and participation in Model United Nations. Open to all grades with beginner and advanced tracks.",
       type: "club" as const,
-      coverImage: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=400&fit=crop",
+      coverImage:
+        "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=400&fit=crop",
       logoUrl: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=200&h=200&fit=crop",
-      bannerUrl: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=1200&h=400&fit=crop",
+      bannerUrl:
+        "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=1200&h=400&fit=crop",
       images: ["https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=400&fit=crop"],
       adminEmail: "debate@aloysius.lk",
       status: "published" as const,
     },
     {
       name: "Music Ensemble",
-      description: "Students learn and perform vocal and instrumental music. The ensemble includes a choir, rock band, and classical group. Performances at all school events.",
+      description:
+        "Students learn and perform vocal and instrumental music. The ensemble includes a choir, rock band, and classical group. Performances at all school events.",
       type: "club" as const,
-      coverImage: "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800&h=400&fit=crop",
+      coverImage:
+        "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800&h=400&fit=crop",
       logoUrl: "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=200&h=200&fit=crop",
-      bannerUrl: "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=1200&h=400&fit=crop",
+      bannerUrl:
+        "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=1200&h=400&fit=crop",
       images: ["https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800&h=400&fit=crop"],
       adminEmail: "music@aloysius.lk",
       status: "published" as const,
     },
     {
       name: "Eco Warriors Club",
-      description: "Environmental awareness and action club. Activities include tree plantation drives, waste management campaigns, and sustainability projects across campus.",
+      description:
+        "Environmental awareness and action club. Activities include tree plantation drives, waste management campaigns, and sustainability projects across campus.",
       type: "club" as const,
-      coverImage: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&h=400&fit=crop",
+      coverImage:
+        "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&h=400&fit=crop",
       logoUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=200&h=200&fit=crop",
-      bannerUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1200&h=400&fit=crop",
+      bannerUrl:
+        "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1200&h=400&fit=crop",
       images: ["https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&h=400&fit=crop"],
       adminEmail: "ecowarriors@aloysius.lk",
       status: "published" as const,
@@ -957,22 +1184,108 @@ export async function seed() {
     });
     activitiesData.push({ id, name: activities[i]!.name });
   }
-  console.log(`Seeded ${activitiesData.length} activities (${activitiesData.filter((_, i) => i < 3).length} published, ${activitiesData.filter((_, i) => i >= 3).length} draft)`);
+  console.log(
+    `Seeded ${activitiesData.length} activities (${activitiesData.filter((_, i) => i < 3).length} published, ${activitiesData.filter((_, i) => i >= 3).length} draft)`,
+  );
 
   // ── Staff Members ──
   const staffMembers = [
-    { name: "Rev. Fr. Joseph Perera", role: "Vice Principal", email: "viceprincipal@aloysiuscollege.lk", bio: "Supports the Principal in academic and disciplinary affairs.", year: "2026", sortOrder: 0 },
-    { name: "Mr. Sanjay Mishra", role: "Head of Sports", email: "sports@aloysiuscollege.lk", bio: "Coordinates all sports programs and inter-school tournaments.", year: "2026", sortOrder: 1 },
-    { name: "Mrs. Priya Kapoor", role: "Head of Science", email: "science@aloysiuscollege.lk", bio: "Leads the Science department and oversees laboratory resources.", year: "2026", sortOrder: 2 },
-    { name: "Mrs. Deepa Nair", role: "Head of Arts", email: "arts@aloysiuscollege.lk", bio: "Directs cultural programs, drama, and music activities.", year: "2026", sortOrder: 3 },
-    { name: "Mr. Rajesh Menon", role: "Senior Teacher - Mathematics", email: "rajesh.menon@aloysiuscollege.lk", bio: "Teaches Advanced Mathematics and coaches the Olympiad team.", year: "2026", sortOrder: 4 },
-    { name: "Mrs. Kavitha Rao", role: "Senior Teacher - English", email: "kavitha.rao@aloysiuscollege.lk", bio: "Leads English language programs and literary activities.", year: "2026", sortOrder: 5 },
-    { name: "Mr. Anil Deshmukh", role: "Administrative Officer", email: "admin@aloysiuscollege.lk", bio: "Manages day-to-day administrative operations.", year: "2026", sortOrder: 6 },
-    { name: "Dr. Amit Saxena", role: "Counselor", email: "counselor@aloysiuscollege.lk", bio: "Student counselor and career guidance advisor.", year: "2026", sortOrder: 7 },
-    { name: "Rev. Fr. Joseph Perera", role: "Vice Principal", email: "viceprincipal@aloysiuscollege.lk", bio: "Supports the Principal in academic and disciplinary affairs.", year: "2025", sortOrder: 0 },
-    { name: "Mr. Sanjay Mishra", role: "Head of Sports", email: "sports@aloysiuscollege.lk", bio: "Coordinates all sports programs and inter-school tournaments.", year: "2025", sortOrder: 1 },
-    { name: "Mrs. Priya Kapoor", role: "Head of Science", email: "science@aloysiuscollege.lk", bio: "Leads the Science department and oversees laboratory resources.", year: "2025", sortOrder: 2 },
-    { name: "Mrs. Deepa Nair", role: "Head of Arts", email: "arts@aloysiuscollege.lk", bio: "Directs cultural programs, drama, and music activities.", year: "2025", sortOrder: 3 },
+    {
+      name: "Rev. Fr. Joseph Perera",
+      role: "Vice Principal",
+      email: "viceprincipal@aloysiuscollege.lk",
+      bio: "Supports the Principal in academic and disciplinary affairs.",
+      year: "2026",
+      sortOrder: 0,
+    },
+    {
+      name: "Mr. Sanjay Mishra",
+      role: "Head of Sports",
+      email: "sports@aloysiuscollege.lk",
+      bio: "Coordinates all sports programs and inter-school tournaments.",
+      year: "2026",
+      sortOrder: 1,
+    },
+    {
+      name: "Mrs. Priya Kapoor",
+      role: "Head of Science",
+      email: "science@aloysiuscollege.lk",
+      bio: "Leads the Science department and oversees laboratory resources.",
+      year: "2026",
+      sortOrder: 2,
+    },
+    {
+      name: "Mrs. Deepa Nair",
+      role: "Head of Arts",
+      email: "arts@aloysiuscollege.lk",
+      bio: "Directs cultural programs, drama, and music activities.",
+      year: "2026",
+      sortOrder: 3,
+    },
+    {
+      name: "Mr. Rajesh Menon",
+      role: "Senior Teacher - Mathematics",
+      email: "rajesh.menon@aloysiuscollege.lk",
+      bio: "Teaches Advanced Mathematics and coaches the Olympiad team.",
+      year: "2026",
+      sortOrder: 4,
+    },
+    {
+      name: "Mrs. Kavitha Rao",
+      role: "Senior Teacher - English",
+      email: "kavitha.rao@aloysiuscollege.lk",
+      bio: "Leads English language programs and literary activities.",
+      year: "2026",
+      sortOrder: 5,
+    },
+    {
+      name: "Mr. Anil Deshmukh",
+      role: "Administrative Officer",
+      email: "admin@aloysiuscollege.lk",
+      bio: "Manages day-to-day administrative operations.",
+      year: "2026",
+      sortOrder: 6,
+    },
+    {
+      name: "Dr. Amit Saxena",
+      role: "Counselor",
+      email: "counselor@aloysiuscollege.lk",
+      bio: "Student counselor and career guidance advisor.",
+      year: "2026",
+      sortOrder: 7,
+    },
+    {
+      name: "Rev. Fr. Joseph Perera",
+      role: "Vice Principal",
+      email: "viceprincipal@aloysiuscollege.lk",
+      bio: "Supports the Principal in academic and disciplinary affairs.",
+      year: "2025",
+      sortOrder: 0,
+    },
+    {
+      name: "Mr. Sanjay Mishra",
+      role: "Head of Sports",
+      email: "sports@aloysiuscollege.lk",
+      bio: "Coordinates all sports programs and inter-school tournaments.",
+      year: "2025",
+      sortOrder: 1,
+    },
+    {
+      name: "Mrs. Priya Kapoor",
+      role: "Head of Science",
+      email: "science@aloysiuscollege.lk",
+      bio: "Leads the Science department and oversees laboratory resources.",
+      year: "2025",
+      sortOrder: 2,
+    },
+    {
+      name: "Mrs. Deepa Nair",
+      role: "Head of Arts",
+      email: "arts@aloysiuscollege.lk",
+      bio: "Directs cultural programs, drama, and music activities.",
+      year: "2025",
+      sortOrder: 3,
+    },
   ];
   for (const member of staffMembers) {
     await db.insert(schema.staffMembers).values({
@@ -991,11 +1304,29 @@ export async function seed() {
   console.log(`Seeded ${staffMembers.length} staff members`);
 
   // ── Club Members ──
-  const clubMembersData: { activityId: string; userId: string; name: string; role: "admin" | "member"; status: "pending" | "approved" | "rejected" | "revoked" }[] = [];
+  const clubMembersData: {
+    activityId: string;
+    userId: string;
+    name: string;
+    role: "admin" | "member";
+    status: "pending" | "approved" | "rejected" | "revoked";
+  }[] = [];
   const clubMemberNames = [
-    "Arjun Nair", "Diya Sharma", "Kabir Singh", "Ishita Verma", "Aditya Kumar", "Navya Pillai",
-    "Rohan Patel", "Vivaan Joshi", "Myra Joshi", "Saanvi Das", "Prisha Iyer", "Ananya Gupta",
-    "Reyansh Bhat", "Arnav Tiwari", "Dhruv Malhotro",
+    "Arjun Nair",
+    "Diya Sharma",
+    "Kabir Singh",
+    "Ishita Verma",
+    "Aditya Kumar",
+    "Navya Pillai",
+    "Rohan Patel",
+    "Vivaan Joshi",
+    "Myra Joshi",
+    "Saanvi Das",
+    "Prisha Iyer",
+    "Ananya Gupta",
+    "Reyansh Bhat",
+    "Arnav Tiwari",
+    "Dhruv Malhotro",
   ];
   const activityIds = activitiesData.map((a) => a.id);
   for (let i = 0; i < clubMemberNames.length; i++) {
@@ -1017,10 +1348,23 @@ export async function seed() {
   console.log(`Seeded ${clubMembersData.length} club members`);
 
   // ── Club Albums ──
-  const clubAlbumsData: { id: string; activityId: string; title: string; description: string; coverImage: string | null; status: "draft" | "published" | "archived"; reviewStatus: "pending" | "approved" | "rejected"; featuredOnHome: boolean; userId: string }[] = [];
+  const clubAlbumsData: {
+    id: string;
+    activityId: string;
+    title: string;
+    description: string;
+    coverImage: string | null;
+    status: "draft" | "published" | "archived";
+    reviewStatus: "pending" | "approved" | "rejected";
+    featuredOnHome: boolean;
+    userId: string;
+  }[] = [];
   const albumTitles = [
-    "Robotics Workshop 2025", "Cricket Tournament Highlights", "Debate Finals",
-    "Music Ensemble Performance", "Eco Warriors Tree Plantation",
+    "Robotics Workshop 2025",
+    "Cricket Tournament Highlights",
+    "Debate Finals",
+    "Music Ensemble Performance",
+    "Eco Warriors Tree Plantation",
   ];
   for (let i = 0; i < albumTitles.length; i++) {
     const activityId = activityIds[i % activityIds.length];
@@ -1069,10 +1413,38 @@ export async function seed() {
 
   // ── Notifications ──
   const notificationsData = [
-    { userId: "user_ob_000", type: "membership_approved" as const, title: "OB Membership Approved", body: "Your Old Boys' Association membership has been approved.", link: "/ob", read: false },
-    { userId: "user_ob_001", type: "membership_pending" as const, title: "OB Membership Pending", body: "Your OB membership request is awaiting approval.", link: "/ob", read: false },
-    { userId: "user_ob_000", type: "content_approved" as const, title: "Event Published", body: "Your OB event 'Annual OB Reunion Dinner 2026' has been published.", link: "/ob", read: true },
-    { userId: "user_ob_000", type: "content_rejected" as const, title: "Event Rejected", body: "Your event submission did not meet the guidelines.", link: "/ob", read: true },
+    {
+      userId: "user_ob_000",
+      type: "membership_approved" as const,
+      title: "OB Membership Approved",
+      body: "Your Old Boys' Association membership has been approved.",
+      link: "/ob",
+      read: false,
+    },
+    {
+      userId: "user_ob_001",
+      type: "membership_pending" as const,
+      title: "OB Membership Pending",
+      body: "Your OB membership request is awaiting approval.",
+      link: "/ob",
+      read: false,
+    },
+    {
+      userId: "user_ob_000",
+      type: "content_approved" as const,
+      title: "Event Published",
+      body: "Your OB event 'Annual OB Reunion Dinner 2026' has been published.",
+      link: "/ob",
+      read: true,
+    },
+    {
+      userId: "user_ob_000",
+      type: "content_rejected" as const,
+      title: "Event Rejected",
+      body: "Your event submission did not meet the guidelines.",
+      link: "/ob",
+      read: true,
+    },
   ];
   for (const n of notificationsData) {
     await db.insert(schema.notifications).values({
@@ -1088,18 +1460,115 @@ export async function seed() {
   }
   console.log(`Seeded ${notificationsData.length} notifications`);
   const obMembers = [
-    { name: "Ranil Wickramasinghe", role: "President", email: "ranil@ob-alloysius.lk", adminEmail: "obadmin@aloysiuscollege.lk", bio: "Class of 1978. Attorney-at-law and former President of the OB Association. Leading fundraising initiatives for the college infrastructure.", year: "2026", sortOrder: 0, status: "approved" as const },
-    { name: "Mahinda Rajapaksa", role: "Vice President", email: "mahinda@ob-alloysius.lk", bio: "Class of 1975. Retired senior government official. Active in mentoring current students and organizing career guidance programs.", year: "2026", sortOrder: 1, status: "approved" as const },
-    { name: "Chandrika Kumaratunga", role: "Secretary", email: "chandrika@ob-alloysius.lk", bio: "Class of 1980. Former diplomat. Manages OB communications and coordinates alumni events.", year: "2026", sortOrder: 2, status: "approved" as const },
-    { name: "Dinesh Gunawardena", role: "Treasurer", email: "dinesh@ob-alloysius.lk", bio: "Class of 1982. Chartered accountant. Oversees OB Association finances and donation management.", year: "2026", sortOrder: 3, status: "approved" as const },
-    { name: "Sajith Premadasa", role: "Committee Member", email: "sajith@ob-alloysius.lk", bio: "Class of 1985. Entrepreneur and philanthropist. Sponsors annual sports awards and student scholarships.", year: "2026", sortOrder: 4, status: "approved" as const },
-    { name: "Ranil Mathew", role: "Committee Member", email: "ranil.m@ob-alloysius.lk", bio: "Class of 1990. Software engineer based in Melbourne. Coordinates overseas alumni chapter activities.", year: "2026", sortOrder: 5, status: "approved" as const },
-    { name: "Nimal Fernando", role: "Committee Member", email: "nimal@ob-alloysius.lk", bio: "Class of 1988. Senior architect. Leads campus beautification and infrastructure projects.", year: "2026", sortOrder: 6, status: "approved" as const },
-    { name: "Kamal Perera", role: "Immediate Past President", email: "kamal@ob-alloysius.lk", bio: "Class of 1976. Retired school principal. Served as OB President from 2018-2024. Now an advisory board member.", year: "2026", sortOrder: 7, status: "approved" as const },
-    { name: "Amal Suriyaarachchi", role: "Committee Member", email: "amal@ob-alloysius.lk", bio: "Class of 1992. Medical doctor. Coordinates health awareness programs and scholarship fund.", year: "2025", sortOrder: 0, status: "approved" as const },
-    { name: "Lasantha Jayasuriya", role: "President", email: "lasantha@ob-alloysius.lk", bio: "Class of 1972. Retired judge. Led the 2025 committee with focus on legal aid and mentorship.", year: "2025", sortOrder: 1, status: "approved" as const },
-    { name: "Priyantha Silva", role: "Secretary", email: "priyantha@ob-alloysius.lk", bio: "Class of 1981. Chartered accountant. Managed OB communications and record-keeping.", year: "2025", sortOrder: 2, status: "approved" as const },
-    { name: "New Member Request", role: "Committee Member", email: "newmember@ob-alloysius.lk", bio: "Pending approval for 2026 committee.", year: "2026", sortOrder: 8, status: "pending" as const },
+    {
+      name: "Ranil Wickramasinghe",
+      role: "President",
+      email: "ranil@ob-alloysius.lk",
+      adminEmail: "obadmin@aloysiuscollege.lk",
+      bio: "Class of 1978. Attorney-at-law and former President of the OB Association. Leading fundraising initiatives for the college infrastructure.",
+      year: "2026",
+      sortOrder: 0,
+      status: "approved" as const,
+    },
+    {
+      name: "Mahinda Rajapaksa",
+      role: "Vice President",
+      email: "mahinda@ob-alloysius.lk",
+      bio: "Class of 1975. Retired senior government official. Active in mentoring current students and organizing career guidance programs.",
+      year: "2026",
+      sortOrder: 1,
+      status: "approved" as const,
+    },
+    {
+      name: "Chandrika Kumaratunga",
+      role: "Secretary",
+      email: "chandrika@ob-alloysius.lk",
+      bio: "Class of 1980. Former diplomat. Manages OB communications and coordinates alumni events.",
+      year: "2026",
+      sortOrder: 2,
+      status: "approved" as const,
+    },
+    {
+      name: "Dinesh Gunawardena",
+      role: "Treasurer",
+      email: "dinesh@ob-alloysius.lk",
+      bio: "Class of 1982. Chartered accountant. Oversees OB Association finances and donation management.",
+      year: "2026",
+      sortOrder: 3,
+      status: "approved" as const,
+    },
+    {
+      name: "Sajith Premadasa",
+      role: "Committee Member",
+      email: "sajith@ob-alloysius.lk",
+      bio: "Class of 1985. Entrepreneur and philanthropist. Sponsors annual sports awards and student scholarships.",
+      year: "2026",
+      sortOrder: 4,
+      status: "approved" as const,
+    },
+    {
+      name: "Ranil Mathew",
+      role: "Committee Member",
+      email: "ranil.m@ob-alloysius.lk",
+      bio: "Class of 1990. Software engineer based in Melbourne. Coordinates overseas alumni chapter activities.",
+      year: "2026",
+      sortOrder: 5,
+      status: "approved" as const,
+    },
+    {
+      name: "Nimal Fernando",
+      role: "Committee Member",
+      email: "nimal@ob-alloysius.lk",
+      bio: "Class of 1988. Senior architect. Leads campus beautification and infrastructure projects.",
+      year: "2026",
+      sortOrder: 6,
+      status: "approved" as const,
+    },
+    {
+      name: "Kamal Perera",
+      role: "Immediate Past President",
+      email: "kamal@ob-alloysius.lk",
+      bio: "Class of 1976. Retired school principal. Served as OB President from 2018-2024. Now an advisory board member.",
+      year: "2026",
+      sortOrder: 7,
+      status: "approved" as const,
+    },
+    {
+      name: "Amal Suriyaarachchi",
+      role: "Committee Member",
+      email: "amal@ob-alloysius.lk",
+      bio: "Class of 1992. Medical doctor. Coordinates health awareness programs and scholarship fund.",
+      year: "2025",
+      sortOrder: 0,
+      status: "approved" as const,
+    },
+    {
+      name: "Lasantha Jayasuriya",
+      role: "President",
+      email: "lasantha@ob-alloysius.lk",
+      bio: "Class of 1972. Retired judge. Led the 2025 committee with focus on legal aid and mentorship.",
+      year: "2025",
+      sortOrder: 1,
+      status: "approved" as const,
+    },
+    {
+      name: "Priyantha Silva",
+      role: "Secretary",
+      email: "priyantha@ob-alloysius.lk",
+      bio: "Class of 1981. Chartered accountant. Managed OB communications and record-keeping.",
+      year: "2025",
+      sortOrder: 2,
+      status: "approved" as const,
+    },
+    {
+      name: "New Member Request",
+      role: "Committee Member",
+      email: "newmember@ob-alloysius.lk",
+      bio: "Pending approval for 2026 committee.",
+      year: "2026",
+      sortOrder: 8,
+      status: "pending" as const,
+    },
   ];
   for (let i = 0; i < obMembers.length; i++) {
     const member = obMembers[i]!;
@@ -1125,7 +1594,8 @@ export async function seed() {
   const obEvents = [
     {
       title: "Annual OB Reunion Dinner 2026",
-      description: "Join fellow old boys for an evening of nostalgia, fellowship, and celebration. Dinner, live music, and awards ceremony.",
+      description:
+        "Join fellow old boys for an evening of nostalgia, fellowship, and celebration. Dinner, live music, and awards ceremony.",
       coverImage: faker.helpers.arrayElement(imageUrls),
       location: "Galle Face Hotel, Colombo",
       eventDate: daysFromNow(30),
@@ -1134,7 +1604,8 @@ export async function seed() {
     },
     {
       title: "Career Guidance Workshop for Current Students",
-      description: "Old boys from various professions share their career journeys and provide guidance to students in grades 10-12. Sessions on medicine, engineering, law, IT, and business.",
+      description:
+        "Old boys from various professions share their career journeys and provide guidance to students in grades 10-12. Sessions on medicine, engineering, law, IT, and business.",
       coverImage: faker.helpers.arrayElement(imageUrls),
       location: "College Auditorium",
       eventDate: daysFromNow(14),
@@ -1143,7 +1614,8 @@ export async function seed() {
     },
     {
       title: "Sports Day - Old Boys vs Current Students",
-      description: "Annual friendly cricket and football matches between the old boys team and current students. Come cheer and enjoy the camaraderie.",
+      description:
+        "Annual friendly cricket and football matches between the old boys team and current students. Come cheer and enjoy the camaraderie.",
       coverImage: faker.helpers.arrayElement(imageUrls),
       location: "College Sports Ground",
       eventDate: daysFromNow(45),
@@ -1152,7 +1624,8 @@ export async function seed() {
     },
     {
       title: "Fundraising Gala for Library Renovation",
-      description: "An evening gala to raise funds for the renovation of the college library. Silent auction, dinner, and entertainment.",
+      description:
+        "An evening gala to raise funds for the renovation of the college library. Silent auction, dinner, and entertainment.",
       coverImage: faker.helpers.arrayElement(imageUrls),
       location: "Mount Lavinia Hotel",
       eventDate: daysFromNow(60),
@@ -1161,7 +1634,8 @@ export async function seed() {
     },
     {
       title: "Mentorship Program Kickoff",
-      description: "Launch of the 2026 OB Mentorship Program pairing old boys with current students for academic and career guidance throughout the year.",
+      description:
+        "Launch of the 2026 OB Mentorship Program pairing old boys with current students for academic and career guidance throughout the year.",
       coverImage: faker.helpers.arrayElement(imageUrls),
       location: "College Conference Hall",
       eventDate: daysFromNow(7),
@@ -1191,14 +1665,95 @@ export async function seed() {
 
   // ── OB Donations ──
   const obDonations = [
-    { donorName: "Ranil Wickramasinghe", donorEmail: "ranil@ob-alloysius.lk", amount: 500000, currency: "LKR", purpose: "Library Renovation Fund", message: "Happy to contribute to the library project. Education is the foundation of our college.", isAnonymous: false, status: "confirmed" as const, donatedAt: daysAgo(15) },
-    { donorName: "Mahinda Rajapaksa", donorEmail: "mahinda@ob-alloysius.lk", amount: 250000, currency: "LKR", purpose: "Sports Equipment", message: "For the new cricket pavilion project.", isAnonymous: false, status: "confirmed" as const, donatedAt: daysAgo(10) },
-    { donorName: "Anonymous", donorEmail: null, amount: 1000000, currency: "LKR", purpose: "Scholarship Fund", message: "In memory of my late father, an old boy of 1965.", isAnonymous: true, status: "confirmed" as const, donatedAt: daysAgo(20) },
-    { donorName: "Nimal Fernando", donorEmail: "nimal@ob-alloysius.lk", amount: 150000, currency: "LKR", purpose: "Campus Beautification", message: "For the new garden project near the main hall.", isAnonymous: false, status: "confirmed" as const, donatedAt: daysAgo(5) },
-    { donorName: "Kamal Perera", donorEmail: "kamal@ob-alloysius.lk", amount: 300000, currency: "LKR", purpose: "Technology Upgrades", message: "For the new computer lab equipment.", isAnonymous: false, status: "confirmed" as const, donatedAt: daysAgo(8) },
-    { donorName: "Sajith Premadasa", donorEmail: "sajith@ob-alloysius.lk", amount: 200000, currency: "LKR", purpose: "Annual Sports Awards", message: "Sponsoring this year's sports day prizes.", isAnonymous: false, status: "pending" as const, donatedAt: daysAgo(2) },
-    { donorName: "Ranil Mathew", donorEmail: "ranil.m@ob-alloysius.lk", amount: 100, currency: "USD", purpose: "Library Renovation Fund", message: "Contributing from the Melbourne chapter.", isAnonymous: false, status: "confirmed" as const, donatedAt: daysAgo(12) },
-    { donorName: "Chandrika Kumaratunga", donorEmail: "chandrika@ob-alloysius.lk", amount: 100000, currency: "LKR", purpose: "Student Welfare", message: "For the student lunch program.", isAnonymous: false, status: "pending" as const, donatedAt: daysAgo(1) },
+    {
+      donorName: "Ranil Wickramasinghe",
+      donorEmail: "ranil@ob-alloysius.lk",
+      amount: 500000,
+      currency: "LKR",
+      purpose: "Library Renovation Fund",
+      message:
+        "Happy to contribute to the library project. Education is the foundation of our college.",
+      isAnonymous: false,
+      status: "confirmed" as const,
+      donatedAt: daysAgo(15),
+    },
+    {
+      donorName: "Mahinda Rajapaksa",
+      donorEmail: "mahinda@ob-alloysius.lk",
+      amount: 250000,
+      currency: "LKR",
+      purpose: "Sports Equipment",
+      message: "For the new cricket pavilion project.",
+      isAnonymous: false,
+      status: "confirmed" as const,
+      donatedAt: daysAgo(10),
+    },
+    {
+      donorName: "Anonymous",
+      donorEmail: null,
+      amount: 1000000,
+      currency: "LKR",
+      purpose: "Scholarship Fund",
+      message: "In memory of my late father, an old boy of 1965.",
+      isAnonymous: true,
+      status: "confirmed" as const,
+      donatedAt: daysAgo(20),
+    },
+    {
+      donorName: "Nimal Fernando",
+      donorEmail: "nimal@ob-alloysius.lk",
+      amount: 150000,
+      currency: "LKR",
+      purpose: "Campus Beautification",
+      message: "For the new garden project near the main hall.",
+      isAnonymous: false,
+      status: "confirmed" as const,
+      donatedAt: daysAgo(5),
+    },
+    {
+      donorName: "Kamal Perera",
+      donorEmail: "kamal@ob-alloysius.lk",
+      amount: 300000,
+      currency: "LKR",
+      purpose: "Technology Upgrades",
+      message: "For the new computer lab equipment.",
+      isAnonymous: false,
+      status: "confirmed" as const,
+      donatedAt: daysAgo(8),
+    },
+    {
+      donorName: "Sajith Premadasa",
+      donorEmail: "sajith@ob-alloysius.lk",
+      amount: 200000,
+      currency: "LKR",
+      purpose: "Annual Sports Awards",
+      message: "Sponsoring this year's sports day prizes.",
+      isAnonymous: false,
+      status: "pending" as const,
+      donatedAt: daysAgo(2),
+    },
+    {
+      donorName: "Ranil Mathew",
+      donorEmail: "ranil.m@ob-alloysius.lk",
+      amount: 100,
+      currency: "USD",
+      purpose: "Library Renovation Fund",
+      message: "Contributing from the Melbourne chapter.",
+      isAnonymous: false,
+      status: "confirmed" as const,
+      donatedAt: daysAgo(12),
+    },
+    {
+      donorName: "Chandrika Kumaratunga",
+      donorEmail: "chandrika@ob-alloysius.lk",
+      amount: 100000,
+      currency: "LKR",
+      purpose: "Student Welfare",
+      message: "For the student lunch program.",
+      isAnonymous: false,
+      status: "pending" as const,
+      donatedAt: daysAgo(1),
+    },
   ];
   for (let i = 0; i < obDonations.length; i++) {
     const donation = obDonations[i]!;

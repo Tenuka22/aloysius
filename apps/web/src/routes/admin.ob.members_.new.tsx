@@ -27,9 +27,18 @@ function CreateOBMemberDialog() {
     >
       <DialogContent className="w-[min(90vw,700px)] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>New Committee Member {year && <span className="text-muted-foreground font-normal">({year})</span>}</DialogTitle>
+          <DialogTitle>
+            New Committee Member{" "}
+            {year && <span className="text-muted-foreground font-normal">({year})</span>}
+          </DialogTitle>
         </DialogHeader>
-        <OBMemberForm mode="create" defaultYear={year} onSuccess={() => navigate({ to: year ? `/admin/ob/members/${year}` : "/admin/ob/members" })} />
+        <OBMemberForm
+          mode="create"
+          defaultYear={year}
+          onSuccess={() =>
+            navigate({ to: year ? `/admin/ob/members/${year}` : "/admin/ob/members" })
+          }
+        />
       </DialogContent>
     </Dialog>
   );

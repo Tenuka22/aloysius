@@ -43,10 +43,15 @@ export function getAspectRatio(url?: string | null): number | null {
 /** Tailwind aspect class for a numeric ratio, or empty string when unknown. */
 export function aspectRatioClass(ratio: number | null): string {
   if (ratio === null) return "";
-  const key = Math.abs(ratio - 16 / 9) < 0.01 ? "aspect-video"
-    : Math.abs(ratio - 4 / 3) < 0.01 ? "aspect-[4/3]"
-    : Math.abs(ratio - 1) < 0.01 ? "aspect-square"
-    : Math.abs(ratio - 3 / 4) < 0.01 ? "aspect-[3/4]"
-    : "";
+  const key =
+    Math.abs(ratio - 16 / 9) < 0.01
+      ? "aspect-video"
+      : Math.abs(ratio - 4 / 3) < 0.01
+        ? "aspect-[4/3]"
+        : Math.abs(ratio - 1) < 0.01
+          ? "aspect-square"
+          : Math.abs(ratio - 3 / 4) < 0.01
+            ? "aspect-[3/4]"
+            : "";
   return key;
 }

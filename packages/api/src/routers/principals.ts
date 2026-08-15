@@ -197,11 +197,7 @@ export const principalsRouter = {
       }
 
       const db = createDb();
-      const existing = await db
-        .select()
-        .from(principals)
-        .where(eq(principals.id, input.id))
-        .get();
+      const existing = await db.select().from(principals).where(eq(principals.id, input.id)).get();
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Principal not found" });
@@ -249,11 +245,7 @@ export const principalsRouter = {
       }
 
       const db = createDb();
-      const existing = await db
-        .select()
-        .from(principals)
-        .where(eq(principals.id, input.id))
-        .get();
+      const existing = await db.select().from(principals).where(eq(principals.id, input.id)).get();
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Principal not found" });

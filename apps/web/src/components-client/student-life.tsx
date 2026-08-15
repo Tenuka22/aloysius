@@ -15,113 +15,18 @@ export type LifeTile = {
 };
 
 type Slot =
-  | { key: "sports" | "music" | "scouts" | "faith"; kind: "image"; className: string }
-  | { key: "clubs" | "houses" | "prefects"; kind: "text"; className: string; bgClass: string };
+  | { key: string; kind: "image"; bgClass: string; defaultRatio: number }
+  | { key: string; kind: "text"; bgClass: string; defaultRatio: number };
 
 const SLOTS: Slot[] = [
-  { key: "sports", kind: "image", className: "" },
-  { key: "music", kind: "image", className: "" },
-  {
-    key: "clubs",
-    kind: "text",
-    className: "",
-    bgClass: "bg-green-dark text-cream",
-  },
-  {
-    key: "houses",
-    kind: "text",
-    className: "",
-    bgClass: "bg-red-brand text-cream",
-  },
-  { key: "scouts", kind: "image", className: "" },
-  { key: "faith", kind: "image", className: "" },
-  {
-    key: "prefects",
-    kind: "text",
-    className: "",
-    bgClass: "bg-gold text-green-dark",
-  },
+  { key: "sports", kind: "image", bgClass: "", defaultRatio: 16 / 9 },
+  { key: "music", kind: "image", bgClass: "", defaultRatio: 3 / 4 },
+  { key: "clubs", kind: "text", bgClass: "bg-green-dark text-cream", defaultRatio: 4 / 3 },
+  { key: "houses", kind: "text", bgClass: "bg-red-brand text-cream", defaultRatio: 1 },
+  { key: "scouts", kind: "image", bgClass: "", defaultRatio: 16 / 9 },
+  { key: "faith", kind: "image", bgClass: "", defaultRatio: 3 / 4 },
+  { key: "prefects", kind: "text", bgClass: "bg-gold text-green-dark", defaultRatio: 1 },
 ];
-
-function ImageTile({
-  tile,
-  className,
-  labelFallback,
-}: {
-  tile: LifeTile;
-  className: string;
-  labelFallback: string;
-}) {
-  const label = tile.label || labelFallback;
-
-  const inner = (
-    <div className="relative w-full inline-block overflow-hidden rounded-xl">
-      {tile.image ? (
-        <img
-          src={tile.image}
-          alt={label}
-          className={`w-full ${aspectRatioClass(getAspectRatio(tile.image)) || "aspect-video"} object-cover`}
-        />
-      ) : (
-        <div className="aspect-[4/3] w-full bg-gradient-to-br from-green-dark/15 to-green-dark/5" />
-      )}
-      {label && (
-        <div className="absolute left-4 sm:left-5 bottom-3 sm:bottom-4 bg-green-dark text-cream font-bold text-xs sm:text-[13px] tracking-[0.1em] px-3 sm:px-4 py-1.5 sm:py-2 pointer-events-none">
-          {label}
-        </div>
-      )}
-    </div>
-  );
-
-  if (tile.href) {
-    return (
-      <a href={tile.href} data-tile className={`block ${className}`}>
-        {inner}
-      </a>
-    );
-  }
-  return (
-    <div data-tile className={`block ${className}`}>
-      {inner}
-    </div>
-  );
-}
-
-function TextTile({
-  tile,
-  className,
-  bgClass,
-  subtext,
-}: {
-  tile: LifeTile;
-  className: string;
-  bgClass: string;
-  subtext?: string;
-}) {
-  const inner = (
-    <div className={`flex w-full inline-block items-center justify-center text-center p-3 ${bgClass}`}>
-      <div className="min-w-0">
-        <div className="font-extrabold text-[13px] sm:text-[15px] tracking-[0.08em] leading-snug line-clamp-2">
-          {tile.label}
-        </div>
-        {subtext && <div className="text-xs text-gold mt-1">{subtext}</div>}
-      </div>
-    </div>
-  );
-
-  if (tile.href) {
-    return (
-      <a href={tile.href} data-tile className={`block ${className}`}>
-        {inner}
-      </a>
-    );
-  }
-  return (
-    <div data-tile className={`block ${className}`}>
-      {inner}
-    </div>
-  );
-}
 
 const SETTING_LABEL_KEYS: Record<string, string> = {
   sports: "life_sports_label",
@@ -132,6 +37,105 @@ const SETTING_LABEL_KEYS: Record<string, string> = {
   faith: "life_faith_label",
   prefects: "life_prefects_label",
 };
+
+function resolveAspectClass(imageUrl: string | null | undefined, defaultRatio: number): string {
+  const fromUrl = getAspectRatio(imageUrl);
+  return aspectRatioClass(fromUrl ?? defaultRatio) || "aspect-video";
+}
+
+function ImageTile({
+  tile,
+  label,
+  bgClass,
+  defaultRatio,
+}: {
+  tile: LifeTile;
+  label: string;
+  bgClass: string;
+  defaultRatio: number;
+}) {
+  const aspect = resolveAspectClass(tile.image, defaultRatio);
+
+  const inner = (
+    <div className="group relative w-full overflow-hidden">
+      {tile.image ? (
+        <img
+          src={tile.image}
+          alt={label}
+          className={`w-full ${aspect} object-cover transition-transform duration-500 group-hover:scale-105`}
+        />
+      ) : (
+        <div className={`w-full ${aspect} ${bgClass || "bg-green-dark/10"}`} />
+      )}
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
+      {label && (
+        <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
+          <div className="bg-green-dark text-cream font-bold text-xs sm:text-[13px] tracking-[0.1em] px-5 py-3">
+            {label}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  if (tile.href) {
+    return (
+      <a href={tile.href} data-tile className="block">
+        {inner}
+      </a>
+    );
+  }
+  return (
+    <div data-tile className="block">
+      {inner}
+    </div>
+  );
+}
+
+function TextTile({
+  label,
+  bgClass,
+  defaultRatio,
+  href,
+}: {
+  label: string;
+  bgClass: string;
+  defaultRatio: number;
+  href?: string;
+}) {
+  const aspect = aspectRatioClass(defaultRatio) || "aspect-video";
+
+  const inner = (
+    <div className="group relative w-full overflow-hidden">
+      <div className={`w-full ${aspect} flex items-center justify-center ${bgClass}`}>
+        <div className="p-5 text-center">
+          <div className="font-extrabold text-[13px] sm:text-[15px] tracking-[0.08em] leading-snug">
+            {label}
+          </div>
+        </div>
+      </div>
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
+      <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
+        <div className="bg-green-dark text-cream font-bold text-xs sm:text-[13px] tracking-[0.1em] px-5 py-3">
+          {label}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (href) {
+    return (
+      <a href={href} data-tile className="block">
+        {inner}
+      </a>
+    );
+  }
+  return (
+    <div data-tile className="block">
+      {inner}
+    </div>
+  );
+}
 
 export function StudentLife({
   settings,
@@ -149,10 +153,10 @@ export function StudentLife({
     const ctx = gsap.context(() => {
       gsap.fromTo(
         el.querySelectorAll("[data-tile]"),
-        { opacity: 0, scale: 0.95 },
+        { opacity: 0, y: 20 },
         {
           opacity: 1,
-          scale: 1,
+          y: 0,
           duration: 0.5,
           stagger: 0.06,
           ease: "power3.out",
@@ -163,35 +167,41 @@ export function StudentLife({
     return () => ctx.revert();
   }, []);
 
+  const heading = s("life_heading");
+
+  if (tiles.length === 0 && !heading) return null;
+
   return (
     <section ref={sectionRef} className="bg-cream py-24 sm:py-[120px] px-4 sm:px-6 lg:px-12">
       <div className="mx-auto max-w-[1180px]">
-        {s("life_eyebrow") && (
-          <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
-            {s("life_eyebrow")}
-          </div>
+        {heading && (
+          <h2 className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] mb-12 sm:mb-15">
+            {heading}
+          </h2>
         )}
-        <h2 className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] mb-12 sm:mb-15">
-          {s("life_heading")}
-        </h2>
 
         <div className="columns-[200px] sm:columns-[280px] lg:columns-[320px] gap-x-3 sm:gap-x-4">
-          {SLOTS.map((slot, i) => {
-            const tile = tiles[i];
+          {SLOTS.map((slot) => {
+            const tile = tiles.find((t) => t.id === slot.key);
             const settingLabelKey = SETTING_LABEL_KEYS[slot.key];
+            const imageKey = `life_${slot.key}_image`;
+            const fallbackImage = settings?.[imageKey] ?? null;
+            const label = tile?.label || s(settingLabelKey);
+
+            if (!label) return null;
+
+            const resolvedTile = tile
+              ? { ...tile, image: tile.image ?? fallbackImage }
+              : { id: slot.key, label, image: fallbackImage };
 
             if (slot.kind === "image") {
-              const imageKey = `life_${slot.key}_image`;
-              const fallbackImage = settings?.[imageKey] ?? null;
-              const resolvedTile = tile
-                ? { ...tile, image: tile.image ?? fallbackImage }
-                : { id: slot.key, label: "", image: fallbackImage };
               return (
                 <div key={slot.key} className="break-inside-avoid mb-3 sm:mb-4 w-full inline-block">
                   <ImageTile
                     tile={resolvedTile}
-                    className={slot.className}
-                    labelFallback={s(settingLabelKey)}
+                    label={label}
+                    bgClass={slot.bgClass}
+                    defaultRatio={slot.defaultRatio}
                   />
                 </div>
               );
@@ -200,10 +210,10 @@ export function StudentLife({
             return (
               <div key={slot.key} className="break-inside-avoid mb-3 sm:mb-4 w-full inline-block">
                 <TextTile
-                  tile={tile ?? { id: slot.key, label: s(settingLabelKey) }}
-                  className={slot.className}
+                  label={label}
                   bgClass={slot.bgClass}
-                  subtext={slot.key === "clubs" ? s("life_clubs_subtext") : undefined}
+                  defaultRatio={slot.defaultRatio}
+                  href={resolvedTile.href}
                 />
               </div>
             );
@@ -211,7 +221,12 @@ export function StudentLife({
 
           {tiles.slice(SLOTS.length).map((tile) => (
             <div key={tile.id} className="break-inside-avoid mb-3 sm:mb-4 w-full inline-block">
-              <ImageTile tile={tile} className="" labelFallback="" />
+              <ImageTile
+                tile={tile}
+                label={tile.label}
+                bgClass=""
+                defaultRatio={4 / 3}
+              />
             </div>
           ))}
         </div>

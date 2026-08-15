@@ -67,17 +67,33 @@ type OBEvent = {
   updatedAt: string;
 };
 
-function DeleteEventDialog({ open, onOpenChange, onConfirm, title }: { open: boolean; onOpenChange: (open: boolean) => void; onConfirm: () => void; title: string }) {
+function DeleteEventDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+  title,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  title: string;
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Event</DialogTitle>
-          <DialogDescription>Are you sure you want to delete <strong>{title}</strong>? This action cannot be undone.</DialogDescription>
+          <DialogDescription>
+            Are you sure you want to delete <strong>{title}</strong>? This action cannot be undone.
+          </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button variant="destructive" onClick={onConfirm}>Delete</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={onConfirm}>
+            Delete
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -101,18 +117,30 @@ function AdminOBEvents() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => { if (!deleteId) return Promise.resolve({ success: true }); return client.ob.obEvents.delete({ id: deleteId }); },
-    onSuccess: () => { toast.success("Event deleted"); setDeleteOpen(false); setDeleteId(null); },
+    mutationFn: () => {
+      if (!deleteId) return Promise.resolve({ success: true });
+      return client.ob.obEvents.delete({ id: deleteId });
+    },
+    onSuccess: () => {
+      toast.success("Event deleted");
+      setDeleteOpen(false);
+      setDeleteId(null);
+    },
   });
 
   const publishMutation = useMutation({
-    mutationFn: (id: string) => client.ob.obEvents.update({ id, status: "published", publishNow: true }),
-    onSuccess: () => { toast.success("Event published"); },
+    mutationFn: (id: string) =>
+      client.ob.obEvents.update({ id, status: "published", publishNow: true }),
+    onSuccess: () => {
+      toast.success("Event published");
+    },
   });
 
   const archiveMutation = useMutation({
     mutationFn: (id: string) => client.ob.obEvents.update({ id, status: "archived" }),
-    onSuccess: () => { toast.success("Event archived"); },
+    onSuccess: () => {
+      toast.success("Event archived");
+    },
   });
 
   const columns: ColumnDef<OBEvent, any>[] = [
@@ -133,7 +161,9 @@ function AdminOBEvents() {
     {
       accessorKey: "location",
       header: "Location",
-      cell: ({ row }) => <span className="text-muted-foreground line-clamp-1">{row.original.location || "-"}</span>,
+      cell: ({ row }) => (
+        <span className="text-muted-foreground line-clamp-1">{row.original.location || "-"}</span>
+      ),
     },
     {
       accessorKey: "eventDate",
@@ -154,8 +184,18 @@ function AdminOBEvents() {
           archived: "bg-gray-50 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
           draft: "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
         };
-        const labels: Record<string, string> = { published: "Published", archived: "Archived", draft: "Draft" };
-        return <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${styles[status] ?? styles.draft}`}>{labels[status] ?? status}</span>;
+        const labels: Record<string, string> = {
+          published: "Published",
+          archived: "Archived",
+          draft: "Draft",
+        };
+        return (
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${styles[status] ?? styles.draft}`}
+          >
+            {labels[status] ?? status}
+          </span>
+        );
       },
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
@@ -170,7 +210,9 @@ function AdminOBEvents() {
               <IconDotsVertical className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem render={<Link to={`/admin/ob/events/$id/edit`} params={{ id: e.id }} />}>
+              <DropdownMenuItem
+                render={<Link to={`/admin/ob/events/$id/edit`} params={{ id: e.id }} />}
+              >
                 <IconPencil className="size-4" /> Edit
               </DropdownMenuItem>
               {e.status === "draft" && (
@@ -189,7 +231,13 @@ function AdminOBEvents() {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onClick={() => { setDeleteId(e.id); setDeleteOpen(true); }}>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => {
+                  setDeleteId(e.id);
+                  setDeleteOpen(true);
+                }}
+              >
                 <IconTrash className="size-4" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -231,16 +279,34 @@ function AdminOBEvents() {
             return (
               <div className="flex items-center justify-between">
                 <div className="flex flex-1 items-center gap-2">
-                  <Input placeholder="Filter by title..." value={(filters.find((f) => f.id === "title")?.value as string) ?? ""} onChange={(e) => setFilter("title", e.target.value)} className="h-8 w-[200px] lg:w-[250px]" />
-                  <Select value={(filters.find((f) => f.id === "status")?.value as string) ?? ""} onValueChange={(val) => setFilter("status", val ?? "")}>
-                    <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="All statuses" /></SelectTrigger>
+                  <Input
+                    placeholder="Filter by title..."
+                    value={(filters.find((f) => f.id === "title")?.value as string) ?? ""}
+                    onChange={(e) => setFilter("title", e.target.value)}
+                    className="h-8 w-[200px] lg:w-[250px]"
+                  />
+                  <Select
+                    value={(filters.find((f) => f.id === "status")?.value as string) ?? ""}
+                    onValueChange={(val) => setFilter("status", val ?? "")}
+                  >
+                    <SelectTrigger className="h-8 w-[140px]">
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="draft">Draft</SelectItem>
                       <SelectItem value="published">Published</SelectItem>
                       <SelectItem value="archived">Archived</SelectItem>
                     </SelectContent>
                   </Select>
-                  {isFiltered && <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">Reset</Button>}
+                  {isFiltered && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => table.resetColumnFilters()}
+                      className="h-8 px-2 lg:px-3"
+                    >
+                      Reset
+                    </Button>
+                  )}
                 </div>
                 <DataTableViewOptions table={table} />
               </div>
@@ -248,7 +314,12 @@ function AdminOBEvents() {
           }}
         />
       </div>
-      <DeleteEventDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={() => deleteMutation.mutate()} title={deleteId ? events.find((e) => e.id === deleteId)?.title || "" : ""} />
+      <DeleteEventDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={() => deleteMutation.mutate()}
+        title={deleteId ? events.find((e) => e.id === deleteId)?.title || "" : ""}
+      />
     </div>
   );
 }

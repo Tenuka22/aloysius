@@ -254,8 +254,7 @@ export const HOMEPAGE_DEFAULTS: Record<HomepageSettingKey, string> = {
   // Achievements
   achievements_eyebrow: "HALL OF FAME",
   achievements_heading: "The Achievement Wall",
-  achievements_description:
-    "Academic, sporting and national honours earned by Aloysians.",
+  achievements_description: "Academic, sporting and national honours earned by Aloysians.",
 
   // Alumni
   alumni_eyebrow: "OLD BOYS' ASSOCIATION",
@@ -280,8 +279,7 @@ export const HOMEPAGE_DEFAULTS: Record<HomepageSettingKey, string> = {
   gallery_cta_url: "/gallery",
 
   // Footer
-  footer_copyright:
-    "\u00A9 {year} St. Aloysius' College, Galle. All Rights Reserved.",
+  footer_copyright: "\u00A9 {year} St. Aloysius' College, Galle. All Rights Reserved.",
   footer_social_facebook: "https://facebook.com/aloysiuscollege",
   footer_social_instagram: "https://instagram.com/aloysiuscollege",
   footer_social_youtube: "https://youtube.com/@aloysiuscollege",

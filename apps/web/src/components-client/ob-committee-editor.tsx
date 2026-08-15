@@ -58,7 +58,11 @@ const COMMITTEE_STRUCTURE = [
     roles: [
       { role: "VICE PRESIDENT - ADMINISTRATION", label: "Administration", count: 1 },
       { role: "VICE PRESIDENT - ACADEMICS", label: "Academics", count: 1 },
-      { role: "VICE PRESIDENT - SOCIAL & CURRICULAR EVENTS", label: "Social & Curricular Events", count: 1 },
+      {
+        role: "VICE PRESIDENT - SOCIAL & CURRICULAR EVENTS",
+        label: "Social & Curricular Events",
+        count: 1,
+      },
       { role: "VICE PRESIDENT - FUNDRAISING", label: "Fundraising", count: 1 },
       { role: "VICE PRESIDENT - MEMBERSHIP", label: "Membership", count: 1 },
       { role: "VICE PRESIDENT - PLAYGROUND & SPORTS", label: "Playground & Sports", count: 1 },
@@ -139,7 +143,9 @@ function MemberPickField({
 
   const filtered = useMemo(() => {
     const q = input.trim().toLowerCase();
-    return q ? pool.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 25) : pool.slice(0, 25);
+    return q
+      ? pool.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 25)
+      : pool.slice(0, 25);
   }, [input, pool]);
 
   const applyMember = (m: OBMember) => {
@@ -160,11 +166,7 @@ function MemberPickField({
       }}
       filter={null}
     >
-      <ComboboxInput
-        placeholder="Search member or type a new name..."
-        showClear
-        className="w-full"
-      >
+      <ComboboxInput placeholder="Search member or type a new name..." showClear className="w-full">
         {photo && (
           <InputGroupAddon align="inline-start">
             <img src={photo} alt="" className="size-5 rounded-full object-cover" />
@@ -183,7 +185,9 @@ function MemberPickField({
                 </span>
               )}
               <span className="truncate">{m.name}</span>
-              <span className="ml-auto shrink-0 text-xs text-muted-foreground">{m.year || "—"}</span>
+              <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                {m.year || "—"}
+              </span>
             </ComboboxItem>
           ))}
         </ComboboxList>
@@ -217,7 +221,9 @@ function SlotPhoto({ value, onChange }: { value: string; onChange: (v: string) =
         {value ? (
           <img src={value} alt="" className="size-full object-cover" />
         ) : (
-          <span className="flex size-full items-center justify-center text-xs text-muted-foreground">—</span>
+          <span className="flex size-full items-center justify-center text-xs text-muted-foreground">
+            —
+          </span>
         )}
       </div>
       <input
@@ -245,7 +251,13 @@ function SlotPhoto({ value, onChange }: { value: string; onChange: (v: string) =
         )}
       </Button>
       {value && (
-        <Button type="button" variant="ghost" size="icon-sm" onClick={() => onChange("")} title="Remove photo">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => onChange("")}
+          title="Remove photo"
+        >
           <IconX className="size-3.5" />
         </Button>
       )}
@@ -275,7 +287,10 @@ export function OBCommitteeEditor({
     setSlots((prev) => {
       const sameRole = prev.filter((s) => s.role === role);
       const nextIndex = sameRole.length;
-      return [...prev, { key: `${role}#${nextIndex}`, role, name: "", email: "", photo: "", bio: "" }];
+      return [
+        ...prev,
+        { key: `${role}#${nextIndex}`, role, name: "", email: "", photo: "", bio: "" },
+      ];
     });
   };
 
@@ -300,7 +315,9 @@ export function OBCommitteeEditor({
           })),
       }),
     onSuccess: (res) => {
-      toast.success(`Committee saved (${res.saved} members${res.removed ? `, ${res.removed} removed` : ""})`);
+      toast.success(
+        `Committee saved (${res.saved} members${res.removed ? `, ${res.removed} removed` : ""})`,
+      );
       queryClient.invalidateQueries({ queryKey: ["ob-members"] });
     },
     onError: (err) => toast.error(err.message),
@@ -319,8 +336,8 @@ export function OBCommitteeEditor({
             </p>
           ) : (
             <p className="text-xs text-muted-foreground mt-1">
-              Assign a person to every role for {year}. Pick an existing OB member or type a new name — the whole
-              committee saves at once.
+              Assign a person to every role for {year}. Pick an existing OB member or type a new
+              name — the whole committee saves at once.
             </p>
           )}
         </div>
@@ -339,7 +356,9 @@ export function OBCommitteeEditor({
       {COMMITTEE_STRUCTURE.map((section) => (
         <Card key={section.section} className="overflow-hidden">
           <div className="border-b bg-muted/30 px-5 py-3">
-            <h3 className="text-xs font-bold tracking-[0.2em] text-green-dark">{section.section.toUpperCase()}</h3>
+            <h3 className="text-xs font-bold tracking-[0.2em] text-green-dark">
+              {section.section.toUpperCase()}
+            </h3>
           </div>
           <CardContent className="p-5 space-y-3">
             {section.roles.map((r) => {
@@ -351,7 +370,9 @@ export function OBCommitteeEditor({
                       <div key={slot.key} className="flex items-center gap-3">
                         <div className="w-44 shrink-0">
                           <div className="text-sm font-medium text-foreground">{r.label}</div>
-                          {r.count > 1 && <div className="text-[11px] text-muted-foreground">#{i + 1}</div>}
+                          {r.count > 1 && (
+                            <div className="text-[11px] text-muted-foreground">#{i + 1}</div>
+                          )}
                         </div>
                         <div className="flex min-w-0 flex-1 items-center gap-2">
                           <div className="relative size-8 shrink-0 overflow-hidden rounded-full bg-muted">
@@ -363,14 +384,18 @@ export function OBCommitteeEditor({
                               </span>
                             )}
                           </div>
-                          <span className="truncate text-sm text-green-dark">{slot.name || "—"}</span>
+                          <span className="truncate text-sm text-green-dark">
+                            {slot.name || "—"}
+                          </span>
                         </div>
                       </div>
                     ) : (
                       <div key={slot.key} className="flex items-center gap-3">
                         <div className="w-44 shrink-0">
                           <div className="text-sm font-medium text-foreground">{r.label}</div>
-                          {r.count > 1 && <div className="text-[11px] text-muted-foreground">#{i + 1}</div>}
+                          {r.count > 1 && (
+                            <div className="text-[11px] text-muted-foreground">#{i + 1}</div>
+                          )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <MemberPickField
@@ -381,7 +406,9 @@ export function OBCommitteeEditor({
                               // If the typed name no longer matches the picked member, drop the
                               // id so it is treated as a brand-new member on save instead of
                               // silently renaming the old row.
-                              const picked = slot.id ? pool.find((m) => m.id === slot.id) : undefined;
+                              const picked = slot.id
+                                ? pool.find((m) => m.id === slot.id)
+                                : undefined;
                               if (picked && picked.name !== name) {
                                 updateSlot(slot.key, { name, id: undefined });
                               } else {
@@ -408,7 +435,10 @@ export function OBCommitteeEditor({
                             />
                           )}
                         </div>
-                        <SlotPhoto value={slot.photo} onChange={(v) => updateSlot(slot.key, { photo: v })} />
+                        <SlotPhoto
+                          value={slot.photo}
+                          onChange={(v) => updateSlot(slot.key, { photo: v })}
+                        />
                         <Button
                           type="button"
                           variant="ghost"

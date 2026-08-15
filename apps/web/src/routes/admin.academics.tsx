@@ -92,7 +92,15 @@ const DEFAULTS: AcademicsFormValues = {
   results_cta_subtitle: "O/L and A/L performance year by year.",
 };
 
-function ImageField({ value, onChange, aspect }: { value: unknown; onChange: (val: unknown) => void; aspect?: number }) {
+function ImageField({
+  value,
+  onChange,
+  aspect,
+}: {
+  value: unknown;
+  onChange: (val: unknown) => void;
+  aspect?: number;
+}) {
   const [uploading, setUploading] = useState(false);
 
   const handleFilesSelected = useCallback(
@@ -118,7 +126,11 @@ function ImageField({ value, onChange, aspect }: { value: unknown; onChange: (va
       <label className="text-sm font-medium leading-none">Photo</label>
       {value ? (
         <div className="relative overflow-hidden rounded-xl border">
-          <img src={value as string} alt="Photo" className="w-full aspect-video object-cover pointer-events-none" />
+          <img
+            src={value as string}
+            alt="Photo"
+            className="w-full aspect-video object-cover pointer-events-none"
+          />
           <Button
             variant="destructive"
             size="sm"
@@ -138,7 +150,10 @@ function ImageField({ value, onChange, aspect }: { value: unknown; onChange: (va
           crop
           aspect={aspect ?? 4 / 3}
           cropTitle="Crop Photo"
-          className={cn("aspect-video justify-center", uploading && "opacity-50 pointer-events-none")}
+          className={cn(
+            "aspect-video justify-center",
+            uploading && "opacity-50 pointer-events-none",
+          )}
         />
       )}
     </div>
@@ -251,9 +266,19 @@ const academicsConfig: FormConfig<AcademicsFormValues> = {
   fields: academicsFields,
   sections: [
     { id: "hero", title: "Hero Section", collapsible: true },
-    { id: "sections", title: "Sections of Study", description: "Primary / Secondary / Advanced Level", collapsible: true },
+    {
+      id: "sections",
+      title: "Sections of Study",
+      description: "Primary / Secondary / Advanced Level",
+      collapsible: true,
+    },
     { id: "streams", title: "A/L Streams", collapsible: true },
-    { id: "departments", title: "Subject Departments", description: "Leave a name empty to remove that row", collapsible: true },
+    {
+      id: "departments",
+      title: "Subject Departments",
+      description: "Leave a name empty to remove that row",
+      collapsible: true,
+    },
     { id: "results", title: "Results Callout", collapsible: true },
   ],
   layout: [
@@ -268,10 +293,58 @@ const academicsConfig: FormConfig<AcademicsFormValues> = {
     { columns: [{ fields: ["stream2_name", "stream2_desc"], span: 12 }] },
     { columns: [{ fields: ["stream3_name", "stream3_desc"], span: 12 }] },
     { columns: [{ fields: ["stream4_name", "stream4_desc"], span: 12 }] },
-    { columns: [{ fields: ["dept_subject1_name", "dept_subject1_head", "dept_subject2_name", "dept_subject2_head"], span: 12 }] },
-    { columns: [{ fields: ["dept_subject3_name", "dept_subject3_head", "dept_subject4_name", "dept_subject4_head"], span: 12 }] },
-    { columns: [{ fields: ["dept_subject5_name", "dept_subject5_head", "dept_subject6_name", "dept_subject6_head"], span: 12 }] },
-    { columns: [{ fields: ["dept_subject7_name", "dept_subject7_head", "dept_subject8_name", "dept_subject8_head"], span: 12 }] },
+    {
+      columns: [
+        {
+          fields: [
+            "dept_subject1_name",
+            "dept_subject1_head",
+            "dept_subject2_name",
+            "dept_subject2_head",
+          ],
+          span: 12,
+        },
+      ],
+    },
+    {
+      columns: [
+        {
+          fields: [
+            "dept_subject3_name",
+            "dept_subject3_head",
+            "dept_subject4_name",
+            "dept_subject4_head",
+          ],
+          span: 12,
+        },
+      ],
+    },
+    {
+      columns: [
+        {
+          fields: [
+            "dept_subject5_name",
+            "dept_subject5_head",
+            "dept_subject6_name",
+            "dept_subject6_head",
+          ],
+          span: 12,
+        },
+      ],
+    },
+    {
+      columns: [
+        {
+          fields: [
+            "dept_subject7_name",
+            "dept_subject7_head",
+            "dept_subject8_name",
+            "dept_subject8_head",
+          ],
+          span: 12,
+        },
+      ],
+    },
     { columns: [{ fields: ["dept_subject9_name", "dept_subject9_head"], span: 12 }] },
     { columns: [{ fields: ["academics_image_1", "academics_image_2"], span: 12 }] },
     { columns: [{ fields: ["results_cta_title", "results_cta_subtitle"], span: 12 }] },

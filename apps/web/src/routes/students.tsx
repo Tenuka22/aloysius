@@ -109,10 +109,16 @@ function StudentsPage() {
               </a>
               &nbsp;/&nbsp;<span className="text-gold">STUDENTS</span>
             </div>
-            <h1 data-animate className="text-5xl sm:text-6xl lg:text-[76px] leading-[1.02] mb-6 max-w-[14ch]">
+            <h1
+              data-animate
+              className="text-5xl sm:text-6xl lg:text-[76px] leading-[1.02] mb-6 max-w-[14ch]"
+            >
               {s("students_title")}
             </h1>
-            <p data-animate className="text-base sm:text-[17px] leading-[1.7] text-cream/75 max-w-[56ch]">
+            <p
+              data-animate
+              className="text-base sm:text-[17px] leading-[1.7] text-cream/75 max-w-[56ch]"
+            >
               {s("students_intro")}
             </p>
           </div>
@@ -121,7 +127,10 @@ function StudentsPage() {
         {/* Sports */}
         <section ref={sportsRef} className="bg-cream py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
           <div className="mx-auto max-w-295">
-            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
+            <div
+              data-animate
+              className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5"
+            >
               SPORTS
             </div>
             <h2 data-animate className="text-4xl sm:text-5xl lg:text-[54px] mb-15">
@@ -186,7 +195,9 @@ function StudentsPage() {
                   >
                     <div className="font-bold text-base">{club.name}</div>
                     {club.description && (
-                      <div className="text-xs text-cream/55 mt-1.5 line-clamp-2">{club.description}</div>
+                      <div className="text-xs text-cream/55 mt-1.5 line-clamp-2">
+                        {club.description}
+                      </div>
                     )}
                   </Link>
                 ))}
@@ -201,7 +212,10 @@ function StudentsPage() {
           className="bg-cream-warm border-t border-green-dark/8 py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
         >
           <div className="mx-auto max-w-295">
-            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
+            <div
+              data-animate
+              className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5"
+            >
               HOUSE SYSTEM
             </div>
             <h2 data-animate className="text-4xl sm:text-5xl lg:text-[54px] mb-15">
@@ -251,7 +265,15 @@ function StudentsPage() {
   );
 }
 
-function SportsTile({ src, label, className }: { src?: string; label: string; className?: string }) {
+function SportsTile({
+  src,
+  label,
+  className,
+}: {
+  src?: string;
+  label: string;
+  className?: string;
+}) {
   return (
     <div data-animate className={`relative overflow-hidden ${className ?? ""}`}>
       {src ? (

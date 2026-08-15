@@ -30,7 +30,11 @@ function EditOBMemberDialog() {
         <DialogHeader>
           <DialogTitle>Edit Committee Member</DialogTitle>
         </DialogHeader>
-        <OBMemberForm mode="edit" id={id} onSuccess={() => navigate({ to: returnTo || "/admin/ob/members" })} />
+        <OBMemberForm
+          mode="edit"
+          id={id}
+          onSuccess={() => navigate({ to: returnTo || "/admin/ob/members" })}
+        />
       </DialogContent>
     </Dialog>
   );

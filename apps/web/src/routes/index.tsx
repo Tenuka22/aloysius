@@ -8,7 +8,6 @@ import { QuickLinks } from "@/components-client/quick-links";
 import { StudentLife } from "@/components-client/student-life";
 import { EventsAnnouncements } from "@/components-client/events-announcements";
 import { Achievements } from "@/components-client/achievements";
-import { Alumni } from "@/components-client/alumni";
 import { Gallery } from "@/components-client/gallery";
 import { OBHomeSection } from "@/routes/ob";
 import { Footer } from "@/components-client/footer";
@@ -26,7 +25,13 @@ function shuffle<T>(items: T[]): T[] {
 }
 
 function buildLifeTiles(
-  activities: { id: string; slug: string; name: string; coverImage: string | null; images: string[] | null }[],
+  activities: {
+    id: string;
+    slug: string;
+    name: string;
+    coverImage: string | null;
+    images: string[] | null;
+  }[],
   events: { id: string; slug: string; title: string; coverImage: string | null }[],
   gallery: { id: string; slug: string; title: string; coverImage: string | null }[],
 ): LifeTile[] {
@@ -97,6 +102,9 @@ export const Route = createFileRoute("/")({
       announcementsData,
       principalData,
       activitiesData,
+      obMembersData,
+      obEventsData,
+      obDonationsData,
     ] = await Promise.all([
       client.settings.getAll(),
       client.achievements.list({ page: 1, pageSize: 6, status: "published" }),
@@ -106,6 +114,9 @@ export const Route = createFileRoute("/")({
       client.announcements.list({ page: 1, pageSize: 10, status: "published" }),
       client.principals.getCurrent(),
       client.activities.list({ status: "published" }),
+      client.ob.obMembers.list({ status: "approved" }),
+      client.ob.obEvents.list({ status: "published" }),
+      client.ob.obDonations.list({ status: "confirmed" }),
     ]);
 
     const galleryImages = await buildGalleryImages(galleryData.rows);
@@ -121,6 +132,9 @@ export const Route = createFileRoute("/")({
       principal: principalData,
       lifeTiles: buildLifeTiles(activitiesData, eventsData.rows, galleryData.rows),
       activities: activitiesData,
+      obMembers: obMembersData,
+      obEvents: obEventsData.rows,
+      obDonations: obDonationsData.rows,
     };
   },
   staleTime: 5 * 60_000,
@@ -139,6 +153,9 @@ function Home() {
     principal,
     lifeTiles,
     activities,
+    obMembers,
+    obEvents,
+    obDonations,
   } = Route.useLoaderData();
 
   return (
@@ -166,8 +183,12 @@ function Home() {
           settings={settings}
         />
         <Achievements initialData={achievements} settings={settings} />
-        <Alumni settings={settings} />
-        <OBHomeSection settings={settings} />
+        <OBHomeSection
+          settings={settings}
+          obMembers={obMembers}
+          obEvents={obEvents}
+          obDonations={obDonations}
+        />
         <Gallery initialImages={galleryImages} settings={settings} />
       </main>
       <Footer settings={settings} />

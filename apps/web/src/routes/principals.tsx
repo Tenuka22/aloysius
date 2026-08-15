@@ -29,7 +29,13 @@ type Principal = {
 export const Route = createFileRoute("/principals")({
   loader: async () => {
     const [principalsData, settings] = await Promise.all([
-      client.principals.list({ page: 1, pageSize: 50, status: "published", sort: "sortOrder", sortDir: "asc" }),
+      client.principals.list({
+        page: 1,
+        pageSize: 50,
+        status: "published",
+        sort: "sortOrder",
+        sortDir: "asc",
+      }),
       client.settings.getAll(),
     ]);
     return {
@@ -74,10 +80,7 @@ function PrincipalsPage() {
       <Navbar />
 
       {/* Hero */}
-      <section
-        ref={heroRef}
-        className="bg-green-dark py-20 sm:py-28 px-4 sm:px-6 lg:px-12"
-      >
+      <section ref={heroRef} className="bg-green-dark py-20 sm:py-28 px-4 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-[1080px]">
           <div className="text-[11px] tracking-[0.4em] font-bold text-gold mb-4">
             ST. ALOYSIUS&rsquo; COLLEGE
@@ -146,7 +149,10 @@ function PrincipalCard({ principal, index }: { principal: Principal; index: numb
         !isEven ? "lg:direction-rtl" : ""
       }`}
     >
-      <div data-animate className={`relative max-w-[340px] mx-auto lg:mx-0 w-full ${!isEven ? "lg:order-2" : ""}`}>
+      <div
+        data-animate
+        className={`relative max-w-[340px] mx-auto lg:mx-0 w-full ${!isEven ? "lg:order-2" : ""}`}
+      >
         <div className="absolute -right-3.5 -bottom-3.5 w-full h-full border border-gold -z-10 pointer-events-none" />
         {principal.portrait ? (
           <img

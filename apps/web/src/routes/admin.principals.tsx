@@ -143,9 +143,7 @@ function ActionsMenu({ item }: { item: PrincipalItem }) {
           </DropdownMenuItem>
           {item.slug && (
             <DropdownMenuItem
-              render={
-                <a href={`/principals/${item.slug}`} target="_blank" rel="noreferrer" />
-              }
+              render={<a href={`/principals/${item.slug}`} target="_blank" rel="noreferrer" />}
             >
               <IconExternalLink className="size-4" />
               View Page

@@ -14,10 +14,10 @@ const studentInput = z.object({
   quote: z.string().optional(),
   marks: z.number().optional(),
   overallGrade: z.string().optional(),
-  stream: z.enum(["physical_science", "biological_science", "commerce", "arts", "technology"]).optional(),
-  subjects: z
-    .array(z.object({ subject: z.string(), grade: z.string() }))
-    .default([]),
+  stream: z
+    .enum(["physical_science", "biological_science", "commerce", "arts", "technology"])
+    .optional(),
+  subjects: z.array(z.object({ subject: z.string(), grade: z.string() })).default([]),
   sortOrder: z.number().optional(),
 });
 
@@ -90,11 +90,7 @@ export const examResultsRouter = {
                   : examResults.resultsYear;
       const orderFn = sortDir === "asc" ? asc : desc;
 
-      const [countRow] = await db
-        .select({ total: count() })
-        .from(examResults)
-        .where(where)
-        .all();
+      const [countRow] = await db.select({ total: count() }).from(examResults).where(where).all();
       const total = countRow?.total ?? 0;
 
       const rows = await db
@@ -115,32 +111,26 @@ export const examResultsRouter = {
       };
     }),
 
-  get: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .handler(async ({ input }) => {
-      const db = createDb();
-      const row = await db
-        .select()
-        .from(examResults)
-        .where(eq(examResults.id, input.id))
-        .get();
+  get: publicProcedure.input(z.object({ id: z.string() })).handler(async ({ input }) => {
+    const db = createDb();
+    const row = await db.select().from(examResults).where(eq(examResults.id, input.id)).get();
 
-      if (!row) {
-        throw new ORPCError("NOT_FOUND", { message: "Exam result not found" });
-      }
+    if (!row) {
+      throw new ORPCError("NOT_FOUND", { message: "Exam result not found" });
+    }
 
-      const students = await db
-        .select()
-        .from(examStudents)
-        .where(eq(examStudents.examResultId, row.id))
-        .orderBy(asc(examStudents.sortOrder), asc(examStudents.createdAt))
-        .all();
+    const students = await db
+      .select()
+      .from(examStudents)
+      .where(eq(examStudents.examResultId, row.id))
+      .orderBy(asc(examStudents.sortOrder), asc(examStudents.createdAt))
+      .all();
 
-      return {
-        ...serializeResult(row),
-        students: students.map(serializeStudent),
-      };
-    }),
+    return {
+      ...serializeResult(row),
+      students: students.map(serializeStudent),
+    };
+  }),
 
   /** Latest published exam results — most recent years first, for the homepage. */
   getRecent: publicProcedure
@@ -298,10 +288,7 @@ export const examResultsRouter = {
         .get();
 
       if (input.students !== undefined) {
-        await db
-          .delete(examStudents)
-          .where(eq(examStudents.examResultId, input.id))
-          .run();
+        await db.delete(examStudents).where(eq(examStudents.examResultId, input.id)).run();
         if (input.students.length > 0) {
           await db
             .insert(examStudents)

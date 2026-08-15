@@ -81,35 +81,64 @@ type OBEventGallery = {
   updatedAt: string;
 };
 
-function DeleteEventDialog({ open, onOpenChange, onConfirm, title }: { open: boolean; onOpenChange: (open: boolean) => void; onConfirm: () => void; title: string }) {
+function DeleteEventDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+  title,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  title: string;
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Event</DialogTitle>
-          <DialogDescription>Are you sure you want to delete <strong>{title}</strong>? This action cannot be undone.</DialogDescription>
+          <DialogDescription>
+            Are you sure you want to delete <strong>{title}</strong>? This action cannot be undone.
+          </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button variant="destructive" onClick={onConfirm}>Delete</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={onConfirm}>
+            Delete
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-function ReleaseGalleryDialog({ open, onOpenChange, onConfirm, eventTitle }: { open: boolean; onOpenChange: (open: boolean) => void; onConfirm: () => void; eventTitle: string }) {
+function ReleaseGalleryDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+  eventTitle,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  eventTitle: string;
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Release Event Gallery</DialogTitle>
           <DialogDescription>
-            Create and release a gallery for <strong>{eventTitle}</strong>? The gallery will be published and visible to the public.
+            Create and release a gallery for <strong>{eventTitle}</strong>? The gallery will be
+            published and visible to the public.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button onClick={onConfirm}>Release Gallery</Button>
         </DialogFooter>
       </DialogContent>
@@ -156,24 +185,39 @@ function OBAdminEvents() {
   }
 
   const deleteMutation = useMutation({
-    mutationFn: () => { if (!deleteId) return Promise.resolve({ success: true }); return client.ob.obEvents.delete({ id: deleteId }); },
-    onSuccess: () => { toast.success("Event deleted"); setDeleteOpen(false); setDeleteId(null); },
+    mutationFn: () => {
+      if (!deleteId) return Promise.resolve({ success: true });
+      return client.ob.obEvents.delete({ id: deleteId });
+    },
+    onSuccess: () => {
+      toast.success("Event deleted");
+      setDeleteOpen(false);
+      setDeleteId(null);
+    },
   });
 
   const publishMutation = useMutation({
-    mutationFn: (id: string) => client.ob.obEvents.update({ id, status: "published", publishNow: true }),
-    onSuccess: () => { toast.success("Event published"); },
+    mutationFn: (id: string) =>
+      client.ob.obEvents.update({ id, status: "published", publishNow: true }),
+    onSuccess: () => {
+      toast.success("Event published");
+    },
   });
 
   const archiveMutation = useMutation({
     mutationFn: (id: string) => client.ob.obEvents.update({ id, status: "archived" }),
-    onSuccess: () => { toast.success("Event archived"); },
+    onSuccess: () => {
+      toast.success("Event archived");
+    },
   });
 
   const releaseGalleryMutation = useMutation({
     mutationFn: () => {
       if (!releaseEventId) return Promise.resolve(null);
-      return client.ob.obEventGalleries.create({ obEventId: releaseEventId, title: events.find((e) => e.id === releaseEventId)?.title || "Event Gallery" });
+      return client.ob.obEventGalleries.create({
+        obEventId: releaseEventId,
+        title: events.find((e) => e.id === releaseEventId)?.title || "Event Gallery",
+      });
     },
     onSuccess: async (gallery) => {
       if (gallery) {
@@ -205,7 +249,9 @@ function OBAdminEvents() {
     {
       accessorKey: "location",
       header: "Location",
-      cell: ({ row }) => <span className="text-muted-foreground line-clamp-1">{row.original.location || "-"}</span>,
+      cell: ({ row }) => (
+        <span className="text-muted-foreground line-clamp-1">{row.original.location || "-"}</span>
+      ),
     },
     {
       accessorKey: "eventDate",
@@ -223,7 +269,9 @@ function OBAdminEvents() {
         const g = galleryByEvent.get(row.original.id);
         if (!g) return <span className="text-xs text-muted-foreground">No gallery</span>;
         return (
-          <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${g.status === "published" ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"}`}>
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${g.status === "published" ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"}`}
+          >
             {g.status === "published" ? "Released" : "Draft"}
           </span>
         );
@@ -239,8 +287,18 @@ function OBAdminEvents() {
           archived: "bg-gray-50 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
           draft: "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
         };
-        const labels: Record<string, string> = { published: "Published", archived: "Archived", draft: "Draft" };
-        return <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${styles[status] ?? styles.draft}`}>{labels[status] ?? status}</span>;
+        const labels: Record<string, string> = {
+          published: "Published",
+          archived: "Archived",
+          draft: "Draft",
+        };
+        return (
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${styles[status] ?? styles.draft}`}
+          >
+            {labels[status] ?? status}
+          </span>
+        );
       },
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
@@ -256,7 +314,9 @@ function OBAdminEvents() {
               <IconDotsVertical className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem render={<Link to={`/admin/ob/events/$id/edit`} params={{ id: e.id }} />}>
+              <DropdownMenuItem
+                render={<Link to={`/admin/ob/events/$id/edit`} params={{ id: e.id }} />}
+              >
                 <IconPencil className="size-4" /> Edit
               </DropdownMenuItem>
               {e.status === "published" && (
@@ -271,20 +331,44 @@ function OBAdminEvents() {
               )}
               <DropdownMenuSeparator />
               {!gallery ? (
-                <DropdownMenuItem onClick={() => { setReleaseEventId(e.id); setReleaseEventTitle(e.title); setReleaseOpen(true); }}>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setReleaseEventId(e.id);
+                    setReleaseEventTitle(e.title);
+                    setReleaseOpen(true);
+                  }}
+                >
                   <IconBrandAppgallery className="size-4" /> Release Gallery
                 </DropdownMenuItem>
               ) : gallery.status === "published" ? (
-                <DropdownMenuItem onClick={async () => { await client.ob.obEventGalleries.unrelease({ id: gallery.id }); toast.success("Gallery unreleased"); queryClient.invalidateQueries({ queryKey: ["ob-event-galleries"] }); }}>
+                <DropdownMenuItem
+                  onClick={async () => {
+                    await client.ob.obEventGalleries.unrelease({ id: gallery.id });
+                    toast.success("Gallery unreleased");
+                    queryClient.invalidateQueries({ queryKey: ["ob-event-galleries"] });
+                  }}
+                >
                   <IconArchive className="size-4" /> Unrelease Gallery
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={async () => { await client.ob.obEventGalleries.release({ id: gallery.id }); toast.success("Gallery released"); queryClient.invalidateQueries({ queryKey: ["ob-event-galleries"] }); }}>
+                <DropdownMenuItem
+                  onClick={async () => {
+                    await client.ob.obEventGalleries.release({ id: gallery.id });
+                    toast.success("Gallery released");
+                    queryClient.invalidateQueries({ queryKey: ["ob-event-galleries"] });
+                  }}
+                >
                   <IconCheck className="size-4" /> Release Gallery
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onClick={() => { setDeleteId(e.id); setDeleteOpen(true); }}>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => {
+                  setDeleteId(e.id);
+                  setDeleteOpen(true);
+                }}
+              >
                 <IconTrash className="size-4" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -325,16 +409,34 @@ function OBAdminEvents() {
             return (
               <div className="flex items-center justify-between">
                 <div className="flex flex-1 items-center gap-2">
-                  <Input placeholder="Filter by title..." value={(filters.find((f) => f.id === "title")?.value as string) ?? ""} onChange={(e) => setFilter("title", e.target.value)} className="h-8 w-[200px] lg:w-[250px]" />
-                  <Select value={(filters.find((f) => f.id === "status")?.value as string) ?? ""} onValueChange={(val) => setFilter("status", val ?? "")}>
-                    <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="All statuses" /></SelectTrigger>
+                  <Input
+                    placeholder="Filter by title..."
+                    value={(filters.find((f) => f.id === "title")?.value as string) ?? ""}
+                    onChange={(e) => setFilter("title", e.target.value)}
+                    className="h-8 w-[200px] lg:w-[250px]"
+                  />
+                  <Select
+                    value={(filters.find((f) => f.id === "status")?.value as string) ?? ""}
+                    onValueChange={(val) => setFilter("status", val ?? "")}
+                  >
+                    <SelectTrigger className="h-8 w-[140px]">
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="draft">Draft</SelectItem>
                       <SelectItem value="published">Published</SelectItem>
                       <SelectItem value="archived">Archived</SelectItem>
                     </SelectContent>
                   </Select>
-                  {isFiltered && <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">Reset</Button>}
+                  {isFiltered && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => table.resetColumnFilters()}
+                      className="h-8 px-2 lg:px-3"
+                    >
+                      Reset
+                    </Button>
+                  )}
                 </div>
                 <DataTableViewOptions table={table} />
               </div>
@@ -342,8 +444,18 @@ function OBAdminEvents() {
           }}
         />
       </div>
-      <DeleteEventDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={() => deleteMutation.mutate()} title={deleteId ? events.find((e) => e.id === deleteId)?.title || "" : ""} />
-      <ReleaseGalleryDialog open={releaseOpen} onOpenChange={setReleaseOpen} onConfirm={() => releaseGalleryMutation.mutate()} eventTitle={releaseEventTitle} />
+      <DeleteEventDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={() => deleteMutation.mutate()}
+        title={deleteId ? events.find((e) => e.id === deleteId)?.title || "" : ""}
+      />
+      <ReleaseGalleryDialog
+        open={releaseOpen}
+        onOpenChange={setReleaseOpen}
+        onConfirm={() => releaseGalleryMutation.mutate()}
+        eventTitle={releaseEventTitle}
+      />
     </div>
   );
 }

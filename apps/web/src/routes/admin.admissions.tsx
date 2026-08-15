@@ -142,7 +142,9 @@ function SectionHeader({ title, description }: { title: string; description?: st
   return (
     <h2 className="text-lg font-semibold border-b pb-2 mb-2">
       {title}
-      {description && <p className="text-sm font-normal text-muted-foreground mt-1">{description}</p>}
+      {description && (
+        <p className="text-sm font-normal text-muted-foreground mt-1">{description}</p>
+      )}
     </h2>
   );
 }

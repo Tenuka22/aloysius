@@ -2,12 +2,9 @@
 
 import { useRef, useEffect, useState } from "react";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@clerk/tanstack-react-start";
 import { UserMenu } from "@/components-client/user-menu";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const navLinks = [
   { label: "Home", to: "/" },
@@ -32,50 +29,66 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
   const schoolName = settings?.school_name || "ST. ALOYSIUS\u2019 COLLEGE";
 
   useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
     const ctx = gsap.context(() => {
-      gsap.fromTo(
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      tl.fromTo(
         [logoRef.current, linksRef.current, ctaRef.current],
-        { opacity: 0, y: -10 },
-        { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power2.out" },
+        { opacity: 0, y: -18 },
+        { opacity: 1, y: 0, duration: 0.8, stagger: 0.12 },
       );
-    }, headerRef);
+    }, header);
 
     return () => ctx.revert();
   }, []);
 
   useEffect(() => {
-    if (mobileMenuRef.current) {
-      if (mobileMenuOpen) {
-        gsap.fromTo(
-          mobileMenuRef.current,
-          { height: 0, opacity: 0 },
-          { height: "auto", opacity: 1, duration: 0.3, ease: "power2.out" },
-        );
-      } else {
-        gsap.to(mobileMenuRef.current, { height: 0, opacity: 0, duration: 0.2, ease: "power2.in" });
-      }
+    const el = mobileMenuRef.current;
+    if (!el) return;
+    if (mobileMenuOpen) {
+      gsap.fromTo(
+        el,
+        { height: 0, opacity: 0 },
+        { height: "auto", opacity: 1, duration: 0.4, ease: "power2.out" },
+      );
+    } else {
+      gsap.to(el, { height: 0, opacity: 0, duration: 0.3, ease: "power2.in" });
     }
   }, [mobileMenuOpen]);
 
   return (
-    <header
-      ref={headerRef}
-      className="sticky top-0 z-50 w-full bg-green-dark text-cream border-b border-gold/25"
-    >
-      <div className="mx-auto flex h-[78px] max-w-7xl items-center gap-8 px-4 sm:px-6 lg:px-12 flex-row justify-between">
+    <header ref={headerRef} className="sticky top-0 z-50 w-full bg-green-dark text-cream">
+      <div
+        className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-gold/80 via-gold/40 to-transparent"
+        aria-hidden="true"
+      />
+
+      <div className="relative mx-auto flex h-[78px] max-w-7xl items-center gap-8 px-4 sm:px-6 lg:px-12 flex-row justify-between">
         {/* Logo */}
         <a
           href="/"
           aria-label={`${schoolName} - Home`}
           ref={logoRef}
-          className="flex items-center gap-3 shrink-0"
+          className="flex items-center gap-3 shrink-0 group"
         >
-          <img src="/logo.png" alt={`${schoolName} crest`} className="h-11 w-auto object-contain" />
-          <span className="leading-[1.15] hidden sm:block">
-            <span className="block font-extrabold text-[15px] tracking-[0.06em]">
-              {schoolName}
-            </span>
-            <span className="block text-[10px] tracking-[0.28em] text-gold">
+          <div className="relative">
+            <img
+              src="/logo.png"
+              alt={`${schoolName} crest`}
+              className="h-11 w-auto object-contain"
+            />
+            <div
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+              style={{
+                background: "radial-gradient(circle, rgba(255,178,3,0.15) 0%, transparent 70%)",
+              }}
+            />
+          </div>
+          <span className="logo-text leading-[1.15] origin-left hidden sm:block">
+            <span className="block font-extrabold text-[15px] tracking-[0.08em]">{schoolName}</span>
+            <span className="block text-[10px] tracking-[0.32em] text-gold/90 font-semibold">
               GALLE &bull; SRI LANKA
             </span>
           </span>
@@ -85,59 +98,66 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
         <nav
           ref={linksRef}
           aria-label="Main navigation"
-          className="hidden lg:flex items-center gap-6 ml-auto text-[13.5px] font-semibold"
+          className="hidden lg:flex items-center gap-1 ml-auto"
         >
           {navLinks.map((item) => (
             <Link
               key={item.label}
               to={item.to}
-              className="py-1.5 border-b-2 border-transparent text-cream hover:text-gold transition-colors whitespace-nowrap"
+              className="relative px-4 py-2 text-[13px] font-semibold tracking-wide text-cream/90 hover:text-gold transition-colors duration-300 whitespace-nowrap"
               activeProps={{
-                className: "!text-gold !border-gold",
+                className: "!text-gold",
               }}
               activeOptions={{ exact: item.to === "/" }}
             >
-              {item.label}
+              <span className="relative z-10">{item.label}</span>
+              <span
+                className="absolute inset-x-2 bottom-0.5 h-0.5 bg-gold origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
+                style={{ transformOrigin: "left" }}
+              />
             </Link>
           ))}
         </nav>
 
         {/* Right Side */}
         <div ref={ctaRef} className="flex items-center gap-3 lg:ml-6">
-          <Link
-            to="/admissions"
-            className="hidden sm:inline-flex items-center bg-gold text-green-dark px-3 py-1.5 text-[12px] font-bold tracking-wider hover:bg-gold-light transition-colors whitespace-nowrap"
-          >
-            Admissions
-          </Link>
-          <UserMenu />
+          <div className="hidden sm:flex items-center gap-3">
+            <Link
+              to="/admissions"
+              className="inline-flex items-center gap-2 bg-gold text-green-dark px-4 py-2 text-[12px] font-bold tracking-wider hover:bg-gold-light transition-all duration-300 relative overflow-hidden group"
+            >
+              <span className="relative z-10">Admissions</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-gold-light to-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </Link>
+            <UserMenu />
+          </div>
           <button
-            className="lg:hidden inline-flex size-8 items-center justify-center text-cream hover:text-gold transition-colors"
+            className="lg:hidden inline-flex size-9 items-center justify-center text-cream hover:text-gold transition-colors duration-300 relative mx-auto"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? (
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="size-5"
-              >
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="size-5"
-              >
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
+            <div className="relative w-5 h-4 flex flex-col justify-between">
+              <span
+                className="block h-0.5 w-full bg-current transition-all duration-300 origin-center"
+                style={{
+                  transform: mobileMenuOpen ? "rotate(45deg) translate(2px, 2px)" : "none",
+                }}
+              />
+              <span
+                className="block h-0.5 w-full bg-current transition-all duration-300"
+                style={{
+                  opacity: mobileMenuOpen ? 0 : 1,
+                  transform: mobileMenuOpen ? "translateX(-4px)" : "none",
+                }}
+              />
+              <span
+                className="block h-0.5 w-full bg-current transition-all duration-300 origin-center"
+                style={{
+                  transform: mobileMenuOpen ? "rotate(-45deg) translate(2px, -2px)" : "none",
+                }}
+              />
+            </div>
           </button>
         </div>
       </div>
@@ -145,48 +165,43 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
       {/* Mobile Menu */}
       <div
         ref={mobileMenuRef}
-        className="lg:hidden overflow-hidden border-t border-gold/20 bg-green-dark"
+        className="lg:hidden overflow-hidden bg-green-dark/98 backdrop-blur-sm"
         style={{ height: 0, opacity: 0 }}
       >
-        <nav className="flex flex-col px-4 py-3 gap-1">
+        <div className="px-4 py-6 space-y-1 border-b-gold-light bg-green-darker">
           {navLinks.map((item) => (
             <Link
               key={item.label}
               to={item.to}
               onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 text-sm font-semibold text-cream hover:text-gold transition-colors"
-              activeProps={{ className: "!text-gold" }}
+              className="block px-4 py-3 text-sm font-semibold text-cream/90 hover:text-gold hover:bg-green-darker/50 transition-all duration-300 border-l-2 border-transparent hover:border-gold -ml-px"
+              activeProps={{ className: "!text-gold !border-gold" }}
               activeOptions={{ exact: item.to === "/" }}
             >
               {item.label}
             </Link>
           ))}
-          <Link
-            to="/admissions"
-            onClick={() => setMobileMenuOpen(false)}
-            className="mt-2 inline-flex items-center justify-center bg-gold text-green-dark px-4 py-2 text-[12px] font-bold tracking-wider hover:bg-gold-light transition-colors"
-          >
-            Admissions
-          </Link>
-          {!isSignedIn && (
-            <div className="flex gap-2 mt-2">
-              <Link
-                to="/sign-in"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex-1 inline-flex items-center justify-center border border-gold/40 text-gold px-3 py-2 text-[12px] font-bold tracking-wider"
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/sign-up"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex-1 inline-flex items-center justify-center border border-gold/40 text-gold px-3 py-2 text-[12px] font-bold tracking-wider"
-              >
-                Sign Up
-              </Link>
-            </div>
-          )}
-        </nav>
+          <div className="pt-3 mt-3 border-t border-gold/15">
+            {!isSignedIn && (
+              <div className="flex gap-2">
+                <Link
+                  to="/sign-in"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex-1 text-center border border-gold/50 text-gold px-3 py-2.5 text-[12px] font-bold tracking-wider hover:bg-gold/10 transition-colors duration-300"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/sign-up"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex-1 text-center border border-gold/50 text-gold px-3 py-2.5 text-[12px] font-bold tracking-wider hover:bg-gold/10 transition-colors duration-300"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </header>
   );

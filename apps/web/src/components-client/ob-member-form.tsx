@@ -18,6 +18,7 @@ import { client } from "@/utils/orpc";
 import { toast } from "sonner";
 import * as v from "valibot";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
+import { IconX } from "@tabler/icons-react";
 
 const COMMITTEE_ROLES = [
   "PATRON",
@@ -65,14 +66,31 @@ const updateMemberSchema = v.object({
 type UpdateMemberValues = v.InferOutput<typeof updateMemberSchema>;
 
 const fields: FieldEntry<CreateMemberValues | UpdateMemberValues>[] = [
-  { name: "photo", kind: "custom", label: "Photo", required: false, customRenderer: ({ value, onChange }) => <PhotoFieldInline value={value} onChange={onChange} /> },
-  { name: "name", kind: "text", label: "Full Name", placeholder: "e.g. John Perera", required: true },
+  {
+    name: "photo",
+    kind: "custom",
+    label: "Photo",
+    required: false,
+    customRenderer: ({ value, onChange }) => <PhotoFieldInline value={value} onChange={onChange} />,
+  },
+  {
+    name: "name",
+    kind: "text",
+    label: "Full Name",
+    placeholder: "e.g. John Perera",
+    required: true,
+  },
   {
     name: "role",
     kind: "custom",
     label: "Role / Position",
     customRenderer: ({ value, onChange, formValues, setFieldValue }) => (
-      <RoleField value={value} onChange={onChange} formValues={formValues as Record<string, unknown>} setFieldValue={setFieldValue} />
+      <RoleField
+        value={value}
+        onChange={onChange}
+        formValues={formValues as Record<string, unknown>}
+        setFieldValue={setFieldValue}
+      />
     ),
     required: true,
   },
@@ -95,14 +113,25 @@ const fields: FieldEntry<CreateMemberValues | UpdateMemberValues>[] = [
   { name: "status", kind: "text", label: "Status", hidden: true, required: false },
 ];
 
-function RoleField({ value, onChange, formValues, setFieldValue }: { value: unknown; onChange: (val: unknown) => void; formValues: Record<string, unknown>; setFieldValue: (name: string, val: unknown) => void }) {
+function RoleField({
+  value,
+  onChange,
+  formValues,
+  setFieldValue,
+}: {
+  value: unknown;
+  onChange: (val: unknown) => void;
+  formValues: Record<string, unknown>;
+  setFieldValue: (name: string, val: unknown) => void;
+}) {
   const [loading, setLoading] = useState(false);
   const prevRole = useRef(value);
 
   useEffect(() => {
     if (value === "PRESIDENT" && prevRole.current !== "PRESIDENT") {
       setLoading(true);
-      client.principals.getCurrent()
+      client.principals
+        .getCurrent()
         .then((principal) => {
           if (principal?.name) {
             setFieldValue("name", principal.name);
@@ -121,17 +150,26 @@ function RoleField({ value, onChange, formValues, setFieldValue }: { value: unkn
       </SelectTrigger>
       <SelectContent>
         {COMMITTEE_ROLES.map((r) => (
-          <SelectItem key={r} value={r}>{r}</SelectItem>
+          <SelectItem key={r} value={r}>
+            {r}
+          </SelectItem>
         ))}
       </SelectContent>
     </Select>
   );
 }
 
-function PhotoFieldInline({ value, onChange }: { value: unknown; onChange: (val: unknown) => void }) {
+function PhotoFieldInline({
+  value,
+  onChange,
+}: {
+  value: unknown;
+  onChange: (val: unknown) => void;
+}) {
   const form = useBuildForm();
   const photo = useStore(form.store, (state: any) => state.values.photo) as string | undefined;
   const [uploading, setUploading] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<number>(4 / 3);
 
   const handleFilesSelected = useCallback(
     async (files: File[]) => {
@@ -139,14 +177,14 @@ function PhotoFieldInline({ value, onChange }: { value: unknown; onChange: (val:
       if (!file) return;
       setUploading(true);
       try {
-        form.setFieldValue("photo", await uploadImageWithRatio(file, 4 / 3));
+        form.setFieldValue("photo", await uploadImageWithRatio(file, aspectRatio));
       } catch {
         toast.error("Failed to upload image");
       } finally {
         setUploading(false);
       }
     },
-    [form],
+    [form, aspectRatio],
   );
 
   const handleRemove = useCallback(
@@ -158,14 +196,44 @@ function PhotoFieldInline({ value, onChange }: { value: unknown; onChange: (val:
     [form],
   );
 
+  const aspectLabel =
+    aspectRatio === 16 / 9
+      ? "16 : 9 (Wide)"
+      : aspectRatio === 4 / 3
+        ? "4 : 3 (Standard)"
+        : aspectRatio === 1
+          ? "1 : 1 (Square)"
+          : aspectRatio === 3 / 4
+            ? "3 : 4 (Portrait)"
+            : "Custom";
+
   return (
     <div>
+      <div className="flex items-center gap-3 mb-3">
+        <Select
+          value={String(aspectRatio)}
+          onValueChange={(v) => setAspectRatio(Number.parseFloat(v))}
+          disabled={uploading}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Aspect ratio" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1.7777777777777777">16 : 9 (Wide)</SelectItem>
+            <SelectItem value="1.3333333333333333">4 : 3 (Standard)</SelectItem>
+            <SelectItem value="1">1 : 1 (Square)</SelectItem>
+            <SelectItem value="0.75">3 : 4 (Portrait)</SelectItem>
+          </SelectContent>
+        </Select>
+        <span className="text-[11px] text-muted-foreground tracking-wider">{aspectLabel}</span>
+      </div>
       {photo ? (
         <div className="relative overflow-hidden rounded-xl border">
           <img
             src={photo}
             alt="Member"
-            className="w-full aspect-[4/3] object-cover pointer-events-none"
+            className="w-full object-cover pointer-events-none"
+            style={{ aspectRatio: String(aspectRatio) }}
           />
           <button
             type="button"
@@ -183,10 +251,10 @@ function PhotoFieldInline({ value, onChange }: { value: unknown; onChange: (val:
           maxSize={10 * 1024 * 1024}
           disabled={uploading}
           crop
-          aspect={4 / 3}
+          aspect={aspectRatio}
           cropTitle="Crop Member Photo"
           className={cn(
-            "aspect-[4/3] justify-center",
+            "justify-center",
             uploading && "opacity-50 pointer-events-none",
           )}
         />
@@ -236,7 +304,12 @@ export function OBMemberForm({
   const config: FormConfig<CreateMemberValues | UpdateMemberValues> = {
     fields,
     layout: [
-      { columns: [{ fields: ["photo"], span: 4 }, { fields: ["name", "role", "year", "email"], span: 8 }] },
+      {
+        columns: [
+          { fields: ["photo"], span: 4 },
+          { fields: ["name", "role", "year", "email"], span: 8 },
+        ],
+      },
       { columns: [{ fields: ["sortOrder"] }] },
       { columns: [{ fields: ["bio"] }] },
     ],

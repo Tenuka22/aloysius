@@ -28,12 +28,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@aloysius-web/ui/components/dialog";
-import {
-  EntityDialog,
-  useBuildForm,
-} from "@aloysius-web/ui/lib/form-builder";
+import { EntityDialog, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@aloysius-web/ui/components/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@aloysius-web/ui/components/select";
 import { IconPlus, IconDotsVertical, IconPencil, IconTrash } from "@tabler/icons-react";
 import { client } from "@/utils/orpc";
 import { toast } from "sonner";
@@ -65,7 +68,13 @@ type BigMatchFormValues = {
   status: "draft" | "published" | "archived";
 };
 
-function CoverImageField({ value, onChange }: { value: unknown; onChange: (val: unknown) => void }) {
+function CoverImageField({
+  value,
+  onChange,
+}: {
+  value: unknown;
+  onChange: (val: unknown) => void;
+}) {
   const form = useBuildForm();
   const coverImage = value as string | undefined;
   const [uploading, setUploading] = useState(false);
@@ -106,7 +115,10 @@ function CoverImageField({ value, onChange }: { value: unknown; onChange: (val: 
           disabled={uploading}
           aspect={16 / 9}
           crop={false}
-          className={cn("aspect-video justify-center", uploading && "opacity-50 pointer-events-none")}
+          className={cn(
+            "aspect-video justify-center",
+            uploading && "opacity-50 pointer-events-none",
+          )}
         />
       )}
     </div>
@@ -121,8 +133,20 @@ const bigMatchFields: FieldEntry<BigMatchFormValues>[] = [
     required: false,
     customRenderer: ({ value, onChange }) => <CoverImageField value={value} onChange={onChange} />,
   },
-  { name: "name", kind: "text", label: "Match Name", placeholder: "e.g. Battle of the Two Cities", required: true },
-  { name: "opponent", kind: "text", label: "Opponent", placeholder: "e.g. Rahula College, Matara", required: true },
+  {
+    name: "name",
+    kind: "text",
+    label: "Match Name",
+    placeholder: "e.g. Battle of the Two Cities",
+    required: true,
+  },
+  {
+    name: "opponent",
+    kind: "text",
+    label: "Opponent",
+    placeholder: "e.g. Rahula College, Matara",
+    required: true,
+  },
   { name: "type", kind: "text", label: "Type", placeholder: "e.g. Cricket", required: true },
   { name: "year", kind: "text", label: "Year", placeholder: "e.g. 2024" },
   { name: "sortOrder", kind: "number", label: "Sort Order" },

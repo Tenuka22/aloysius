@@ -1,7 +1,15 @@
 import { z } from "zod";
 import { and, eq, desc, asc, inArray, sql } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
-import { activities, clubMembers, events, announcements, studentWorks, news, clubAlbums } from "@aloysius-web/db/schema";
+import {
+  activities,
+  clubMembers,
+  events,
+  announcements,
+  studentWorks,
+  news,
+  clubAlbums,
+} from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { createClerkClient } from "@clerk/backend";
 import { env } from "@aloysius-web/env/server";
@@ -195,7 +203,13 @@ export const clubsRouter = {
         const now = new Date();
         const updated = await db
           .update(clubMembers)
-          .set({ status: "pending", reason: null, decidedBy: null, decidedAt: null, updatedAt: now })
+          .set({
+            status: "pending",
+            reason: null,
+            decidedBy: null,
+            decidedAt: null,
+            updatedAt: now,
+          })
           .where(eq(clubMembers.id, existing.id))
           .returning()
           .get();
@@ -284,7 +298,13 @@ export const clubsRouter = {
       const now = new Date();
       const updated = await db
         .update(clubMembers)
-        .set({ status: "approved", reason: null, decidedBy: userId, decidedAt: now, updatedAt: now })
+        .set({
+          status: "approved",
+          reason: null,
+          decidedBy: userId,
+          decidedAt: now,
+          updatedAt: now,
+        })
         .where(eq(clubMembers.id, input.id))
         .returning()
         .get();
@@ -420,11 +440,31 @@ export const clubsRouter = {
     const db = createDb();
     const [newsCount, eventCount, announcementCount, studentWorkCount, albumCount] =
       await Promise.all([
-        db.select({ count: sql<number>`count(*)` }).from(news).where(eq(news.reviewStatus, "pending")).get(),
-        db.select({ count: sql<number>`count(*)` }).from(events).where(eq(events.reviewStatus, "pending")).get(),
-        db.select({ count: sql<number>`count(*)` }).from(announcements).where(eq(announcements.reviewStatus, "pending")).get(),
-        db.select({ count: sql<number>`count(*)` }).from(studentWorks).where(eq(studentWorks.reviewStatus, "pending")).get(),
-        db.select({ count: sql<number>`count(*)` }).from(clubAlbums).where(eq(clubAlbums.reviewStatus, "pending")).get(),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(news)
+          .where(eq(news.reviewStatus, "pending"))
+          .get(),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(events)
+          .where(eq(events.reviewStatus, "pending"))
+          .get(),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(announcements)
+          .where(eq(announcements.reviewStatus, "pending"))
+          .get(),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(studentWorks)
+          .where(eq(studentWorks.reviewStatus, "pending"))
+          .get(),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(clubAlbums)
+          .where(eq(clubAlbums.reviewStatus, "pending"))
+          .get(),
       ]);
 
     return (
@@ -444,39 +484,38 @@ export const clubsRouter = {
 
     const db = createDb();
 
-    const [newsRows, eventRows, announcementRows, studentWorkRows, albumRows] =
-      await Promise.all([
-        db
-          .select()
-          .from(news)
-          .where(eq(news.reviewStatus, "pending"))
-          .orderBy(desc(news.updatedAt))
-          .all(),
-        db
-          .select()
-          .from(events)
-          .where(eq(events.reviewStatus, "pending"))
-          .orderBy(desc(events.updatedAt))
-          .all(),
-        db
-          .select()
-          .from(announcements)
-          .where(eq(announcements.reviewStatus, "pending"))
-          .orderBy(desc(announcements.updatedAt))
-          .all(),
-        db
-          .select()
-          .from(studentWorks)
-          .where(eq(studentWorks.reviewStatus, "pending"))
-          .orderBy(desc(studentWorks.updatedAt))
-          .all(),
-        db
-          .select()
-          .from(clubAlbums)
-          .where(eq(clubAlbums.reviewStatus, "pending"))
-          .orderBy(desc(clubAlbums.updatedAt))
-          .all(),
-      ]);
+    const [newsRows, eventRows, announcementRows, studentWorkRows, albumRows] = await Promise.all([
+      db
+        .select()
+        .from(news)
+        .where(eq(news.reviewStatus, "pending"))
+        .orderBy(desc(news.updatedAt))
+        .all(),
+      db
+        .select()
+        .from(events)
+        .where(eq(events.reviewStatus, "pending"))
+        .orderBy(desc(events.updatedAt))
+        .all(),
+      db
+        .select()
+        .from(announcements)
+        .where(eq(announcements.reviewStatus, "pending"))
+        .orderBy(desc(announcements.updatedAt))
+        .all(),
+      db
+        .select()
+        .from(studentWorks)
+        .where(eq(studentWorks.reviewStatus, "pending"))
+        .orderBy(desc(studentWorks.updatedAt))
+        .all(),
+      db
+        .select()
+        .from(clubAlbums)
+        .where(eq(clubAlbums.reviewStatus, "pending"))
+        .orderBy(desc(clubAlbums.updatedAt))
+        .all(),
+    ]);
 
     const activityIds = [
       ...newsRows.map((r) => r.activityId),
@@ -501,7 +540,7 @@ export const clubsRouter = {
         excerpt: r.excerpt,
         coverImage: r.coverImage,
         activityId: r.activityId,
-        activityName: r.activityId ? activityMap.get(r.activityId)?.name ?? null : null,
+        activityName: r.activityId ? (activityMap.get(r.activityId)?.name ?? null) : null,
         userId: r.userId,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.updatedAt.toISOString(),
@@ -514,7 +553,7 @@ export const clubsRouter = {
         excerpt: r.excerpt,
         coverImage: r.coverImage,
         activityId: r.activityId,
-        activityName: r.activityId ? activityMap.get(r.activityId)?.name ?? null : null,
+        activityName: r.activityId ? (activityMap.get(r.activityId)?.name ?? null) : null,
         userId: r.userId,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.updatedAt.toISOString(),
@@ -527,7 +566,7 @@ export const clubsRouter = {
         excerpt: r.excerpt,
         coverImage: r.coverImage,
         activityId: r.activityId,
-        activityName: r.activityId ? activityMap.get(r.activityId)?.name ?? null : null,
+        activityName: r.activityId ? (activityMap.get(r.activityId)?.name ?? null) : null,
         userId: r.userId,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.updatedAt.toISOString(),
@@ -540,7 +579,7 @@ export const clubsRouter = {
         excerpt: r.description,
         coverImage: r.coverImage,
         activityId: r.activityId,
-        activityName: r.activityId ? activityMap.get(r.activityId)?.name ?? null : null,
+        activityName: r.activityId ? (activityMap.get(r.activityId)?.name ?? null) : null,
         userId: r.userId,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.updatedAt.toISOString(),
@@ -646,7 +685,11 @@ export const clubsRouter = {
           .where(eq(announcements.id, input.id))
           .run();
       } else if (input.type === "album") {
-        const existing = await db.select().from(clubAlbums).where(eq(clubAlbums.id, input.id)).get();
+        const existing = await db
+          .select()
+          .from(clubAlbums)
+          .where(eq(clubAlbums.id, input.id))
+          .get();
         if (!existing) throw new ORPCError("NOT_FOUND", { message: "Album not found" });
         authorUserId = existing.userId;
         authorActivityId = existing.activityId;
@@ -713,5 +756,4 @@ export const clubsRouter = {
 
       return { success: true };
     }),
-
 };

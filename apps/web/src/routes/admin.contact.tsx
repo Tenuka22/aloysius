@@ -69,7 +69,9 @@ function SectionHeader({ title, description }: { title: string; description?: st
   return (
     <h2 className="text-lg font-semibold border-b pb-2 mb-2">
       {title}
-      {description && <p className="text-sm font-normal text-muted-foreground mt-1">{description}</p>}
+      {description && (
+        <p className="text-sm font-normal text-muted-foreground mt-1">{description}</p>
+      )}
     </h2>
   );
 }
@@ -144,7 +146,10 @@ function AdminContact() {
       </section>
 
       <section className="border bg-card p-6 space-y-4">
-        <SectionHeader title="College Office" description="Used on the Contact page and in the site footer" />
+        <SectionHeader
+          title="College Office"
+          description="Used on the Contact page and in the site footer"
+        />
         <Field
           label="Address"
           value={getValue("address")}

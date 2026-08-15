@@ -86,7 +86,12 @@ function AlumniPage() {
     }))
     .filter((n) => n.name);
 
-  const registerUrl = s("join_cta_button_url") !== "#" ? s("join_cta_button_url") : settings.contact_email ? `mailto:${settings.contact_email}` : "#";
+  const registerUrl =
+    s("join_cta_button_url") !== "#"
+      ? s("join_cta_button_url")
+      : settings.contact_email
+        ? `mailto:${settings.contact_email}`
+        : "#";
 
   return (
     <div className="min-h-screen bg-cream">
@@ -117,10 +122,16 @@ function AlumniPage() {
               </a>
               &nbsp;/&nbsp;<span className="text-gold">ALUMNI</span>
             </div>
-            <h1 data-animate className="text-5xl sm:text-6xl lg:text-[76px] leading-[1.02] mb-6 max-w-[14ch]">
+            <h1
+              data-animate
+              className="text-5xl sm:text-6xl lg:text-[76px] leading-[1.02] mb-6 max-w-[14ch]"
+            >
               {s("alumni_page_title")}
             </h1>
-            <p data-animate className="text-base sm:text-[17px] leading-[1.7] text-cream/75 max-w-[56ch] mb-11">
+            <p
+              data-animate
+              className="text-base sm:text-[17px] leading-[1.7] text-cream/75 max-w-[56ch] mb-11"
+            >
               {s("alumni_page_intro")}
             </p>
             <div data-animate className="flex gap-4 flex-wrap">
@@ -143,7 +154,10 @@ function AlumniPage() {
         {/* OBA Branches */}
         <section ref={branchesRef} className="bg-cream py-24 sm:py-30 px-4 sm:px-6 lg:px-12">
           <div className="mx-auto max-w-295">
-            <div data-animate className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
+            <div
+              data-animate
+              className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5"
+            >
               THE ASSOCIATION
             </div>
             <h2 data-animate className="text-4xl sm:text-5xl lg:text-[54px] mb-15">
@@ -196,7 +210,11 @@ function AlumniPage() {
                 {notables.map((notable, i) => (
                   <div key={i} data-animate>
                     {notable.photo ? (
-                      <img src={notable.photo} alt={notable.name} className="w-full h-65 object-cover" />
+                      <img
+                        src={notable.photo}
+                        alt={notable.name}
+                        className="w-full h-65 object-cover"
+                      />
                     ) : (
                       <div className="w-full h-65 flex items-center justify-center bg-cream/5">
                         <span className="text-[10px] tracking-widest text-cream/40 font-semibold">
@@ -226,7 +244,10 @@ function AlumniPage() {
             <h2 data-animate className="text-3xl sm:text-[50px] mb-4.5">
               {s("join_cta_title")}
             </h2>
-            <p data-animate className="text-base leading-[1.7] text-green-dark/75 max-w-[52ch] mx-auto mb-10">
+            <p
+              data-animate
+              className="text-base leading-[1.7] text-green-dark/75 max-w-[52ch] mx-auto mb-10"
+            >
               {s("join_cta_desc")}
             </p>
             <div data-animate className="flex gap-4 justify-center flex-wrap">

@@ -102,7 +102,15 @@ function Field({
   );
 }
 
-function ImageField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function ImageField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   const [uploading, setUploading] = useState(false);
 
   const handleFilesSelected = useCallback(
@@ -128,7 +136,11 @@ function ImageField({ label, value, onChange }: { label: string; value: string; 
       <label className="text-sm font-medium leading-none">{label}</label>
       {value ? (
         <div className="relative overflow-hidden rounded-xl border">
-          <img src={value} alt={label} className="w-full aspect-video object-cover pointer-events-none" />
+          <img
+            src={value}
+            alt={label}
+            className="w-full aspect-video object-cover pointer-events-none"
+          />
           <Button
             variant="destructive"
             size="sm"
@@ -149,7 +161,10 @@ function ImageField({ label, value, onChange }: { label: string; value: string; 
           crop
           aspect={3 / 4}
           cropTitle={`Crop ${label}`}
-          className={cn("aspect-video justify-center", uploading && "opacity-50 pointer-events-none")}
+          className={cn(
+            "aspect-video justify-center",
+            uploading && "opacity-50 pointer-events-none",
+          )}
         />
       )}
     </div>
@@ -160,7 +175,9 @@ function SectionHeader({ title, description }: { title: string; description?: st
   return (
     <h2 className="text-lg font-semibold border-b pb-2 mb-2">
       {title}
-      {description && <p className="text-sm font-normal text-muted-foreground mt-1">{description}</p>}
+      {description && (
+        <p className="text-sm font-normal text-muted-foreground mt-1">{description}</p>
+      )}
     </h2>
   );
 }
@@ -216,7 +233,9 @@ function AdminAlumni() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Alumni Page Content</h1>
-          <p className="text-sm text-muted-foreground mt-1">Customize every section of the alumni page</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Customize every section of the alumni page
+          </p>
         </div>
         <Button onClick={handleSave} disabled={mutation.isPending}>
           {mutation.isPending ? "Saving..." : "Save Changes"}
@@ -265,7 +284,10 @@ function AdminAlumni() {
       </section>
 
       <section className="border bg-card p-6 space-y-4">
-        <SectionHeader title="Distinguished Aloysians" description="Leave a name empty to remove that entry" />
+        <SectionHeader
+          title="Distinguished Aloysians"
+          description="Leave a name empty to remove that entry"
+        />
         {[1, 2, 3, 4].map((num) => (
           <div key={num} className="border rounded-lg p-4 space-y-3">
             <div className="grid grid-cols-2 gap-4">

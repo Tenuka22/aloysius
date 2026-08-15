@@ -47,8 +47,7 @@ export function serializeMembership(row: MembershipRow) {
 export async function getUserEmail(userId: string): Promise<string | null> {
   try {
     const user = await clerkClient.users.getUser(userId);
-    const email =
-      user.primaryEmailAddress?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress;
+    const email = user.primaryEmailAddress?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress;
     return email?.toLowerCase() ?? null;
   } catch {
     return null;
@@ -80,10 +79,7 @@ export function isApprovedMember(membership: MembershipRow | undefined): boolean
 }
 
 /** True if the user is a club admin (role=admin + approved) OR a site admin (role=admin). */
-export function isClubAdmin(
-  membership: MembershipRow | undefined,
-  isSiteAdmin: boolean,
-): boolean {
+export function isClubAdmin(membership: MembershipRow | undefined, isSiteAdmin: boolean): boolean {
   if (isSiteAdmin) return true;
   return membership?.role === "admin" && membership?.status === "approved";
 }
@@ -106,10 +102,7 @@ export function assertClubMember(
 /**
  * Throws UNAUTHORIZED unless the user is a club admin or site admin.
  */
-export function assertClubAdmin(
-  membership: MembershipRow | undefined,
-  isSiteAdmin: boolean,
-): void {
+export function assertClubAdmin(membership: MembershipRow | undefined, isSiteAdmin: boolean): void {
   if (isClubAdmin(membership, isSiteAdmin)) return;
   throw new ORPCError("UNAUTHORIZED", {
     message: "Only club admins can perform this action.",
@@ -135,11 +128,7 @@ export async function resolveClubAccess(
     isSiteAdmin || (membership?.role === "admin" && membership?.status === "approved");
 
   if (!isClubAdmin) {
-    const activity = await db
-      .select()
-      .from(activities)
-      .where(eq(activities.id, activityId))
-      .get();
+    const activity = await db.select().from(activities).where(eq(activities.id, activityId)).get();
     if (activity?.adminEmail) {
       const userEmail = await getUserEmail(userId);
       if (userEmail && userEmail === activity.adminEmail.toLowerCase()) {

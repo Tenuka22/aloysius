@@ -18,7 +18,9 @@ export function OBAdminDashboard() {
     queryFn: () => client.ob.obEvents.list({}),
   });
 
-  const pendingMembers = members.filter((m: any) => m.status === "pending" && m.role !== "ADMINISTRATOR");
+  const pendingMembers = members.filter(
+    (m: any) => m.status === "pending" && m.role !== "ADMINISTRATOR",
+  );
   const publishedEvents = events.filter((e: any) => e.status === "published");
 
   return (
@@ -38,7 +40,9 @@ export function OBAdminDashboard() {
                 <IconUsers className="size-5 text-foreground" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-foreground">{members.filter((m: any) => m.role !== "ADMINISTRATOR").length}</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {members.filter((m: any) => m.role !== "ADMINISTRATOR").length}
+                </div>
                 <div className="text-xs text-muted-foreground">Total Members</div>
               </div>
             </div>
@@ -47,7 +51,12 @@ export function OBAdminDashboard() {
                 {pendingMembers.length} pending approval
               </div>
             )}
-            <Button variant="ghost" size="sm" className="w-full mt-3 justify-between" render={<Link to="/ob-admin/members" />}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full mt-3 justify-between"
+              render={<Link to="/ob-admin/members" />}
+            >
               Manage Members <IconArrowRight className="size-3.5" />
             </Button>
           </CardContent>
@@ -64,10 +73,13 @@ export function OBAdminDashboard() {
                 <div className="text-xs text-muted-foreground">Published Events</div>
               </div>
             </div>
-            <div className="mt-3 text-xs text-muted-foreground">
-              {events.length} total events
-            </div>
-            <Button variant="ghost" size="sm" className="w-full mt-3 justify-between" render={<Link to="/ob-admin/events" />}>
+            <div className="mt-3 text-xs text-muted-foreground">{events.length} total events</div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full mt-3 justify-between"
+              render={<Link to="/ob-admin/events" />}
+            >
               Manage Events <IconArrowRight className="size-3.5" />
             </Button>
           </CardContent>
@@ -80,14 +92,23 @@ export function OBAdminDashboard() {
                 <IconUserShield className="size-5 text-foreground" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-foreground">{members.filter((m: any) => m.role !== "ADMINISTRATOR" && m.status === "approved").length}</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {
+                    members.filter(
+                      (m: any) => m.role !== "ADMINISTRATOR" && m.status === "approved",
+                    ).length
+                  }
+                </div>
                 <div className="text-xs text-muted-foreground">Active Committee</div>
               </div>
             </div>
-            <div className="mt-3 text-xs text-muted-foreground">
-              Across all years
-            </div>
-            <Button variant="ghost" size="sm" className="w-full mt-3 justify-between" render={<Link to="/ob-admin/committee" />}>
+            <div className="mt-3 text-xs text-muted-foreground">Across all years</div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full mt-3 justify-between"
+              render={<Link to="/ob-admin/committee" />}
+            >
               View Committee <IconArrowRight className="size-3.5" />
             </Button>
           </CardContent>

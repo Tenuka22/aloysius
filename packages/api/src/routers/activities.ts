@@ -322,9 +322,10 @@ export const activitiesRouter = {
                 id: crypto.randomUUID(),
                 activityId,
                 userId: user.id,
-                name: user.firstName || user.lastName
-                  ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
-                  : null,
+                name:
+                  user.firstName || user.lastName
+                    ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
+                    : null,
                 role: "admin",
                 status: "approved",
                 decidedBy: "system",

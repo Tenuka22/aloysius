@@ -122,9 +122,7 @@
       "indexes": {
         "achievements_slug_idx": {
           "name": "achievements_slug_idx",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -243,9 +241,7 @@
       "indexes": {
         "activities_slug_idx": {
           "name": "activities_slug_idx",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -413,9 +409,7 @@
       "indexes": {
         "announcements_slug_idx": {
           "name": "announcements_slug_idx",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -424,12 +418,8 @@
           "name": "announcements_activity_id_activities_id_fk",
           "tableFrom": "announcements",
           "tableTo": "activities",
-          "columnsFrom": [
-            "activity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -540,9 +530,7 @@
       "indexes": {
         "big_matches_slug_idx": {
           "name": "big_matches_slug_idx",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -551,12 +539,8 @@
           "name": "big_matches_event_id_events_id_fk",
           "tableFrom": "big_matches",
           "tableTo": "events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -564,12 +548,8 @@
           "name": "big_matches_gallery_id_gallery_id_fk",
           "tableFrom": "big_matches",
           "tableTo": "gallery",
-          "columnsFrom": [
-            "gallery_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["gallery_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -631,12 +611,8 @@
           "name": "club_album_images_album_id_club_albums_id_fk",
           "tableFrom": "club_album_images",
           "tableTo": "club_albums",
-          "columnsFrom": [
-            "album_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["album_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -753,9 +729,7 @@
       "indexes": {
         "club_albums_activity_idx": {
           "name": "club_albums_activity_idx",
-          "columns": [
-            "activity_id"
-          ],
+          "columns": ["activity_id"],
           "isUnique": false
         }
       },
@@ -764,12 +738,8 @@
           "name": "club_albums_activity_id_activities_id_fk",
           "tableFrom": "club_albums",
           "tableTo": "activities",
-          "columnsFrom": [
-            "activity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -864,10 +834,7 @@
       "indexes": {
         "club_members_activity_user_idx": {
           "name": "club_members_activity_user_idx",
-          "columns": [
-            "activity_id",
-            "user_id"
-          ],
+          "columns": ["activity_id", "user_id"],
           "isUnique": true
         }
       },
@@ -876,12 +843,8 @@
           "name": "club_members_activity_id_activities_id_fk",
           "tableFrom": "club_members",
           "tableTo": "activities",
-          "columnsFrom": [
-            "activity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -956,12 +919,8 @@
           "name": "event_records_event_id_events_id_fk",
           "tableFrom": "event_records",
           "tableTo": "events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1179,9 +1138,7 @@
       "indexes": {
         "events_slug_idx": {
           "name": "events_slug_idx",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -1190,12 +1147,8 @@
           "name": "events_activity_id_activities_id_fk",
           "tableFrom": "events",
           "tableTo": "activities",
-          "columnsFrom": [
-            "activity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1392,9 +1345,7 @@
       "indexes": {
         "gallery_slug_idx": {
           "name": "gallery_slug_idx",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -1403,12 +1354,8 @@
           "name": "gallery_event_id_events_id_fk",
           "tableFrom": "gallery",
           "tableTo": "events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1416,12 +1363,8 @@
           "name": "gallery_student_work_id_student_works_id_fk",
           "tableFrom": "gallery",
           "tableTo": "student_works",
-          "columnsFrom": [
-            "student_work_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["student_work_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1429,12 +1372,8 @@
           "name": "gallery_achievement_id_achievements_id_fk",
           "tableFrom": "gallery",
           "tableTo": "achievements",
-          "columnsFrom": [
-            "achievement_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["achievement_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1496,12 +1435,8 @@
           "name": "gallery_images_gallery_id_gallery_id_fk",
           "tableFrom": "gallery_images",
           "tableTo": "gallery",
-          "columnsFrom": [
-            "gallery_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["gallery_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1654,9 +1589,7 @@
       "indexes": {
         "news_slug_idx": {
           "name": "news_slug_idx",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -1665,12 +1598,8 @@
           "name": "news_activity_id_activities_id_fk",
           "tableFrom": "news",
           "tableTo": "activities",
-          "columnsFrom": [
-            "activity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1743,10 +1672,7 @@
       "indexes": {
         "notifications_user_read_idx": {
           "name": "notifications_user_read_idx",
-          "columns": [
-            "user_id",
-            "read"
-          ],
+          "columns": ["user_id", "read"],
           "isUnique": false
         }
       },
@@ -2089,9 +2015,7 @@
       "indexes": {
         "student_works_slug_idx": {
           "name": "student_works_slug_idx",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -2100,12 +2024,8 @@
           "name": "student_works_activity_id_activities_id_fk",
           "tableFrom": "student_works",
           "tableTo": "activities",
-          "columnsFrom": [
-            "activity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["activity_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }

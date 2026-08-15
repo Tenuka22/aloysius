@@ -14,8 +14,8 @@ A modern website for St. Aloysius' College, Galle - a prestigious school founded
 ## Design Direction
 
 - **Aesthetic:** Brutalist corners (sharp, angular edges with minimal/no border-radius)
-- **Colors:** Dark green (#0a1f0a) primary, gold (#c9a227) secondary
-- **Typography:** Playfair Display Variable (serif) for headings and body
+- **Colors:** Dark green (#013405 / #062B0A) primary, gold (#FFB203 / #FFD45A) secondary, cream (#FFF8E7) backgrounds
+- **Typography:** Playfair Display Variable (serif) for headings, Manrope Variable for body text
 - **Style:** Institutional, traditional, yet modern - reflecting 160+ years of heritage
 
 ## Key Sections

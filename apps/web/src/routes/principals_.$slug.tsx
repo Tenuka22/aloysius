@@ -205,9 +205,7 @@ function PrincipalDetailPage() {
                   <div className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5">
                     TENURE
                   </div>
-                  <p className="text-[15px] font-semibold text-green-dark">
-                    {principal.tenure}
-                  </p>
+                  <p className="text-[15px] font-semibold text-green-dark">{principal.tenure}</p>
                 </div>
               )}
             </div>

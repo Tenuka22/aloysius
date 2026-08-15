@@ -2,17 +2,22 @@
 
 ## Color Palette
 
-- **Primary:** Dark Green (#0a1f0a) - backgrounds, main sections
-- **Secondary:** Gold (#c9a227) - accents, highlights, CTAs
-- **Destructive:** Red - for alerts/warnings
-- **Background:** White/light gray for content areas
-- **Text:** White on dark backgrounds, dark on light backgrounds
+- **Green Dark:** #013405 - primary backgrounds, main sections
+- **Green Darker:** #062B0A - deeper sections and overlays
+- **Gold:** #FFB203 - accents, highlights, CTAs
+- **Gold Light:** #FFD45A - hover states and secondary accents
+- **Cream:** #FFF8E7 - light backgrounds, content areas
+- **Cream Light:** #FFFEF6 - cards and elevated surfaces
+- **Black:** #000000 - high contrast text
+- **Red Brand:** #A51919 - brand alerts
+- **Red Alert:** #E05252 - destructive actions and warnings
+- **Text:** Dark green (#013405) on light backgrounds, cream/gold on dark backgrounds
 
 ## Typography
 
-- **Font Family:** Playfair Display Variable (serif)
-- **Usage:** All headings and body text use this serif font
-- **Weights:** Regular (400), Medium (500), Semibold (600), Bold (700)
+- **Font Family (Headings):** Playfair Display Variable (serif)
+- **Font Family (Body):** Manrope Variable (sans-serif)
+- **Weights:** Light (300), Regular (400), Medium (500), Semibold (600), Bold (700)
 
 ## Layout Principles
 

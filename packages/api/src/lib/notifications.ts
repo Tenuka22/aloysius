@@ -45,9 +45,7 @@ export async function createNotification(input: CreateNotificationInput): Promis
 }
 
 /** Creates notifications for multiple users in a single insert (e.g. all club admins). */
-export async function createNotifications(
-  inputs: CreateNotificationInput[],
-): Promise<void> {
+export async function createNotifications(inputs: CreateNotificationInput[]): Promise<void> {
   const valid = inputs.filter((input) => !!input.userId);
   if (valid.length === 0) return;
   try {
@@ -85,4 +83,3 @@ export async function unreadNotificationCount(userId: string): Promise<number> {
     return 0;
   }
 }
-

@@ -36,9 +36,17 @@ const AL_SUBJECTS: Record<string, string[]> = {
   biological_science: ["Biology", "Chemistry", "Physics", "Agricultural Science"],
   commerce: ["Accounting", "Business Studies", "Economics", "Business Statistics", "ICT"],
   arts: [
-    "Sinhala", "Tamil", "English", "History", "Political Science",
-    "Geography", "Logic & Scientific Method", "Economics",
-    "Buddhist Civilization", "Christian Culture", "Art",
+    "Sinhala",
+    "Tamil",
+    "English",
+    "History",
+    "Political Science",
+    "Geography",
+    "Logic & Scientific Method",
+    "Economics",
+    "Buddhist Civilization",
+    "Christian Culture",
+    "Art",
   ],
   technology: ["Engineering Technology", "Science for Technology", "ICT", "Bio Systems Technology"],
 };
@@ -178,7 +186,9 @@ function YearFields() {
           placeholder="e.g. 2025"
           className={inputClass}
         />
-        <p className="text-xs text-muted-foreground">Year the exam was scheduled / registered for</p>
+        <p className="text-xs text-muted-foreground">
+          Year the exam was scheduled / registered for
+        </p>
       </div>
       <div className="space-y-1.5">
         <label className="text-sm font-medium leading-none">
@@ -191,20 +201,16 @@ function YearFields() {
           placeholder="e.g. 2026"
           className={inputClass}
         />
-        <p className="text-xs text-muted-foreground">Year the exam was actually held (if different)</p>
+        <p className="text-xs text-muted-foreground">
+          Year the exam was actually held (if different)
+        </p>
       </div>
     </div>
   );
 }
 
 /** Grade select A B C D S F */
-function GradeSelect({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
+function GradeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <select
       value={value}
@@ -348,7 +354,9 @@ function StudentCard({
               >
                 <option value="">Select grade...</option>
                 {GRADES.map((g) => (
-                  <option key={g} value={g}>{g}</option>
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
                 ))}
               </select>
             </div>
@@ -380,7 +388,8 @@ function StudentCard({
 
               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">
-                  Subjects &amp; Grades <span className="text-muted-foreground font-normal">(3 subjects)</span>
+                  Subjects &amp; Grades{" "}
+                  <span className="text-muted-foreground font-normal">(3 subjects)</span>
                 </label>
                 {(student.subjects ?? []).length > 0 ? (
                   <div className="space-y-1.5">
@@ -393,10 +402,15 @@ function StudentCard({
                         >
                           <option value="">Subject {i + 1}</option>
                           {(AL_SUBJECTS[student.stream ?? "physical_science"] ?? []).map((subj) => (
-                            <option key={subj} value={subj}>{subj}</option>
+                            <option key={subj} value={subj}>
+                              {subj}
+                            </option>
                           ))}
                         </select>
-                        <GradeSelect value={s.grade} onChange={(g) => setSubject(i, { grade: g })} />
+                        <GradeSelect
+                          value={s.grade}
+                          onChange={(g) => setSubject(i, { grade: g })}
+                        />
                       </div>
                     ))}
                   </div>
@@ -503,9 +517,7 @@ export function ExamResultForm({
 
   const config: FormConfig<CreateExamResultValues | UpdateExamResultValues> = {
     fields,
-    layout: [
-      { columns: [{ fields: ["publishNow"] }] },
-    ],
+    layout: [{ columns: [{ fields: ["publishNow"] }] }],
     submitLabel: mode === "create" ? "Create Exam Result" : "Save Changes",
     onCancel: () => onSuccess?.(),
     renderAboveFields: () => (

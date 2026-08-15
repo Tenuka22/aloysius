@@ -380,7 +380,9 @@ export const clubMembers = sqliteTable(
       .references(() => activities.id, { onDelete: "cascade" }),
     userId: text("user_id").notNull(),
     name: text("name"),
-    role: text("role", { enum: ["admin", "member"] }).notNull().default("member"),
+    role: text("role", { enum: ["admin", "member"] })
+      .notNull()
+      .default("member"),
     status: text("status", { enum: ["pending", "approved", "rejected", "revoked"] })
       .notNull()
       .default("pending"),
@@ -482,7 +484,9 @@ export const examStudents = sqliteTable(
     quote: text("quote"),
     marks: integer("marks"),
     overallGrade: text("overall_grade"),
-    stream: text("stream", { enum: ["physical_science", "biological_science", "commerce", "arts", "technology"] }),
+    stream: text("stream", {
+      enum: ["physical_science", "biological_science", "commerce", "arts", "technology"],
+    }),
     subjects: text("subjects", { mode: "json" })
       .$type<{ subject: string; grade: string }[]>()
       .default([]),
@@ -577,7 +581,11 @@ export const obMembers = sqliteTable(
       .notNull()
       .$defaultFn(() => new Date()),
   },
-  (table) => [index("ob_members_role_idx").on(table.role), index("ob_members_user_idx").on(table.userId), index("ob_members_year_idx").on(table.year)],
+  (table) => [
+    index("ob_members_role_idx").on(table.role),
+    index("ob_members_user_idx").on(table.userId),
+    index("ob_members_year_idx").on(table.year),
+  ],
 );
 
 // --- OB Events table (Old Boys' Association events) ---
