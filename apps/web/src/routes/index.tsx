@@ -9,7 +9,7 @@ import { StudentLife } from "@/components-client/student-life";
 import { EventsAnnouncements } from "@/components-client/events-announcements";
 import { Achievements } from "@/components-client/achievements";
 import { Gallery } from "@/components-client/gallery";
-import { OBHomeSection } from "@/routes/ob";
+import { OBHomeSection } from "@/components-client/ob-home-section";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
 import type { LifeTile } from "@/components-client/student-life";
@@ -133,8 +133,8 @@ export const Route = createFileRoute("/")({
       lifeTiles: buildLifeTiles(activitiesData, eventsData.rows, galleryData.rows),
       activities: activitiesData,
       obMembers: obMembersData,
-      obEvents: obEventsData.rows,
-      obDonations: obDonationsData.rows,
+      obEvents: obEventsData,
+      obDonations: obDonationsData,
     };
   },
   staleTime: 5 * 60_000,

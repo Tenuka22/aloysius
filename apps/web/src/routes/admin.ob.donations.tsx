@@ -1,7 +1,7 @@
 "use client";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnFiltersState,
   type PaginationState,
@@ -50,7 +50,6 @@ import { client } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
-import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 
 type OBDonation = {
   id: string;
@@ -107,6 +106,7 @@ export const Route = createFileRoute("/admin/ob/donations")({
 });
 
 function AdminOBDonations() {
+  const queryClient = useQueryClient();
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -127,17 +127,24 @@ function AdminOBDonations() {
       toast.success("Donation deleted");
       setDeleteOpen(false);
       setDeleteId(null);
+      queryClient.invalidateQueries({ queryKey: ["ob-donations"] });
     },
   });
 
   const confirmMutation = useMutation({
     mutationFn: (id: string) => client.ob.obDonations.update({ id, status: "confirmed" }),
-    onSuccess: () => toast.success("Donation confirmed"),
+    onSuccess: () => {
+      toast.success("Donation confirmed");
+      queryClient.invalidateQueries({ queryKey: ["ob-donations"] });
+    },
   });
 
   const cancelMutation = useMutation({
     mutationFn: (id: string) => client.ob.obDonations.update({ id, status: "cancelled" }),
-    onSuccess: () => toast.success("Donation cancelled"),
+    onSuccess: () => {
+      toast.success("Donation cancelled");
+      queryClient.invalidateQueries({ queryKey: ["ob-donations"] });
+    },
   });
 
   const columns: ColumnDef<OBDonation, any>[] = [
@@ -156,8 +163,7 @@ function AdminOBDonations() {
       cell: ({ row }) => {
         const url = row.original.image;
         if (!url) return <span className="text-muted-foreground">-</span>;
-        const ratioClass = aspectRatioClass(getAspectRatio(url)) || "aspect-video";
-        return <img src={url} alt="" className={`w-16 ${ratioClass} rounded-md object-cover`} />;
+        return <img src={url} alt="" className="h-10 w-10 rounded-md object-cover" />;
       },
       size: 80,
     },
