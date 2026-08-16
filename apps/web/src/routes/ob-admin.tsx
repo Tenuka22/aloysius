@@ -2,9 +2,11 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
 import { createDb } from "@aloysius-web/db";
-import { obMembers } from "@aloysius-web/db/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { obMembers, siteSettings } from "@aloysius-web/db/schema";
+import { eq } from "drizzle-orm";
 import { OBAdminLayout } from "@/components-client/ob-admin-layout";
+
+const OB_ADMIN_EMAIL_KEY = "ob_admin_email";
 
 const requireOBAdmin = createServerFn({ method: "GET" }).handler(async () => {
   const { isAuthenticated, userId } = await auth();
@@ -28,18 +30,15 @@ const requireOBAdmin = createServerFn({ method: "GET" }).handler(async () => {
   }
 
   const db = createDb();
-  const adminMatch = email
-    ? await db
-        .select({ id: obMembers.id })
-        .from(obMembers)
-        .where(
-          and(eq(obMembers.status, "approved"), sql`lower(${obMembers.adminEmail}) = ${email}`),
-        )
-        .limit(1)
-        .get()
-    : undefined;
+  const setting = await db
+    .select()
+    .from(siteSettings)
+    .where(eq(siteSettings.key, OB_ADMIN_EMAIL_KEY))
+    .get();
+  const adminEmail = setting?.value?.trim().toLowerCase();
+  const isMatch = !!email && !!adminEmail && email === adminEmail;
 
-  if (!adminMatch) {
+  if (!isMatch) {
     throw redirect({ to: "/ob" });
   }
 

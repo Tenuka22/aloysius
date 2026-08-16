@@ -24,7 +24,7 @@ import {
 import { Dropzone } from "@/components/file-upload";
 import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
 import { withAspectRatio } from "@/lib/image-ratio";
 import { toast } from "sonner";
@@ -63,9 +63,11 @@ const updatePrincipalSchema = v.object({
 
 type UpdatePrincipalValues = v.InferOutput<typeof updatePrincipalSchema>;
 
+type FormValues = CreatePrincipalValues | UpdatePrincipalValues;
+
 function PortraitField() {
   const form = useBuildForm();
-  const portrait = useStore(form.store, (state: any) => state.values.portrait) as
+  const portrait = useStore(form.store, (state: { values: FormValues }) => state.values.portrait) as
     | string
     | undefined;
   const [uploading, setUploading] = useState(false);
@@ -141,7 +143,7 @@ function PortraitField() {
 
 function NameField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.name) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.name) as string;
 
   return (
     <Field>
@@ -176,7 +178,7 @@ type RoleValue = (typeof STAFF_ROLES)[number]["value"];
 
 function RoleField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.title) as RoleValue | "";
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.title) as RoleValue | "";
 
   return (
     <Field>
@@ -205,7 +207,7 @@ function RoleField() {
 
 function YearField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.year) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.year) as string;
 
   return (
     <Field>
@@ -224,7 +226,7 @@ function YearField() {
 
 function TenureField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.tenure) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.tenure) as string;
 
   return (
     <Field>
@@ -242,7 +244,7 @@ function TenureField() {
 
 function QuoteField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.quote) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.quote) as string;
 
   return (
     <Field>
@@ -264,7 +266,7 @@ function QuoteField() {
 
 function EducationField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.education) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.education) as string;
 
   return (
     <Field>
@@ -284,7 +286,7 @@ function EducationField() {
 
 function BioField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.bio) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.bio) as string;
 
   return (
     <Field>
@@ -306,7 +308,7 @@ function BioField() {
 
 function MessageField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.message) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.message) as string;
 
   const handleImageUpload = useCallback(async (file: File) => {
     const webp = await convertToWebp(file);
@@ -385,28 +387,50 @@ export function PrincipalForm({
 }) {
   const queryClient = useQueryClient();
 
-  const existingPrincipal = useQuery({
-    queryKey: ["principals", id],
-    queryFn: () => client.principals.get({ id: id! }),
-    enabled: mode === "edit" && !!id,
-  });
+  const existingPrincipal = useQuery(
+    orpc.principals.get.queryOptions({
+      input: { id: id! },
+      enabled: mode === "edit" && !!id,
+    }),
+  );
 
-  const mutation = useMutation({
-    mutationFn: (values: CreatePrincipalValues | UpdatePrincipalValues) => {
-      if (mode === "create") {
-        return client.principals.create(values as any);
-      }
-      return client.principals.update({ id: id!, ...values } as any);
-    },
-    onSuccess: () => {
-      toast.success(mode === "create" ? "Principal created" : "Principal updated");
-      queryClient.invalidateQueries({ queryKey: ["principals"] });
-      onSuccess?.();
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const createMutation = useMutation(
+    orpc.admin.principals.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("Principal created");
+        queryClient.invalidateQueries({ queryKey: orpc.principals.key() });
+        onSuccess?.();
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
+
+  const updateMutation = useMutation(
+    orpc.admin.principals.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Principal updated");
+        queryClient.invalidateQueries({ queryKey: orpc.principals.key() });
+        onSuccess?.();
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
+
+  const mutation = {
+    mutateAsync: (values: CreatePrincipalValues | UpdatePrincipalValues) =>
+      mode === "create"
+        ? createMutation.mutateAsync(
+            values as Parameters<typeof createMutation.mutateAsync>[0],
+          )
+        : updateMutation.mutateAsync(
+            { id: id!, ...values } as Parameters<typeof updateMutation.mutateAsync>[0],
+          ),
+    isPending: createMutation.isPending || updateMutation.isPending,
+  };
 
   const principal = existingPrincipal.data;
 

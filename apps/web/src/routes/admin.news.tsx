@@ -41,31 +41,23 @@ import {
   SelectValue,
 } from "@aloysius-web/ui/components/select";
 import { IconPlus, IconDotsVertical, IconPencil, IconTrash } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
-
-type NewsItem = {
-  id: string;
-  title: string;
-  excerpt: string | null;
-  coverImage: string | null;
-  tags: string[] | null;
-  status: string;
-  publishedAt: string | null;
-  createdAt: string;
-};
+import type { NewsRow } from "@/lib/api-types";
 
 function DeleteDialog({
   open,
   onOpenChange,
   onConfirm,
   title,
+  isPending,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title: string;
+  isPending: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,11 +69,11 @@ function DeleteDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete
+          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+            {isPending ? "Deleting…" : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -89,21 +81,22 @@ function DeleteDialog({
   );
 }
 
-function ActionsMenu({ item }: { item: NewsItem }) {
+function ActionsMenu({ item }: { item: NewsRow }) {
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const deleteMutation = useMutation({
-    mutationFn: () => client.news.delete({ id: item.id }),
-    onSuccess: () => {
-      toast.success("Article deleted");
-      queryClient.invalidateQueries({ queryKey: ["news"] });
-      setDeleteOpen(false);
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const deleteMutation = useMutation(
+    orpc.admin.news.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success("Article deleted");
+        queryClient.invalidateQueries({ queryKey: orpc.news.key() });
+        setDeleteOpen(false);
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   return (
     <>
@@ -127,14 +120,15 @@ function ActionsMenu({ item }: { item: NewsItem }) {
       <DeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onConfirm={() => deleteMutation.mutate()}
+        onConfirm={() => deleteMutation.mutate({ id: item.id })}
+        isPending={deleteMutation.isPending}
         title={item.title}
       />
     </>
   );
 }
 
-const columns: ColumnDef<NewsItem, any>[] = [
+const columns: ColumnDef<NewsRow, any>[] = [
   {
     accessorKey: "coverImage",
     header: "Cover",
@@ -238,26 +232,18 @@ function AdminNewsList() {
       ? (rawStatus as "draft" | "published" | "archived")
       : undefined;
 
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      "news",
-      pagination.pageIndex,
-      pagination.pageSize,
-      sort?.id,
-      sort?.desc,
-      search,
-      status,
-    ],
-    queryFn: () =>
-      client.news.list({
+  const { data, isLoading } = useQuery(
+    orpc.news.list.queryOptions({
+      input: {
         page: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
         sort: sort?.id,
         sortDir: sort?.desc ? "desc" : "asc",
         search,
         status,
-      }),
-  });
+      },
+    }),
+  );
 
   const items = data?.rows ?? [];
   const pageCount = data?.pageCount ?? 0;

@@ -38,25 +38,12 @@ import {
   SelectValue,
 } from "@aloysius-web/ui/components/select";
 import { IconPlus, IconDotsVertical, IconPencil, IconTrash } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
+import type { BigMatchRow } from "@/lib/api-types";
 import { Dropzone } from "@/components/file-upload";
-import { uploadImageWithRatio } from "@/lib/upload-image";
 import { cn } from "@aloysius-web/ui/lib/utils";
-
-type BigMatch = {
-  id: string;
-  name: string;
-  opponent: string;
-  coverImage: string | null;
-  type: string;
-  year: number | null;
-  eventId: string | null;
-  galleryId: string | null;
-  sortOrder: number;
-  status: string;
-};
 
 type BigMatchFormValues = {
   name: string;
@@ -70,7 +57,6 @@ type BigMatchFormValues = {
 
 function CoverImageField({
   value,
-  onChange,
 }: {
   value: unknown;
   onChange: (val: unknown) => void;
@@ -177,11 +163,13 @@ function DeleteDialog({
   onOpenChange,
   onConfirm,
   title,
+  isPending,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title: string;
+  isPending: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -193,11 +181,11 @@ function DeleteDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete
+          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+            {isPending ? "Deleting…" : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -205,21 +193,22 @@ function DeleteDialog({
   );
 }
 
-function ActionsMenu({ item, onEdit }: { item: BigMatch; onEdit: () => void }) {
+function ActionsMenu({ item, onEdit }: { item: BigMatchRow; onEdit: () => void }) {
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const deleteMutation = useMutation({
-    mutationFn: () => client.bigMatches.delete({ id: item.id }),
-    onSuccess: () => {
-      toast.success("Big match deleted");
-      queryClient.invalidateQueries({ queryKey: ["bigMatches"] });
-      setDeleteOpen(false);
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const deleteMutation = useMutation(
+    orpc.admin.bigMatches.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success("Big match deleted");
+        queryClient.invalidateQueries({ queryKey: orpc.bigMatches.key() });
+        setDeleteOpen(false);
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   return (
     <>
@@ -243,8 +232,9 @@ function ActionsMenu({ item, onEdit }: { item: BigMatch; onEdit: () => void }) {
       <DeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onConfirm={() => deleteMutation.mutate()}
+        onConfirm={() => deleteMutation.mutate({ id: item.id })}
         title={item.name}
+        isPending={deleteMutation.isPending}
       />
     </>
   );
@@ -258,7 +248,7 @@ function AdminBigMatches() {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<BigMatch | null>(null);
+  const [editingItem, setEditingItem] = useState<BigMatchRow | null>(null);
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -273,10 +263,32 @@ function AdminBigMatches() {
       ? (rawStatus as "draft" | "published" | "archived")
       : undefined;
 
-  const { data: bigMatches, isLoading } = useQuery({
-    queryKey: ["bigMatches", status],
-    queryFn: () => client.bigMatches.list({ status }),
-  });
+  const { data: bigMatches, isLoading } = useQuery(
+    orpc.bigMatches.list.queryOptions({ input: { status } }),
+  );
+
+  const updateMutation = useMutation(
+    orpc.admin.bigMatches.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Big match updated");
+        queryClient.invalidateQueries({ queryKey: orpc.bigMatches.key() });
+        setEditOpen(false);
+        setEditingItem(null);
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
+
+  const createMutation = useMutation(
+    orpc.admin.bigMatches.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("Big match created");
+        queryClient.invalidateQueries({ queryKey: orpc.bigMatches.key() });
+        setCreateOpen(false);
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
   const allItems = bigMatches ?? [];
   const totalItems = allItems.length;
@@ -284,7 +296,7 @@ function AdminBigMatches() {
   const pageStart = pagination.pageIndex * pagination.pageSize;
   const items = allItems.slice(pageStart, pageStart + pagination.pageSize);
 
-  const columns: ColumnDef<BigMatch, any>[] = [
+  const columns: ColumnDef<BigMatchRow, any>[] = [
     {
       accessorKey: "name",
       header: "Name",
@@ -443,7 +455,7 @@ function AdminBigMatches() {
           }
           onSubmit={async (values) => {
             if (!editingItem) return;
-            await client.bigMatches.update({
+            await updateMutation.mutateAsync({
               id: editingItem.id,
               name: values.name,
               opponent: values.opponent,
@@ -453,12 +465,8 @@ function AdminBigMatches() {
               sortOrder: values.sortOrder,
               status: values.status,
             });
-            toast.success("Big match updated");
-            queryClient.invalidateQueries({ queryKey: ["bigMatches"] });
-            setEditOpen(false);
-            setEditingItem(null);
           }}
-          queryKeysToInvalidate={["bigMatches"]}
+          queryKeysToInvalidate={[orpc.bigMatches.key()]}
           size="full"
         />
 
@@ -477,7 +485,7 @@ function AdminBigMatches() {
             status: "published",
           }}
           onSubmit={async (values) => {
-            await client.bigMatches.create({
+            await createMutation.mutateAsync({
               name: values.name,
               opponent: values.opponent,
               coverImage: values.coverImage || undefined,
@@ -485,11 +493,8 @@ function AdminBigMatches() {
               year: values.year ? Number(values.year) : undefined,
               status: values.status,
             });
-            toast.success("Big match created");
-            queryClient.invalidateQueries({ queryKey: ["bigMatches"] });
-            setCreateOpen(false);
           }}
-          queryKeysToInvalidate={["bigMatches"]}
+          queryKeysToInvalidate={[orpc.bigMatches.key()]}
           size="full"
         />
       </div>

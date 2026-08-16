@@ -134,7 +134,7 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
               <div
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
                 style={{
-                  background: "radial-gradient(circle, rgba(255,178,3,0.15) 0%, transparent 70%)",
+                  background: "radial-gradient(circle, color-mix(in oklab, var(--gold) 15%, transparent) 0%, transparent 70%)",
                 }}
               />
             </div>
@@ -150,7 +150,7 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
           <nav
             ref={linksRef}
             aria-label="Main navigation"
-            className="hidden lg:flex items-center gap-1 ml-auto"
+            className="hidden xl:flex items-center gap-1 ml-auto"
           >
             {navLinks.map((item) => (
               <Link
@@ -172,19 +172,17 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
           </nav>
 
           {/* Right Side */}
-          <div ref={ctaRef} className="flex items-center gap-3 lg:ml-6">
-            <div className="hidden sm:flex items-center gap-3">
-              <Link
-                to="/admissions"
-                className="inline-flex items-center gap-2 bg-gold text-green-dark px-4 py-2 text-[12px] font-bold tracking-wider hover:bg-gold-light transition-all duration-300 relative overflow-hidden group"
-              >
-                <span className="relative z-10">Admissions</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-gold-light to-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Link>
-              <UserMenu />
-            </div>
+          <div ref={ctaRef} className="flex items-center gap-2 xl:ml-6">
+            <Link
+              to="/admissions"
+              className="hidden sm:inline-flex items-center gap-2 bg-gold text-green-dark px-4 py-2 text-[12px] font-bold tracking-wider hover:bg-gold-light transition-all duration-300 relative overflow-hidden group"
+            >
+              <span className="relative z-10">Admissions</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-gold-light to-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </Link>
+            <UserMenu />
             <button
-              className="lg:hidden inline-flex size-9 items-center justify-center text-cream hover:text-gold transition-colors duration-300 relative mx-auto"
+              className="xl:hidden inline-flex size-9 items-center justify-center text-cream hover:text-gold transition-colors duration-300 relative mx-auto"
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -219,7 +217,7 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
       {!isOBRoute && (
         <div
           ref={mobileMenuRef}
-          className="lg:hidden overflow-hidden bg-green-dark/98 backdrop-blur-sm"
+          className="xl:hidden overflow-hidden bg-green-dark/98 backdrop-blur-sm"
           style={{ height: 0, opacity: 0 }}
         >
           <div className="px-4 py-6 space-y-1 border-b-gold-light bg-green-darker">

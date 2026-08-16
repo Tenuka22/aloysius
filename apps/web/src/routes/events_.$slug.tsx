@@ -3,26 +3,6 @@ import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
 
-type Event = {
-  id: string;
-  title: string;
-  content: string | null;
-  excerpt: string | null;
-  coverImage: string | null;
-  bodyImage: string | null;
-  purpose: string | null;
-  organization: string | null;
-  organizerName: string | null;
-  organizerType: string | null;
-  location: string | null;
-  startDate: string;
-  endDate: string | null;
-  isRecurring: boolean;
-  isAllDay: boolean;
-  tags: string[] | null;
-  publishedAt: string | null;
-};
-
 const authorTypeLabels: Record<string, string> = {
   student: "Student",
   faculty: "Faculty",
@@ -40,7 +20,7 @@ export const Route = createFileRoute("/events_/$slug")({
 });
 
 function EventDetailPage() {
-  const { event } = Route.useLoaderData() as { event: Event };
+  const { event } = Route.useLoaderData();
 
   const eventDate = new Date(event.startDate);
   const month = eventDate.toLocaleString("default", { month: "short" });

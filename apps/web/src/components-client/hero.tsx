@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
+import { MediaImage } from "@/components-client/media-image";
 
 export function Hero({ settings }: { settings?: Record<string, string> }) {
   const sectionRef = useRef<HTMLElement>(null);
@@ -45,11 +46,11 @@ export function Hero({ settings }: { settings?: Record<string, string> }) {
       style={{ height: "92vh", minHeight: 640 }}
     >
       {bgImage && (
-        <img
+        <MediaImage
           src={bgImage}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
-          aria-hidden="true"
+          fallback={null}
         />
       )}
       <div

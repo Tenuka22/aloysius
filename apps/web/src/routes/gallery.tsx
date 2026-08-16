@@ -1,20 +1,28 @@
 "use client";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 
 export const Route = createFileRoute("/gallery")({
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery(
+      orpc.gallery.list.queryOptions({
+        input: { page: 1, pageSize: 50, status: "published" },
+      }),
+    );
+  },
   component: GalleryPage,
 });
 
 function GalleryPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["gallery", "public"],
-    queryFn: () => client.gallery.list({ page: 1, pageSize: 50, status: "published" }),
-  });
+  const { data } = useSuspenseQuery(
+    orpc.gallery.list.queryOptions({
+      input: { page: 1, pageSize: 50, status: "published" },
+    }),
+  );
 
   const albums = data?.rows ?? [];
 
@@ -39,9 +47,7 @@ function GalleryPage() {
 
         <section className="px-4 sm:px-6 lg:px-8 pb-16">
           <div className="mx-auto max-w-6xl">
-            {isLoading ? (
-              <div className="text-center text-muted-foreground py-16">Loading albums...</div>
-            ) : albums.length === 0 ? (
+            {albums.length === 0 ? (
               <div className="text-center text-muted-foreground py-16">No albums yet.</div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

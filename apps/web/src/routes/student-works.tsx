@@ -1,10 +1,10 @@
 "use client";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 
 const categoryColors: Record<string, string> = {
   film: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
@@ -18,14 +18,22 @@ const categoryColors: Record<string, string> = {
 };
 
 export const Route = createFileRoute("/student-works")({
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery(
+      orpc.studentWorks.list.queryOptions({
+        input: { page: 1, pageSize: 50, status: "published" },
+      }),
+    );
+  },
   component: StudentWorksPage,
 });
 
 function StudentWorksPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["studentWorks", "public"],
-    queryFn: () => client.studentWorks.list({ page: 1, pageSize: 50, status: "published" }),
-  });
+  const { data } = useSuspenseQuery(
+    orpc.studentWorks.list.queryOptions({
+      input: { page: 1, pageSize: 50, status: "published" },
+    }),
+  );
 
   const items = data?.rows ?? [];
 
@@ -51,11 +59,7 @@ function StudentWorksPage() {
 
         <section className="px-4 sm:px-6 lg:px-8 pb-16">
           <div className="mx-auto max-w-6xl">
-            {isLoading ? (
-              <div className="text-center text-muted-foreground py-16">
-                Loading student works...
-              </div>
-            ) : items.length === 0 ? (
+            {items.length === 0 ? (
               <div className="text-center text-muted-foreground py-16">No student works yet.</div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

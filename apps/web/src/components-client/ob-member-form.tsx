@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@aloysius-web/ui/components/select";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import * as v from "valibot";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
@@ -65,13 +65,15 @@ const updateMemberSchema = v.object({
 
 type UpdateMemberValues = v.InferOutput<typeof updateMemberSchema>;
 
+type FormValues = CreateMemberValues | UpdateMemberValues;
+
 const fields: FieldEntry<CreateMemberValues | UpdateMemberValues>[] = [
   {
     name: "photo",
     kind: "custom",
     label: "Photo",
     required: false,
-    customRenderer: ({ value, onChange }) => <PhotoFieldInline value={value} onChange={onChange} />,
+    customRenderer: () => <PhotoFieldInline />,
   },
   {
     name: "name",
@@ -84,11 +86,10 @@ const fields: FieldEntry<CreateMemberValues | UpdateMemberValues>[] = [
     name: "role",
     kind: "custom",
     label: "Role / Position",
-    customRenderer: ({ value, onChange, formValues, setFieldValue }) => (
+    customRenderer: ({ value, onChange, setFieldValue }) => (
       <RoleField
         value={value}
         onChange={onChange}
-        formValues={formValues as Record<string, unknown>}
         setFieldValue={setFieldValue}
       />
     ),
@@ -116,12 +117,10 @@ const fields: FieldEntry<CreateMemberValues | UpdateMemberValues>[] = [
 function RoleField({
   value,
   onChange,
-  formValues,
   setFieldValue,
 }: {
   value: unknown;
   onChange: (val: unknown) => void;
-  formValues: Record<string, unknown>;
   setFieldValue: (name: string, val: unknown) => void;
 }) {
   const [loading, setLoading] = useState(false);
@@ -159,15 +158,9 @@ function RoleField({
   );
 }
 
-function PhotoFieldInline({
-  value,
-  onChange,
-}: {
-  value: unknown;
-  onChange: (val: unknown) => void;
-}) {
+function PhotoFieldInline() {
   const form = useBuildForm();
-  const photo = useStore(form.store, (state: any) => state.values.photo) as string | undefined;
+  const photo = useStore(form.store, (state: { values: FormValues }) => state.values.photo) as string | undefined;
   const [uploading, setUploading] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<number>(4 / 3);
 
@@ -212,7 +205,7 @@ function PhotoFieldInline({
       <div className="flex items-center gap-3 mb-3">
         <Select
           value={String(aspectRatio)}
-          onValueChange={(v) => setAspectRatio(Number.parseFloat(v))}
+          onValueChange={(v) => setAspectRatio(Number.parseFloat(v ?? "1"))}
           disabled={uploading}
         >
           <SelectTrigger className="w-[180px]">
@@ -276,28 +269,46 @@ export function OBMemberForm({
 }) {
   const queryClient = useQueryClient();
 
-  const existingMember = useQuery({
-    queryKey: ["ob-member", id],
-    queryFn: () => client.ob.obMembers.get({ id: id! }),
-    enabled: mode === "edit" && !!id,
-  });
+  const existingMember = useQuery(
+    orpc.ob.obMembers.get.queryOptions({
+      input: { id: id! },
+      enabled: mode === "edit" && !!id,
+    }),
+  );
 
-  const mutation = useMutation({
-    mutationFn: (values: CreateMemberValues | UpdateMemberValues) => {
-      if (mode === "create") {
-        return client.ob.obMembers.create(values as CreateMemberValues);
-      }
-      return client.ob.obMembers.update({ id: id!, ...values });
-    },
-    onSuccess: () => {
-      toast.success(mode === "create" ? "Member created" : "Member updated");
-      queryClient.invalidateQueries({ queryKey: ["ob-members"] });
-      onSuccess?.();
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const createMutation = useMutation(
+    orpc.ob.obMembers.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("Member created");
+        queryClient.invalidateQueries({ queryKey: orpc.ob.obMembers.key() });
+        onSuccess?.();
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
+
+  const updateMutation = useMutation(
+    orpc.ob.obMembers.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Member updated");
+        queryClient.invalidateQueries({ queryKey: orpc.ob.obMembers.key() });
+        onSuccess?.();
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
+
+  const mutation = {
+    mutateAsync: (values: CreateMemberValues | UpdateMemberValues) =>
+      mode === "create"
+        ? createMutation.mutateAsync(values as CreateMemberValues)
+        : updateMutation.mutateAsync({ id: id!, ...values }),
+    isPending: createMutation.isPending || updateMutation.isPending,
+  };
 
   const member = existingMember.data;
 
@@ -345,7 +356,7 @@ export function OBMemberForm({
               bio: member.bio ?? "",
               year: member.year ?? "",
               sortOrder: member.sortOrder ?? 0,
-              status: member.status as any,
+              status: member.status,
             }
           : {
               name: "",

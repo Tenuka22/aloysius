@@ -3,13 +3,11 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { MediaImage } from "@/components-client/media-image";
 
 gsap.registerPlugin(ScrollTrigger);
 
-function ArchivalImage({ src, className }: { src?: string; className?: string }) {
-  if (src) {
-    return <img src={src} alt="" className={`w-full object-cover ${className ?? ""}`} />;
-  }
+function ArchivalPlaceholder({ className }: { className?: string }) {
   return (
     <div
       className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-green-dark/[0.07] to-green-dark/[0.02] ${className ?? ""}`}
@@ -18,6 +16,17 @@ function ArchivalImage({ src, className }: { src?: string; className?: string })
         ARCHIVE PHOTO
       </span>
     </div>
+  );
+}
+
+function ArchivalImage({ src, alt, className }: { src?: string | null; alt?: string; className?: string }) {
+  return (
+    <MediaImage
+      src={src}
+      alt={alt ?? ""}
+      className={`w-full object-cover ${className ?? ""}`}
+      fallback={<ArchivalPlaceholder className={className} />}
+    />
   );
 }
 
@@ -72,7 +81,7 @@ export function Heritage({ settings }: { settings?: Record<string, string> }) {
         <div
           data-animate
           className="hidden lg:block h-full min-h-[420px]"
-          style={{ background: "linear-gradient(180deg, #FFB203 0%, rgba(255,178,3,0.06) 100%)" }}
+          style={{ background: "linear-gradient(180deg, var(--gold) 0%, color-mix(in oklab, var(--gold) 6%, transparent) 100%)" }}
         />
         <div data-animate className="flex flex-col gap-8">
           <div>

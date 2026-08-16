@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { MediaImage } from "@/components-client/media-image";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -66,19 +67,18 @@ export function PrincipalMessage({
       <div className="relative mx-auto max-w-[1080px] grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-12 lg:gap-[72px] items-center">
         <div data-animate className="relative max-w-[340px] mx-auto lg:mx-0 w-full">
           <div className="absolute -right-3.5 -bottom-3.5 w-full h-full border border-gold -z-10 pointer-events-none" />
-          {photo ? (
-            <img
-              src={photo}
-              alt={displayName}
-              className="w-full aspect-[3/4] object-cover shadow-xl shadow-green-dark/10"
-            />
-          ) : (
-            <div className="w-full aspect-[3/4] flex items-center justify-center bg-gradient-to-br from-green-dark/[0.07] to-green-dark/[0.02]">
-              <span className="text-[11px] tracking-[0.18em] text-green-dark/50 font-semibold">
-                PRINCIPAL PORTRAIT
-              </span>
-            </div>
-          )}
+          <MediaImage
+            src={photo}
+            alt={displayName}
+            className="w-full aspect-[3/4] object-cover shadow-xl shadow-green-dark/10"
+            fallback={
+              <div className="w-full aspect-[3/4] flex items-center justify-center bg-gradient-to-br from-green-dark/[0.07] to-green-dark/[0.02]">
+                <span className="text-[11px] tracking-[0.18em] text-green-dark/50 font-semibold">
+                  PRINCIPAL PORTRAIT
+                </span>
+              </div>
+            }
+          />
         </div>
         <div data-animate>
           {displayQuote && (

@@ -50,32 +50,23 @@ import {
   IconArchive,
   IconRotate,
 } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
-
-type GalleryItem = {
-  id: string;
-  title: string;
-  description: string | null;
-  eventId: string | null;
-  coverImage: string | null;
-  tags: string[] | null;
-  status: string;
-  publishedAt: string | null;
-  createdAt: string;
-};
+import type { GalleryAlbumRow } from "@/lib/api-types";
 
 function DeleteDialog({
   open,
   onOpenChange,
   onConfirm,
   title,
+  isPending,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title: string;
+  isPending: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,11 +78,11 @@ function DeleteDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete
+          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+            {isPending ? "Deleting…" : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -99,33 +90,34 @@ function DeleteDialog({
   );
 }
 
-function ActionsMenu({ item }: { item: GalleryItem }) {
+function ActionsMenu({ item }: { item: GalleryAlbumRow }) {
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const deleteMutation = useMutation({
-    mutationFn: () => client.gallery.delete({ id: item.id }),
-    onSuccess: () => {
-      toast.success("Gallery deleted");
-      queryClient.invalidateQueries({ queryKey: ["gallery"] });
-      setDeleteOpen(false);
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const deleteMutation = useMutation(
+    orpc.admin.gallery.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success("Gallery deleted");
+        queryClient.invalidateQueries({ queryKey: orpc.gallery.key() });
+        setDeleteOpen(false);
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
-  const statusMutation = useMutation({
-    mutationFn: (status: "draft" | "published" | "archived") =>
-      client.gallery.update({ id: item.id, status, publishNow: status === "published" }),
-    onSuccess: () => {
-      toast.success("Status updated");
-      queryClient.invalidateQueries({ queryKey: ["gallery"] });
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const statusMutation = useMutation(
+    orpc.admin.gallery.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Status updated");
+        queryClient.invalidateQueries({ queryKey: orpc.gallery.key() });
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   return (
     <>
@@ -146,25 +138,33 @@ function ActionsMenu({ item }: { item: GalleryItem }) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {item.status === "draft" && (
-            <DropdownMenuItem onClick={() => statusMutation.mutate("published")}>
+            <DropdownMenuItem
+              onClick={() => statusMutation.mutate({ id: item.id, status: "published" })}
+            >
               <IconSend className="size-4" />
               Publish
             </DropdownMenuItem>
           )}
           {item.status === "published" && (
             <>
-              <DropdownMenuItem onClick={() => statusMutation.mutate("draft")}>
+              <DropdownMenuItem
+                onClick={() => statusMutation.mutate({ id: item.id, status: "draft" })}
+              >
                 <IconRotate className="size-4" />
                 Unpublish
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => statusMutation.mutate("archived")}>
+              <DropdownMenuItem
+                onClick={() => statusMutation.mutate({ id: item.id, status: "archived" })}
+              >
                 <IconArchive className="size-4" />
                 Archive
               </DropdownMenuItem>
             </>
           )}
           {item.status === "archived" && (
-            <DropdownMenuItem onClick={() => statusMutation.mutate("draft")}>
+            <DropdownMenuItem
+              onClick={() => statusMutation.mutate({ id: item.id, status: "draft" })}
+            >
               <IconRotate className="size-4" />
               Restore to Draft
             </DropdownMenuItem>
@@ -180,14 +180,15 @@ function ActionsMenu({ item }: { item: GalleryItem }) {
       <DeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onConfirm={() => deleteMutation.mutate()}
+        onConfirm={() => deleteMutation.mutate({ id: item.id })}
+        isPending={deleteMutation.isPending}
         title={item.title}
       />
     </>
   );
 }
 
-const columns: ColumnDef<GalleryItem, any>[] = [
+const columns: ColumnDef<GalleryAlbumRow, any>[] = [
   {
     accessorKey: "coverImage",
     header: "Cover",
@@ -291,26 +292,18 @@ function AdminGalleryList() {
       ? (rawStatus as "draft" | "published" | "archived")
       : undefined;
 
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      "gallery",
-      pagination.pageIndex,
-      pagination.pageSize,
-      sort?.id,
-      sort?.desc,
-      search,
-      status,
-    ],
-    queryFn: () =>
-      client.gallery.list({
+  const { data, isLoading } = useQuery(
+    orpc.gallery.list.queryOptions({
+      input: {
         page: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
         sort: sort?.id,
         sortDir: sort?.desc ? "desc" : "asc",
         search,
         status,
-      }),
-  });
+      },
+    }),
+  );
 
   const items = data?.rows ?? [];
   const pageCount = data?.pageCount ?? 0;

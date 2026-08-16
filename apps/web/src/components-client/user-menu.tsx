@@ -3,11 +3,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { Show, useAuth } from "@clerk/tanstack-react-start";
 import { IconSettings, IconShieldCheck, IconUserShield, IconUsers } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 
-/** Shared pill style for navbar admin / membership links on the dark-green header. */
+/** Shared pill style for navbar admin / membership links on the dark-green header.
+ *  Icon-only by design: with up to 8 nav links plus Admissions, spelling out
+ *  "Admin"/"OB"/"My Clubs" here would overflow narrower widths. The icon +
+ *  title/aria-label carries the meaning instead. */
 const pillClass =
-  "inline-flex items-center gap-1.5 rounded-md border border-gold/40 text-gold px-3 py-1.5 text-[12px] font-bold tracking-wider transition-colors hover:bg-gold hover:text-green-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-green-dark active:scale-[0.97]";
+  "inline-flex size-9 items-center justify-center rounded-md border border-gold/40 text-gold transition-colors hover:bg-gold hover:text-green-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-green-dark active:scale-[0.97]";
 
 function AdminLink() {
   const { sessionClaims } = useAuth();
@@ -16,42 +19,37 @@ function AdminLink() {
   if (role !== "admin") return null;
 
   return (
-    <a href="/admin" title="Site admin panel" className={pillClass}>
-      <IconSettings className="size-3.5" aria-hidden="true" />
-      Admin
+    <a href="/admin" title="Site admin panel" aria-label="Site admin panel" className={pillClass}>
+      <IconSettings className="size-4" aria-hidden="true" />
     </a>
   );
 }
 
 /** Shown in the navbar when the signed-in user belongs to one or more clubs.
- *  If they are a club admin (of one or more clubs) the link is labeled
- *  "Club Admin" so they know /clubs is their management entry point. */
+ *  If they are a club admin (of one or more clubs) the icon and tooltip change
+ *  so they know /activities-admin is their management entry point. */
 function MyClubsLink() {
   const { isSignedIn } = useAuth();
 
-  const { data } = useQuery({
-    queryKey: ["clubs", "my"],
-    queryFn: () => client.clubs.myClubs(),
-    enabled: isSignedIn,
-    staleTime: 60_000,
-  });
+  const { data } = useQuery(
+    orpc.clubs.myClubs.queryOptions({
+      enabled: isSignedIn,
+      staleTime: 60_000,
+    }),
+  );
 
   if (!isSignedIn || !data || data.length === 0) return null;
 
   const isClubAdmin = data.some((c) => c.membership.isAdmin === true);
+  const label = isClubAdmin ? "Manage your club(s) as admin" : "Your clubs";
 
   return (
-    <a
-      href="/clubs"
-      title={isClubAdmin ? "Manage your club(s) as admin" : "Your clubs"}
-      className={pillClass}
-    >
+    <a href="/activities-admin" title={label} aria-label={label} className={pillClass}>
       {isClubAdmin ? (
-        <IconShieldCheck className="size-3.5" aria-hidden="true" />
+        <IconShieldCheck className="size-4" aria-hidden="true" />
       ) : (
-        <IconUsers className="size-3.5" aria-hidden="true" />
+        <IconUsers className="size-4" aria-hidden="true" />
       )}
-      {isClubAdmin ? "Club Admin" : "My Clubs"}
     </a>
   );
 }
@@ -61,19 +59,23 @@ function MyClubsLink() {
 function OBAdminLink() {
   const { isSignedIn } = useAuth();
 
-  const { data } = useQuery({
-    queryKey: ["ob-my-membership"],
-    queryFn: () => client.ob.obMembers.myMembership(),
-    enabled: isSignedIn,
-    staleTime: 60_000,
-  });
+  const { data } = useQuery(
+    orpc.ob.obMembers.myMembership.queryOptions({
+      enabled: isSignedIn,
+      staleTime: 60_000,
+    }),
+  );
 
   if (!isSignedIn || data?.isAdmin !== true) return null;
 
   return (
-    <a href="/ob-admin" title="Old Boys' admin panel" className={pillClass}>
-      <IconUserShield className="size-3.5" aria-hidden="true" />
-      OB
+    <a
+      href="/ob-admin"
+      title="Old Boys' admin panel"
+      aria-label="Old Boys' admin panel"
+      className={pillClass}
+    >
+      <IconUserShield className="size-4" aria-hidden="true" />
     </a>
   );
 }

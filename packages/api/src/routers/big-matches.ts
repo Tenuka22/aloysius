@@ -3,18 +3,25 @@ import { eq, asc } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
 import { bigMatches } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
-import { protectedProcedure, publicProcedure } from "../index";
-import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
+import { publicProcedure } from "../index";
+import { contentStatusSchema } from "../schemas";
+import { checkSlugUnique } from "../lib/slug";
 
 export const bigMatchesRouter = {
   list: publicProcedure
-    .input(z.object({ status: z.enum(["draft", "published", "archived"]).optional() }).optional())
-    .handler(async ({ input }) => {
+    .input(z.object({ status: contentStatusSchema.optional() }).optional())
+    .handler(async ({ input, context }) => {
       const db = createDb();
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
       let query = db.select().from(bigMatches).orderBy(asc(bigMatches.sortOrder));
 
       if (input?.status) {
+        if (input.status !== "published" && !isSiteAdmin) {
+          throw new ORPCError("UNAUTHORIZED", { message: "Site admin access required." });
+        }
         query = query.where(eq(bigMatches.status, input.status)) as typeof query;
+      } else if (!isSiteAdmin) {
+        query = query.where(eq(bigMatches.status, "published")) as typeof query;
       }
 
       const rows = await query.all();
@@ -37,7 +44,7 @@ export const bigMatchesRouter = {
 
   get: publicProcedure
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const db = createDb();
       const row =
         "id" in input
@@ -48,6 +55,9 @@ export const bigMatchesRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Big match not found" });
       }
 
+      if (row.status !== "published" && !(context.auth?.adminCalled ?? false)) {
+        throw new ORPCError("NOT_FOUND", { message: "Big match not found" });
+      }
       return {
         id: row.id,
         slug: row.slug,
@@ -63,130 +73,6 @@ export const bigMatchesRouter = {
         createdAt: row.createdAt.toISOString(),
         updatedAt: row.updatedAt.toISOString(),
       };
-    }),
-
-  create: protectedProcedure
-    .input(
-      z.object({
-        slug: z.string().optional(),
-        name: z.string().min(1),
-        opponent: z.string().min(1),
-        coverImage: z.string().optional(),
-        type: z.string().default("Cricket"),
-        year: z.number().optional(),
-        eventId: z.string().optional(),
-        galleryId: z.string().optional(),
-        sortOrder: z.number().default(0),
-        status: z.enum(["draft", "published", "archived"]).default("draft"),
-      }),
-    )
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      const slug = input.slug
-        ? await generateUniqueSlug(bigMatches, input.slug)
-        : await generateUniqueSlug(bigMatches, input.name);
-      const record = await db
-        .insert(bigMatches)
-        .values({
-          id: crypto.randomUUID(),
-          slug,
-          ...input,
-        })
-        .returning()
-        .get();
-
-      return {
-        id: record.id,
-        slug: record.slug,
-        name: record.name,
-        opponent: record.opponent,
-        coverImage: record.coverImage,
-        type: record.type,
-        year: record.year,
-        eventId: record.eventId,
-        galleryId: record.galleryId,
-        sortOrder: record.sortOrder,
-        status: record.status,
-        createdAt: record.createdAt.toISOString(),
-        updatedAt: record.updatedAt.toISOString(),
-      };
-    }),
-
-  update: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        slug: z.string().optional(),
-        name: z.string().min(1).optional(),
-        opponent: z.string().min(1).optional(),
-        coverImage: z.string().nullable().optional(),
-        type: z.string().optional(),
-        year: z.number().nullable().optional(),
-        eventId: z.string().nullable().optional(),
-        galleryId: z.string().nullable().optional(),
-        sortOrder: z.number().optional(),
-        status: z.enum(["draft", "published", "archived"]).optional(),
-      }),
-    )
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      const existing = await db.select().from(bigMatches).where(eq(bigMatches.id, input.id)).get();
-
-      if (!existing) {
-        throw new ORPCError("NOT_FOUND", { message: "Big match not found" });
-      }
-
-      const { id, ...updateData } = input;
-      if (updateData.slug !== undefined) {
-        updateData.slug = await generateUniqueSlug(bigMatches, updateData.slug, id);
-      }
-      if (updateData.name !== undefined) {
-        if (updateData.slug === undefined) {
-          updateData.slug = await generateUniqueSlug(bigMatches, updateData.name, id);
-        }
-      }
-      const record = await db
-        .update(bigMatches)
-        .set({ ...updateData, updatedAt: new Date() })
-        .where(eq(bigMatches.id, id))
-        .returning()
-        .get();
-
-      return {
-        id: record.id,
-        slug: record.slug,
-        name: record.name,
-        opponent: record.opponent,
-        coverImage: record.coverImage,
-        type: record.type,
-        year: record.year,
-        eventId: record.eventId,
-        galleryId: record.galleryId,
-        sortOrder: record.sortOrder,
-        status: record.status,
-        createdAt: record.createdAt.toISOString(),
-        updatedAt: record.updatedAt.toISOString(),
-      };
-    }),
-
-  delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      await db.delete(bigMatches).where(eq(bigMatches.id, input.id)).run();
-      return { success: true };
     }),
 
   checkSlug: publicProcedure

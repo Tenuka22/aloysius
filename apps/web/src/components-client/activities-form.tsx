@@ -4,13 +4,14 @@ import { useCallback, useState } from "react";
 import { useStore } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@aloysius-web/ui/components/button";
+import { Card, CardContent } from "@aloysius-web/ui/components/card";
 import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
 import { MinimalTiptapEditor } from "@aloysius-web/ui/components/minimal-tiptap";
 import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
-import { IconX, IconGripVertical } from "@tabler/icons-react";
+import { IconX, IconGripVertical, IconShieldCheck } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
 import { toast } from "sonner";
 import { SlugFieldInline } from "@/components-client/slug-field";
@@ -51,6 +52,8 @@ const updateActivitySchema = v.object({
 
 type UpdateActivityValues = v.InferOutput<typeof updateActivitySchema>;
 
+type FormValues = CreateActivityValues | UpdateActivityValues;
+
 const fields: FieldEntry<CreateActivityValues | UpdateActivityValues>[] = [
   {
     name: "name",
@@ -65,8 +68,7 @@ const fields: FieldEntry<CreateActivityValues | UpdateActivityValues>[] = [
     kind: "custom",
     label: "Slug",
     required: false,
-    customRenderer: () => null,
-    renderField: (name, value, onChange) => (
+    customRenderer: ({ value, onChange }) => (
       <SlugFieldInline
         routerName="activities"
         sourceField="name"
@@ -152,7 +154,7 @@ const fields: FieldEntry<CreateActivityValues | UpdateActivityValues>[] = [
 
 function CoverImageField() {
   const form = useBuildForm();
-  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as
+  const coverImage = useStore(form.store, (state: { values: FormValues }) => state.values.coverImage) as
     | string
     | undefined;
   const [uploading, setUploading] = useState(false);
@@ -235,7 +237,7 @@ function BrandingImageField({
   hint: string;
 }) {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values[field]) as string | undefined;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values[field]) as string | undefined;
   const [uploading, setUploading] = useState(false);
 
   const handleFilesSelected = useCallback(
@@ -303,7 +305,7 @@ function BrandingImageField({
 
 function NameField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.name) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.name) as string;
 
   return (
     <div className="space-y-1.5">
@@ -323,7 +325,7 @@ function NameField() {
 
 function TypeField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.type) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.type) as string;
 
   return (
     <div className="space-y-1.5">
@@ -345,31 +347,37 @@ function TypeField() {
 
 function AdminEmailField() {
   const form = useBuildForm();
-  const value = (useStore(form.store, (state: any) => state.values.adminEmail) as string) ?? "";
-  const type = useStore(form.store, (state: any) => state.values.type) as string;
-
-  if (type === "academic") return null;
+  const value = (useStore(form.store, (state: { values: FormValues }) => state.values.adminEmail) as string) ?? "";
+  const type = useStore(form.store, (state: { values: FormValues }) => state.values.type) as string;
 
   return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium leading-none">Administrator Email</label>
-      <p className="text-xs text-muted-foreground">
-        The administrator responsible for managing this {type}.
-      </p>
-      <input
-        type="email"
-        value={value}
-        onChange={(e) => form.setFieldValue("adminEmail", e.target.value)}
-        placeholder="admin@example.com"
-        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      />
-    </div>
+    <Card className="border-secondary/20">
+      <CardContent className="p-4 flex flex-wrap items-center gap-4">
+        <div className="flex-1 min-w-[240px]">
+          <label className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+            <IconShieldCheck className="size-3.5 text-primary shrink-0" />
+            Club Admin Email
+          </label>
+          <input
+            type="email"
+            value={value}
+            onChange={(e) => form.setFieldValue("adminEmail", e.target.value)}
+            placeholder="admin@example.com"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          />
+          <p className="text-[11px] text-muted-foreground mt-1.5">
+            The person responsible for managing this {type}&apos;s roster and content. They can
+            sign in with this email to moderate submissions without being a site admin.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
 function StatusField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.status) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.status) as string;
 
   return (
     <div className="space-y-1.5">
@@ -391,7 +399,7 @@ function StatusField() {
 
 function SortOrderField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.sortOrder) as number;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.sortOrder) as number;
 
   return (
     <div className="space-y-1.5">
@@ -409,7 +417,7 @@ function SortOrderField() {
 
 function ImagesField() {
   const form = useBuildForm();
-  const images = (useStore(form.store, (state: any) => state.values.images) as string[]) ?? [];
+  const images = (useStore(form.store, (state: { values: FormValues }) => state.values.images) as string[]) ?? [];
   const [uploading, setUploading] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
@@ -564,36 +572,45 @@ export function ActivitiesForm({
 }) {
   const queryClient = useQueryClient();
 
-  const { data: activity, isLoading: isLoadingItem } = useQuery({
-    queryKey: ["activities", id],
-    queryFn: () => client.activities.get({ id: id! }),
-    enabled: mode === "edit" && !!id,
-  });
+  const { data: activity, isLoading: isLoadingItem } = useQuery(
+    orpc.activities.get.queryOptions({
+      input: { id: id! },
+      enabled: mode === "edit" && !!id,
+    }),
+  );
 
-  const createMutation = useMutation({
-    mutationFn: (body: any) => client.activities.create(body),
-    onSuccess: () => {
-      toast.success("Activity created");
-      queryClient.invalidateQueries({ queryKey: ["activities"] });
-      onSuccess();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const createMutation = useMutation(
+    orpc.admin.activities.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("Activity created");
+        queryClient.invalidateQueries({ queryKey: orpc.activities.key() });
+        onSuccess();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const updateMutation = useMutation({
-    mutationFn: (body: any) => client.activities.update(body),
-    onSuccess: () => {
-      toast.success("Activity updated");
-      queryClient.invalidateQueries({ queryKey: ["activities"] });
-      onSuccess();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const updateMutation = useMutation(
+    orpc.activities.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Activity updated");
+        queryClient.invalidateQueries({ queryKey: orpc.activities.key() });
+        onSuccess();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
   const handleSubmit = useCallback(
     async (values: CreateActivityValues | UpdateActivityValues) => {
-      if (mode === "edit" && id) await updateMutation.mutateAsync({ ...values, id });
-      else await createMutation.mutateAsync(values);
+      if (mode === "edit" && id)
+        await updateMutation.mutateAsync(
+          { ...values, id } as Parameters<typeof updateMutation.mutateAsync>[0],
+        );
+      else
+        await createMutation.mutateAsync(
+          values as Parameters<typeof createMutation.mutateAsync>[0],
+        );
     },
     [mode, id, createMutation, updateMutation],
   );
@@ -627,6 +644,7 @@ export function ActivitiesForm({
     },
     renderAboveFields: () => (
       <div className="space-y-6">
+        <AdminEmailField />
         <div className="flex gap-6">
           <div className="w-[280px] shrink-0">
             <CoverImageField />
@@ -634,7 +652,6 @@ export function ActivitiesForm({
           <div className="flex-1 grid grid-cols-2 gap-4">
             <NameField />
             <TypeField />
-            <AdminEmailField />
             <StatusField />
             <SortOrderField />
           </div>

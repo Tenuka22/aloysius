@@ -8,7 +8,7 @@ import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
 import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import * as v from "valibot";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
@@ -43,9 +43,11 @@ const updateDonationSchema = v.object({
 
 type UpdateDonationValues = v.InferOutput<typeof updateDonationSchema>;
 
-function ImageInline({ onChange }: { onChange: (val: unknown) => void }) {
+type FormValues = CreateDonationValues | UpdateDonationValues;
+
+function ImageInline() {
   const form = useBuildForm();
-  const image = useStore(form.store, (state: any) => state.values.image) as string | undefined;
+  const image = useStore(form.store, (state: { values: FormValues }) => state.values.image) as string | undefined;
   const [uploading, setUploading] = useState(false);
 
   const handleFilesSelected = useCallback(
@@ -116,7 +118,7 @@ const fields: FieldEntry<CreateDonationValues | UpdateDonationValues>[] = [
     kind: "custom",
     label: "Image",
     required: false,
-    customRenderer: ({ onChange }) => <ImageInline onChange={onChange} />,
+    customRenderer: () => <ImageInline />,
   },
   {
     name: "donorName",
@@ -185,28 +187,46 @@ export function OBDonationForm({
 }) {
   const queryClient = useQueryClient();
 
-  const existingDonation = useQuery({
-    queryKey: ["ob-donation", id],
-    queryFn: () => client.ob.obDonations.get({ id: id! }),
-    enabled: mode === "edit" && !!id,
-  });
+  const existingDonation = useQuery(
+    orpc.ob.obDonations.get.queryOptions({
+      input: { id: id! },
+      enabled: mode === "edit" && !!id,
+    }),
+  );
 
-  const mutation = useMutation({
-    mutationFn: (values: CreateDonationValues | UpdateDonationValues) => {
-      if (mode === "create") {
-        return client.ob.obDonations.create(values as CreateDonationValues);
-      }
-      return client.ob.obDonations.update({ id: id!, ...values });
-    },
-    onSuccess: () => {
-      toast.success(mode === "create" ? "Donation recorded" : "Donation updated");
-      queryClient.invalidateQueries({ queryKey: ["ob-donations"] });
-      onSuccess?.();
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const createMutation = useMutation(
+    orpc.ob.obDonations.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("Donation recorded");
+        queryClient.invalidateQueries({ queryKey: orpc.ob.obDonations.key() });
+        onSuccess?.();
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
+
+  const updateMutation = useMutation(
+    orpc.ob.obDonations.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Donation updated");
+        queryClient.invalidateQueries({ queryKey: orpc.ob.obDonations.key() });
+        onSuccess?.();
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
+
+  const mutation = {
+    mutateAsync: (values: CreateDonationValues | UpdateDonationValues) =>
+      mode === "create"
+        ? createMutation.mutateAsync(values as CreateDonationValues)
+        : updateMutation.mutateAsync({ id: id!, ...values }),
+    isPending: createMutation.isPending || updateMutation.isPending,
+  };
 
   const donation = existingDonation.data;
 
@@ -272,7 +292,7 @@ export function OBDonationForm({
               message: donation.message ?? "",
               image: donation.image ?? "",
               isAnonymous: donation.isAnonymous,
-              status: donation.status as any,
+              status: donation.status,
               donatedAt: donation.donatedAt ? donation.donatedAt.slice(0, 10) : "",
             }
           : {

@@ -3,20 +3,6 @@ import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
 
-type StudentWork = {
-  id: string;
-  title: string;
-  description: string | null;
-  category: string;
-  studentNames: string[] | null;
-  studentGrade: string | null;
-  authorType: string | null;
-  coverImage: string | null;
-  contentUrl: string | null;
-  tags: string[] | null;
-  publishedAt: string | null;
-};
-
 const categoryLabels: Record<string, string> = {
   film: "Short Film",
   art: "Digital Art",
@@ -56,7 +42,7 @@ export const Route = createFileRoute("/student-works_/$slug")({
 });
 
 function StudentWorkDetailPage() {
-  const { studentWork } = Route.useLoaderData() as { studentWork: StudentWork };
+  const { studentWork } = Route.useLoaderData();
 
   return (
     <div className="min-h-screen bg-background">

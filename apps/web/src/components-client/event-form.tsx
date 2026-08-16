@@ -15,7 +15,7 @@ import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
 import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
 import { toast } from "sonner";
 import * as v from "valibot";
@@ -67,6 +67,8 @@ const updateEventSchema = v.object({
 
 type UpdateEventValues = v.InferOutput<typeof updateEventSchema>;
 
+type FormValues = CreateEventValues | UpdateEventValues;
+
 const fields: FieldEntry<CreateEventValues | UpdateEventValues>[] = [
   { name: "title", kind: "text", label: "Title", placeholder: "Enter event title", required: true },
   {
@@ -74,12 +76,11 @@ const fields: FieldEntry<CreateEventValues | UpdateEventValues>[] = [
     kind: "custom",
     label: "Slug",
     required: false,
-    customRenderer: () => null,
-    renderField: (name, value, onChange) => (
+    customRenderer: ({ value, onChange }) => (
       <SlugFieldInline
         routerName="events"
         value={(value as string) ?? ""}
-        onChange={(v) => onChange(v)}
+        onChange={onChange}
       />
     ),
   },
@@ -157,7 +158,7 @@ const fields: FieldEntry<CreateEventValues | UpdateEventValues>[] = [
 
 function CoverImageField() {
   const form = useBuildForm();
-  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as
+  const coverImage = useStore(form.store, (state: { values: FormValues }) => state.values.coverImage) as
     | string
     | undefined;
   const [uploading, setUploading] = useState(false);
@@ -229,7 +230,7 @@ function CoverImageField() {
 
 function BodyImageField() {
   const form = useBuildForm();
-  const bodyImage = useStore(form.store, (state: any) => state.values.bodyImage) as
+  const bodyImage = useStore(form.store, (state: { values: FormValues }) => state.values.bodyImage) as
     | string
     | undefined;
   const [uploading, setUploading] = useState(false);
@@ -301,13 +302,13 @@ function BodyImageField() {
 
 function DateTimeSection() {
   const form = useBuildForm();
-  const startDate = useStore(form.store, (state: any) => state.values.startDate) as string;
-  const endDate = useStore(form.store, (state: any) => state.values.endDate) as string;
-  const isAllDay = useStore(form.store, (state: any) => state.values.isAllDay) as boolean;
-  const isRecurring = useStore(form.store, (state: any) => state.values.isRecurring) as boolean;
+  const startDate = useStore(form.store, (state: { values: FormValues }) => state.values.startDate) as string;
+  const endDate = useStore(form.store, (state: { values: FormValues }) => state.values.endDate) as string;
+  const isAllDay = useStore(form.store, (state: { values: FormValues }) => state.values.isAllDay) as boolean;
+  const isRecurring = useStore(form.store, (state: { values: FormValues }) => state.values.isRecurring) as boolean;
   const recurrenceRule = useStore(
     form.store,
-    (state: any) => state.values.recurrenceRule,
+    (state: { values: FormValues }) => state.values.recurrenceRule,
   ) as string;
 
   const parsedStart = startDate ? new Date(startDate) : undefined;
@@ -421,28 +422,52 @@ export function EventForm({
 }) {
   const queryClient = useQueryClient();
 
-  const existingEvent = useQuery({
-    queryKey: ["events", id],
-    queryFn: () => client.events.get({ id: id! }),
-    enabled: mode === "edit" && !!id,
-  });
+  const existingEvent = useQuery(
+    orpc.events.get.queryOptions({
+      input: { id: id! },
+      enabled: mode === "edit" && !!id,
+    }),
+  );
 
-  const mutation = useMutation({
-    mutationFn: (values: CreateEventValues | UpdateEventValues) => {
-      if (mode === "create") {
-        return client.events.create({ ...(values as CreateEventValues), activityId } as any);
-      }
-      return client.events.update({ id: id!, ...values });
-    },
-    onSuccess: () => {
-      toast.success(mode === "create" ? "Event created" : "Event updated");
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      onSuccess?.();
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const createMutation = useMutation(
+    orpc.events.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("Event created");
+        queryClient.invalidateQueries({ queryKey: orpc.events.key() });
+        onSuccess?.();
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
+
+  const updateMutation = useMutation(
+    orpc.events.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Event updated");
+        queryClient.invalidateQueries({ queryKey: orpc.events.key() });
+        onSuccess?.();
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
+
+  const mutation = {
+    mutateAsync: (values: CreateEventValues | UpdateEventValues) =>
+      mode === "create"
+        ? createMutation.mutateAsync(
+            { ...(values as CreateEventValues), activityId } as Parameters<
+              typeof createMutation.mutateAsync
+            >[0],
+          )
+        : updateMutation.mutateAsync(
+            { id: id!, ...values } as Parameters<typeof updateMutation.mutateAsync>[0],
+          ),
+    isPending: createMutation.isPending || updateMutation.isPending,
+  };
 
   const event = existingEvent.data;
 

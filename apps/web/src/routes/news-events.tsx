@@ -87,7 +87,7 @@ function NewsEventsPage() {
   const [page, setPage] = useState(1);
 
   const allStories: Story[] = useMemo(() => {
-    const fromNews: Story[] = (news as any[]).map((n) => ({
+    const fromNews: Story[] = news.map((n) => ({
       id: n.id,
       slug: n.slug,
       title: n.title,
@@ -97,7 +97,7 @@ function NewsEventsPage() {
       catColor: GREEN,
       source: "news",
     }));
-    const fromEvents: Story[] = (events as any[]).map((e) => ({
+    const fromEvents: Story[] = events.map((e) => ({
       id: e.id,
       slug: e.slug,
       title: e.title,
@@ -107,7 +107,7 @@ function NewsEventsPage() {
       catColor: GREEN,
       source: "events",
     }));
-    const fromAnnouncements: Story[] = (announcements as any[]).map((a) => ({
+    const fromAnnouncements: Story[] = announcements.map((a) => ({
       id: a.id,
       slug: a.slug,
       title: a.title,
@@ -117,7 +117,7 @@ function NewsEventsPage() {
       catColor: GREEN,
       source: "announcements",
     }));
-    const fromAchievements: Story[] = (achievements as any[]).map((a) => {
+    const fromAchievements: Story[] = achievements.map((a) => {
       const catLabel =
         a.category === "academic"
           ? "ACADEMIC"
@@ -154,7 +154,7 @@ function NewsEventsPage() {
 
   const upcomingEvents = useMemo(() => {
     const now = Date.now();
-    return (events as any[])
+    return events
       .filter((e) => new Date(e.startDate).getTime() >= now)
       .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
       .slice(0, 4);
@@ -341,7 +341,7 @@ function NewsEventsPage() {
               {upcomingEvents.length === 0 ? (
                 <div className="text-[#FFF8E7]/50 py-8">No upcoming events scheduled.</div>
               ) : (
-                upcomingEvents.map((event: any) => {
+                upcomingEvents.map((event) => {
                   const eventDate = new Date(event.startDate);
                   const day = eventDate.getDate();
                   const month = eventDate

@@ -1,14 +1,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
 import { notifications } from "@aloysius-web/db/schema";
-
-export type NotificationType =
-  | "membership_request"
-  | "membership_approved"
-  | "membership_rejected"
-  | "membership_revoked"
-  | "content_approved"
-  | "content_rejected";
+import type { NotificationType } from "@aloysius-web/db/enums";
 
 type CreateNotificationInput = {
   userId: string;

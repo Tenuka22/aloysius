@@ -162,7 +162,7 @@ function Home() {
     <div className="min-h-screen bg-cream">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:bg-green-dark focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-cream focus:outline-2 focus:outline-gold focus:outline-offset-2"
       >
         Skip to main content
       </a>

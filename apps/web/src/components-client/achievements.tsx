@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 import { IconArrowRight } from "@tabler/icons-react";
+import { MediaImage } from "@/components-client/media-image";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -107,15 +108,14 @@ export function Achievements({
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 border-2 border-gold bg-white">
               <div className="relative w-full overflow-hidden">
-                {featured.coverImage ? (
-                  <img
-                    src={featured.coverImage}
-                    alt={featured.title}
-                    className={`w-full ${aspectRatioClass(getAspectRatio(featured.coverImage)) || "aspect-video"} lg:aspect-[4/3] object-cover transition-transform duration-500 group-hover:scale-105`}
-                  />
-                ) : (
-                  <div className="w-full aspect-video lg:aspect-[4/3] bg-gradient-to-br from-green-dark/10 to-gold/5" />
-                )}
+                <MediaImage
+                  src={featured.coverImage}
+                  alt={featured.title}
+                  className={`w-full ${aspectRatioClass(getAspectRatio(featured.coverImage)) || "aspect-video"} lg:aspect-[4/3] object-cover transition-transform duration-500 group-hover:scale-105`}
+                  fallback={
+                    <div className="w-full aspect-video lg:aspect-[4/3] bg-gradient-to-br from-green-dark/10 to-gold/5" />
+                  }
+                />
               </div>
               <div className="p-7 lg:p-10 flex flex-col justify-center">
                 <div className="text-[11px] tracking-[0.16em] font-bold text-gold mb-3">
@@ -142,7 +142,7 @@ export function Achievements({
 
         {rest.length > 0 && (
           <div data-animate className="border-t border-green-dark/10">
-            {rest.map((item, idx) => (
+            {rest.map((item) => (
               <Link
                 key={item.id}
                 to="/achievements/$slug"
@@ -150,15 +150,14 @@ export function Achievements({
                 className="group flex items-center gap-4 sm:gap-6 px-4 py-4 sm:py-5 border-b border-green-dark/10 hover:bg-white transition-colors"
               >
                 <div className="w-16 sm:w-20 shrink-0 aspect-[4/3] overflow-hidden bg-green-dark/5">
-                  {item.coverImage ? (
-                    <img
-                      src={item.coverImage}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-green-dark/10 to-gold/10" />
-                  )}
+                  <MediaImage
+                    src={item.coverImage}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    fallback={
+                      <div className="w-full h-full bg-gradient-to-br from-green-dark/10 to-gold/10" />
+                    }
+                  />
                 </div>
                 <div className="text-[11px] tracking-[0.16em] font-bold text-gold w-12 sm:w-16 shrink-0">
                   {item.year ?? "—"}

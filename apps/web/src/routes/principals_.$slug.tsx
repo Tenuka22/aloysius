@@ -11,21 +11,6 @@ import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 
 gsap.registerPlugin(ScrollTrigger);
 
-type Principal = {
-  id: string;
-  slug: string;
-  name: string;
-  title: string | null;
-  quote: string | null;
-  message: string | null;
-  bio: string | null;
-  education: string | null;
-  tenure: string | null;
-  portrait: string | null;
-  sortOrder: number;
-  status: string;
-};
-
 export const Route = createFileRoute("/principals_/$slug")({
   loader: async ({ params }) => {
     const [principal, settings] = await Promise.allSettled([
@@ -42,10 +27,7 @@ export const Route = createFileRoute("/principals_/$slug")({
 });
 
 function PrincipalDetailPage() {
-  const { principal, settings } = Route.useLoaderData() as {
-    principal: Principal | null;
-    settings: Record<string, string>;
-  };
+  const { principal, settings } = Route.useLoaderData();
   const pageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

@@ -12,7 +12,7 @@ import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
 import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import * as v from "valibot";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
@@ -47,9 +47,11 @@ const updateAchievementSchema = v.object({
 
 type UpdateAchievementValues = v.InferOutput<typeof updateAchievementSchema>;
 
+type FormValues = CreateAchievementValues | UpdateAchievementValues;
+
 function CoverImageField() {
   const form = useBuildForm();
-  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as
+  const coverImage = useStore(form.store, (state: { values: FormValues }) => state.values.coverImage) as
     | string
     | undefined;
   const [uploading, setUploading] = useState(false);
@@ -121,7 +123,7 @@ function CoverImageField() {
 
 function TitleField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.title) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.title) as string;
 
   return (
     <div className="space-y-1.5">
@@ -141,7 +143,7 @@ function TitleField() {
 
 function CategoryField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.category) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.category) as string;
 
   return (
     <div className="space-y-1.5">
@@ -167,7 +169,7 @@ function CategoryField() {
 
 function RecipientTypeField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.recipientType) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.recipientType) as string;
 
   return (
     <div className="space-y-1.5">
@@ -193,7 +195,7 @@ function RecipientNamesField() {
   const form = useBuildForm();
   const recipientNames = useStore(
     form.store,
-    (state: any) => state.values.recipientNames,
+    (state: { values: FormValues }) => state.values.recipientNames,
   ) as string[];
 
   return (
@@ -238,12 +240,11 @@ const fields: FieldEntry<CreateAchievementValues | UpdateAchievementValues>[] = 
     kind: "custom",
     label: "Slug",
     required: false,
-    customRenderer: () => null,
-    renderField: (name, value, onChange) => (
+    customRenderer: ({ value, onChange }) => (
       <SlugFieldInline
         routerName="achievements"
         value={(value as string) ?? ""}
-        onChange={(v) => onChange(v)}
+        onChange={onChange}
       />
     ),
   },
@@ -274,28 +275,49 @@ export function AchievementForm({
 }) {
   const queryClient = useQueryClient();
 
-  const existingAchievement = useQuery({
-    queryKey: ["achievements", id],
-    queryFn: () => client.achievements.get({ id: id! }),
-    enabled: mode === "edit" && !!id,
-  });
+  const existingAchievement = useQuery(
+    orpc.achievements.get.queryOptions({
+      input: { id: id! },
+      enabled: mode === "edit" && !!id,
+    }),
+  );
 
-  const mutation = useMutation({
-    mutationFn: (values: CreateAchievementValues | UpdateAchievementValues) => {
-      if (mode === "create") {
-        return client.achievements.create(values as any);
-      }
-      return client.achievements.update({ id: id!, ...values } as any);
-    },
-    onSuccess: () => {
-      toast.success(mode === "create" ? "Achievement created" : "Achievement updated");
-      queryClient.invalidateQueries({ queryKey: ["achievements"] });
-      onSuccess?.();
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const createMutation = useMutation(
+    orpc.admin.achievements.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("Achievement created");
+        queryClient.invalidateQueries({ queryKey: orpc.achievements.key() });
+        onSuccess?.();
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
+
+  const updateMutation = useMutation(
+    orpc.admin.achievements.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Achievement updated");
+        queryClient.invalidateQueries({ queryKey: orpc.achievements.key() });
+        onSuccess?.();
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
+
+  const mutation = {
+    mutateAsync: (values: CreateAchievementValues | UpdateAchievementValues) =>
+      mode === "create"
+        ? createMutation.mutateAsync(values as Parameters<typeof createMutation.mutateAsync>[0])
+        : updateMutation.mutateAsync({
+            id: id!,
+            ...values,
+          } as Parameters<typeof updateMutation.mutateAsync>[0]),
+    isPending: createMutation.isPending || updateMutation.isPending,
+  };
 
   const achievement = existingAchievement.data;
 
@@ -312,8 +334,6 @@ export function AchievementForm({
       beforeSubmit: (values) => ({
         ...values,
         year: values.year === "" || values.year == null ? undefined : Number(values.year),
-        recipientType: values.recipientType || undefined,
-        category: values.category || undefined,
       }),
     },
     renderAboveFields: () => (

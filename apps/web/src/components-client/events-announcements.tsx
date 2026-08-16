@@ -5,15 +5,17 @@ import { Link } from "@tanstack/react-router";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
+import { MediaImage } from "@/components-client/media-image";
+import type { NewsRow, EventRow, AnnouncementRow, ActivityRow, GalleryAlbumRow } from "@/lib/api-types";
 
 gsap.registerPlugin(ScrollTrigger);
 
 interface EventsAnnouncementsProps {
-  initialEvents?: any[];
-  initialNews?: any[];
-  initialAnnouncements?: any[];
-  initialClubs?: any[];
-  initialGallery?: any[];
+  initialEvents?: EventRow[];
+  initialNews?: NewsRow[];
+  initialAnnouncements?: AnnouncementRow[];
+  initialClubs?: ActivityRow[];
+  initialGallery?: GalleryAlbumRow[];
   settings?: Record<string, string>;
 }
 
@@ -30,21 +32,12 @@ type FeedItem = {
 };
 
 const sourceMeta: Record<FeedSource, { label: string; color: string; to: string }> = {
-  news: { label: "COLLEGE NEWS", color: "#FFB203", to: "/news/$slug" },
-  events: { label: "EVENTS", color: "#FFD45A", to: "/events/$slug" },
-  announcements: { label: "ANNOUNCEMENTS", color: "#E05252", to: "/announcements/$slug" },
-  clubs: { label: "CLUBS", color: "#FFB203", to: "/clubs/$slug" },
-  gallery: { label: "GALLERY", color: "#5EEAD4", to: "/gallery/$slug" },
+  news: { label: "COLLEGE NEWS", color: "var(--gold)", to: "/news/$slug" },
+  events: { label: "EVENTS", color: "var(--gold-light)", to: "/events/$slug" },
+  announcements: { label: "ANNOUNCEMENTS", color: "var(--red-alert)", to: "/announcements/$slug" },
+  clubs: { label: "CLUBS", color: "var(--red-brand)", to: "/clubs/$slug" },
+  gallery: { label: "GALLERY", color: "var(--cream)", to: "/gallery/$slug" },
 };
-
-function formatDate(date: string) {
-  if (!date) return "";
-  return new Date(date).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 function resolveAspectClass(imageUrl: string | null | undefined): string {
   const ratio = getAspectRatio(imageUrl);
@@ -64,7 +57,7 @@ export function EventsAnnouncements({
   const heading = s("events_heading");
 
   const merged: FeedItem[] = [
-    ...initialNews.map((n: any) => ({
+    ...initialNews.map((n) => ({
       id: n.id,
       title: n.title,
       slug: n.slug,
@@ -73,7 +66,7 @@ export function EventsAnnouncements({
       date: n.publishedAt ?? n.createdAt ?? "",
       source: "news" as const,
     })),
-    ...initialEvents.map((e: any) => ({
+    ...initialEvents.map((e) => ({
       id: e.id,
       title: e.title,
       slug: e.slug,
@@ -82,7 +75,7 @@ export function EventsAnnouncements({
       date: e.publishedAt ?? e.startDate ?? e.createdAt ?? "",
       source: "events" as const,
     })),
-    ...initialAnnouncements.map((a: any) => ({
+    ...initialAnnouncements.map((a) => ({
       id: a.id,
       title: a.title,
       slug: a.slug,
@@ -91,7 +84,7 @@ export function EventsAnnouncements({
       date: a.publishedAt ?? a.createdAt ?? "",
       source: "announcements" as const,
     })),
-    ...initialClubs.map((c: any) => ({
+    ...initialClubs.map((c) => ({
       id: c.id,
       title: c.name,
       slug: c.slug,
@@ -100,7 +93,7 @@ export function EventsAnnouncements({
       date: c.createdAt ?? "",
       source: "clubs" as const,
     })),
-    ...initialGallery.map((g: any) => ({
+    ...initialGallery.map((g) => ({
       id: g.id,
       title: g.title,
       slug: g.slug,
@@ -180,15 +173,18 @@ export function EventsAnnouncements({
             className="group block"
           >
             <div className="relative w-full overflow-hidden">
-              {featured.coverImage ? (
-                <img
-                  src={featured.coverImage}
-                  alt={featured.title}
-                  className={`w-full ${resolveAspectClass(featured.coverImage)} object-cover transition-transform duration-500 group-hover:scale-105`}
-                />
-              ) : (
-                <div className="w-full aspect-video bg-gradient-to-br from-gold/10 to-green-dark/20" />
-              )}
+              <MediaImage
+                src={featured.coverImage}
+                alt={featured.title}
+                className={`w-full ${resolveAspectClass(featured.coverImage)} object-cover transition-transform duration-500 group-hover:scale-105`}
+                fallback={
+                  <div className="w-full aspect-video bg-gradient-to-br from-gold/10 to-green-dark/20" />
+                }
+              />
+              <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-black/55 px-2.5 py-1 text-[10px] font-bold tracking-[0.14em] text-cream">
+                <span className="w-1.5 h-1.5 shrink-0" style={{ background: featuredMeta.color }} />
+                {featuredMeta.label}
+              </span>
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
               <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
                 <div className="bg-green-dark text-cream font-bold text-xs sm:text-[13px] tracking-[0.1em] px-5 py-3">
@@ -209,15 +205,18 @@ export function EventsAnnouncements({
                   className="group block"
                 >
                   <div className="relative w-full overflow-hidden">
-                    {item.coverImage ? (
-                      <img
-                        src={item.coverImage}
-                        alt={item.title}
-                        className={`w-full ${resolveAspectClass(item.coverImage)} object-cover transition-transform duration-500 group-hover:scale-105`}
-                      />
-                    ) : (
-                      <div className="w-full aspect-video bg-gradient-to-br from-gold/10 to-green-dark/20" />
-                    )}
+                    <MediaImage
+                      src={item.coverImage}
+                      alt={item.title}
+                      className={`w-full ${resolveAspectClass(item.coverImage)} object-cover transition-transform duration-500 group-hover:scale-105`}
+                      fallback={
+                        <div className="w-full aspect-video bg-gradient-to-br from-gold/10 to-green-dark/20" />
+                      }
+                    />
+                    <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1.5 bg-black/55 px-2 py-0.5 text-[9px] font-bold tracking-[0.12em] text-cream">
+                      <span className="w-1.5 h-1.5 shrink-0" style={{ background: meta.color }} />
+                      {meta.label}
+                    </span>
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
                     <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
                       <div className="bg-green-dark text-cream font-bold text-xs sm:text-[13px] tracking-[0.1em] px-5 py-3">

@@ -4,10 +4,14 @@ import { createDb } from "@aloysius-web/db";
 import { events, eventRecords } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import {
+  authorTypeSchema,
+  contentStatusSchema,
+  reviewStatusSchema,
+  sortDirectionSchema,
+} from "../schemas";
 import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 import { resolveClubAccess, assertClubMember } from "../lib/club-access";
-
-const sortDirection = z.enum(["asc", "desc"]);
 
 export const eventsRouter = {
   list: publicProcedure
@@ -16,11 +20,11 @@ export const eventsRouter = {
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).max(100).default(10),
         sort: z.string().optional(),
-        sortDir: sortDirection.default("desc"),
+        sortDir: sortDirectionSchema.default("desc"),
         search: z.string().optional(),
-        status: z.enum(["draft", "published", "archived"]).optional(),
+        status: contentStatusSchema.optional(),
         activityId: z.string().optional(),
-        reviewStatus: z.enum(["pending", "approved", "rejected"]).optional(),
+        reviewStatus: reviewStatusSchema.optional(),
       }),
     )
     .handler(async ({ input, context }) => {
@@ -48,7 +52,12 @@ export const eventsRouter = {
         conditions.push(like(events.title, `%${search}%`));
       }
       if (status) {
+        if (status !== "published" && !isSiteAdmin && !canSeeNonApproved) {
+          throw new ORPCError("UNAUTHORIZED", { message: "Only published content is publicly visible." });
+        }
         conditions.push(eq(events.status, status));
+      } else if (!isSiteAdmin && !canSeeNonApproved) {
+        conditions.push(eq(events.status, "published"));
       }
       if (input.activityId) {
         conditions.push(eq(events.activityId, input.activityId));
@@ -139,13 +148,14 @@ export const eventsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Event not found" });
       }
 
-      // Non-approved club content is only visible to the author, club members/admins, or site admins.
-      if (row.activityId && row.reviewStatus !== "approved") {
-        const userId = context.auth?.userId ?? null;
-        const isSiteAdmin = context.auth?.adminCalled ?? false;
-        const isAuthor = userId !== null && userId === row.userId;
+      // Non-published/non-approved content is only visible to the author, club members/admins, or site admins.
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const userId = context.auth?.userId ?? null;
+      const isAuthor = userId !== null && userId === row.userId;
+      const needsGating = row.status !== "published" || (!!row.activityId && row.reviewStatus !== "approved");
+      if (needsGating) {
         let canView = isSiteAdmin || isAuthor;
-        if (!canView && userId) {
+        if (!canView && userId && row.activityId) {
           const { membership, isClubAdmin } = await resolveClubAccess(
             db,
             row.activityId,
@@ -202,7 +212,7 @@ export const eventsRouter = {
         purpose: z.string().optional(),
         organization: z.string().optional(),
         organizerName: z.string().optional(),
-        organizerType: z.enum(["student", "faculty", "club", "org"]).optional(),
+        organizerType: authorTypeSchema.optional(),
         location: z.string().optional(),
         startDate: z.string(),
         endDate: z.string().optional(),
@@ -218,30 +228,25 @@ export const eventsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
+      if (!input.activityId) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "A club (activityId) is required. General events are created via site admin.",
+        });
+      }
 
       const db = createDb();
+      const { membership, isClubAdmin } = await resolveClubAccess(
+        db,
+        input.activityId,
+        context.auth.userId,
+        context.auth.adminCalled,
+      );
+      assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
 
-      // Club content: the user must be an approved member (or club admin / site admin),
-      // and it always starts as pending review until a site admin approves it.
-      let reviewStatus: "pending" | "approved" | "rejected" = "approved";
-      let status: "draft" | "published" = input.publishNow ? "published" : "draft";
-      let publishedAt: Date | null = input.publishNow ? new Date() : null;
-
-      if (input.activityId) {
-        const { membership, isClubAdmin } = await resolveClubAccess(
-          db,
-          input.activityId,
-          context.auth.userId,
-          context.auth.adminCalled,
-        );
-        assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
-
-        if (!context.auth.adminCalled) {
-          reviewStatus = "pending";
-          status = "draft";
-          publishedAt = null;
-        }
-      }
+      const reviewStatus: "pending" | "approved" = context.auth.adminCalled ? "approved" : "pending";
+      const status: "draft" | "published" =
+        context.auth.adminCalled && input.publishNow ? "published" : "draft";
+      const publishedAt: Date | null = status === "published" ? new Date() : null;
 
       const id = crypto.randomUUID();
       const slug = input.slug
@@ -270,7 +275,7 @@ export const eventsRouter = {
           recurrenceRule: input.recurrenceRule ?? null,
           tags: input.tags ?? [],
           status,
-          activityId: input.activityId ?? null,
+          activityId: input.activityId,
           reviewStatus,
           publishedAt,
           userId: context.auth.userId,
@@ -322,7 +327,7 @@ export const eventsRouter = {
         purpose: z.string().optional(),
         organization: z.string().optional(),
         organizerName: z.string().optional(),
-        organizerType: z.enum(["student", "faculty", "club", "org"]).optional(),
+        organizerType: authorTypeSchema.optional(),
         location: z.string().optional(),
         startDate: z.string().optional(),
         endDate: z.string().optional(),
@@ -330,7 +335,6 @@ export const eventsRouter = {
         isAllDay: z.boolean().optional(),
         recurrenceRule: z.string().optional(),
         tags: z.array(z.string()).optional(),
-        status: z.enum(["draft", "published", "archived"]).optional(),
         publishNow: z.boolean().optional(),
       }),
     )
@@ -345,25 +349,26 @@ export const eventsRouter = {
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Event not found" });
       }
-
-      // Club content: only members/admins may edit, and any member edit must be re-reviewed.
-      if (existing.activityId) {
-        const { membership, isClubAdmin } = await resolveClubAccess(
-          db,
-          existing.activityId,
-          context.auth.userId,
-          context.auth.adminCalled,
-        );
-        assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
+      if (!existing.activityId) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "General events can only be edited by a site admin.",
+        });
       }
+
+      const { membership, isClubAdmin } = await resolveClubAccess(
+        db,
+        existing.activityId,
+        context.auth.userId,
+        context.auth.adminCalled,
+      );
+      assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
 
       const now = new Date();
       const updateData: Record<string, unknown> = {
         updatedAt: now,
       };
 
-      if (existing.activityId && !context.auth.adminCalled) {
-        // Any change by a club member requires fresh site-admin review.
+      if (!context.auth.adminCalled) {
         updateData.reviewStatus = "pending";
         updateData.status = "draft";
         updateData.publishedAt = null;
@@ -397,12 +402,7 @@ export const eventsRouter = {
       if (input.isAllDay !== undefined) updateData.isAllDay = input.isAllDay;
       if (input.recurrenceRule !== undefined) updateData.recurrenceRule = input.recurrenceRule;
       if (input.tags !== undefined) updateData.tags = input.tags;
-      if (input.status !== undefined) {
-        updateData.status = input.status;
-        if (input.status === "published" && !existing.publishedAt) {
-          updateData.publishedAt = now;
-        }
-      } else if (input.publishNow === true && !existing.publishedAt) {
+      if (context.auth.adminCalled && input.publishNow === true && !existing.publishedAt) {
         updateData.publishedAt = now;
         updateData.status = "published";
       }
@@ -458,21 +458,23 @@ export const eventsRouter = {
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Event not found" });
       }
+      if (!existing.activityId) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "General events can only be deleted by a site admin.",
+        });
+      }
 
-      // Club content: only the author, club admin, or site admin may delete.
-      if (existing.activityId) {
-        const { isClubAdmin } = await resolveClubAccess(
-          db,
-          existing.activityId,
-          context.auth.userId,
-          context.auth.adminCalled,
-        );
-        const isAuthor = existing.userId === context.auth.userId;
-        if (!isAuthor && !isClubAdmin) {
-          throw new ORPCError("UNAUTHORIZED", {
-            message: "Only the author or a club admin can delete this.",
-          });
-        }
+      const { isClubAdmin } = await resolveClubAccess(
+        db,
+        existing.activityId,
+        context.auth.userId,
+        context.auth.adminCalled,
+      );
+      const isAuthor = existing.userId === context.auth.userId;
+      if (!isAuthor && !isClubAdmin) {
+        throw new ORPCError("UNAUTHORIZED", {
+          message: "Only the author or a club admin can delete this.",
+        });
       }
 
       await db.delete(events).where(eq(events.id, input.id)).run();
@@ -500,65 +502,6 @@ export const eventsRouter = {
         recordedAt: row.recordedAt.toISOString(),
         createdAt: row.createdAt.toISOString(),
       }));
-    }),
-
-  addRecord: protectedProcedure
-    .input(
-      z.object({
-        eventId: z.string(),
-        outcome: z.enum(["success", "postponed", "failed"]),
-        reason: z.string().optional(),
-        notes: z.string().optional(),
-      }),
-    )
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      const event = await db.select().from(events).where(eq(events.id, input.eventId)).get();
-
-      if (!event) {
-        throw new ORPCError("NOT_FOUND", { message: "Event not found" });
-      }
-
-      const id = crypto.randomUUID();
-      const record = await db
-        .insert(eventRecords)
-        .values({
-          id,
-          eventId: input.eventId,
-          outcome: input.outcome,
-          reason: input.reason ?? null,
-          notes: input.notes ?? null,
-          userId: context.auth.userId,
-        })
-        .returning()
-        .get();
-
-      return {
-        id: record.id,
-        eventId: record.eventId,
-        outcome: record.outcome,
-        reason: record.reason,
-        notes: record.notes,
-        recordedAt: record.recordedAt.toISOString(),
-        createdAt: record.createdAt.toISOString(),
-      };
-    }),
-
-  deleteRecord: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      await db.delete(eventRecords).where(eq(eventRecords.id, input.id)).run();
-
-      return { success: true };
     }),
 
   checkSlug: publicProcedure

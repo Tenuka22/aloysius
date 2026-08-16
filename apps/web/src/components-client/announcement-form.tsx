@@ -20,7 +20,7 @@ import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
 import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
 import { toast } from "sonner";
 import * as v from "valibot";
@@ -71,12 +71,11 @@ const fields: FieldEntry<CreateAnnouncementValues | UpdateAnnouncementValues>[] 
     kind: "custom",
     label: "Slug",
     required: false,
-    customRenderer: () => null,
-    renderField: (name, value, onChange) => (
+    customRenderer: ({ value, onChange }) => (
       <SlugFieldInline
         routerName="announcements"
         value={(value as string) ?? ""}
-        onChange={(v) => onChange(v)}
+        onChange={onChange}
       />
     ),
   },
@@ -116,7 +115,11 @@ const fields: FieldEntry<CreateAnnouncementValues | UpdateAnnouncementValues>[] 
 
 function CoverImageField() {
   const form = useBuildForm();
-  const coverImage = useStore(form.store, (state) => state.values.coverImage) as string | undefined;
+  const coverImage = useStore(
+    form.store,
+    (state: { values: CreateAnnouncementValues | UpdateAnnouncementValues }) =>
+      state.values.coverImage,
+  ) as string | undefined;
   const [uploading, setUploading] = useState(false);
 
   const handleFilesSelected = useCallback(
@@ -289,50 +292,55 @@ export function AnnouncementForm({
 }) {
   const queryClient = useQueryClient();
 
-  const { data: announcement, isLoading: isLoadingItem } = useQuery({
-    queryKey: ["announcements", id],
-    queryFn: () => client.announcements.get({ id: id! }),
-    enabled: mode === "edit" && !!id,
-  });
+  const { data: announcement, isLoading: isLoadingItem } = useQuery(
+    orpc.announcements.get.queryOptions({
+      input: { id: id! },
+      enabled: mode === "edit" && !!id,
+    }),
+  );
 
-  const createMutation = useMutation({
-    mutationFn: (body: CreateAnnouncementValues) =>
-      client.announcements.create({
-        ...body,
-        activityId,
-        audience: body.audience as "all" | "students" | "parents" | "staff" | "alumni",
-      } as any),
-    onSuccess: () => {
-      toast.success("Announcement created");
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
-      onSuccess();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const createMutation = useMutation(
+    orpc.announcements.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("Announcement created");
+        queryClient.invalidateQueries({ queryKey: orpc.announcements.key() });
+        onSuccess();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const updateMutation = useMutation({
-    mutationFn: (body: UpdateAnnouncementValues & { id: string }) =>
-      client.announcements.update({
-        ...body,
-        audience: body.audience as "all" | "students" | "parents" | "staff" | "alumni",
-      }),
-    onSuccess: () => {
-      toast.success("Announcement updated");
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
-      onSuccess();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const updateMutation = useMutation(
+    orpc.announcements.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Announcement updated");
+        queryClient.invalidateQueries({ queryKey: orpc.announcements.key() });
+        onSuccess();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
   const handleSubmit = useCallback(
     async (values: CreateAnnouncementValues | UpdateAnnouncementValues) => {
       if (mode === "edit" && id)
-        await updateMutation.mutateAsync({ ...values, id } as UpdateAnnouncementValues & {
-          id: string;
-        });
-      else await createMutation.mutateAsync(values as CreateAnnouncementValues);
+        await updateMutation.mutateAsync(
+          {
+            ...values,
+            id,
+            audience: values.audience as "all" | "students" | "parents" | "staff" | "alumni",
+          } as Parameters<typeof updateMutation.mutateAsync>[0],
+        );
+      else
+        await createMutation.mutateAsync(
+          {
+            ...values,
+            activityId,
+            audience: values.audience as "all" | "students" | "parents" | "staff" | "alumni",
+          } as Parameters<typeof createMutation.mutateAsync>[0],
+        );
     },
-    [mode, id, createMutation, updateMutation],
+    [mode, id, activityId, createMutation, updateMutation],
   );
 
   if (mode === "edit" && isLoadingItem) {

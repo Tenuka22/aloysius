@@ -11,7 +11,7 @@ import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
 import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import * as v from "valibot";
 import { Input } from "@aloysius-web/ui/components/input";
@@ -87,6 +87,8 @@ const updateSchema = v.object({
 
 type UpdateValues = v.InferOutput<typeof updateSchema>;
 
+type FormValues = CreateValues | UpdateValues;
+
 const fields: FieldEntry<CreateValues | UpdateValues>[] = [
   {
     name: "title",
@@ -101,12 +103,11 @@ const fields: FieldEntry<CreateValues | UpdateValues>[] = [
     kind: "custom",
     label: "Slug",
     required: false,
-    customRenderer: () => null,
-    renderField: (name, value, onChange) => (
+    customRenderer: ({ value, onChange }) => (
       <SlugFieldInline
         routerName="studentWorks"
         value={(value as string) ?? ""}
-        onChange={(v) => onChange(v)}
+        onChange={onChange}
       />
     ),
   },
@@ -159,7 +160,7 @@ const fields: FieldEntry<CreateValues | UpdateValues>[] = [
 
 function TitleField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.title) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.title) as string;
 
   return (
     <Field>
@@ -179,7 +180,7 @@ function TitleField() {
 
 function CategoryField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.category) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.category) as string;
 
   return (
     <Field>
@@ -210,7 +211,7 @@ function CategoryField() {
 
 function StudentNameField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.studentNames) as string[];
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.studentNames) as string[];
 
   return (
     <div className="space-y-1.5">
@@ -228,7 +229,7 @@ function StudentNameField() {
 
 function CoverImageField() {
   const form = useBuildForm();
-  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as
+  const coverImage = useStore(form.store, (state: { values: FormValues }) => state.values.coverImage) as
     | string
     | undefined;
   const [uploading, setUploading] = useState(false);
@@ -329,11 +330,12 @@ export function StudentWorkForm({
 }) {
   const queryClient = useQueryClient();
 
-  const existingWork = useQuery({
-    queryKey: ["studentWorks", id],
-    queryFn: () => client.studentWorks.get({ id: id! }),
-    enabled: mode === "edit" && !!id,
-  });
+  const existingWork = useQuery(
+    orpc.studentWorks.get.queryOptions({
+      input: { id: id! },
+      enabled: mode === "edit" && !!id,
+    }),
+  );
 
   const work = existingWork.data;
 
@@ -357,7 +359,7 @@ export function StudentWorkForm({
       }),
       onSuccess: () => {
         toast.success(mode === "create" ? "Student work created" : "Student work updated");
-        queryClient.invalidateQueries({ queryKey: ["studentWorks"] });
+        queryClient.invalidateQueries({ queryKey: orpc.studentWorks.key() });
         onSuccess?.();
       },
       onError: (err) => {
@@ -428,9 +430,15 @@ export function StudentWorkForm({
       }
       onSubmit={async (values) => {
         if (mode === "create") {
-          return client.studentWorks.create({ ...(values as CreateValues), activityId } as any);
+          return client.studentWorks.create({
+            ...(values as CreateValues),
+            activityId,
+          } as Parameters<typeof client.studentWorks.create>[0]);
         }
-        return client.studentWorks.update({ id: id!, ...values });
+        return client.studentWorks.update({
+          id: id!,
+          ...values,
+        } as Parameters<typeof client.studentWorks.update>[0]);
       }}
     />
   );

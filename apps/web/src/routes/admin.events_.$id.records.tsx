@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
@@ -24,18 +24,9 @@ import {
 import { Input } from "@aloysius-web/ui/components/input";
 import { Textarea } from "@aloysius-web/ui/components/textarea";
 import { IconPlus, IconTrash, IconCheck, IconClock, IconX } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
-
-type EventRecord = {
-  id: string;
-  eventId: string;
-  outcome: "success" | "postponed" | "failed";
-  reason: string | null;
-  notes: string | null;
-  recordedAt: string;
-  createdAt: string;
-};
+import type { EventRecord } from "@/lib/api-types";
 
 const outcomeConfig = {
   success: {
@@ -69,26 +60,21 @@ function AddRecordDialog({
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
 
-  const addRecord = useMutation({
-    mutationFn: () =>
-      client.events.addRecord({
-        eventId,
-        outcome,
-        reason: reason || undefined,
-        notes: notes || undefined,
-      }),
-    onSuccess: () => {
-      toast.success("Record added");
-      queryClient.invalidateQueries({ queryKey: ["events", eventId, "records"] });
-      onOpenChange(false);
-      setOutcome("success");
-      setReason("");
-      setNotes("");
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const addRecord = useMutation(
+    orpc.admin.events.addRecord.mutationOptions({
+      onSuccess: () => {
+        toast.success("Record added");
+        queryClient.invalidateQueries({ queryKey: orpc.events.key() });
+        onOpenChange(false);
+        setOutcome("success");
+        setReason("");
+        setNotes("");
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -138,7 +124,14 @@ function AddRecordDialog({
             Cancel
           </Button>
           <Button
-            onClick={() => addRecord.mutate()}
+            onClick={() =>
+              addRecord.mutate({
+                eventId,
+                outcome,
+                reason: reason || undefined,
+                notes: notes || undefined,
+              })
+            }
             disabled={addRecord.isPending || (outcome === "failed" && !reason)}
           >
             {addRecord.isPending ? "Adding..." : "Add Record"}
@@ -155,30 +148,26 @@ export const Route = createFileRoute("/admin/events_/$id/records")({
 
 function EventRecordsPage() {
   const { id } = Route.useParams();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
 
-  const { data: event } = useQuery({
-    queryKey: ["events", id],
-    queryFn: () => client.events.get({ id }),
-  });
+  const { data: event } = useQuery(orpc.events.get.queryOptions({ input: { id } }));
 
-  const { data: records = [], isLoading } = useQuery({
-    queryKey: ["events", id, "records"],
-    queryFn: () => client.events.listRecords({ eventId: id }),
-  });
+  const { data: records = [], isLoading } = useQuery(
+    orpc.events.listRecords.queryOptions({ input: { eventId: id } }),
+  );
 
-  const deleteRecord = useMutation({
-    mutationFn: (recordId: string) => client.events.deleteRecord({ id: recordId }),
-    onSuccess: () => {
-      toast.success("Record deleted");
-      queryClient.invalidateQueries({ queryKey: ["events", id, "records"] });
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const deleteRecord = useMutation(
+    orpc.admin.events.deleteRecord.mutationOptions({
+      onSuccess: () => {
+        toast.success("Record deleted");
+        queryClient.invalidateQueries({ queryKey: orpc.events.key() });
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   return (
     <div className="flex flex-col">
@@ -243,7 +232,7 @@ function EventRecordsPage() {
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    onClick={() => deleteRecord.mutate(record.id)}
+                    onClick={() => deleteRecord.mutate({ id: record.id })}
                   >
                     <IconTrash className="size-3" />
                   </Button>

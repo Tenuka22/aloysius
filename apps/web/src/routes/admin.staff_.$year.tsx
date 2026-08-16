@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
@@ -17,11 +17,16 @@ import {
 } from "@aloysius-web/ui/components/combobox";
 import { InputGroupAddon } from "@aloysius-web/ui/components/input-group";
 import { IconArrowLeft, IconCrown, IconPencil } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import { StaffEditor, type StaffMember } from "@/components-client/staff-editor";
 
 export const Route = createFileRoute("/admin/staff_/$year")({
+  loader: async ({ context, params }) => {
+    await context.queryClient.prefetchQuery(
+      orpc.staff.list.queryOptions({ input: { year: params.year } }),
+    );
+  },
   component: AdminStaffYear,
 });
 
@@ -31,25 +36,17 @@ function AdminStaffYear() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [principalInput, setPrincipalInput] = useState("");
 
-  const { data: yearMembers = [], isLoading } = useQuery({
-    queryKey: ["staff", "year", year],
-    queryFn: () => client.staff.list({ year }),
-  });
+  const { data: yearMembers } = useSuspenseQuery(
+    orpc.staff.list.queryOptions({ input: { year } }),
+  );
 
-  const { data: allStaff = [] } = useQuery({
-    queryKey: ["staff", "all"],
-    queryFn: () => client.staff.list({}),
-  });
+  const { data: allStaff = [] } = useQuery(orpc.staff.list.queryOptions({ input: {} }));
 
-  const { data: principals } = useQuery({
-    queryKey: ["principals", "all"],
-    queryFn: () => client.principals.list({ page: 1, pageSize: 100 }),
-  });
+  const { data: principals } = useQuery(
+    orpc.principals.list.queryOptions({ input: { page: 1, pageSize: 100 } }),
+  );
 
-  const { data: currentPrincipal } = useQuery({
-    queryKey: ["principals", "current"],
-    queryFn: () => client.principals.getCurrent(),
-  });
+  const { data: currentPrincipal } = useQuery(orpc.principals.getCurrent.queryOptions());
 
   const principalRows = principals?.rows ?? [];
   const assigned = principalRows.find((p: any) => p.year === year) ?? null;
@@ -69,15 +66,15 @@ function AdminStaffYear() {
     mutationFn: async (id: string) => {
       const ops: Promise<unknown>[] = [];
       if (assigned && assigned.id !== id && assigned.year === year) {
-        ops.push(client.principals.update({ id: assigned.id, year: "" }));
+        ops.push(client.admin.principals.update({ id: assigned.id, year: "" }));
       }
-      ops.push(client.principals.update({ id, year }));
+      ops.push(client.admin.principals.update({ id, year }));
       await Promise.all(ops);
     },
     onSuccess: () => {
       toast.success(`Principal set for ${year}`);
-      queryClient.invalidateQueries({ queryKey: ["principals"] });
-      queryClient.invalidateQueries({ queryKey: ["staff"] });
+      queryClient.invalidateQueries({ queryKey: orpc.principals.key() });
+      queryClient.invalidateQueries({ queryKey: orpc.staff.key() });
     },
     onError: (err) => toast.error(err.message),
   });
@@ -217,15 +214,11 @@ function AdminStaffYear() {
 
         {/* Staff roster */}
         <section>
-          {isLoading ? (
-            <div className="text-center text-muted-foreground py-8">Loading...</div>
-          ) : (
-            <StaffEditor
-              year={year}
-              members={yearMembers as StaffMember[]}
-              pool={allStaff as StaffMember[]}
-            />
-          )}
+          <StaffEditor
+            year={year}
+            members={yearMembers as StaffMember[]}
+            pool={allStaff as StaffMember[]}
+          />
         </section>
       </div>
     </div>

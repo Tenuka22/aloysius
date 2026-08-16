@@ -49,9 +49,10 @@ import {
   IconRotate,
   IconExternalLink,
 } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
+import type { ExamResultRow } from "@/lib/api-types";
 
 const EXAM_TYPE_LABELS: Record<string, string> = {
   scholarship: "G5 Scholarship",
@@ -59,25 +60,18 @@ const EXAM_TYPE_LABELS: Record<string, string> = {
   al: "GCE A/L",
 };
 
-type ExamResultItem = {
-  id: string;
-  examType: string;
-  examYear: number;
-  resultsYear: number;
-  status: string;
-  createdAt: string;
-};
-
 function DeleteDialog({
   open,
   onOpenChange,
   onConfirm,
   title,
+  isPending,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title: string;
+  isPending: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -89,11 +83,11 @@ function DeleteDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete
+          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+            {isPending ? "Deleting…" : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -101,33 +95,34 @@ function DeleteDialog({
   );
 }
 
-function ActionsMenu({ item }: { item: ExamResultItem }) {
+function ActionsMenu({ item }: { item: ExamResultRow }) {
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const deleteMutation = useMutation({
-    mutationFn: () => client.examResults.delete({ id: item.id }),
-    onSuccess: () => {
-      toast.success("Exam result deleted");
-      queryClient.invalidateQueries({ queryKey: ["examResults"] });
-      setDeleteOpen(false);
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const deleteMutation = useMutation(
+    orpc.admin.examResults.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success("Exam result deleted");
+        queryClient.invalidateQueries({ queryKey: orpc.examResults.key() });
+        setDeleteOpen(false);
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
-  const statusMutation = useMutation({
-    mutationFn: (status: "draft" | "published" | "archived") =>
-      client.examResults.update({ id: item.id, status }),
-    onSuccess: () => {
-      toast.success("Status updated");
-      queryClient.invalidateQueries({ queryKey: ["examResults"] });
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const statusMutation = useMutation(
+    orpc.admin.examResults.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Status updated");
+        queryClient.invalidateQueries({ queryKey: orpc.examResults.key() });
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   return (
     <>
@@ -148,25 +143,33 @@ function ActionsMenu({ item }: { item: ExamResultItem }) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {item.status === "draft" && (
-            <DropdownMenuItem onClick={() => statusMutation.mutate("published")}>
+            <DropdownMenuItem
+              onClick={() => statusMutation.mutate({ id: item.id, status: "published" })}
+            >
               <IconSend className="size-4" />
               Publish
             </DropdownMenuItem>
           )}
           {item.status === "published" && (
             <>
-              <DropdownMenuItem onClick={() => statusMutation.mutate("draft")}>
+              <DropdownMenuItem
+                onClick={() => statusMutation.mutate({ id: item.id, status: "draft" })}
+              >
                 <IconRotate className="size-4" />
                 Unpublish
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => statusMutation.mutate("archived")}>
+              <DropdownMenuItem
+                onClick={() => statusMutation.mutate({ id: item.id, status: "archived" })}
+              >
                 <IconArchive className="size-4" />
                 Archive
               </DropdownMenuItem>
             </>
           )}
           {item.status === "archived" && (
-            <DropdownMenuItem onClick={() => statusMutation.mutate("draft")}>
+            <DropdownMenuItem
+              onClick={() => statusMutation.mutate({ id: item.id, status: "draft" })}
+            >
               <IconRotate className="size-4" />
               Restore to Draft
             </DropdownMenuItem>
@@ -182,14 +185,15 @@ function ActionsMenu({ item }: { item: ExamResultItem }) {
       <DeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onConfirm={() => deleteMutation.mutate()}
+        onConfirm={() => deleteMutation.mutate({ id: item.id })}
+        isPending={deleteMutation.isPending}
         title={`${EXAM_TYPE_LABELS[item.examType] ?? item.examType} ${item.examYear} (${item.resultsYear})`}
       />
     </>
   );
 }
 
-const columns: ColumnDef<ExamResultItem, any>[] = [
+const columns: ColumnDef<ExamResultRow, any>[] = [
   {
     accessorKey: "examType",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Exam" />,
@@ -264,33 +268,27 @@ function AdminExamResultsList() {
   const sort = sorting[0];
   const rawExamType = columnFilters.find((f) => f.id === "examType")?.value;
   const examType =
-    typeof rawExamType === "string" && rawExamType.length > 0 ? rawExamType : undefined;
+    typeof rawExamType === "string" && rawExamType.length > 0
+      ? (rawExamType as "scholarship" | "ol" | "al")
+      : undefined;
   const rawStatus = columnFilters.find((f) => f.id === "status")?.value;
   const status =
     typeof rawStatus === "string" && rawStatus.length > 0
       ? (rawStatus as "draft" | "published" | "archived")
       : undefined;
 
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      "examResults",
-      pagination.pageIndex,
-      pagination.pageSize,
-      sort?.id,
-      sort?.desc,
-      examType,
-      status,
-    ],
-    queryFn: () =>
-      client.examResults.list({
+  const { data, isLoading } = useQuery(
+    orpc.examResults.list.queryOptions({
+      input: {
         page: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
         sort: sort?.id,
         sortDir: sort?.desc ? "desc" : "asc",
-        examType: examType as any,
+        examType,
         status,
-      }),
-  });
+      },
+    }),
+  );
 
   const items = data?.rows ?? [];
   const pageCount = data?.pageCount ?? 0;

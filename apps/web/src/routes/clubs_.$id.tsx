@@ -19,41 +19,11 @@ import { AnnouncementForm } from "@/components-client/announcement-form";
 import { StudentWorkForm } from "@/components-client/student-work-form";
 import { NewsForm } from "@/components-client/news-form";
 import { ClubAlbums } from "@/components-client/club-albums";
-import { client } from "@/utils/orpc";
+import { ActivitiesForm } from "@/components-client/activities-form";
+import { IconPencil } from "@tabler/icons-react";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
-
-type Membership = {
-  id: string;
-  activityId: string;
-  userId: string;
-  name: string | null;
-  role: "admin" | "member";
-  status: "pending" | "approved" | "rejected" | "revoked";
-  reason: string | null;
-  isAdmin?: boolean;
-  decidedBy: string | null;
-  decidedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-type ContentItem = {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt?: string | null;
-  description?: string | null;
-  coverImage: string | null;
-  status: string;
-  activityId: string | null;
-  reviewStatus: string;
-  reviewedAt: string | null;
-  rejectionReason: string | null;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
-  [key: string]: unknown;
-};
+import type { ClubContentItem } from "@/lib/api-types";
 
 const membershipStatusStyles: Record<string, string> = {
   approved: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400",
@@ -118,129 +88,146 @@ function ClubPage() {
   } | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [editClubOpen, setEditClubOpen] = useState(false);
 
-  const { data: activity, isLoading: activityLoading } = useQuery({
-    queryKey: ["activities", id],
-    queryFn: () => client.activities.get({ id }),
-  });
+  const { data: activity, isLoading: activityLoading } = useQuery(
+    orpc.activities.get.queryOptions({ input: { id } }),
+  );
 
-  const { data: myMembership, isLoading: membershipLoading } = useQuery({
-    queryKey: ["clubs", "membership", id],
-    queryFn: () => client.clubs.membership({ activityId: id }),
-  });
+  const { data: myMembership, isLoading: membershipLoading } = useQuery(
+    orpc.clubs.membership.queryOptions({ input: { activityId: id } }),
+  );
 
   const myStatus = myMembership?.status ?? null;
   const isApproved = myStatus === "approved";
   const isClubAdmin = isSiteAdmin || myMembership?.isAdmin === true;
 
-  const { data: members, isLoading: membersLoading } = useQuery({
-    queryKey: ["clubs", "members", id],
-    queryFn: () => client.clubs.listMembers({ activityId: id }),
-    enabled: isApproved || isSiteAdmin,
-  });
+  const { data: members, isLoading: membersLoading } = useQuery(
+    orpc.clubs.listMembers.queryOptions({
+      input: { activityId: id },
+      enabled: isApproved || isSiteAdmin,
+    }),
+  );
 
   const canViewContent = isApproved || isSiteAdmin;
 
-  const { data: events } = useQuery({
-    queryKey: ["events", "club", id],
-    queryFn: () => client.events.list({ activityId: id, pageSize: 50 }),
-    enabled: canViewContent,
-  });
+  const { data: events } = useQuery(
+    orpc.events.list.queryOptions({
+      input: { activityId: id, pageSize: 50 },
+      enabled: canViewContent,
+    }),
+  );
 
-  const { data: announcements } = useQuery({
-    queryKey: ["announcements", "club", id],
-    queryFn: () => client.announcements.list({ activityId: id, pageSize: 50 }),
-    enabled: canViewContent,
-  });
+  const { data: announcements } = useQuery(
+    orpc.announcements.list.queryOptions({
+      input: { activityId: id, pageSize: 50 },
+      enabled: canViewContent,
+    }),
+  );
 
-  const { data: studentWorks } = useQuery({
-    queryKey: ["studentWorks", "club", id],
-    queryFn: () => client.studentWorks.list({ activityId: id, pageSize: 50 }),
-    enabled: canViewContent,
-  });
+  const { data: studentWorks } = useQuery(
+    orpc.studentWorks.list.queryOptions({
+      input: { activityId: id, pageSize: 50 },
+      enabled: canViewContent,
+    }),
+  );
 
-  const { data: news } = useQuery({
-    queryKey: ["news", "club", id],
-    queryFn: () => client.news.list({ activityId: id, pageSize: 50 }),
-    enabled: canViewContent,
-  });
+  const { data: news } = useQuery(
+    orpc.news.list.queryOptions({
+      input: { activityId: id, pageSize: 50 },
+      enabled: canViewContent,
+    }),
+  );
 
   const invalidateAll = () => {
-    queryClient.invalidateQueries({ queryKey: ["clubs"] });
-    queryClient.invalidateQueries({ queryKey: ["news"] });
-    queryClient.invalidateQueries({ queryKey: ["events"] });
-    queryClient.invalidateQueries({ queryKey: ["announcements"] });
-    queryClient.invalidateQueries({ queryKey: ["studentWorks"] });
+    queryClient.invalidateQueries({ queryKey: orpc.clubs.key() });
+    queryClient.invalidateQueries({ queryKey: orpc.news.key() });
+    queryClient.invalidateQueries({ queryKey: orpc.events.key() });
+    queryClient.invalidateQueries({ queryKey: orpc.announcements.key() });
+    queryClient.invalidateQueries({ queryKey: orpc.studentWorks.key() });
   };
 
-  const requestMembership = useMutation({
-    mutationFn: () => client.clubs.requestMembership({ activityId: id }),
-    onSuccess: () => {
-      toast.success("Membership request sent for approval");
-      queryClient.invalidateQueries({ queryKey: ["clubs"] });
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const requestMembership = useMutation(
+    orpc.clubs.requestMembership.mutationOptions({
+      onSuccess: () => {
+        toast.success("Membership request sent for approval");
+        queryClient.invalidateQueries({ queryKey: orpc.clubs.key() });
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const approveMember = useMutation({
-    mutationFn: (membershipId: string) => client.clubs.approveMember({ id: membershipId }),
-    onSuccess: () => {
-      toast.success("Member approved");
-      queryClient.invalidateQueries({ queryKey: ["clubs"] });
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const approveMember = useMutation(
+    orpc.clubs.approveMember.mutationOptions({
+      onSuccess: () => {
+        toast.success("Member approved");
+        queryClient.invalidateQueries({ queryKey: orpc.clubs.key() });
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const rejectMember = useMutation({
-    mutationFn: (membershipId: string) =>
-      client.clubs.rejectMember({ id: membershipId, reason: rejectReason || undefined }),
-    onSuccess: () => {
-      toast.success("Application rejected");
-      setRejectId(null);
-      setRejectReason("");
-      queryClient.invalidateQueries({ queryKey: ["clubs"] });
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const rejectMember = useMutation(
+    orpc.clubs.rejectMember.mutationOptions({
+      onSuccess: () => {
+        toast.success("Application rejected");
+        setRejectId(null);
+        setRejectReason("");
+        queryClient.invalidateQueries({ queryKey: orpc.clubs.key() });
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const revokeMember = useMutation({
-    mutationFn: (membershipId: string) => client.clubs.revokeMember({ id: membershipId }),
-    onSuccess: () => {
-      toast.success("Member access revoked");
-      queryClient.invalidateQueries({ queryKey: ["clubs"] });
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const revokeMember = useMutation(
+    orpc.clubs.revokeMember.mutationOptions({
+      onSuccess: () => {
+        toast.success("Member access revoked");
+        queryClient.invalidateQueries({ queryKey: orpc.clubs.key() });
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const deleteContent = useMutation({
-    mutationFn: ({
+  const deleteContentOptions = {
+    onSuccess: () => {
+      toast.success("Content deleted");
+      invalidateAll();
+    },
+    onError: (err: Error) => toast.error(err.message),
+  };
+  const deleteNews = useMutation(orpc.news.delete.mutationOptions(deleteContentOptions));
+  const deleteEvent = useMutation(orpc.events.delete.mutationOptions(deleteContentOptions));
+  const deleteAnnouncement = useMutation(
+    orpc.announcements.delete.mutationOptions(deleteContentOptions),
+  );
+  const deleteStudentWork = useMutation(
+    orpc.studentWorks.delete.mutationOptions(deleteContentOptions),
+  );
+  const deleteContent = {
+    mutate: ({
       type,
       itemId,
     }: {
       type: "news" | "event" | "announcement" | "studentWork";
       itemId: string;
     }) => {
-      if (type === "news") return client.news.delete({ id: itemId });
-      if (type === "event") return client.events.delete({ id: itemId });
-      if (type === "announcement") return client.announcements.delete({ id: itemId });
-      return client.studentWorks.delete({ id: itemId });
+      if (type === "news") return deleteNews.mutate({ id: itemId });
+      if (type === "event") return deleteEvent.mutate({ id: itemId });
+      if (type === "announcement") return deleteAnnouncement.mutate({ id: itemId });
+      return deleteStudentWork.mutate({ id: itemId });
     },
-    onSuccess: () => {
-      toast.success("Content deleted");
-      invalidateAll();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  };
 
-  const pendingMembers = (members ?? []).filter((m: Membership) => m.status === "pending");
-  const approvedMembers = (members ?? []).filter((m: Membership) => m.status === "approved");
+  const pendingMembers = (members ?? []).filter((m) => m.status === "pending");
+  const approvedMembers = (members ?? []).filter((m) => m.status === "approved");
 
-  const newsItems = (news?.rows ?? []) as unknown as ContentItem[];
-  const eventItems = (events?.rows ?? []) as unknown as ContentItem[];
-  const announcementItems = (announcements?.rows ?? []) as unknown as ContentItem[];
-  const studentWorkItems = (studentWorks?.rows ?? []) as unknown as ContentItem[];
+  const newsItems = news?.rows ?? [];
+  const eventItems = events?.rows ?? [];
+  const announcementItems = announcements?.rows ?? [];
+  const studentWorkItems = studentWorks?.rows ?? [];
 
-  const renderReviewBadge = (item: ContentItem) => (
+  const renderReviewBadge = (item: ClubContentItem) => (
     <span
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
         reviewStyles[item.reviewStatus] ?? reviewStyles.approved
@@ -250,11 +237,9 @@ function ClubPage() {
     </span>
   );
 
-  const renderContentRow = (
-    item: ContentItem,
-    type: "news" | "event" | "announcement" | "studentWork",
-  ) => {
-    const canEdit = isSiteAdmin || isClubAdmin || item.userId === myMembership?.userId;
+  const renderContentRow = (item: ClubContentItem, type: "news" | "event" | "announcement" | "studentWork") => {
+    const canEdit =
+      isSiteAdmin || isClubAdmin || ("userId" in item && item.userId === myMembership?.userId);
     return (
       <div
         key={item.id}
@@ -339,7 +324,7 @@ function ClubPage() {
               to="/clubs"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              &larr; Back to My Clubs
+              &larr; Back to Clubs
             </Link>
             {activity.bannerUrl && (
               <div className="mt-4 overflow-hidden rounded-2xl border">
@@ -383,6 +368,15 @@ function ClubPage() {
                       Club Admin
                     </span>
                   )}
+                  {isClubAdmin && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditClubOpen(true)}
+                    >
+                      <IconPencil className="size-3.5 mr-1" /> Edit Club
+                    </Button>
+                  )}
                 </div>
                 <p className="text-muted-foreground mt-1">
                   {typeLabels[activity.type] ?? activity.type}
@@ -397,7 +391,7 @@ function ClubPage() {
             <div className="mt-8 flex flex-wrap items-center gap-3">
               {!myMembership && (
                 <Button
-                  onClick={() => requestMembership.mutate()}
+                  onClick={() => requestMembership.mutate({ activityId: id })}
                   disabled={requestMembership.isPending}
                 >
                   {requestMembership.isPending ? "Sending..." : "Request to Join"}
@@ -413,7 +407,7 @@ function ClubPage() {
                   )}
                   <Button
                     variant="outline"
-                    onClick={() => requestMembership.mutate()}
+                    onClick={() => requestMembership.mutate({ activityId: id })}
                     disabled={requestMembership.isPending}
                   >
                     Request Again
@@ -519,7 +513,7 @@ function ClubPage() {
                         <div>
                           <h3 className="font-semibold mb-3">Pending Requests</h3>
                           <div className="space-y-2">
-                            {pendingMembers.map((m: Membership) => (
+                            {pendingMembers.map((m) => (
                               <div
                                 key={m.id}
                                 className="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
@@ -533,7 +527,7 @@ function ClubPage() {
                                 <div className="flex items-center gap-2">
                                   <Button
                                     size="sm"
-                                    onClick={() => approveMember.mutate(m.id)}
+                                    onClick={() => approveMember.mutate({ id: m.id })}
                                     disabled={approveMember.isPending}
                                   >
                                     Approve
@@ -564,7 +558,7 @@ function ClubPage() {
                           <p className="text-sm text-muted-foreground">No approved members yet.</p>
                         ) : (
                           <div className="space-y-2">
-                            {approvedMembers.map((m: Membership) => (
+                            {approvedMembers.map((m) => (
                               <div
                                 key={m.id}
                                 className="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
@@ -593,7 +587,7 @@ function ClubPage() {
                                     size="sm"
                                     variant="ghost"
                                     className="text-destructive"
-                                    onClick={() => revokeMember.mutate(m.id)}
+                                    onClick={() => revokeMember.mutate({ id: m.id })}
                                     disabled={revokeMember.isPending}
                                   >
                                     Revoke
@@ -797,13 +791,32 @@ function ClubPage() {
               </Button>
               <Button
                 variant="destructive"
-                onClick={() => rejectId && rejectMember.mutate(rejectId)}
+                onClick={() => rejectId && rejectMember.mutate({ id: rejectId, reason: rejectReason || undefined })}
                 disabled={rejectMember.isPending}
               >
                 Reject Application
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit club branding dialog (club admin) */}
+      <Dialog open={editClubOpen} onOpenChange={setEditClubOpen}>
+        <DialogContent className="w-[min(90vw,1100px)] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Club</DialogTitle>
+          </DialogHeader>
+          {editClubOpen && (
+            <ActivitiesForm
+              mode="edit"
+              id={id}
+              onSuccess={() => {
+                setEditClubOpen(false);
+                queryClient.invalidateQueries({ queryKey: orpc.activities.get.key({ input: { id } }) });
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

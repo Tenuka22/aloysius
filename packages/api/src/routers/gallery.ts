@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { eq, desc, asc, like, and, count } from "drizzle-orm";
+import { eq, desc, asc, like, and, or, isNotNull, count } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
 import { gallery, galleryImages } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
-import { protectedProcedure, publicProcedure } from "../index";
-import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
-
-const sortDirection = z.enum(["asc", "desc"]);
+import { publicProcedure } from "../index";
+import { contentStatusSchema, sortDirectionSchema } from "../schemas";
+import { checkSlugUnique } from "../lib/slug";
+import { isOBAdmin } from "../lib/ob-admin";
 
 export const galleryRouter = {
   list: publicProcedure
@@ -15,26 +15,46 @@ export const galleryRouter = {
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).max(100).default(10),
         sort: z.string().optional(),
-        sortDir: sortDirection.default("desc"),
+        sortDir: sortDirectionSchema.default("desc"),
         search: z.string().optional(),
-        status: z.enum(["draft", "published", "archived"]).optional(),
+        status: contentStatusSchema.optional(),
         eventId: z.string().optional(),
+        obEventId: z.string().optional(),
+        obDonationId: z.string().optional(),
+        // "ob": galleries linked to any Old Boys' Association event or donation.
+        scope: z.enum(["ob"]).optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const db = createDb();
-      const { page, pageSize, sort, sortDir, search, status, eventId } = input;
+      const { page, pageSize, sort, sortDir, search, status, eventId, obEventId, obDonationId, scope } =
+        input;
       const offset = (page - 1) * pageSize;
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
 
       const conditions = [];
       if (search) {
         conditions.push(like(gallery.title, `%${search}%`));
       }
       if (status) {
+        if (!isSiteAdmin && status !== "published") {
+          throw new ORPCError("UNAUTHORIZED", { message: "Site admin access required." });
+        }
         conditions.push(eq(gallery.status, status));
+      } else if (!isSiteAdmin) {
+        conditions.push(eq(gallery.status, "published"));
       }
       if (eventId) {
         conditions.push(eq(gallery.eventId, eventId));
+      }
+      if (obEventId) {
+        conditions.push(eq(gallery.obEventId, obEventId));
+      }
+      if (obDonationId) {
+        conditions.push(eq(gallery.obDonationId, obDonationId));
+      }
+      if (scope === "ob") {
+        conditions.push(or(isNotNull(gallery.obEventId), isNotNull(gallery.obDonationId))!);
       }
       const where = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -69,6 +89,8 @@ export const galleryRouter = {
           title: row.title,
           description: row.description,
           eventId: row.eventId,
+          obEventId: row.obEventId,
+          obDonationId: row.obDonationId,
           studentWorkId: row.studentWorkId,
           achievementId: row.achievementId,
           coverImage: row.coverImage,
@@ -90,7 +112,7 @@ export const galleryRouter = {
 
   get: publicProcedure
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const db = createDb();
       const row =
         "id" in input
@@ -99,6 +121,18 @@ export const galleryRouter = {
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
+      }
+
+      if (row.status !== "published") {
+        const isSiteAdmin = context.auth?.adminCalled ?? false;
+        const userId = context.auth?.userId ?? null;
+        const isAuthor = userId !== null && userId === row.userId;
+        const isObScopeGallery = !row.eventId && !row.studentWorkId && !row.achievementId;
+        const callerIsOBAdmin =
+          userId !== null && isObScopeGallery && (await isOBAdmin(userId));
+        if (!isSiteAdmin && !isAuthor && !callerIsOBAdmin) {
+          throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
+        }
       }
 
       const images = await db
@@ -114,6 +148,8 @@ export const galleryRouter = {
         title: row.title,
         description: row.description,
         eventId: row.eventId,
+        obEventId: row.obEventId,
+        obDonationId: row.obDonationId,
         studentWorkId: row.studentWorkId,
         achievementId: row.achievementId,
         coverImage: row.coverImage,
@@ -134,179 +170,6 @@ export const galleryRouter = {
           createdAt: img.createdAt.toISOString(),
         })),
       };
-    }),
-
-  create: protectedProcedure
-    .input(
-      z.object({
-        slug: z.string().optional(),
-        title: z.string().min(1),
-        description: z.string().optional(),
-        eventId: z.string().optional(),
-        studentWorkId: z.string().optional(),
-        achievementId: z.string().optional(),
-        coverImage: z.string().optional(),
-        authorName: z.string().optional(),
-        authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
-        tags: z.array(z.string()).optional(),
-        status: z.enum(["draft", "published", "archived"]).optional(),
-      }),
-    )
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const id = crypto.randomUUID();
-      const now = new Date();
-      const slug = input.slug
-        ? await generateUniqueSlug(gallery, input.slug)
-        : await generateUniqueSlug(gallery, input.title);
-
-      const db = createDb();
-      const record = await db
-        .insert(gallery)
-        .values({
-          id,
-          slug,
-          title: input.title,
-          description: input.description ?? null,
-          eventId: input.eventId || null,
-          studentWorkId: input.studentWorkId || null,
-          achievementId: input.achievementId || null,
-          coverImage: input.coverImage || null,
-          authorName: input.authorName ?? null,
-          authorType: input.authorType ?? null,
-          tags: input.tags ?? [],
-          status: input.status ?? "draft",
-          publishedAt: input.status === "published" ? now : null,
-          userId: context.auth.userId,
-        })
-        .returning()
-        .get();
-
-      return {
-        id: record.id,
-        slug: record.slug,
-        title: record.title,
-        description: record.description,
-        eventId: record.eventId,
-        studentWorkId: record.studentWorkId,
-        achievementId: record.achievementId,
-        coverImage: record.coverImage,
-        authorName: record.authorName,
-        authorType: record.authorType,
-        tags: record.tags,
-        status: record.status,
-        publishedAt: record.publishedAt?.toISOString() ?? null,
-        createdAt: record.createdAt.toISOString(),
-        updatedAt: record.updatedAt.toISOString(),
-        userId: record.userId,
-      };
-    }),
-
-  update: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        slug: z.string().optional(),
-        title: z.string().min(1).optional(),
-        description: z.string().optional(),
-        eventId: z.string().optional(),
-        studentWorkId: z.string().optional(),
-        achievementId: z.string().optional(),
-        coverImage: z.string().optional(),
-        authorName: z.string().optional(),
-        authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
-        tags: z.array(z.string()).optional(),
-        status: z.enum(["draft", "published", "archived"]).optional(),
-      }),
-    )
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      const existing = await db.select().from(gallery).where(eq(gallery.id, input.id)).get();
-
-      if (!existing) {
-        throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
-      }
-
-      const now = new Date();
-      const updateData: Record<string, unknown> = {
-        updatedAt: now,
-      };
-
-      if (input.slug !== undefined) {
-        updateData.slug = await generateUniqueSlug(gallery, input.slug, input.id);
-      }
-      if (input.title !== undefined) {
-        updateData.title = input.title;
-        if (input.slug === undefined) {
-          updateData.slug = await generateUniqueSlug(gallery, input.title, input.id);
-        }
-      }
-      if (input.description !== undefined) updateData.description = input.description || null;
-      if (input.eventId !== undefined) updateData.eventId = input.eventId || null;
-      if (input.studentWorkId !== undefined) updateData.studentWorkId = input.studentWorkId || null;
-      if (input.achievementId !== undefined) updateData.achievementId = input.achievementId || null;
-      if (input.coverImage !== undefined) updateData.coverImage = input.coverImage || null;
-      if (input.authorName !== undefined) updateData.authorName = input.authorName || null;
-      if (input.authorType !== undefined) updateData.authorType = input.authorType || null;
-      if (input.tags !== undefined) updateData.tags = input.tags;
-      if (input.status !== undefined) {
-        updateData.status = input.status;
-        if (input.status === "published" && !existing.publishedAt) {
-          updateData.publishedAt = now;
-        }
-      }
-
-      const record = await db
-        .update(gallery)
-        .set(updateData)
-        .where(eq(gallery.id, input.id))
-        .returning()
-        .get();
-
-      return {
-        id: record.id,
-        slug: record.slug,
-        title: record.title,
-        description: record.description,
-        eventId: record.eventId,
-        studentWorkId: record.studentWorkId,
-        achievementId: record.achievementId,
-        coverImage: record.coverImage,
-        authorName: record.authorName,
-        authorType: record.authorType,
-        tags: record.tags,
-        status: record.status,
-        publishedAt: record.publishedAt?.toISOString() ?? null,
-        createdAt: record.createdAt.toISOString(),
-        updatedAt: record.updatedAt.toISOString(),
-        userId: record.userId,
-      };
-    }),
-
-  delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      const existing = await db.select().from(gallery).where(eq(gallery.id, input.id)).get();
-
-      if (!existing) {
-        throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
-      }
-
-      await db.delete(gallery).where(eq(gallery.id, input.id)).run();
-
-      return { success: true };
     }),
 
   listImages: publicProcedure
@@ -351,122 +214,6 @@ export const galleryRouter = {
         pageCount: Math.ceil(total / pageSize),
         page,
         pageSize,
-      };
-    }),
-
-  addImage: protectedProcedure
-    .input(
-      z.object({
-        galleryId: z.string(),
-        url: z.string().min(1),
-        caption: z.string().optional(),
-        sortOrder: z.number().optional(),
-      }),
-    )
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      const existingGallery = await db
-        .select()
-        .from(gallery)
-        .where(eq(gallery.id, input.galleryId))
-        .get();
-
-      if (!existingGallery) {
-        throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
-      }
-
-      const id = crypto.randomUUID();
-      const record = await db
-        .insert(galleryImages)
-        .values({
-          id,
-          galleryId: input.galleryId,
-          url: input.url,
-          caption: input.caption ?? null,
-          sortOrder: input.sortOrder ?? 0,
-        })
-        .returning()
-        .get();
-
-      return {
-        id: record.id,
-        galleryId: record.galleryId,
-        url: record.url,
-        caption: record.caption,
-        sortOrder: record.sortOrder,
-        createdAt: record.createdAt.toISOString(),
-      };
-    }),
-
-  removeImage: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      const existing = await db
-        .select()
-        .from(galleryImages)
-        .where(eq(galleryImages.id, input.id))
-        .get();
-
-      if (!existing) {
-        throw new ORPCError("NOT_FOUND", { message: "Gallery image not found" });
-      }
-
-      await db.delete(galleryImages).where(eq(galleryImages.id, input.id)).run();
-
-      return { success: true };
-    }),
-
-  updateImage: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        caption: z.string().optional(),
-        sortOrder: z.number().optional(),
-      }),
-    )
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      const existing = await db
-        .select()
-        .from(galleryImages)
-        .where(eq(galleryImages.id, input.id))
-        .get();
-
-      if (!existing) {
-        throw new ORPCError("NOT_FOUND", { message: "Gallery image not found" });
-      }
-
-      const updateData: Record<string, unknown> = {};
-      if (input.caption !== undefined) updateData.caption = input.caption;
-      if (input.sortOrder !== undefined) updateData.sortOrder = input.sortOrder;
-
-      const record = await db
-        .update(galleryImages)
-        .set(updateData)
-        .where(eq(galleryImages.id, input.id))
-        .returning()
-        .get();
-
-      return {
-        id: record.id,
-        galleryId: record.galleryId,
-        url: record.url,
-        caption: record.caption,
-        sortOrder: record.sortOrder,
-        createdAt: record.createdAt.toISOString(),
       };
     }),
 

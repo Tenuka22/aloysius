@@ -11,11 +11,11 @@ import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
 import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
 import { toast } from "sonner";
 import * as v from "valibot";
-import { SlugField } from "@/components-client/slug-field";
+import { SlugFieldInline } from "@/components-client/slug-field";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
 
 const createNewsSchema = v.object({
@@ -59,7 +59,7 @@ const fields: FieldEntry<CreateNewsValues | UpdateNewsValues>[] = [
     kind: "custom",
     label: "Slug",
     required: false,
-    customRenderer: ({ value, onChange, name, formValues }) => {
+    customRenderer: ({ value, onChange }) => {
       return (
         <SlugFieldInline
           sourceField="title"
@@ -127,7 +127,10 @@ const fields: FieldEntry<CreateNewsValues | UpdateNewsValues>[] = [
 
 function CoverImageField() {
   const form = useBuildForm();
-  const coverImage = useStore(form.store, (state) => state.values.coverImage) as string | undefined;
+  const coverImage = useStore(
+    form.store,
+    (state: { values: CreateNewsValues | UpdateNewsValues }) => state.values.coverImage,
+  ) as string | undefined;
   const [uploading, setUploading] = useState(false);
 
   const handleFilesSelected = useCallback(
@@ -246,39 +249,49 @@ export function NewsForm({
 }) {
   const queryClient = useQueryClient();
 
-  const { data: newsItem, isLoading: isLoadingItem } = useQuery({
-    queryKey: ["news", id],
-    queryFn: () => client.news.get({ id: id! }),
-    enabled: mode === "edit" && !!id,
-  });
+  const { data: newsItem, isLoading: isLoadingItem } = useQuery(
+    orpc.news.get.queryOptions({
+      input: { id: id! },
+      enabled: mode === "edit" && !!id,
+    }),
+  );
 
-  const createMutation = useMutation({
-    mutationFn: (body: CreateNewsValues) => client.news.create({ ...body, activityId } as any),
-    onSuccess: () => {
-      toast.success("News article created");
-      queryClient.invalidateQueries({ queryKey: ["news"] });
-      onSuccess();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const createMutation = useMutation(
+    orpc.news.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("News article created");
+        queryClient.invalidateQueries({ queryKey: orpc.news.key() });
+        onSuccess();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const updateMutation = useMutation({
-    mutationFn: (body: UpdateNewsValues & { id: string }) => client.news.update(body),
-    onSuccess: () => {
-      toast.success("News updated");
-      queryClient.invalidateQueries({ queryKey: ["news"] });
-      onSuccess();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const updateMutation = useMutation(
+    orpc.news.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("News updated");
+        queryClient.invalidateQueries({ queryKey: orpc.news.key() });
+        onSuccess();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
   const handleSubmit = useCallback(
     async (values: CreateNewsValues | UpdateNewsValues) => {
       if (mode === "edit" && id)
-        await updateMutation.mutateAsync({ ...values, id } as UpdateNewsValues & { id: string });
-      else await createMutation.mutateAsync(values as CreateNewsValues);
+        await updateMutation.mutateAsync({
+          ...values,
+          id,
+        } as Parameters<typeof updateMutation.mutateAsync>[0]);
+      else
+        await createMutation.mutateAsync({
+          ...(values as CreateNewsValues),
+          activityId,
+        } as Parameters<typeof createMutation.mutateAsync>[0]);
     },
-    [mode, id, createMutation, updateMutation],
+    [mode, id, activityId, createMutation, updateMutation],
   );
 
   if (mode === "edit" && isLoadingItem) {
@@ -326,8 +339,8 @@ export function NewsForm({
               coverImage: newsItem.coverImage ?? "",
               tags: newsItem.tags ?? [],
               publishNow: newsItem.status === "published",
-              authorName: (newsItem as any).authorName ?? "",
-              authorType: (newsItem as any).authorType ?? "",
+              authorName: newsItem.authorName ?? "",
+              authorType: newsItem.authorType ?? "",
             }
           : {
               title: "",

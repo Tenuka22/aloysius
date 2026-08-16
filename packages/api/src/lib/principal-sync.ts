@@ -5,14 +5,18 @@ import { principals, staffMembers, obMembers } from "@aloysius-web/db/schema";
 /**
  * Idempotently auto-sync the current published principal into:
  *  1. a `staff_members` row with role "Principal" (in the principal's creation year),
- *  2. the current year's `ob_members` President slot.
+ *  2. the President slot for a given (or the current) committee year — but only when
+ *     that slot has no one assigned yet.
  *
- * Staff members themselves are permanent — but the principal has a tenure, so when
- * a new principal is published, the President row (and the Principal staff row)
- * are re-pointed at the new principal. Called on read so no manual sync button is
+ * Staff members themselves are permanent and always re-pointed at the current
+ * principal. The President slot is a one-time default: once a President exists
+ * for a year — auto-filled or manually set by the OB admin — it is left alone, so
+ * a manual assignment always wins. Called on read so no manual sync button is
  * ever needed.
  */
-export async function ensurePrincipalAsStaffAndPresident(): Promise<{
+export async function ensurePrincipalAsStaffAndPresident(
+  targetYear?: string,
+): Promise<{
   principal: string | null;
   staff: boolean;
   president: boolean;
@@ -32,7 +36,7 @@ export async function ensurePrincipalAsStaffAndPresident(): Promise<{
 
   const now = new Date();
   const staffYear = principal.year || String(now.getFullYear());
-  const presidentYear = String(now.getFullYear());
+  const presidentYear = targetYear || String(now.getFullYear());
 
   // 1. Principal staff member row (matched by name + role so an incoming principal
   //    gets their own row while the previous principal's row stays with their year).
@@ -73,7 +77,10 @@ export async function ensurePrincipalAsStaffAndPresident(): Promise<{
     staff = true;
   }
 
-  // 2. Current year's OB President slot — re-pointed at the new principal if it changed.
+  // 2. OB President slot for the target year — only auto-filled when nobody has
+  //    defined a President for that year yet. A row that already exists (whether
+  //    auto-filled earlier or set by the OB admin) is left untouched, so a manual
+  //    assignment always wins over the principal.
   let president = false;
   const presidentRow = await db
     .select()
@@ -86,19 +93,7 @@ export async function ensurePrincipalAsStaffAndPresident(): Promise<{
       ),
     )
     .get();
-  if (presidentRow) {
-    await db
-      .update(obMembers)
-      .set({
-        name: principal.name,
-        photo: principal.portrait ?? null,
-        bio: principal.message ?? null,
-        updatedAt: now,
-      })
-      .where(eq(obMembers.id, presidentRow.id))
-      .run();
-    president = true;
-  } else {
+  if (!presidentRow) {
     await db
       .insert(obMembers)
       .values({
@@ -106,7 +101,6 @@ export async function ensurePrincipalAsStaffAndPresident(): Promise<{
         name: principal.name,
         role: "President",
         email: null,
-        adminEmail: null,
         photo: principal.portrait ?? null,
         bio: principal.message ?? null,
         year: presidentYear,

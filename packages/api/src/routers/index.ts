@@ -20,6 +20,7 @@ import { principalsRouter } from "./principals";
 import { staffRouter } from "./staff";
 import { examResultsRouter } from "./exam-results";
 import { obRouter } from "./ob";
+import { adminRouter } from "./admin";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -50,6 +51,7 @@ export const appRouter = {
   staff: staffRouter,
   examResults: examResultsRouter,
   ob: obRouter,
+  admin: adminRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

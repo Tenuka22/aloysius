@@ -9,7 +9,7 @@ import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
 import { IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import * as v from "valibot";
 import { DateTimePicker } from "./date-time-picker";
@@ -41,9 +41,11 @@ const updateEventSchema = v.object({
 
 type UpdateEventValues = v.InferOutput<typeof updateEventSchema>;
 
-function CoverImageInline({ onChange }: { onChange: (val: unknown) => void }) {
+type FormValues = CreateEventValues | UpdateEventValues;
+
+function CoverImageInline() {
   const form = useBuildForm();
-  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as
+  const coverImage = useStore(form.store, (state: { values: FormValues }) => state.values.coverImage) as
     | string
     | undefined;
   const [uploading, setUploading] = useState(false);
@@ -121,7 +123,6 @@ function ContentEditorInline({
   value: unknown;
   onChange: (val: unknown) => void;
 }) {
-  const form = useBuildForm();
   const handleImageUpload = useCallback(async (file: File) => {
     const result = await client.files.uploadFile(file);
     return result.url;
@@ -145,7 +146,7 @@ const fields: FieldEntry<CreateEventValues | UpdateEventValues>[] = [
     kind: "custom",
     label: "Cover Image",
     required: false,
-    customRenderer: ({ onChange }) => <CoverImageInline onChange={onChange} />,
+    customRenderer: () => <CoverImageInline />,
   },
   {
     name: "title",
@@ -199,28 +200,46 @@ export function OBEventForm({
 }) {
   const queryClient = useQueryClient();
 
-  const existingEvent = useQuery({
-    queryKey: ["ob-event", id],
-    queryFn: () => client.ob.obEvents.get({ id: id! }),
-    enabled: mode === "edit" && !!id,
-  });
+  const existingEvent = useQuery(
+    orpc.ob.obEvents.get.queryOptions({
+      input: { id: id! },
+      enabled: mode === "edit" && !!id,
+    }),
+  );
 
-  const mutation = useMutation({
-    mutationFn: (values: CreateEventValues | UpdateEventValues) => {
-      if (mode === "create") {
-        return client.ob.obEvents.create(values as CreateEventValues);
-      }
-      return client.ob.obEvents.update({ id: id!, ...values });
-    },
-    onSuccess: () => {
-      toast.success(mode === "create" ? "Event created" : "Event updated");
-      queryClient.invalidateQueries({ queryKey: ["ob-events"] });
-      onSuccess?.();
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const createMutation = useMutation(
+    orpc.ob.obEvents.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("Event created");
+        queryClient.invalidateQueries({ queryKey: orpc.ob.obEvents.key() });
+        onSuccess?.();
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
+
+  const updateMutation = useMutation(
+    orpc.ob.obEvents.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Event updated");
+        queryClient.invalidateQueries({ queryKey: orpc.ob.obEvents.key() });
+        onSuccess?.();
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
+
+  const mutation = {
+    mutateAsync: (values: CreateEventValues | UpdateEventValues) =>
+      mode === "create"
+        ? createMutation.mutateAsync(values as CreateEventValues)
+        : updateMutation.mutateAsync({ id: id!, ...values }),
+    isPending: createMutation.isPending || updateMutation.isPending,
+  };
 
   const event = existingEvent.data;
 

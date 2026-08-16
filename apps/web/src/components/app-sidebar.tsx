@@ -10,12 +10,11 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import {
   IconDashboard,
   IconCalendarEvent,
   IconSchool,
-  IconNews,
   IconSpeakerphone,
   IconTrophy,
   IconPhoto,
@@ -27,7 +26,6 @@ import {
   IconUser,
   IconReportAnalytics,
   IconUsers,
-  IconHeart,
 } from "@tabler/icons-react";
 
 const overviewItems = [
@@ -50,7 +48,7 @@ const publishingItems = [
     ],
   },
   {
-    title: "Club Content Review",
+    title: "Activity Reviews",
     url: "/admin/reviews",
     icon: <IconClipboardCheck />,
     badge: <PendingReviewBadge />,
@@ -59,13 +57,13 @@ const publishingItems = [
 
 /** Live count of club content awaiting site-admin approval. */
 function PendingReviewBadge() {
-  const { data } = useQuery({
-    queryKey: ["reviews", "pending-count"],
-    queryFn: () => client.clubs.pendingReviewCount(),
-    refetchInterval: 30_000,
-    staleTime: 15_000,
-    retry: false,
-  });
+  const { data } = useQuery(
+    orpc.admin.clubs.pendingReviewCount.queryOptions({
+      refetchInterval: 30_000,
+      staleTime: 15_000,
+      retry: false,
+    }),
+  );
   const count = data ?? 0;
   if (count === 0) return null;
   return (
@@ -155,6 +153,8 @@ const cmsItems = [
       { title: "Members", url: "/admin/ob/members" },
       { title: "Events", url: "/admin/ob/events" },
       { title: "Donations", url: "/admin/ob/donations" },
+      { title: "News", url: "/admin/ob/news" },
+      { title: "Announcements", url: "/admin/ob/announcements" },
     ],
   },
 ];

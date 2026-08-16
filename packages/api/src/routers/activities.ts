@@ -1,40 +1,46 @@
 import { z } from "zod";
 import { eq, asc, and } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
-import { activities, clubMembers } from "@aloysius-web/db/schema";
+import { activities } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import { activityTypeSchema, contentStatusSchema } from "../schemas";
 import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
-import { getUserEmail } from "../lib/club-access";
-import { createClerkClient } from "@clerk/backend";
-import { env } from "@aloysius-web/env/server";
-
-const clerkClient = createClerkClient({
-  secretKey: env.CLERK_SECRET_KEY,
-  publishableKey: env.CLERK_PUBLISHABLE_KEY,
-});
+import { resolveClubAccess } from "../lib/club-access";
 
 export const activitiesRouter = {
   list: publicProcedure
     .input(
       z
         .object({
-          status: z.enum(["draft", "published", "archived"]).optional(),
-          type: z.enum(["club", "sport", "other"]).optional(),
+          status: contentStatusSchema.optional(),
+          type: activityTypeSchema.optional(),
         })
         .optional(),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const db = createDb();
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
       const conditions = [];
       if (input?.status) {
+        if (input.status !== "published" && !isSiteAdmin) {
+          throw new ORPCError("UNAUTHORIZED", { message: "Site admin access required." });
+        }
         conditions.push(eq(activities.status, input.status));
+      } else if (!isSiteAdmin) {
+        conditions.push(eq(activities.status, "published"));
       }
       if (input?.type) {
         conditions.push(eq(activities.type, input.type));
       }
 
-      const rows = await db.select().from(activities).orderBy(asc(activities.sortOrder)).all();
+      const where = conditions.length > 0 ? and(...conditions) : undefined;
+      const rows = await db
+        .select()
+        .from(activities)
+        .where(where)
+        .orderBy(asc(activities.sortOrder))
+        .all();
 
       return rows.map((row) => ({
         id: row.id,
@@ -56,7 +62,7 @@ export const activitiesRouter = {
 
   get: publicProcedure
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const db = createDb();
       const row =
         "id" in input
@@ -65,6 +71,19 @@ export const activitiesRouter = {
 
       if (!row) {
         throw new ORPCError("NOT_FOUND", { message: "Activity not found" });
+      }
+
+      if (row.status !== "published") {
+        const isSiteAdmin = context.auth?.adminCalled ?? false;
+        const userId = context.auth?.userId ?? null;
+        let canView = isSiteAdmin;
+        if (!canView && userId) {
+          const { membership, isClubAdmin } = await resolveClubAccess(db, row.id, userId, isSiteAdmin);
+          canView = isClubAdmin || membership?.status === "approved";
+        }
+        if (!canView) {
+          throw new ORPCError("NOT_FOUND", { message: "Activity not found" });
+        }
       }
 
       return {
@@ -85,78 +104,6 @@ export const activitiesRouter = {
       };
     }),
 
-  create: protectedProcedure
-    .input(
-      z.object({
-        slug: z.string().optional(),
-        name: z.string().min(1),
-        description: z.string().optional(),
-        coverImage: z.string().optional(),
-        logoUrl: z.string().optional(),
-        bannerUrl: z.string().optional(),
-        images: z.array(z.string()).optional(),
-        type: z.enum(["club", "sport", "other"]).default("club"),
-        adminEmail: z.string().email().optional(),
-        sortOrder: z.number().optional(),
-        status: z.enum(["draft", "published", "archived"]).default("draft"),
-      }),
-    )
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
-      const db = createDb();
-      const now = new Date();
-      const id = crypto.randomUUID();
-      const slug = input.slug
-        ? await generateUniqueSlug(activities, input.slug)
-        : await generateUniqueSlug(activities, input.name);
-
-      let status = input.status;
-      if (!isSiteAdmin) {
-        status = "draft";
-      }
-
-      const record = await db
-        .insert(activities)
-        .values({
-          id,
-          slug,
-          name: input.name,
-          description: input.description,
-          coverImage: input.coverImage,
-          logoUrl: input.logoUrl,
-          bannerUrl: input.bannerUrl,
-          images: input.images ?? [],
-          type: input.type,
-          adminEmail: input.adminEmail,
-          sortOrder: input.sortOrder ?? 0,
-          status,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .returning()
-        .get();
-
-      return {
-        id: record.id,
-        slug: record.slug,
-        name: record.name,
-        description: record.description,
-        coverImage: record.coverImage,
-        logoUrl: record.logoUrl,
-        bannerUrl: record.bannerUrl,
-        images: record.images ?? [],
-        type: record.type,
-        adminEmail: record.adminEmail,
-        sortOrder: record.sortOrder,
-        status: record.status,
-        createdAt: record.createdAt.toISOString(),
-        updatedAt: record.updatedAt.toISOString(),
-      };
-    }),
 
   update: protectedProcedure
     .input(
@@ -169,10 +116,10 @@ export const activitiesRouter = {
         logoUrl: z.string().optional().nullable(),
         bannerUrl: z.string().optional().nullable(),
         images: z.array(z.string()).optional(),
-        type: z.enum(["club", "sport", "other"]).optional(),
+        type: activityTypeSchema.optional(),
         adminEmail: z.string().email().optional().nullable(),
         sortOrder: z.number().optional(),
-        status: z.enum(["draft", "published", "archived"]).optional(),
+        status: contentStatusSchema.optional(),
       }),
     )
     .handler(async ({ input, context }) => {
@@ -186,6 +133,15 @@ export const activitiesRouter = {
 
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Activity not found" });
+      }
+
+      let callerIsClubAdmin = isSiteAdmin;
+      if (!callerIsClubAdmin) {
+        const { isClubAdmin } = await resolveClubAccess(db, input.id, context.auth.userId, isSiteAdmin);
+        callerIsClubAdmin = isClubAdmin;
+      }
+      if (!callerIsClubAdmin) {
+        throw new ORPCError("FORBIDDEN", { message: "Club admin or site admin access required." });
       }
 
       const updateData: Record<string, unknown> = {
@@ -206,13 +162,32 @@ export const activitiesRouter = {
       if (input.logoUrl !== undefined) updateData.logoUrl = input.logoUrl;
       if (input.bannerUrl !== undefined) updateData.bannerUrl = input.bannerUrl;
       if (input.images !== undefined) updateData.images = input.images;
-      if (input.type !== undefined) updateData.type = input.type;
-      if (input.adminEmail !== undefined) updateData.adminEmail = input.adminEmail;
-      if (input.sortOrder !== undefined) updateData.sortOrder = input.sortOrder;
+
+      // Structural/curation and access-control fields: site admin only to change.
+      if (input.type !== undefined && input.type !== existing.type) {
+        if (!isSiteAdmin) {
+          throw new ORPCError("FORBIDDEN", { message: "Only site admin can change activity type." });
+        }
+        updateData.type = input.type;
+      }
+      if (input.adminEmail !== undefined && input.adminEmail !== existing.adminEmail) {
+        if (!isSiteAdmin) {
+          throw new ORPCError("FORBIDDEN", {
+            message: "Only site admin can change the club admin email.",
+          });
+        }
+        updateData.adminEmail = input.adminEmail;
+      }
+      if (input.sortOrder !== undefined && input.sortOrder !== existing.sortOrder) {
+        if (!isSiteAdmin) {
+          throw new ORPCError("FORBIDDEN", { message: "Only site admin can change sort order." });
+        }
+        updateData.sortOrder = input.sortOrder;
+      }
 
       if (input.status !== undefined) {
-        if (!isSiteAdmin && input.status === "published" && existing.status !== "published") {
-          throw new ORPCError("FORBIDDEN", { message: "Only site admin can publish activities." });
+        if (!isSiteAdmin && input.status !== existing.status) {
+          throw new ORPCError("FORBIDDEN", { message: "Only site admin can change activity status." });
         }
         updateData.status = input.status;
       }
@@ -242,149 +217,6 @@ export const activitiesRouter = {
       };
     }),
 
-  delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      const existing = await db.select().from(activities).where(eq(activities.id, input.id)).get();
-
-      if (!existing) {
-        throw new ORPCError("NOT_FOUND", { message: "Activity not found" });
-      }
-
-      await db.delete(activities).where(eq(activities.id, input.id)).run();
-
-      return { success: true };
-    }),
-
-  /**
-   * Sync activity admins from the DB: for every activity's `adminEmail`, find the
-   * Clerk user and seed a `club_members` row (role=admin, approved) so they appear
-   * as admins in the DB. Also downgrades system-seeded admin rows whose email no
-   * longer matches the activity's `adminEmail`. No Clerk metadata is written.
-   * Site admin only.
-   */
-  syncAdminMetadata: protectedProcedure.handler(async ({ context }) => {
-    if (!context.auth?.userId) {
-      throw new ORPCError("UNAUTHORIZED");
-    }
-    if (!context.auth?.adminCalled) {
-      throw new ORPCError("FORBIDDEN", { message: "Site admin access required." });
-    }
-
-    const db = createDb();
-    const allActivities = await db
-      .select()
-      .from(activities)
-      .orderBy(asc(activities.sortOrder))
-      .all();
-
-    const activitiesWithAdmin = allActivities.filter((a) => a.adminEmail);
-
-    const emailToActivityIds = new Map<string, string[]>();
-    for (const activity of activitiesWithAdmin) {
-      const email = activity.adminEmail!.toLowerCase();
-      const existing = emailToActivityIds.get(email) ?? [];
-      existing.push(activity.id);
-      emailToActivityIds.set(email, existing);
-    }
-
-    const results = { updated: 0, cleared: 0, errors: 0, errorsList: [] as string[] };
-
-    // (1) Seed club_members rows (role=admin, approved) for each admin email.
-    for (const [email, activityIds] of emailToActivityIds) {
-      try {
-        const users = await clerkClient.users.getUserList({ emailAddress: [email] });
-        const user = users.data[0];
-
-        if (!user) {
-          results.errorsList.push(`No Clerk user found for ${email}`);
-          results.errors++;
-          continue;
-        }
-
-        for (const activityId of activityIds) {
-          const existingMember = await db
-            .select()
-            .from(clubMembers)
-            .where(and(eq(clubMembers.activityId, activityId), eq(clubMembers.userId, user.id)))
-            .get();
-
-          if (!existingMember) {
-            const now = new Date();
-            await db
-              .insert(clubMembers)
-              .values({
-                id: crypto.randomUUID(),
-                activityId,
-                userId: user.id,
-                name:
-                  user.firstName || user.lastName
-                    ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
-                    : null,
-                role: "admin",
-                status: "approved",
-                decidedBy: "system",
-                decidedAt: now,
-                createdAt: now,
-                updatedAt: now,
-              })
-              .run();
-            results.updated++;
-          }
-        }
-      } catch (err) {
-        results.errorsList.push(
-          `Error syncing ${email}: ${err instanceof Error ? err.message : String(err)}`,
-        );
-        results.errors++;
-      }
-    }
-
-    // (2) Downgrade system-seeded admin rows whose email no longer matches the
-    // activity's adminEmail, so removed admins stop being treated as admins.
-    const systemAdminRows = await db
-      .select()
-      .from(clubMembers)
-      .where(
-        and(
-          eq(clubMembers.role, "admin"),
-          eq(clubMembers.status, "approved"),
-          eq(clubMembers.decidedBy, "system"),
-        ),
-      )
-      .all();
-
-    for (const row of systemAdminRows) {
-      try {
-        const userEmail = await getUserEmail(row.userId);
-        if (!userEmail) continue;
-        const activity = await db
-          .select()
-          .from(activities)
-          .where(eq(activities.id, row.activityId))
-          .get();
-        if (activity?.adminEmail?.toLowerCase() === userEmail) continue;
-        await db
-          .update(clubMembers)
-          .set({ role: "member", updatedAt: new Date() })
-          .where(eq(clubMembers.id, row.id))
-          .run();
-        results.cleared++;
-      } catch (err) {
-        results.errorsList.push(
-          `Error clearing admin row ${row.id}: ${err instanceof Error ? err.message : String(err)}`,
-        );
-        results.errors++;
-      }
-    }
-
-    return results;
-  }),
 
   checkSlug: publicProcedure
     .input(z.object({ slug: z.string(), excludeId: z.string().optional() }))

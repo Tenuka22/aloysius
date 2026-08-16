@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@aloysius-web/ui/components/button";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 
 const ADMISSIONS_KEYS = [
@@ -157,19 +157,17 @@ function AdminAdmissions() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<Record<string, string>>({});
 
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ["settings", "admissions"],
-    queryFn: () => client.settings.getAll(),
-  });
+  const { data: settings, isLoading } = useQuery(orpc.settings.getAll.queryOptions());
 
-  const mutation = useMutation({
-    mutationFn: (items: { key: string; value: string }[]) => client.settings.setMany({ items }),
-    onSuccess: () => {
-      toast.success("Admissions page updated");
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const mutation = useMutation(
+    orpc.admin.settings.setMany.mutationOptions({
+      onSuccess: () => {
+        toast.success("Admissions page updated");
+        queryClient.invalidateQueries({ queryKey: orpc.settings.key() });
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
   const getValue = (key: string) => form[key] ?? settings?.[key] ?? DEFAULTS[key] ?? "";
 
@@ -182,7 +180,7 @@ function AdminAdmissions() {
       key,
       value: getValue(key),
     }));
-    mutation.mutate(items);
+    mutation.mutate({ items });
   };
 
   if (isLoading) {

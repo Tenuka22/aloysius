@@ -8,16 +8,9 @@ import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Input } from "@aloysius-web/ui/components/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@aloysius-web/ui/components/card";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
-
-type StatItem = {
-  id: string;
-  label: string;
-  value: string;
-  icon: string;
-  sortOrder: number;
-};
+import type { StatItem } from "@/lib/api-types";
 
 export const Route = createFileRoute("/admin/stats")({
   component: AdminStats,
@@ -27,26 +20,20 @@ function StatCard({ stat }: { stat: StatItem }) {
   const queryClient = useQueryClient();
   const [label, setLabel] = useState(stat.label);
   const [value, setValue] = useState(stat.value);
-  const [icon, setIcon] = useState(stat.icon);
+  const [icon, setIcon] = useState(stat.icon ?? "");
   const [sortOrder, setSortOrder] = useState(stat.sortOrder);
 
-  const updateMutation = useMutation({
-    mutationFn: () =>
-      client.stats.update({
-        id: stat.id,
-        label,
-        value,
-        icon,
-        sortOrder,
-      }),
-    onSuccess: () => {
-      toast.success("Stat updated");
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const updateMutation = useMutation(
+    orpc.admin.stats.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Stat updated");
+        queryClient.invalidateQueries({ queryKey: orpc.stats.key() });
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   return (
     <Card>
@@ -80,7 +67,7 @@ function StatCard({ stat }: { stat: StatItem }) {
         <div className="flex justify-end">
           <Button
             size="sm"
-            onClick={() => updateMutation.mutate()}
+            onClick={() => updateMutation.mutate({ id: stat.id, label, value, icon, sortOrder })}
             disabled={updateMutation.isPending}
           >
             {updateMutation.isPending ? "Saving..." : "Save"}
@@ -92,10 +79,7 @@ function StatCard({ stat }: { stat: StatItem }) {
 }
 
 function AdminStats() {
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ["stats"],
-    queryFn: () => client.stats.list(),
-  });
+  const { data: stats, isLoading } = useQuery(orpc.stats.list.queryOptions());
 
   return (
     <div className="flex flex-col">

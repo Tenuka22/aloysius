@@ -1,12 +1,15 @@
 "use client";
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnFiltersState,
   type PaginationState,
   type SortingState,
 } from "@tanstack/react-table";
+import { z } from "zod";
+import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
+import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Input } from "@aloysius-web/ui/components/input";
 import { Card, CardContent } from "@aloysius-web/ui/components/card";
@@ -42,35 +45,33 @@ import {
   IconShieldCheck,
 } from "@tabler/icons-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@aloysius-web/ui/components/avatar";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
+import type { OBMember } from "@/lib/api-types";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import { OBMemberForm } from "@/components-client/ob-member-form";
 
-type OBMember = {
-  id: string;
-  userId: string | null;
-  name: string;
-  role: string;
-  email: string | null;
-  adminEmail: string | null;
-  photo: string | null;
-  bio: string | null;
-  year: string;
-  sortOrder: number;
-  status: string;
-  decidedBy: string | null;
-  decidedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+const membersSearchSchema = z.object({
+  search: z.string().optional(),
+});
 
 export const Route = createFileRoute("/ob-admin/members")({
+  validateSearch: (search) => membersSearchSchema.parse(search),
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.prefetchQuery(orpc.ob.obMembers.list.queryOptions({ input: {} })),
+      context.queryClient.prefetchQuery(
+        orpc.settings.get.queryOptions({ input: { key: "ob_admin_email" } }),
+      ),
+    ]);
+  },
   component: OBAdminMembers,
 });
 
 function OBAdminMembers() {
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -79,52 +80,62 @@ function OBAdminMembers() {
   const [editing, setEditing] = useState<OBMember | null>(null);
   const [deleting, setDeleting] = useState<OBMember | null>(null);
 
-  const { data: members = [], isLoading } = useQuery({
-    queryKey: ["ob-members", "admin"],
-    queryFn: () => client.ob.obMembers.list({}),
-  });
+  const { data: members = [] } = useSuspenseQuery(orpc.ob.obMembers.list.queryOptions({ input: {} }));
+  const { data: adminEmailSetting } = useSuspenseQuery(
+    orpc.settings.get.queryOptions({ input: { key: "ob_admin_email" } }),
+  );
+  const obAdminEmail = adminEmailSetting?.value?.toLowerCase() ?? "";
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["ob-members"] });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: orpc.ob.obMembers.key() });
 
-  const approveMutation = useMutation({
-    mutationFn: (id: string) => client.ob.obMembers.approveMember({ id }),
-    onSuccess: () => {
-      toast.success("Member approved");
-      invalidate();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const approveMutation = useMutation(
+    orpc.ob.obMembers.approveMember.mutationOptions({
+      onSuccess: () => {
+        toast.success("Member approved");
+        invalidate();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const rejectMutation = useMutation({
-    mutationFn: (id: string) => client.ob.obMembers.rejectMember({ id }),
-    onSuccess: () => {
-      toast.success("Membership rejected");
-      invalidate();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const rejectMutation = useMutation(
+    orpc.ob.obMembers.rejectMember.mutationOptions({
+      onSuccess: () => {
+        toast.success("Membership rejected");
+        invalidate();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const revokeMutation = useMutation({
-    mutationFn: (id: string) => client.ob.obMembers.revokeMember({ id }),
-    onSuccess: () => {
-      toast.success("Membership revoked");
-      invalidate();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const revokeMutation = useMutation(
+    orpc.ob.obMembers.revokeMember.mutationOptions({
+      onSuccess: () => {
+        toast.success("Membership revoked");
+        invalidate();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => client.ob.obMembers.delete({ id }),
-    onSuccess: () => {
-      toast.success("Member removed");
-      setDeleting(null);
-      invalidate();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const deleteMutation = useMutation(
+    orpc.ob.obMembers.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success("Member removed");
+        setDeleting(null);
+        invalidate();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const visibleMembers = members.filter((m: any) => m.role !== "ADMINISTRATOR");
-  const pendingMembers = visibleMembers.filter((m: any) => m.status === "pending");
+  const visibleMembers = members.filter((m: OBMember) => m.role !== "ADMINISTRATOR");
+  const pendingMembers = visibleMembers.filter((m: OBMember) => m.status === "pending");
+  const filteredMembers = search.search
+    ? visibleMembers.filter((m: OBMember) =>
+        m.name.toLowerCase().includes(search.search!.toLowerCase()),
+      )
+    : visibleMembers;
 
   const columns: ColumnDef<OBMember, any>[] = [
     {
@@ -150,8 +161,8 @@ function OBAdminMembers() {
         return (
           <div className="flex items-center gap-2">
             <span>{m.name}</span>
-            {m.adminEmail && (
-              <IconShieldCheck className="size-3.5 text-gold shrink-0" title="OB Admin" />
+            {!!obAdminEmail && m.email?.toLowerCase() === obAdminEmail && (
+              <IconShieldCheck className="size-3.5 text-primary shrink-0" title="OB Admin" />
             )}
           </div>
         );
@@ -215,19 +226,19 @@ function OBAdminMembers() {
               </DropdownMenuItem>
               {m.status === "pending" && (
                 <>
-                  <DropdownMenuItem onClick={() => approveMutation.mutate(m.id)}>
+                  <DropdownMenuItem onClick={() => approveMutation.mutate({ id: m.id })}>
                     <IconCheck className="size-4" /> Approve
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     variant="destructive"
-                    onClick={() => rejectMutation.mutate(m.id)}
+                    onClick={() => rejectMutation.mutate({ id: m.id })}
                   >
                     <IconX className="size-4" /> Reject
                   </DropdownMenuItem>
                 </>
               )}
               {m.status === "approved" && (
-                <DropdownMenuItem variant="destructive" onClick={() => revokeMutation.mutate(m.id)}>
+                <DropdownMenuItem variant="destructive" onClick={() => revokeMutation.mutate({ id: m.id })}>
                   <IconRotate className="size-4" /> Revoke
                 </DropdownMenuItem>
               )}
@@ -243,105 +254,94 @@ function OBAdminMembers() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold font-heading text-green-dark">Members</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage every OB member — add, edit, and approve membership requests.
-          </p>
-        </div>
-        <Button
-          size="sm"
-          onClick={() => setFormOpen(true)}
-          className="bg-green-dark text-cream hover:bg-green-darker"
-        >
+    <div className="flex flex-col">
+      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <SidebarTrigger className="-ml-1" />
+        <Separator orientation="vertical" className="mr-2 h-4" />
+        <h1 className="text-lg font-semibold">Members</h1>
+        <Button size="sm" className="ml-auto" onClick={() => setFormOpen(true)}>
           <IconPlus className="mr-1 size-4" /> Add Member
         </Button>
-      </div>
-
-      {pendingMembers.length > 0 && (
-        <section>
-          <h2 className="text-sm font-bold tracking-[0.2em] text-yellow-600 mb-4">
-            PENDING APPROVAL ({pendingMembers.length})
-          </h2>
-          <div className="space-y-3">
-            {pendingMembers.map((member: any) => (
-              <Card key={member.id} className="border-yellow-500/30">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar size="default">
-                      <AvatarImage src={member.photo ?? undefined} alt={member.name} />
-                      <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium text-sm text-green-dark">{member.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {member.role} &bull; {member.year || "No year"} &bull;{" "}
-                        {member.email || "No email"}
+      </header>
+      <div className="flex-1 space-y-6 p-6">
+        {pendingMembers.length > 0 && (
+          <section>
+            <h2 className="mb-3 text-sm font-semibold text-foreground">
+              Pending approval ({pendingMembers.length})
+            </h2>
+            <Card>
+              <CardContent className="-mx-(--card-spacing) divide-y divide-border">
+                {pendingMembers.map((member: OBMember) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between gap-4 px-(--card-spacing) py-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar size="default">
+                        <AvatarImage src={member.photo ?? undefined} alt={member.name} />
+                        <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-foreground truncate">
+                          {member.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {member.role} &bull; {member.year || "No year"} &bull;{" "}
+                          {member.email || "No email"}
+                        </div>
                       </div>
                     </div>
+                    <div className="flex shrink-0 gap-2">
+                      <Button size="sm" onClick={() => approveMutation.mutate({ id: member.id })}>
+                        <IconCheck className="size-4 mr-1" /> Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => rejectMutation.mutate({ id: member.id })}
+                      >
+                        <IconX className="size-4 mr-1" /> Reject
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => approveMutation.mutate(member.id)}
-                      className="bg-green-dark text-cream hover:bg-green-darker"
-                    >
-                      <IconCheck className="size-4 mr-1" /> Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => rejectMutation.mutate(member.id)}
-                    >
-                      <IconX className="size-4 mr-1" /> Reject
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
+                ))}
+              </CardContent>
+            </Card>
+          </section>
+        )}
 
-      <section>
-        <h2 className="text-sm font-bold tracking-[0.2em] text-muted-foreground mb-4">
-          ALL MEMBERS ({visibleMembers.length})
-        </h2>
-        <div className="bg-white rounded-lg border p-2">
-          <DataTable
-            columns={columns}
-            data={visibleMembers}
-            loading={isLoading}
-            pageCount={0}
-            pagination={pagination}
-            onPaginationChange={setPagination}
-            sorting={sorting}
-            columnFilters={columnFilters}
-            onSortingChange={setSorting}
-            onColumnFiltersChange={setColumnFilters}
-            toolbar={(table) => {
-              const filters = table.getState().columnFilters;
-              const isFiltered = filters.length > 0;
-              const setFilter = (id: string, value: string) => {
-                const next = filters.filter((f) => f.id !== id);
-                if (value) next.push({ id, value });
-                table.setColumnFilters(next);
-              };
-              return (
+        <section>
+          <h2 className="mb-3 text-sm font-semibold text-foreground">
+            All members ({visibleMembers.length})
+          </h2>
+          <div className="rounded-lg border bg-card p-2">
+            <DataTable
+              columns={columns}
+              data={filteredMembers}
+              pageCount={0}
+              pagination={pagination}
+              onPaginationChange={setPagination}
+              sorting={sorting}
+              columnFilters={columnFilters}
+              onSortingChange={setSorting}
+              onColumnFiltersChange={setColumnFilters}
+              toolbar={(table) => (
                 <div className="flex items-center justify-between">
                   <div className="flex flex-1 items-center gap-2">
                     <Input
-                      placeholder="Filter by name..."
-                      value={(filters.find((f) => f.id === "name")?.value as string) ?? ""}
-                      onChange={(e) => setFilter("name", e.target.value)}
+                      placeholder="Search by name..."
+                      value={search.search ?? ""}
+                      onChange={(e) =>
+                        navigate({
+                          search: (prev) => ({ ...prev, search: e.target.value || undefined }),
+                        })
+                      }
                       className="h-8 w-[200px] lg:w-[250px]"
                     />
-                    {isFiltered && (
+                    {search.search && (
                       <Button
                         variant="ghost"
-                        onClick={() => table.resetColumnFilters()}
+                        onClick={() => navigate({ search: {} })}
                         className="h-8 px-2 lg:px-3"
                       >
                         Reset
@@ -350,12 +350,13 @@ function OBAdminMembers() {
                   </div>
                   <DataTableViewOptions table={table} />
                 </div>
-              );
-            }}
-            paginationBar={(table) => <DataTablePagination table={table} />}
-          />
-        </div>
-      </section>
+              )}
+              paginationBar={(table) => <DataTablePagination table={table} />}
+            />
+          </div>
+        </section>
+      </div>
+
 
       {/* Add / Edit member */}
       <Dialog
@@ -412,7 +413,7 @@ function OBAdminMembers() {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => deleting && deleteMutation.mutate(deleting.id)}
+              onClick={() => deleting && deleteMutation.mutate({ id: deleting.id })}
               disabled={deleteMutation.isPending}
             >
               Delete

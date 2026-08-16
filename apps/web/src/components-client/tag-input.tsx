@@ -14,7 +14,7 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@aloysius-web/ui/components/combobox";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 
 interface TagInputProps {
   value: string[];
@@ -32,10 +32,9 @@ export function TagInput({
   const anchor = useComboboxAnchor();
   const [searchValue, setSearchValue] = useState("");
 
-  const { data: allTags = [] } = useQuery({
-    queryKey: ["tags", "list", searchValue],
-    queryFn: () => client.tags.list({ search: searchValue || undefined }),
-  });
+  const { data: allTags = [] } = useQuery(
+    orpc.tags.list.queryOptions({ input: { search: searchValue || undefined } }),
+  );
 
   const items = allTags.filter((tag) => !value.includes(tag));
 

@@ -1,0 +1,270 @@
+import { z } from "zod";
+import { eq } from "drizzle-orm";
+import { createDb } from "@aloysius-web/db";
+import { events, eventRecords } from "@aloysius-web/db/schema";
+import { ORPCError } from "@orpc/server";
+import { adminProcedure } from "../../index";
+import {
+  authorTypeSchema,
+  contentStatusSchema,
+  eventOutcomeSchema,
+} from "../../schemas";
+import { generateUniqueSlug } from "../../lib/slug";
+
+/**
+ * Super-user tier for events. Site admin only (see admin/index.ts). Handles
+ * general (no activityId) events, admin-authored overrides of club events,
+ * and event outcome records (success/postponed/failed) — a purely
+ * administrative function with no self-service equivalent.
+ */
+export const adminEventsRouter = {
+  create: adminProcedure
+    .input(
+      z.object({
+        slug: z.string().optional(),
+        title: z.string().min(1),
+        content: z.string(),
+        excerpt: z.string().optional(),
+        coverImage: z.string().optional(),
+        bodyImage: z.string().optional(),
+        purpose: z.string().optional(),
+        organization: z.string().optional(),
+        organizerName: z.string().optional(),
+        organizerType: authorTypeSchema.optional(),
+        location: z.string().optional(),
+        startDate: z.string(),
+        endDate: z.string().optional(),
+        isRecurring: z.boolean().optional(),
+        isAllDay: z.boolean().optional(),
+        recurrenceRule: z.string().optional(),
+        tags: z.array(z.string()).optional(),
+        publishNow: z.boolean().optional(),
+        activityId: z.string().optional(),
+      }),
+    )
+    .handler(async ({ input, context }) => {
+      const db = createDb();
+      const status: "draft" | "published" = input.publishNow ? "published" : "draft";
+      const publishedAt = status === "published" ? new Date() : null;
+
+      const id = crypto.randomUUID();
+      const slug = input.slug
+        ? await generateUniqueSlug(events, input.slug)
+        : await generateUniqueSlug(events, input.title);
+
+      const record = await db
+        .insert(events)
+        .values({
+          id,
+          slug,
+          title: input.title,
+          content: input.content,
+          excerpt: input.excerpt ?? null,
+          coverImage: input.coverImage ?? null,
+          bodyImage: input.bodyImage ?? null,
+          purpose: input.purpose ?? null,
+          organization: input.organization ?? null,
+          organizerName: input.organizerName ?? null,
+          organizerType: input.organizerType ?? null,
+          location: input.location ?? null,
+          startDate: new Date(input.startDate),
+          endDate: input.endDate ? new Date(input.endDate) : null,
+          isRecurring: input.isRecurring ?? false,
+          isAllDay: input.isAllDay ?? false,
+          recurrenceRule: input.recurrenceRule ?? null,
+          tags: input.tags ?? [],
+          status,
+          activityId: input.activityId ?? null,
+          reviewStatus: "approved",
+          publishedAt,
+          userId: context.auth.userId!,
+        })
+        .returning()
+        .get();
+
+      return {
+        id: record.id,
+        slug: record.slug,
+        title: record.title,
+        content: record.content,
+        excerpt: record.excerpt,
+        coverImage: record.coverImage,
+        bodyImage: record.bodyImage,
+        purpose: record.purpose,
+        organization: record.organization,
+        organizerName: record.organizerName,
+        organizerType: record.organizerType,
+        location: record.location,
+        startDate: record.startDate.toISOString(),
+        endDate: record.endDate?.toISOString() ?? null,
+        isRecurring: record.isRecurring,
+        isAllDay: record.isAllDay,
+        recurrenceRule: record.recurrenceRule,
+        tags: record.tags,
+        status: record.status,
+        activityId: record.activityId,
+        reviewStatus: record.reviewStatus,
+        publishedAt: record.publishedAt?.toISOString() ?? null,
+        createdAt: record.createdAt.toISOString(),
+        updatedAt: record.updatedAt.toISOString(),
+      };
+    }),
+
+  update: adminProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        slug: z.string().optional(),
+        title: z.string().min(1).optional(),
+        content: z.string().optional(),
+        excerpt: z.string().optional(),
+        coverImage: z.string().optional(),
+        bodyImage: z.string().optional(),
+        purpose: z.string().optional(),
+        organization: z.string().optional(),
+        organizerName: z.string().optional(),
+        organizerType: authorTypeSchema.optional(),
+        location: z.string().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        isRecurring: z.boolean().optional(),
+        isAllDay: z.boolean().optional(),
+        recurrenceRule: z.string().optional(),
+        tags: z.array(z.string()).optional(),
+        status: contentStatusSchema.optional(),
+        publishNow: z.boolean().optional(),
+      }),
+    )
+    .handler(async ({ input }) => {
+      const db = createDb();
+      const existing = await db.select().from(events).where(eq(events.id, input.id)).get();
+      if (!existing) {
+        throw new ORPCError("NOT_FOUND", { message: "Event not found" });
+      }
+
+      const now = new Date();
+      const updateData: Record<string, unknown> = { updatedAt: now };
+
+      if (input.slug !== undefined) {
+        updateData.slug = await generateUniqueSlug(events, input.slug, input.id);
+      }
+      if (input.title !== undefined) {
+        updateData.title = input.title;
+        if (input.slug === undefined) {
+          updateData.slug = await generateUniqueSlug(events, input.title, input.id);
+        }
+      }
+      if (input.content !== undefined) updateData.content = input.content;
+      if (input.excerpt !== undefined) updateData.excerpt = input.excerpt;
+      if (input.coverImage !== undefined) updateData.coverImage = input.coverImage;
+      if (input.bodyImage !== undefined) updateData.bodyImage = input.bodyImage;
+      if (input.purpose !== undefined) updateData.purpose = input.purpose;
+      if (input.organization !== undefined) updateData.organization = input.organization;
+      if (input.organizerName !== undefined) updateData.organizerName = input.organizerName || null;
+      if (input.organizerType !== undefined) updateData.organizerType = input.organizerType || null;
+      if (input.location !== undefined) updateData.location = input.location;
+      if (input.startDate !== undefined) updateData.startDate = new Date(input.startDate);
+      if (input.endDate !== undefined)
+        updateData.endDate = input.endDate ? new Date(input.endDate) : null;
+      if (input.isRecurring !== undefined) updateData.isRecurring = input.isRecurring;
+      if (input.isAllDay !== undefined) updateData.isAllDay = input.isAllDay;
+      if (input.recurrenceRule !== undefined) updateData.recurrenceRule = input.recurrenceRule;
+      if (input.tags !== undefined) updateData.tags = input.tags;
+      if (input.status !== undefined) {
+        updateData.status = input.status;
+        if (input.status === "published" && !existing.publishedAt) {
+          updateData.publishedAt = now;
+        }
+      } else if (input.publishNow === true && !existing.publishedAt) {
+        updateData.publishedAt = now;
+        updateData.status = "published";
+      }
+
+      const record = await db
+        .update(events)
+        .set(updateData)
+        .where(eq(events.id, input.id))
+        .returning()
+        .get();
+
+      return {
+        id: record.id,
+        slug: record.slug,
+        title: record.title,
+        content: record.content,
+        excerpt: record.excerpt,
+        coverImage: record.coverImage,
+        bodyImage: record.bodyImage,
+        purpose: record.purpose,
+        organization: record.organization,
+        organizerName: record.organizerName,
+        organizerType: record.organizerType,
+        location: record.location,
+        startDate: record.startDate.toISOString(),
+        endDate: record.endDate?.toISOString() ?? null,
+        isRecurring: record.isRecurring,
+        isAllDay: record.isAllDay,
+        recurrenceRule: record.recurrenceRule,
+        tags: record.tags,
+        status: record.status,
+        activityId: record.activityId,
+        reviewStatus: record.reviewStatus,
+        publishedAt: record.publishedAt?.toISOString() ?? null,
+        createdAt: record.createdAt.toISOString(),
+        updatedAt: record.updatedAt.toISOString(),
+      };
+    }),
+
+  delete: adminProcedure.input(z.object({ id: z.string() })).handler(async ({ input }) => {
+    const db = createDb();
+    await db.delete(events).where(eq(events.id, input.id)).run();
+    return { success: true };
+  }),
+
+  addRecord: adminProcedure
+    .input(
+      z.object({
+        eventId: z.string(),
+        outcome: eventOutcomeSchema,
+        reason: z.string().optional(),
+        notes: z.string().optional(),
+      }),
+    )
+    .handler(async ({ input, context }) => {
+      const db = createDb();
+      const event = await db.select().from(events).where(eq(events.id, input.eventId)).get();
+      if (!event) {
+        throw new ORPCError("NOT_FOUND", { message: "Event not found" });
+      }
+
+      const id = crypto.randomUUID();
+      const record = await db
+        .insert(eventRecords)
+        .values({
+          id,
+          eventId: input.eventId,
+          outcome: input.outcome,
+          reason: input.reason ?? null,
+          notes: input.notes ?? null,
+          userId: context.auth.userId!,
+        })
+        .returning()
+        .get();
+
+      return {
+        id: record.id,
+        eventId: record.eventId,
+        outcome: record.outcome,
+        reason: record.reason,
+        notes: record.notes,
+        recordedAt: record.recordedAt.toISOString(),
+        createdAt: record.createdAt.toISOString(),
+      };
+    }),
+
+  deleteRecord: adminProcedure.input(z.object({ id: z.string() })).handler(async ({ input }) => {
+    const db = createDb();
+    await db.delete(eventRecords).where(eq(eventRecords.id, input.id)).run();
+    return { success: true };
+  }),
+};

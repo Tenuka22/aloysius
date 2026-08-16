@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useInfiniteQuery, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
@@ -18,44 +18,37 @@ import {
 import { IconTrash } from "@tabler/icons-react";
 import { Dropzone } from "@/components/file-upload";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
 import { toast } from "sonner";
-
-type GalleryImage = {
-  id: string;
-  galleryId: string;
-  url: string;
-  caption: string | null;
-  sortOrder: number;
-  createdAt: string;
-};
+import type { GalleryImage } from "@/lib/api-types";
 
 export const Route = createFileRoute("/admin/gallery_/$id/images")({
+  loader: async ({ context, params }) => {
+    await context.queryClient.prefetchQuery(
+      orpc.gallery.get.queryOptions({ input: { id: params.id } }),
+    );
+  },
   component: GalleryImagesPage,
 });
 
 function GalleryImagesPage() {
   const { id } = Route.useParams();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [deleteImageId, setDeleteImageId] = useState<string | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const { data: gallery } = useQuery({
-    queryKey: ["gallery", id],
-    queryFn: () => client.gallery.get({ id }),
-  });
+  const { data: gallery } = useSuspenseQuery(orpc.gallery.get.queryOptions({ input: { id } }));
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
-    queryKey: ["gallery", id, "images"],
-    queryFn: ({ pageParam = 1 }) =>
-      client.gallery.listImages({ galleryId: id, page: pageParam, pageSize: 20 }),
-    getNextPageParam: (lastPage) =>
-      lastPage.page < lastPage.pageCount ? lastPage.page + 1 : undefined,
-    initialPageParam: 1,
-  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery(
+    orpc.gallery.listImages.infiniteOptions({
+      input: (pageParam) => ({ galleryId: id, page: pageParam, pageSize: 20 }),
+      getNextPageParam: (lastPage) =>
+        lastPage.page < lastPage.pageCount ? lastPage.page + 1 : undefined,
+      initialPageParam: 1,
+    }),
+  );
 
   const images = data?.pages.flatMap((page) => page.rows) ?? [];
 
@@ -76,40 +69,41 @@ function GalleryImagesPage() {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const addImage = useMutation({
-    mutationFn: (body: { galleryId: string; url: string; caption?: string }) =>
-      client.gallery.addImage(body),
-    onSuccess: () => {
-      toast.success("Image added");
-      queryClient.invalidateQueries({ queryKey: ["gallery", id, "images"] });
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const addImage = useMutation(
+    orpc.admin.gallery.addImage.mutationOptions({
+      onSuccess: () => {
+        toast.success("Image added");
+        queryClient.invalidateQueries({ queryKey: orpc.gallery.key() });
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
-  const removeImage = useMutation({
-    mutationFn: (imageId: string) => client.gallery.removeImage({ id: imageId }),
-    onSuccess: () => {
-      toast.success("Image removed");
-      queryClient.invalidateQueries({ queryKey: ["gallery", id, "images"] });
-      setDeleteImageId(null);
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const removeImage = useMutation(
+    orpc.admin.gallery.removeImage.mutationOptions({
+      onSuccess: () => {
+        toast.success("Image removed");
+        queryClient.invalidateQueries({ queryKey: orpc.gallery.key() });
+        setDeleteImageId(null);
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
-  const updateImage = useMutation({
-    mutationFn: (body: { id: string; caption?: string; sortOrder?: number }) =>
-      client.gallery.updateImage(body),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["gallery", id, "images"] });
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const updateImage = useMutation(
+    orpc.admin.gallery.updateImage.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpc.gallery.key() });
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   const handleFilesSelected = useCallback(
     async (files: File[]) => {
@@ -146,13 +140,13 @@ function GalleryImagesPage() {
             Gallery
           </Button>
           <span className="text-muted-foreground">/</span>
-          <h1 className="text-lg font-semibold">{gallery?.title ?? "Album"}</h1>
+          <h1 className="text-lg font-semibold">{gallery.title}</h1>
         </div>
       </header>
       <div className="flex-1 p-6 space-y-6">
         <div className="space-y-2">
           <label className="text-sm font-medium">Cover Image (16:9)</label>
-          {gallery?.coverImage ? (
+          {gallery.coverImage ? (
             <div className="relative overflow-hidden rounded-xl border max-w-md">
               <img
                 src={gallery.coverImage}
@@ -220,7 +214,7 @@ function GalleryImagesPage() {
             <Button
               variant="destructive"
               onClick={() => {
-                if (deleteImageId) removeImage.mutate(deleteImageId);
+                if (deleteImageId) removeImage.mutate({ id: deleteImageId });
               }}
               disabled={removeImage.isPending}
             >

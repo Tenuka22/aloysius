@@ -5,7 +5,6 @@ import { clubAlbums, clubAlbumImages, activities } from "@aloysius-web/db/schema
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { resolveClubAccess, assertClubMember } from "../lib/club-access";
-import { createNotification } from "../lib/notifications";
 
 type AlbumRow = typeof clubAlbums.$inferSelect;
 type AlbumImageRow = typeof clubAlbumImages.$inferSelect;
@@ -512,81 +511,4 @@ export const clubAlbumsRouter = {
       return { success: true };
     }),
 
-  /** Approve or reject an album. Site admin only. */
-  review: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        action: z.enum(["approve", "reject"]),
-        reason: z.string().optional(),
-      }),
-    )
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.adminCalled) {
-        throw new ORPCError("UNAUTHORIZED", { message: "Site admin access required." });
-      }
-      const reviewerId = context.auth.userId!;
-      const db = createDb();
-      const existing = await db.select().from(clubAlbums).where(eq(clubAlbums.id, input.id)).get();
-      if (!existing) throw new ORPCError("NOT_FOUND", { message: "Album not found" });
-
-      const now = new Date();
-      await db
-        .update(clubAlbums)
-        .set({
-          reviewStatus: input.action === "approve" ? "approved" : "rejected",
-          status: input.action === "approve" ? "published" : "draft",
-          reviewedBy: reviewerId,
-          reviewedAt: now,
-          rejectionReason: input.action === "reject" ? (input.reason ?? null) : null,
-          updatedAt: now,
-        })
-        .where(eq(clubAlbums.id, input.id))
-        .run();
-
-      await createNotification({
-        userId: existing.userId,
-        type: input.action === "approve" ? "content_approved" : "content_rejected",
-        title:
-          input.action === "approve"
-            ? `Photo album approved: ${existing.title}`
-            : `Photo album rejected: ${existing.title}`,
-        body:
-          input.action === "reject"
-            ? input.reason
-              ? `Reason: ${input.reason}`
-              : undefined
-            : "Your album is now live on the club page.",
-        link: `/clubs/${existing.activityId}`,
-      });
-
-      return { success: true };
-    }),
-
-  /** Toggle featured-on-homepage. Site admin only; only approved albums can be featured. */
-  setFeatured: protectedProcedure
-    .input(z.object({ id: z.string(), featured: z.boolean() }))
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.adminCalled) {
-        throw new ORPCError("UNAUTHORIZED", { message: "Site admin access required." });
-      }
-
-      const db = createDb();
-      const existing = await db.select().from(clubAlbums).where(eq(clubAlbums.id, input.id)).get();
-      if (!existing) throw new ORPCError("NOT_FOUND", { message: "Album not found" });
-
-      if (input.featured && existing.reviewStatus !== "approved") {
-        throw new ORPCError("BAD_REQUEST", {
-          message: "Only approved albums can be featured on the homepage.",
-        });
-      }
-
-      await db
-        .update(clubAlbums)
-        .set({ featuredOnHome: input.featured, updatedAt: new Date() })
-        .where(eq(clubAlbums.id, input.id))
-        .run();
-
-      return { success: true };
-    }),
 };

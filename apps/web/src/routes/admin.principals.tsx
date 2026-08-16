@@ -50,33 +50,23 @@ import {
   IconRotate,
   IconExternalLink,
 } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
-
-type PrincipalItem = {
-  id: string;
-  slug: string;
-  name: string;
-  title: string;
-  quote: string | null;
-  portrait: string | null;
-  year: string;
-  sortOrder: number;
-  status: string;
-  createdAt: string;
-};
+import type { PrincipalRow } from "@/lib/api-types";
 
 function DeleteDialog({
   open,
   onOpenChange,
   onConfirm,
   title,
+  isPending,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title: string;
+  isPending: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -88,11 +78,11 @@ function DeleteDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete
+          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+            {isPending ? "Deleting…" : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -100,33 +90,34 @@ function DeleteDialog({
   );
 }
 
-function ActionsMenu({ item }: { item: PrincipalItem }) {
+function ActionsMenu({ item }: { item: PrincipalRow }) {
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const deleteMutation = useMutation({
-    mutationFn: () => client.principals.delete({ id: item.id }),
-    onSuccess: () => {
-      toast.success("Staff member deleted");
-      queryClient.invalidateQueries({ queryKey: ["principals"] });
-      setDeleteOpen(false);
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const deleteMutation = useMutation(
+    orpc.admin.principals.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success("Staff member deleted");
+        queryClient.invalidateQueries({ queryKey: orpc.principals.key() });
+        setDeleteOpen(false);
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
-  const statusMutation = useMutation({
-    mutationFn: (status: "draft" | "published" | "archived") =>
-      client.principals.update({ id: item.id, status }),
-    onSuccess: () => {
-      toast.success("Status updated");
-      queryClient.invalidateQueries({ queryKey: ["principals"] });
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const statusMutation = useMutation(
+    orpc.admin.principals.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Status updated");
+        queryClient.invalidateQueries({ queryKey: orpc.principals.key() });
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   return (
     <>
@@ -151,25 +142,33 @@ function ActionsMenu({ item }: { item: PrincipalItem }) {
           )}
           <DropdownMenuSeparator />
           {item.status === "draft" && (
-            <DropdownMenuItem onClick={() => statusMutation.mutate("published")}>
+            <DropdownMenuItem
+              onClick={() => statusMutation.mutate({ id: item.id, status: "published" })}
+            >
               <IconSend className="size-4" />
               Publish
             </DropdownMenuItem>
           )}
           {item.status === "published" && (
             <>
-              <DropdownMenuItem onClick={() => statusMutation.mutate("draft")}>
+              <DropdownMenuItem
+                onClick={() => statusMutation.mutate({ id: item.id, status: "draft" })}
+              >
                 <IconRotate className="size-4" />
                 Unpublish
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => statusMutation.mutate("archived")}>
+              <DropdownMenuItem
+                onClick={() => statusMutation.mutate({ id: item.id, status: "archived" })}
+              >
                 <IconArchive className="size-4" />
                 Archive
               </DropdownMenuItem>
             </>
           )}
           {item.status === "archived" && (
-            <DropdownMenuItem onClick={() => statusMutation.mutate("draft")}>
+            <DropdownMenuItem
+              onClick={() => statusMutation.mutate({ id: item.id, status: "draft" })}
+            >
               <IconRotate className="size-4" />
               Restore to Draft
             </DropdownMenuItem>
@@ -185,14 +184,15 @@ function ActionsMenu({ item }: { item: PrincipalItem }) {
       <DeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onConfirm={() => deleteMutation.mutate()}
+        onConfirm={() => deleteMutation.mutate({ id: item.id })}
+        isPending={deleteMutation.isPending}
         title={item.name}
       />
     </>
   );
 }
 
-const columns: ColumnDef<PrincipalItem, any>[] = [
+const columns: ColumnDef<PrincipalRow, any>[] = [
   {
     accessorKey: "portrait",
     header: "Portrait",
@@ -275,26 +275,18 @@ function AdminPrincipalsList() {
       ? (rawStatus as "draft" | "published" | "archived")
       : undefined;
 
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      "principals",
-      pagination.pageIndex,
-      pagination.pageSize,
-      sort?.id,
-      sort?.desc,
-      search,
-      status,
-    ],
-    queryFn: () =>
-      client.principals.list({
+  const { data, isLoading } = useQuery(
+    orpc.principals.list.queryOptions({
+      input: {
         page: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
         sort: sort?.id,
         sortDir: sort?.desc ? "desc" : "asc",
         search,
         status,
-      }),
-  });
+      },
+    }),
+  );
 
   const items = data?.rows ?? [];
   const pageCount = data?.pageCount ?? 0;

@@ -4,10 +4,15 @@ import { createDb } from "@aloysius-web/db";
 import { announcements } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import {
+  audienceSchema,
+  authorTypeSchema,
+  contentStatusSchema,
+  reviewStatusSchema,
+  sortDirectionSchema,
+} from "../schemas";
 import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 import { resolveClubAccess, assertClubMember } from "../lib/club-access";
-
-const sortDirection = z.enum(["asc", "desc"]);
 
 export const announcementsRouter = {
   list: publicProcedure
@@ -16,12 +21,12 @@ export const announcementsRouter = {
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).max(100).default(10),
         sort: z.string().optional(),
-        sortDir: sortDirection.default("desc"),
+        sortDir: sortDirectionSchema.default("desc"),
         search: z.string().optional(),
-        status: z.enum(["draft", "published", "archived"]).optional(),
-        audience: z.enum(["all", "students", "parents", "staff", "alumni"]).optional(),
+        status: contentStatusSchema.optional(),
+        audience: audienceSchema.optional(),
         activityId: z.string().optional(),
-        reviewStatus: z.enum(["pending", "approved", "rejected"]).optional(),
+        reviewStatus: reviewStatusSchema.optional(),
       }),
     )
     .handler(async ({ input, context }) => {
@@ -47,7 +52,12 @@ export const announcementsRouter = {
         conditions.push(like(announcements.title, `%${search}%`));
       }
       if (status) {
+        if (status !== "published" && !isSiteAdmin && !canSeeNonApproved) {
+          throw new ORPCError("UNAUTHORIZED", { message: "Only published content is publicly visible." });
+        }
         conditions.push(eq(announcements.status, status));
+      } else if (!isSiteAdmin && !canSeeNonApproved) {
+        conditions.push(eq(announcements.status, "published"));
       }
       if (audience) {
         conditions.push(eq(announcements.audience, audience));
@@ -133,12 +143,13 @@ export const announcementsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
       }
 
-      if (row.activityId && row.reviewStatus !== "approved") {
-        const userId = context.auth?.userId ?? null;
-        const isSiteAdmin = context.auth?.adminCalled ?? false;
-        const isAuthor = userId !== null && userId === row.userId;
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const userId = context.auth?.userId ?? null;
+      const isAuthor = userId !== null && userId === row.userId;
+      const needsGating = row.status !== "published" || (!!row.activityId && row.reviewStatus !== "approved");
+      if (needsGating) {
         let canView = isSiteAdmin || isAuthor;
-        if (!canView && userId) {
+        if (!canView && userId && row.activityId) {
           const { membership, isClubAdmin } = await resolveClubAccess(
             db,
             row.activityId,
@@ -185,11 +196,11 @@ export const announcementsRouter = {
         excerpt: z.string().optional(),
         coverImage: z.string().optional(),
         tags: z.array(z.string()).optional(),
-        audience: z.enum(["all", "students", "parents", "staff", "alumni"]).optional(),
+        audience: audienceSchema.optional(),
         addressedTo: z.string().optional(),
         publishNow: z.boolean().optional(),
         authorName: z.string().optional(),
-        authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
+        authorType: authorTypeSchema.optional(),
         activityId: z.string().optional(),
       }),
     )
@@ -197,28 +208,25 @@ export const announcementsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
+      if (!input.activityId) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "A club (activityId) is required. General announcements are created via site admin.",
+        });
+      }
 
       const db = createDb();
+      const { membership, isClubAdmin } = await resolveClubAccess(
+        db,
+        input.activityId,
+        context.auth.userId,
+        context.auth.adminCalled,
+      );
+      assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
 
-      let reviewStatus: "pending" | "approved" | "rejected" = "approved";
-      let status: "draft" | "published" = input.publishNow ? "published" : "draft";
-      let publishedAt: Date | null = input.publishNow ? new Date() : null;
-
-      if (input.activityId) {
-        const { membership, isClubAdmin } = await resolveClubAccess(
-          db,
-          input.activityId,
-          context.auth.userId,
-          context.auth.adminCalled,
-        );
-        assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
-
-        if (!context.auth.adminCalled) {
-          reviewStatus = "pending";
-          status = "draft";
-          publishedAt = null;
-        }
-      }
+      const reviewStatus: "pending" | "approved" = context.auth.adminCalled ? "approved" : "pending";
+      const status: "draft" | "published" =
+        context.auth.adminCalled && input.publishNow ? "published" : "draft";
+      const publishedAt: Date | null = status === "published" ? new Date() : null;
 
       const id = crypto.randomUUID();
       const slug = input.slug
@@ -242,7 +250,7 @@ export const announcementsRouter = {
           authorName: input.authorName ?? null,
           authorType: input.authorType ?? null,
           userId: context.auth.userId,
-          activityId: input.activityId ?? null,
+          activityId: input.activityId,
           reviewStatus,
         })
         .returning()
@@ -282,11 +290,11 @@ export const announcementsRouter = {
         excerpt: z.string().optional(),
         coverImage: z.string().optional(),
         tags: z.array(z.string()).optional(),
-        audience: z.enum(["all", "students", "parents", "staff", "alumni"]).optional(),
+        audience: audienceSchema.optional(),
         addressedTo: z.string().optional(),
         publishNow: z.boolean().optional(),
         authorName: z.string().optional(),
-        authorType: z.enum(["student", "faculty", "club", "org"]).optional(),
+        authorType: authorTypeSchema.optional(),
       }),
     )
     .handler(async ({ input, context }) => {
@@ -304,23 +312,26 @@ export const announcementsRouter = {
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
       }
-
-      if (existing.activityId) {
-        const { membership, isClubAdmin } = await resolveClubAccess(
-          db,
-          existing.activityId,
-          context.auth.userId,
-          context.auth.adminCalled,
-        );
-        assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
+      if (!existing.activityId) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "General announcements can only be edited by a site admin.",
+        });
       }
+
+      const { membership, isClubAdmin } = await resolveClubAccess(
+        db,
+        existing.activityId,
+        context.auth.userId,
+        context.auth.adminCalled,
+      );
+      assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
 
       const now = new Date();
       const updateData: Record<string, unknown> = {
         updatedAt: now,
       };
 
-      if (existing.activityId && !context.auth.adminCalled) {
+      if (!context.auth.adminCalled) {
         updateData.reviewStatus = "pending";
         updateData.status = "draft";
         updateData.publishedAt = null;
@@ -346,7 +357,7 @@ export const announcementsRouter = {
       if (input.addressedTo !== undefined) updateData.addressedTo = input.addressedTo;
       if (input.authorName !== undefined) updateData.authorName = input.authorName;
       if (input.authorType !== undefined) updateData.authorType = input.authorType;
-      if (input.publishNow === true && !existing.publishedAt) {
+      if (context.auth.adminCalled && input.publishNow === true && !existing.publishedAt) {
         updateData.publishedAt = now;
         updateData.status = "published";
       }
@@ -399,20 +410,23 @@ export const announcementsRouter = {
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Announcement not found" });
       }
+      if (!existing.activityId) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "General announcements can only be deleted by a site admin.",
+        });
+      }
 
-      if (existing.activityId) {
-        const { isClubAdmin } = await resolveClubAccess(
-          db,
-          existing.activityId,
-          context.auth.userId,
-          context.auth.adminCalled,
-        );
-        const isAuthor = existing.userId === context.auth.userId;
-        if (!isAuthor && !isClubAdmin) {
-          throw new ORPCError("UNAUTHORIZED", {
-            message: "Only the author or a club admin can delete this.",
-          });
-        }
+      const { isClubAdmin } = await resolveClubAccess(
+        db,
+        existing.activityId,
+        context.auth.userId,
+        context.auth.adminCalled,
+      );
+      const isAuthor = existing.userId === context.auth.userId;
+      if (!isAuthor && !isClubAdmin) {
+        throw new ORPCError("UNAUTHORIZED", {
+          message: "Only the author or a club admin can delete this.",
+        });
       }
 
       await db.delete(announcements).where(eq(announcements.id, input.id)).run();

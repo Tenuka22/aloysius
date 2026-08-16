@@ -41,22 +41,10 @@ import {
   SelectValue,
 } from "@aloysius-web/ui/components/select";
 import { IconPlus, IconDotsVertical, IconPencil, IconTrash } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
-
-type AnnouncementItem = {
-  id: string;
-  title: string;
-  excerpt: string | null;
-  coverImage: string | null;
-  tags: string[] | null;
-  status: string;
-  audience: string;
-  addressedTo: string | null;
-  publishedAt: string | null;
-  createdAt: string;
-};
+import type { AnnouncementRow } from "@/lib/api-types";
 
 const audienceLabels: Record<string, string> = {
   all: "Everyone",
@@ -71,11 +59,13 @@ function DeleteDialog({
   onOpenChange,
   onConfirm,
   title,
+  isPending,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title: string;
+  isPending: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,11 +77,11 @@ function DeleteDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete
+          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+            {isPending ? "Deleting…" : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -99,21 +89,22 @@ function DeleteDialog({
   );
 }
 
-function ActionsMenu({ item }: { item: AnnouncementItem }) {
+function ActionsMenu({ item }: { item: AnnouncementRow }) {
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const deleteMutation = useMutation({
-    mutationFn: () => client.announcements.delete({ id: item.id }),
-    onSuccess: () => {
-      toast.success("Announcement deleted");
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
-      setDeleteOpen(false);
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const deleteMutation = useMutation(
+    orpc.admin.announcements.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success("Announcement deleted");
+        queryClient.invalidateQueries({ queryKey: orpc.announcements.key() });
+        setDeleteOpen(false);
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   return (
     <>
@@ -139,14 +130,15 @@ function ActionsMenu({ item }: { item: AnnouncementItem }) {
       <DeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onConfirm={() => deleteMutation.mutate()}
+        onConfirm={() => deleteMutation.mutate({ id: item.id })}
         title={item.title}
+        isPending={deleteMutation.isPending}
       />
     </>
   );
 }
 
-const columns: ColumnDef<AnnouncementItem, any>[] = [
+const columns: ColumnDef<AnnouncementRow, any>[] = [
   {
     accessorKey: "coverImage",
     header: "Cover",
@@ -264,19 +256,9 @@ function AdminAnnouncementsList() {
       ? (rawAudience as "all" | "students" | "parents" | "staff" | "alumni")
       : undefined;
 
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      "announcements",
-      pagination.pageIndex,
-      pagination.pageSize,
-      sort?.id,
-      sort?.desc,
-      search,
-      status,
-      audience,
-    ],
-    queryFn: () =>
-      client.announcements.list({
+  const { data, isLoading } = useQuery(
+    orpc.announcements.list.queryOptions({
+      input: {
         page: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
         sort: sort?.id,
@@ -284,8 +266,9 @@ function AdminAnnouncementsList() {
         search,
         status,
         audience,
-      }),
-  });
+      },
+    }),
+  );
 
   const items = data?.rows ?? [];
   const pageCount = data?.pageCount ?? 0;

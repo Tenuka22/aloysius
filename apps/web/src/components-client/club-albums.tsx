@@ -16,7 +16,7 @@ import {
 import { Dropzone } from "@/components/file-upload";
 import { IconPhoto, IconPlus, IconTrash, IconStar, IconX } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
 import { toast } from "sonner";
 
@@ -75,17 +75,15 @@ export function ClubAlbums({
   const [createOpen, setCreateOpen] = useState(false);
   const [viewId, setViewId] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["clubAlbums", activityId],
-    queryFn: () => client.clubAlbums.list({ activityId, pageSize: 50 }),
-  });
+  const { data, isLoading } = useQuery(
+    orpc.clubAlbums.list.queryOptions({ input: { activityId, pageSize: 50 } }),
+  );
 
   const albums = (data?.rows ?? []) as Album[];
 
   const invalidate = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["clubAlbums", activityId] });
-    queryClient.invalidateQueries({ queryKey: ["clubAlbums", viewId] });
-  }, [queryClient, activityId, viewId]);
+    queryClient.invalidateQueries({ queryKey: orpc.clubAlbums.key() });
+  }, [queryClient]);
 
   return (
     <div className="space-y-4">
@@ -223,21 +221,21 @@ function CreateAlbumDialog({
   const [uploading, setUploading] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
 
-  const createAlbum = useMutation({
-    mutationFn: () =>
-      client.clubAlbums.create({ activityId, title, description: description || undefined }),
-    onSuccess: async (data) => {
-      const album = data as Album;
-      // Upload any photos first, then attach them to the album
-      for (const url of photos) {
-        await client.clubAlbums.addImage({ albumId: album.id, url });
-      }
-      toast.success("Album created — pending site admin approval");
-      queryClient.invalidateQueries({ queryKey: ["clubAlbums", activityId] });
-      onSuccess();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const createAlbum = useMutation(
+    orpc.clubAlbums.create.mutationOptions({
+      onSuccess: async (data) => {
+        const album = data as Album;
+        // Upload any photos first, then attach them to the album
+        for (const url of photos) {
+          await client.clubAlbums.addImage({ albumId: album.id, url });
+        }
+        toast.success("Album created — pending site admin approval");
+        queryClient.invalidateQueries({ queryKey: orpc.clubAlbums.key() });
+        onSuccess();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
   const handleFilesSelected = useCallback(async (files: File[]) => {
     setUploading(true);
@@ -261,7 +259,7 @@ function CreateAlbumDialog({
       toast.error("Album title is required");
       return;
     }
-    createAlbum.mutate();
+    createAlbum.mutate({ activityId, title, description: description || undefined });
   };
 
   return (
@@ -362,11 +360,9 @@ function ViewAlbumDialog({
   const [uploading, setUploading] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["clubAlbums", albumId],
-    queryFn: () => client.clubAlbums.get({ id: albumId }),
-    enabled: open,
-  });
+  const { data, isLoading } = useQuery(
+    orpc.clubAlbums.get.queryOptions({ input: { id: albumId }, enabled: open }),
+  );
 
   const album = (data?.album as Album | undefined) ?? null;
   const images = (data?.images as AlbumImage[] | undefined) ?? [];
@@ -375,8 +371,8 @@ function ViewAlbumDialog({
   const canEdit = canManage || isAuthor;
 
   const invalidate = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["clubAlbums", albumId] });
-  }, [queryClient, albumId]);
+    queryClient.invalidateQueries({ queryKey: orpc.clubAlbums.key() });
+  }, [queryClient]);
 
   const addImages = useMutation({
     mutationFn: async (files: File[]) => {
@@ -393,33 +389,36 @@ function ViewAlbumDialog({
     onError: (err) => toast.error(err.message),
   });
 
-  const removeImage = useMutation({
-    mutationFn: (id: string) => client.clubAlbums.removeImage({ id }),
-    onSuccess: () => {
-      toast.success("Photo removed");
-      invalidate();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const removeImage = useMutation(
+    orpc.clubAlbums.removeImage.mutationOptions({
+      onSuccess: () => {
+        toast.success("Photo removed");
+        invalidate();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const deleteAlbum = useMutation({
-    mutationFn: () => client.clubAlbums.delete({ id: albumId }),
-    onSuccess: () => {
-      toast.success("Album deleted");
-      setDeleteOpen(false);
-      onOpenChange(false);
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const deleteAlbum = useMutation(
+    orpc.clubAlbums.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success("Album deleted");
+        setDeleteOpen(false);
+        onOpenChange(false);
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
-  const toggleFeatured = useMutation({
-    mutationFn: (featured: boolean) => client.clubAlbums.setFeatured({ id: albumId, featured }),
-    onSuccess: () => {
-      toast.success("Album feature updated");
-      invalidate();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const toggleFeatured = useMutation(
+    orpc.admin.clubAlbums.setFeatured.mutationOptions({
+      onSuccess: () => {
+        toast.success("Album feature updated");
+        invalidate();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
   const handleFilesSelected = useCallback(
     (files: File[]) => {
@@ -487,7 +486,7 @@ function ViewAlbumDialog({
                       {canEdit && (
                         <button
                           type="button"
-                          onClick={() => removeImage.mutate(image.id)}
+                          onClick={() => removeImage.mutate({ id: image.id })}
                           disabled={removeImage.isPending}
                           className="absolute top-2 right-2 rounded-md bg-black/60 p-1.5 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
                           aria-label="Remove photo"
@@ -517,7 +516,7 @@ function ViewAlbumDialog({
               <Button
                 variant={album.featuredOnHome ? "default" : "outline"}
                 size="sm"
-                onClick={() => toggleFeatured.mutate(!album.featuredOnHome)}
+                onClick={() => toggleFeatured.mutate({ id: albumId, featured: !album.featuredOnHome })}
                 disabled={toggleFeatured.isPending}
                 className="mr-auto"
               >
@@ -554,7 +553,7 @@ function ViewAlbumDialog({
             </Button>
             <Button
               variant="destructive"
-              onClick={() => deleteAlbum.mutate()}
+              onClick={() => deleteAlbum.mutate({ id: albumId })}
               disabled={deleteAlbum.isPending}
             >
               Delete

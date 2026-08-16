@@ -18,7 +18,7 @@ import { Card } from "@aloysius-web/ui/components/card";
 import { Field, FieldLabel, FieldContent } from "@aloysius-web/ui/components/field";
 import { cn } from "@aloysius-web/ui/lib/utils";
 import { IconPlus, IconTrash, IconUpload, IconUser, IconX } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import { uploadImageWithRatio } from "@/lib/upload-image";
 
@@ -279,30 +279,17 @@ export function StaffEditor({
     setSlots((prev) => (prev.length > 1 ? prev.filter((s) => s.key !== key) : prev));
   };
 
-  const saveMutation = useMutation({
-    mutationFn: () =>
-      client.staff.saveYear({
-        year,
-        entries: slots
-          .filter((s) => s.name.trim())
-          .map((s, i) => ({
-            id: s.id || undefined,
-            name: s.name.trim(),
-            role: s.role.trim() || "Staff",
-            email: s.email.trim() || null,
-            photo: s.photo || null,
-            bio: s.bio.trim() || null,
-            sortOrder: i,
-          })),
-      }),
-    onSuccess: (res) => {
-      toast.success(
-        `Staff saved (${res.saved} members${res.removed ? `, ${res.removed} removed` : ""})`,
-      );
-      queryClient.invalidateQueries({ queryKey: ["staff"] });
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const saveMutation = useMutation(
+    orpc.admin.staff.saveYear.mutationOptions({
+      onSuccess: (res) => {
+        toast.success(
+          `Staff saved (${res.saved} members${res.removed ? `, ${res.removed} removed` : ""})`,
+        );
+        queryClient.invalidateQueries({ queryKey: orpc.staff.key() });
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
   const filledCount = slots.filter((s) => s.name.trim()).length;
 
@@ -323,7 +310,22 @@ export function StaffEditor({
             </span>
             <Button
               size="sm"
-              onClick={() => saveMutation.mutate()}
+              onClick={() =>
+                saveMutation.mutate({
+                  year,
+                  entries: slots
+                    .filter((s) => s.name.trim())
+                    .map((s, i) => ({
+                      id: s.id || undefined,
+                      name: s.name.trim(),
+                      role: s.role.trim() || "Staff",
+                      email: s.email.trim() || null,
+                      photo: s.photo || null,
+                      bio: s.bio.trim() || null,
+                      sortOrder: i,
+                    })),
+                })
+              }
               disabled={saveMutation.isPending}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >

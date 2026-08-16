@@ -2,12 +2,12 @@
 
 import { useCallback, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@aloysius-web/ui/components/button";
 import { FormBuilder } from "@aloysius-web/ui/lib/form-builder";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
 import * as v from "valibot";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
 import { toast } from "sonner";
 import { Dropzone } from "@/components/file-upload";
@@ -78,14 +78,23 @@ const DEFAULTS: AcademicsFormValues = {
   stream4_name: "Arts & Technology",
   stream4_desc: "Humanities, ICT and engineering technology.",
   dept_subject1_name: "Mathematics",
+  dept_subject1_head: "",
   dept_subject2_name: "Science",
+  dept_subject2_head: "",
   dept_subject3_name: "Sinhala",
+  dept_subject3_head: "",
   dept_subject4_name: "English",
+  dept_subject4_head: "",
   dept_subject5_name: "History & Religion",
+  dept_subject5_head: "",
   dept_subject6_name: "Commerce",
+  dept_subject6_head: "",
   dept_subject7_name: "ICT & Technology",
+  dept_subject7_head: "",
   dept_subject8_name: "Aesthetics (Art & Music)",
+  dept_subject8_head: "",
   dept_subject9_name: "Physical Education",
+  dept_subject9_head: "",
   academics_image_1: "",
   academics_image_2: "",
   results_cta_title: "Examination Results & Achievements",
@@ -353,30 +362,28 @@ const academicsConfig: FormConfig<AcademicsFormValues> = {
 };
 
 export const Route = createFileRoute("/admin/academics")({
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery(orpc.settings.getAll.queryOptions());
+  },
   component: AdminAcademics,
 });
 
 function AdminAcademics() {
   const queryClient = useQueryClient();
 
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ["settings", "academics"],
-    queryFn: () => client.settings.getAll(),
-  });
+  const { data: settings } = useSuspenseQuery(orpc.settings.getAll.queryOptions());
 
-  const mutation = useMutation({
-    mutationFn: async (values: AcademicsFormValues) => {
-      const items = Object.entries(values).map(([key, value]) => ({ key, value }));
-      return client.settings.setMany({ items });
-    },
-    onSuccess: () => {
-      toast.success("Academics page updated");
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const mutation = useMutation(
+    orpc.admin.settings.setMany.mutationOptions({
+      onSuccess: () => {
+        toast.success("Academics page updated");
+        queryClient.invalidateQueries({ queryKey: orpc.settings.key() });
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   const settingsMap = settings as Record<string, string> | undefined;
   const defaultValues: AcademicsFormValues = {
@@ -423,16 +430,6 @@ function AdminAcademics() {
     results_cta_subtitle: settingsMap?.results_cta_subtitle ?? DEFAULTS.results_cta_subtitle,
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4 p-6">
-        <div className="h-8 w-48 rounded bg-muted animate-pulse" />
-        <div className="h-10 rounded bg-muted animate-pulse" />
-        <div className="h-20 rounded bg-muted animate-pulse" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8 p-6 w-full max-w-4xl">
       <div className="flex items-center justify-between">
@@ -448,9 +445,12 @@ function AdminAcademics() {
         valibotSchema={academicsSchema}
         defaultValues={defaultValues}
         mutationOptions={{
-          mutationFn: async ({ body }) => mutation.mutateAsync(body),
+          mutationFn: async ({ body }) => {
+            const items = Object.entries(body).map(([key, value]) => ({ key, value }));
+            return mutation.mutateAsync({ items });
+          },
         }}
-        queryKeysToInvalidate={[["settings"]]}
+        queryKeysToInvalidate={[orpc.settings.key()]}
       />
     </div>
   );

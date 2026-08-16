@@ -5,6 +5,8 @@ import {
   IconHeart,
   IconUsers,
 } from "@tabler/icons-react";
+import { MediaImage } from "@/components-client/media-image";
+import type { OBMember, OBEvent, OBDonation } from "@/lib/api-types";
 
 export function OBHomeSection({
   settings,
@@ -13,9 +15,9 @@ export function OBHomeSection({
   obDonations = [],
 }: {
   settings?: Record<string, string>;
-  obMembers?: any[];
-  obEvents?: any[];
-  obDonations?: any[];
+  obMembers?: OBMember[];
+  obEvents?: OBEvent[];
+  obDonations?: OBDonation[];
 } = {}) {
   const heading = settings?.ob_heading || "OLD BOYS' ASSOCIATION";
   const description =
@@ -40,30 +42,28 @@ export function OBHomeSection({
 ];
 
   const approved = (obMembers ?? [])
-    .filter((m: any) => m.status === "approved")
-    .filter(
-      (m: any, idx: number, arr: any[]) => arr.findIndex((x: any) => x.id === m.id) === idx,
-    );
+    .filter((m) => m.status === "approved")
+    .filter((m, idx, arr) => arr.findIndex((x) => x.id === m.id) === idx);
 
-  const headCommittee = approved.filter((m: any) =>
+  const headCommittee = approved.filter((m) =>
     HEAD_ROLES.includes((m.role || "").toUpperCase()),
   );
 
   const publishedEvents = (obEvents ?? []).filter(
-    (e: any) => e.status === "published",
+    (e) => e.status === "published",
   );
 
   const confirmedDonations = (obDonations ?? []).filter(
-    (d: any) => d.status === "confirmed",
+    (d) => d.status === "confirmed",
   );
 
   const totalRaised = confirmedDonations.reduce(
-    (sum: number, d: any) => sum + (d.amount || 0),
+    (sum, d) => sum + (d.amount || 0),
     0,
   );
 
   return (
-    <section className="bg-[#013405] py-24 sm:py-[120px] px-4 sm:px-6 lg:px-12">
+    <section className="bg-green-dark py-24 sm:py-[120px] px-4 sm:px-6 lg:px-12">
       <div className="mx-auto max-w-[1180px]">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 lg:mb-16">
@@ -93,7 +93,7 @@ export function OBHomeSection({
               </h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {headCommittee.map((member: any) => (
+              {headCommittee.map((member) => (
                 <Card
                   key={member.id}
                   className="bg-cream/[0.03] border-gold/20 overflow-hidden"
@@ -139,38 +139,37 @@ export function OBHomeSection({
               </h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
-              {publishedEvents.slice(0, 3).map((event: any) => (
+              {publishedEvents.slice(0, 3).map((event) => (
                 <Link
                   key={event.id}
                   to="/ob"
                   className="group block bg-green-dark border-2 border-gold hover:bg-gold transition-colors duration-300"
                 >
                   <div className="relative w-full overflow-hidden">
-                    {event.coverImage ? (
-                      <img
-                        src={event.coverImage}
-                        alt={event.title}
-                        className="w-full aspect-[16/9] object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-full aspect-[16/9] bg-green-dark/5 flex items-center justify-center">
-                        <span className="text-[11px] tracking-widest text-green-dark/30 font-semibold">
-                          EVENT
-                        </span>
-                      </div>
-                    )}
+                    <MediaImage
+                      src={event.coverImage}
+                      alt={event.title}
+                      className="w-full aspect-[16/9] object-cover transition-transform duration-500 group-hover:scale-105"
+                      fallback={
+                        <div className="w-full aspect-[16/9] bg-gold/10 flex items-center justify-center">
+                          <span className="text-[11px] tracking-widest text-gold/50 font-semibold">
+                            EVENT
+                          </span>
+                        </div>
+                      }
+                    />
                   </div>
                   <div className="p-4 lg:p-5">
-                    <div className="font-heading text-base sm:text-lg font-semibold leading-snug text-green-dark group-hover:underline">
+                    <div className="font-heading text-base sm:text-lg font-semibold leading-snug text-cream group-hover:text-green-dark transition-colors duration-300">
                       {event.title}
                     </div>
                     {event.location && (
-                      <div className="text-[13px] text-green-dark/50 mt-1.5">
+                      <div className="text-[13px] text-cream/60 group-hover:text-green-dark/70 mt-1.5 transition-colors duration-300">
                         {event.location}
                       </div>
                     )}
                     {event.eventDate && (
-                      <div className="text-[11px] tracking-wider text-gold mt-2.5 font-bold">
+                      <div className="text-[11px] tracking-wider text-gold group-hover:text-green-dark mt-2.5 font-bold transition-colors duration-300">
                         {new Date(event.eventDate).toLocaleDateString(undefined, {
                           month: "short",
                           day: "numeric",
@@ -194,7 +193,7 @@ export function OBHomeSection({
                 SUPPORT
               </h3>
             </div>
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
               <div>
                 <div className="font-heading text-4xl sm:text-5xl font-semibold text-cream">
                   LKR {totalRaised.toLocaleString()}
@@ -204,8 +203,13 @@ export function OBHomeSection({
                 </div>
               </div>
               <div className="flex-1 max-w-xl">
+                {confirmedDonations.length > 5 && (
+                  <div className="text-[10px] tracking-[0.16em] font-bold text-gold/60 mb-2 px-4 lg:px-0">
+                    MOST RECENT
+                  </div>
+                )}
                 <div className="border-t border-gold/10">
-                  {confirmedDonations.slice(0, 5).map((d: any) => {
+                  {confirmedDonations.slice(0, 5).map((d) => {
                     const date = d.donatedAt
                       ? new Date(d.donatedAt).toLocaleDateString(undefined, {
                           month: "short",
@@ -219,11 +223,19 @@ export function OBHomeSection({
                         className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 py-3 border-b border-gold/10 px-4 hover:bg-green-darker transition-colors"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-full bg-cream/5 flex items-center justify-center shrink-0">
-                            <span className="text-gold/70 font-bold text-[11px]">
-                              {(d.isAnonymous ? "A" : d.donorName?.charAt(0) || "?").toUpperCase()}
-                            </span>
-                          </div>
+                          {d.image ? (
+                            <img
+                              src={d.image}
+                              alt=""
+                              className="w-9 h-9 rounded-full object-cover shrink-0 border border-gold/20"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-cream/5 flex items-center justify-center shrink-0">
+                              <span className="text-gold/70 font-bold text-[11px]">
+                                {(d.isAnonymous ? "A" : d.donorName?.charAt(0) || "?").toUpperCase()}
+                              </span>
+                            </div>
+                          )}
                           <div className="min-w-0">
                             <div className="text-[12px] text-cream/80 truncate">
                               {d.isAnonymous ? "Anonymous" : d.donorName}

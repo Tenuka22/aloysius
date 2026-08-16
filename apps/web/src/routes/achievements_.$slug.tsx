@@ -3,19 +3,6 @@ import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
 
-type Achievement = {
-  id: string;
-  title: string;
-  description: string | null;
-  category: string;
-  recipientNames: string[] | null;
-  recipientType: string | null;
-  year: number | null;
-  coverImage: string | null;
-  tags: string[] | null;
-  publishedAt: string | null;
-};
-
 const categoryLabels: Record<string, string> = {
   academic: "Academic",
   sports: "Sports",
@@ -51,7 +38,7 @@ export const Route = createFileRoute("/achievements_/$slug")({
 });
 
 function AchievementDetailPage() {
-  const { achievement } = Route.useLoaderData() as { achievement: Achievement };
+  const { achievement } = Route.useLoaderData();
 
   return (
     <div className="min-h-screen bg-background">

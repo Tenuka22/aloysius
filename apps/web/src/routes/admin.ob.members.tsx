@@ -2,7 +2,7 @@
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
@@ -16,10 +16,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@aloysius-web/ui/components/dialog";
-import { IconPlus, IconUsers, IconRefresh, IconShieldCheck } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { IconPlus, IconUsers, IconShieldCheck } from "@tabler/icons-react";
+import { orpc } from "@/utils/orpc";
+import type { OBMember } from "@/lib/api-types";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const OB_ADMIN_EMAIL_KEY = "ob_admin_email";
 
 const HEAD_ROLES = [
   "PRESIDENT",
@@ -39,6 +42,12 @@ function isHeadRole(role: string): boolean {
 }
 
 export const Route = createFileRoute("/admin/ob/members")({
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery(orpc.ob.obMembers.list.queryOptions({ input: {} }));
+    await context.queryClient.prefetchQuery(
+      orpc.settings.get.queryOptions({ input: { key: OB_ADMIN_EMAIL_KEY } }),
+    );
+  },
   component: AdminOBMembers,
 });
 
@@ -47,42 +56,46 @@ function AdminOBMembers() {
   const queryClient = useQueryClient();
   const [newYearOpen, setNewYearOpen] = useState(false);
   const [newYear, setNewYear] = useState("");
+  const [obAdminEmail, setObAdminEmail] = useState("");
 
-  const { data: members = [], isLoading } = useQuery({
-    queryKey: ["ob-members"],
-    queryFn: () => client.ob.obMembers.list({}),
-  });
+  const { data: members = [] } = useSuspenseQuery(
+    orpc.ob.obMembers.list.queryOptions({ input: {} }),
+  );
+  const { data: adminEmailSetting } = useSuspenseQuery(
+    orpc.settings.get.queryOptions({ input: { key: OB_ADMIN_EMAIL_KEY } }),
+  );
 
-  const syncAdminEmails = useMutation({
-    mutationFn: () => client.ob.obMembers.syncOBAdminEmails(),
-    onSuccess: (res) => {
-      if (res.errors > 0) {
-        toast.error(`Synced ${res.synced}, ${res.errors} error(s): ${res.errorsList.join("; ")}`);
-      } else {
-        toast.success(`Admin emails synced (${res.synced} updated)`);
-      }
-      queryClient.invalidateQueries({ queryKey: ["ob-members"] });
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const visibleMembers = members.filter((m: OBMember) => m.role !== "ADMINISTRATOR");
+  const approvedMembers = visibleMembers.filter((m: OBMember) => m.status === "approved");
 
-  const visibleMembers = members.filter((m: any) => m.role !== "ADMINISTRATOR");
-  const approvedMembers = visibleMembers.filter((m: any) => m.status === "approved");
+  // There is a single, site-wide OB admin email — always load the latest saved
+  // value directly, with no per-member lookup.
+  useEffect(() => {
+    setObAdminEmail(adminEmailSetting?.value ?? "");
+  }, [adminEmailSetting]);
 
-  const years = Array.from(new Set(approvedMembers.map((m: any) => m.year).filter(Boolean)))
+  const saveAdminMutation = useMutation(
+    orpc.admin.settings.set.mutationOptions({
+      onSuccess: () => {
+        toast.success("OB admin email saved");
+        queryClient.invalidateQueries({ queryKey: orpc.settings.key() });
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
+
+  const years = Array.from(new Set(approvedMembers.map((m: OBMember) => m.year).filter(Boolean)))
     .sort()
     .reverse();
 
   const getYearData = (year: string) => {
-    const yearMembers = visibleMembers.filter((m: any) => m.year === year);
-    const headCommittee = yearMembers.filter((m: any) => isHeadRole(m.role));
-    const regularMembers = yearMembers.filter((m: any) => !isHeadRole(m.role));
-    const admin = yearMembers.find((m: any) => m.adminEmail);
+    const yearMembers = visibleMembers.filter((m: OBMember) => m.year === year);
+    const headCommittee = yearMembers.filter((m: OBMember) => isHeadRole(m.role));
+    const regularMembers = yearMembers.filter((m: OBMember) => !isHeadRole(m.role));
     return {
       total: yearMembers.length,
       headCommittee,
       regularMembers,
-      adminEmail: admin?.adminEmail ?? null,
       hasData: yearMembers.length > 0,
     };
   };
@@ -102,27 +115,45 @@ function AdminOBMembers() {
         <Separator orientation="vertical" className="mr-2 h-4" />
         <h1 className="text-lg font-semibold">OB Committee</h1>
         <div className="ml-auto flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => syncAdminEmails.mutate()}
-            disabled={syncAdminEmails.isPending}
-          >
-            <IconRefresh
-              className={`size-4 mr-1 ${syncAdminEmails.isPending ? "animate-spin" : ""}`}
-            />
-            {syncAdminEmails.isPending ? "Syncing..." : "Sync Admin Emails"}
-          </Button>
           <Button size="sm" onClick={() => setNewYearOpen(true)}>
             <IconPlus className="mr-1 size-4" />
             Create New Year
           </Button>
         </div>
       </header>
+      <div className="p-6 pb-0">
+        <Card className="border-secondary/20">
+          <CardContent className="p-4 flex flex-wrap items-center gap-4">
+            <div className="flex-1 min-w-[240px]">
+              <label className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                <IconShieldCheck className="size-3.5 text-primary shrink-0" />
+                OB Admin Email
+              </label>
+              <Input
+                placeholder="admin@example.com"
+                value={obAdminEmail}
+                onChange={(e) => setObAdminEmail(e.target.value)}
+                className="h-9"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1.5">
+                The single OB admin manages the OB dashboard for every committee year — this
+                need not be an approved member and is not necessarily the President.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() =>
+                saveAdminMutation.mutate({ key: OB_ADMIN_EMAIL_KEY, value: obAdminEmail.trim() })
+              }
+              disabled={saveAdminMutation.isPending}
+            >
+              {saveAdminMutation.isPending ? "Saving..." : "Save"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
       <div className="flex-1 p-6">
-        {isLoading ? (
-          <div className="text-center text-muted-foreground py-8">Loading...</div>
-        ) : years.length === 0 ? (
+        {years.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             No committee years yet. Create a new year to start building the OB committee.
           </div>
@@ -142,12 +173,6 @@ function AdminOBMembers() {
                         {data.total} members
                       </span>
                     </div>
-                    {data.adminEmail && (
-                      <div className="flex items-center gap-1.5 mt-2 text-xs text-primary">
-                        <IconShieldCheck className="size-3.5 shrink-0" />
-                        <span className="truncate">{data.adminEmail}</span>
-                      </div>
-                    )}
                   </div>
                   <div className="flex-1 p-5 space-y-3">
                     {data.headCommittee.length > 0 && (
@@ -156,7 +181,7 @@ function AdminOBMembers() {
                           HEAD COMMITTEE
                         </div>
                         <div className="space-y-2">
-                          {data.headCommittee.slice(0, 4).map((member: any) => (
+                          {data.headCommittee.slice(0, 4).map((member: OBMember) => (
                             <div key={member.id} className="flex items-center gap-2.5">
                               <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0 overflow-hidden">
                                 {member.photo ? (
@@ -177,9 +202,6 @@ function AdminOBMembers() {
                                   {member.role}
                                 </div>
                               </div>
-                              {member.adminEmail && (
-                                <IconShieldCheck className="size-3.5 text-primary shrink-0" />
-                              )}
                             </div>
                           ))}
                           {data.headCommittee.length > 4 && (
@@ -196,7 +218,7 @@ function AdminOBMembers() {
                           MEMBERS
                         </div>
                         <div className="space-y-2">
-                          {data.regularMembers.slice(0, 3).map((member: any) => (
+                          {data.regularMembers.slice(0, 3).map((member: OBMember) => (
                             <div key={member.id} className="flex items-center gap-2.5">
                               <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0 overflow-hidden">
                                 {member.photo ? (
@@ -228,17 +250,14 @@ function AdminOBMembers() {
                       </div>
                     )}
                   </div>
-                  <div className="px-5 py-3 border-t bg-secondary/10">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-center"
-                      render={<Link to="/admin/ob/members/$year" params={{ year }} />}
-                    >
-                      <IconUsers className="mr-1.5 size-4" />
-                      Manage {year} Committee
-                    </Button>
-                  </div>
+                  <Button
+                    variant="secondary"
+                    className="w-full h-12 justify-center rounded-none rounded-b-xl border-t text-sm font-semibold"
+                    render={<Link to="/admin/ob/members/$year" params={{ year }} />}
+                  >
+                    <IconUsers className="mr-1.5 size-4" />
+                    Manage {year} Committee
+                  </Button>
                 </Card>
               );
             })}

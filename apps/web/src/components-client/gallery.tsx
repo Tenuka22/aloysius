@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { MediaImage } from "@/components-client/media-image";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -91,27 +92,47 @@ export function Gallery({
           </div>
         ) : (
           <div ref={gridRef} className="columns-[320px] gap-4">
-            {items.map((item) => (
-              <div key={item.id} className="mb-4 break-inside-avoid overflow-hidden">
-                {item.slug ? (
-                  <a href={`/gallery/${item.slug}`} className="block">
-                    <img
-                      src={item.url}
-                      alt={item.caption || "Gallery image"}
-                      loading="lazy"
-                      className="w-full h-auto object-cover hover:opacity-90 transition-opacity"
-                    />
-                  </a>
-                ) : (
-                  <img
-                    src={item.url}
-                    alt={item.caption || "Gallery image"}
-                    loading="lazy"
-                    className="w-full h-auto object-cover"
-                  />
-                )}
-              </div>
-            ))}
+            {items.map((item) => {
+              const fallback = (
+                <div className="w-full aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-green-dark/[0.07] to-green-dark/[0.02]">
+                  <span className="text-[11px] tracking-[0.18em] text-green-dark/50 font-semibold">
+                    ARCHIVE PHOTO
+                  </span>
+                </div>
+              );
+              const img = (
+                <MediaImage
+                  src={item.url}
+                  alt={item.caption || "Gallery image"}
+                  loading="lazy"
+                  className="w-full h-auto object-cover hover:opacity-90 transition-opacity"
+                  fallback={fallback}
+                />
+              );
+              return (
+                <div key={item.id} className="mb-4 break-inside-avoid overflow-hidden">
+                  {item.slug ? (
+                    <a href={`/gallery/${item.slug}`} className="block">
+                      {img}
+                    </a>
+                  ) : (
+                    img
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {items.length > 0 && (
+          <div data-animate className="flex justify-center mt-14">
+            <a
+              href={s("gallery_cta_url") || "/gallery"}
+              className="inline-flex items-center gap-2.5 border-2 border-green-dark px-8 py-3.5 text-sm font-bold tracking-[0.08em] text-green-dark hover:bg-green-dark hover:text-cream transition-colors duration-300"
+            >
+              SEE MORE PHOTOS
+              <span aria-hidden="true">&rarr;</span>
+            </a>
           </div>
         )}
       </div>

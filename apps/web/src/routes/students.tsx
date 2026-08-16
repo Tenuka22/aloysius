@@ -8,14 +8,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-type ActivityRow = {
-  id: string;
-  name: string;
-  description: string | null;
-  coverImage: string | null;
-  type: string;
-};
-
 const DEFAULT_HOUSES = [
   { name: "Cooreman", color: "#FFD700" },
   { name: "Murphy", color: "#E31E24" },
@@ -40,7 +32,7 @@ export const Route = createFileRoute("/students")({
       client.settings.getAll(),
       client.activities.list({ status: "published", type: "club" }),
     ]);
-    return { settings, clubs: clubs as ActivityRow[] };
+    return { settings, clubs };
   },
   staleTime: 5 * 60_000,
   component: StudentsPage,

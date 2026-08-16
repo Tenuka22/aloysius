@@ -1,17 +1,18 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 
 export function NoticeStrip({ settings }: { settings?: Record<string, string> }) {
   const s = (key: string) => settings?.[key] ?? "";
   const topId = s("top_announcement_id").trim();
 
-  const { data: topAnnouncement } = useQuery({
-    queryKey: ["announcements", "get", topId],
-    queryFn: () => client.announcements.get({ id: topId }),
-    enabled: !!topId,
-  });
+  const { data: topAnnouncement } = useQuery(
+    orpc.announcements.get.queryOptions({
+      input: { id: topId },
+      enabled: !!topId,
+    }),
+  );
 
   // Top announcement selected in the homepage CMS -> yellow strip with green text
   if (topAnnouncement) {
@@ -42,7 +43,7 @@ export function NoticeStrip({ settings }: { settings?: Record<string, string> })
 
   const url = s("notice_url") || "/news-events";
   const isHigh = settings?.notice_priority === "high";
-  const color = isHigh ? "#E05252" : "#FFB203";
+  const color = isHigh ? "var(--red-alert)" : "var(--gold)";
 
   return (
     <div className="bg-green-darker text-cream text-[13px] flex items-center gap-3.5 px-4 sm:px-6 lg:px-12 py-[9px]">

@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Dropzone } from "@/components/file-upload";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
 import { toast } from "sonner";
 import { IconX } from "@tabler/icons-react";
@@ -190,19 +190,17 @@ function AdminAlumni() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<Record<string, string>>({});
 
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ["settings", "alumni"],
-    queryFn: () => client.settings.getAll(),
-  });
+  const { data: settings, isLoading } = useQuery(orpc.settings.getAll.queryOptions());
 
-  const mutation = useMutation({
-    mutationFn: (items: { key: string; value: string }[]) => client.settings.setMany({ items }),
-    onSuccess: () => {
-      toast.success("Alumni page updated");
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const mutation = useMutation(
+    orpc.admin.settings.setMany.mutationOptions({
+      onSuccess: () => {
+        toast.success("Alumni page updated");
+        queryClient.invalidateQueries({ queryKey: orpc.settings.key() });
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
   const getValue = (key: string) => form[key] ?? settings?.[key] ?? DEFAULTS[key] ?? "";
 
@@ -215,7 +213,7 @@ function AdminAlumni() {
       key,
       value: getValue(key),
     }));
-    mutation.mutate(items);
+    mutation.mutate({ items });
   };
 
   if (isLoading) {

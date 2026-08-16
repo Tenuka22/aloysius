@@ -18,21 +18,31 @@ const DEFAULTS: Record<string, string> = {
   history1_title: "Founding of the College",
   history1_body:
     "St. Aloysius' College was established by Belgian Jesuit missionaries led by Bishop Joseph Van Reeth.",
-  history1_image: "",
+  history1_image: "/old1.png",
   history2_year: "1920s",
   history2_title: "Early Growth",
   history2_body: "Expansion of the College, early buildings and student body.",
-  history2_image: "",
+  history2_image: "/old2.png",
   history3_year: "1971",
   history3_title: "A Century of Excellence",
   history3_body:
     "Became a national school with the appointment of the first Buddhist principal, marking milestones in academics, sport and national life.",
-  history3_image: "",
+  history3_image: "/old3.png",
   history4_year: "Today",
   history4_title: "The Modern College",
   history4_body:
     "St. Aloysius' College today - facilities, programmes and a community of over 5,000 students.",
-  history4_image: "",
+  history4_image: "/old4.png",
+  about_founders_eyebrow: "OUR FOUNDATIONS",
+  about_founders_title: "Built on Faith & Tradition",
+  founder1_name: "Bishop Joseph Van Reeth",
+  founder1_image: "/Bishop Joseph Van Reeth.png",
+  founder1_body:
+    "Founded in 1895 by Belgian Jesuit missionaries under Bishop Joseph Van Reeth, the first bishop of Galle, St. Aloysius' College carries forward a 130-year tradition of forming young men of competence, conscience and compassion.",
+  founder2_name: "St. Aloysius Gonzaga",
+  founder2_image: "/St. Aloysius Gonzaga.png",
+  founder2_body:
+    "Named after St. Aloysius Gonzaga, the patron saint of youth, the college embodies the Jesuit values of academic excellence, moral integrity and service to others.",
   about_vision_statement:
     "To be a leading centre of academic and moral excellence, forming young men of competence, conscience and compassion.",
   about_mission_statement:
@@ -264,6 +274,7 @@ function AboutPage() {
   const administrationRef = useRef<HTMLElement>(null);
   const [anthemTab, setAnthemTab] = useState("en");
   const [showScore, setShowScore] = useState(false);
+  const [showFullAnthem, setShowFullAnthem] = useState(false);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -296,7 +307,7 @@ function AboutPage() {
     year: s(`history${i}_year`),
     title: s(`history${i}_title`),
     body: s(`history${i}_body`),
-    image: settings[`history${i}_image`],
+    image: s(`history${i}_image`),
   }));
 
   // Group staff by year, sorted descending (most recent first)
@@ -394,44 +405,26 @@ function AboutPage() {
               data-animate
               className="text-[11px] tracking-[0.4em] font-bold text-red-brand mb-4.5"
             >
-              OUR FOUNDATIONS
+              {s("about_founders_eyebrow")}
             </div>
             <h2
               data-animate
               className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-15"
             >
-              Built on Faith & Tradition
+              {s("about_founders_title")}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-              <div data-animate className="flex flex-col">
-                <div className="aspect-[4/5] overflow-hidden mb-6 border border-gold/20">
-                  <img
-                    src="/Bishop Joseph Van Reeth.png"
-                    alt="Bishop Joseph Van Reeth"
-                    className="w-full h-full object-cover"
-                  />
+              {[1, 2].map((i) => (
+                <div key={i} data-animate className="flex flex-col">
+                  <div className="aspect-[4/5] overflow-hidden mb-6 border border-gold/20">
+                    <ArchivalImage src={s(`founder${i}_image`)} />
+                  </div>
+                  <h3 className="font-bold text-lg mb-2">{s(`founder${i}_name`)}</h3>
+                  <p className="text-sm leading-[1.7] text-[#013405]/75">
+                    {s(`founder${i}_body`)}
+                  </p>
                 </div>
-                <h3 className="font-bold text-lg mb-2">Bishop Joseph Van Reeth</h3>
-                <p className="text-sm leading-[1.7] text-[#013405]/75">
-                  Founded in 1895 by Belgian Jesuit missionaries under Bishop Joseph Van Reeth, the
-                  first bishop of Galle, St. Aloysius' College carries forward a 130-year tradition
-                  of forming young men of competence, conscience and compassion.
-                </p>
-              </div>
-              <div data-animate className="flex flex-col">
-                <div className="aspect-[4/5] overflow-hidden mb-6 border border-gold/20">
-                  <img
-                    src="/St. Aloysius Gonzaga.png"
-                    alt="St. Aloysius Gonzaga"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="font-bold text-lg mb-2">St. Aloysius Gonzaga</h3>
-                <p className="text-sm leading-[1.7] text-[#013405]/75">
-                  Named after St. Aloysius Gonzaga, the patron saint of youth, the college embodies
-                  the Jesuit values of academic excellence, moral integrity and service to others.
-                </p>
-              </div>
+              ))}
             </div>
           </div>
         </section>
@@ -586,7 +579,7 @@ function AboutPage() {
           ref={anthemRef}
           className="bg-[#fffdf6] border-t border-[#013405]/[0.08] py-24 sm:py-30 px-4 sm:px-6 lg:px-12"
         >
-          <div className="mx-auto max-w-190 text-center">
+          <div className="mx-auto max-w-4xl text-center">
             <div
               data-animate
               className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5"
@@ -608,7 +601,10 @@ function AboutPage() {
                 {Object.entries(anthemLyrics).map(([key, lang]) => (
                   <button
                     key={key}
-                    onClick={() => setAnthemTab(key)}
+                    onClick={() => {
+                      setAnthemTab(key);
+                      setShowFullAnthem(false);
+                    }}
                     className={`px-5 py-2 text-sm font-semibold transition-colors ${
                       anthemTab === key
                         ? "bg-[#013405] text-[#FFF8E7]"
@@ -620,48 +616,92 @@ function AboutPage() {
                 ))}
               </div>
 
-              <div className="mb-6">
-                <div className="aspect-21/9 bg-[#013405]/5 overflow-hidden">
+              <div className="mb-8 max-w-2xl mx-auto">
+                <div className="aspect-[3/2] bg-[#013405]/5 overflow-hidden">
                   <img
                     src="/collage-en-anthem-creators.png"
-                    alt="College Anthem Creators"
-                    className="w-full h-full object-cover"
+                    alt="Portraits of D. Anghie and Fr. Strom Sidicinus, S.J., who wrote the College Anthem"
+                    className="w-full h-full object-cover object-top"
                   />
                 </div>
-                <p className="text-xs text-[#013405]/50 text-center mt-2 italic">
+                <p className="text-xs text-[#013405]/50 text-center mt-2.5 italic">
                   English: Words by D. Anghie &middot; Music by Strom Sidicinus, S.J. &middot;
                   Sinhala: Lyrics by Rev. Fr. Moses Perera &middot; Music by Sunil Santha
                 </p>
               </div>
 
-              <div className="border border-[#013405]/15 border-t-2 border-t-[#FFB203] bg-[#FFF8E7] p-7 sm:p-11">
-                {anthemLyrics[anthemTab]?.stanzas.length === 0 ? (
-                  <p className="text-center text-[#013405]/50 italic py-8">Coming soon.</p>
-                ) : (
-                  <div className="space-y-6">
-                    {anthemLyrics[anthemTab]?.stanzas.map((stanza, si) => (
-                      <div
-                        key={si}
-                        className={
-                          si === 1 || si === 2 || si === 18 || si === 19 ? "text-center" : ""
-                        }
-                      >
-                        {stanza.map((line, li) => (
-                          <p
-                            key={li}
-                            className="font-['Cormorant_Garamond'] text-lg leading-relaxed text-[#013405]/85"
-                          >
-                            {line}
-                          </p>
-                        ))}
-                        {si < (anthemLyrics[anthemTab]?.stanzas.length ?? 0) - 1 && (
-                          <div className="border-b border-[#013405]/10 my-4" />
+              {(() => {
+                const allStanzas = anthemLyrics[anthemTab]?.stanzas ?? [];
+                const PREVIEW_COUNT = 4;
+                const isLong = allStanzas.length > PREVIEW_COUNT;
+                const visibleStanzas =
+                  showFullAnthem || !isLong ? allStanzas : allStanzas.slice(0, PREVIEW_COUNT);
+                return (
+                  <>
+                    <div className="relative">
+                      <div className="border border-[#013405]/15 border-t-2 border-t-[#FFB203] bg-[#FFF8E7] p-7 sm:p-10 lg:p-12 text-left">
+                        {allStanzas.length === 0 ? (
+                          <p className="text-center text-[#013405]/50 italic py-8">Coming soon.</p>
+                        ) : (
+                          <div className="sm:columns-2 gap-x-12 lg:gap-x-16">
+                            {visibleStanzas.map((stanza, si) => (
+                              <div
+                                key={si}
+                                className={`break-inside-avoid flex gap-4 pb-6 mb-6 border-b border-[#013405]/10 last:border-b-0 last:pb-0 last:mb-0 ${
+                                  si === 1 || si === 2 || si === 18 || si === 19
+                                    ? "sm:text-center"
+                                    : ""
+                                }`}
+                              >
+                                <span className="shrink-0 font-['Cormorant_Garamond'] text-sm font-bold text-[#FFB203] tabular-nums pt-0.5 w-5">
+                                  {si + 1}
+                                </span>
+                                <div className="min-w-0">
+                                  {stanza.map((line, li) => (
+                                    <p
+                                      key={li}
+                                      className="font-['Cormorant_Garamond'] text-lg leading-relaxed text-[#013405]/85"
+                                    >
+                                      {line}
+                                    </p>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      {isLong && !showFullAnthem && (
+                        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#FFF8E7] to-transparent pointer-events-none" />
+                      )}
+                    </div>
+
+                    {isLong && (
+                      <button
+                        onClick={() => setShowFullAnthem((v) => !v)}
+                        className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-[#013405]/70 hover:text-[#013405] border border-[#013405]/15 transition-colors"
+                      >
+                        {showFullAnthem
+                          ? "Show Fewer Verses"
+                          : `Read Full Anthem (${allStanzas.length} verses)`}
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className={`size-3 transition-transform ${showFullAnthem ? "rotate-180" : ""}`}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
 
               {anthemTab === "en" && (
                 <div className="mt-6">

@@ -7,7 +7,7 @@ import { Button } from "@aloysius-web/ui/components/button";
 import { FormBuilder } from "@aloysius-web/ui/lib/form-builder";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
 import * as v from "valibot";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
 import { toast } from "sonner";
 import { Dropzone } from "@/components/file-upload";
@@ -70,11 +70,9 @@ const DEFAULTS: StudentsFormValues = {
 function SportsImageField({
   value,
   onChange,
-  name,
 }: {
   value: unknown;
   onChange: (val: unknown) => void;
-  name: string;
 }) {
   const [uploading, setUploading] = useState(false);
 
@@ -144,24 +142,24 @@ const studentsFields: FieldEntry<StudentsFormValues>[] = [
     name: "sports_cricket_image",
     kind: "custom",
     label: "Cricket Photo",
-    customRenderer: ({ value, onChange, name }) => (
-      <SportsImageField value={value} onChange={onChange} name={name} />
+    customRenderer: ({ value, onChange }) => (
+      <SportsImageField value={value} onChange={onChange} />
     ),
   },
   {
     name: "sports_rugby_image",
     kind: "custom",
     label: "Rugby Photo",
-    customRenderer: ({ value, onChange, name }) => (
-      <SportsImageField value={value} onChange={onChange} name={name} />
+    customRenderer: ({ value, onChange }) => (
+      <SportsImageField value={value} onChange={onChange} />
     ),
   },
   {
     name: "sports_athletics_image",
     kind: "custom",
     label: "Athletics Photo",
-    customRenderer: ({ value, onChange, name }) => (
-      <SportsImageField value={value} onChange={onChange} name={name} />
+    customRenderer: ({ value, onChange }) => (
+      <SportsImageField value={value} onChange={onChange} />
     ),
   },
   { name: "sports_more_text", kind: "text", label: "More Sports Text" },
@@ -250,24 +248,19 @@ export const Route = createFileRoute("/admin/students")({
 function AdminStudents() {
   const queryClient = useQueryClient();
 
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ["settings", "students"],
-    queryFn: () => client.settings.getAll(),
-  });
+  const { data: settings, isLoading } = useQuery(orpc.settings.getAll.queryOptions());
 
-  const mutation = useMutation({
-    mutationFn: async (values: StudentsFormValues) => {
-      const items = Object.entries(values).map(([key, value]) => ({ key, value }));
-      return client.settings.setMany({ items });
-    },
-    onSuccess: () => {
-      toast.success("Students page updated");
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const mutation = useMutation(
+    orpc.admin.settings.setMany.mutationOptions({
+      onSuccess: () => {
+        toast.success("Students page updated");
+        queryClient.invalidateQueries({ queryKey: orpc.settings.key() });
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   const settingsMap = settings as Record<string, string> | undefined;
   const defaultValues: StudentsFormValues = {
@@ -318,9 +311,12 @@ function AdminStudents() {
         valibotSchema={studentsSchema}
         defaultValues={defaultValues}
         mutationOptions={{
-          mutationFn: async ({ body }) => mutation.mutateAsync(body),
+          mutationFn: async ({ body }) => {
+            const items = Object.entries(body).map(([key, value]) => ({ key, value }));
+            return mutation.mutateAsync({ items });
+          },
         }}
-        queryKeysToInvalidate={[["settings"]]}
+        queryKeysToInvalidate={[orpc.settings.key()]}
       />
     </div>
   );

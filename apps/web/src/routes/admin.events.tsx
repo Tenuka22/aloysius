@@ -50,38 +50,23 @@ import {
   IconArchive,
   IconRotate,
 } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
-
-type EventItem = {
-  id: string;
-  title: string;
-  excerpt: string | null;
-  coverImage: string | null;
-  bodyImage: string | null;
-  purpose: string | null;
-  organization: string | null;
-  location: string | null;
-  startDate: string;
-  endDate: string | null;
-  isRecurring: boolean;
-  tags: string[] | null;
-  status: string;
-  publishedAt: string | null;
-  createdAt: string;
-};
+import type { EventRow } from "@/lib/api-types";
 
 function DeleteDialog({
   open,
   onOpenChange,
   onConfirm,
   title,
+  isPending,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title: string;
+  isPending: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -93,11 +78,11 @@ function DeleteDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete
+          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+            {isPending ? "Deleting…" : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -105,33 +90,34 @@ function DeleteDialog({
   );
 }
 
-function ActionsMenu({ item }: { item: EventItem }) {
+function ActionsMenu({ item }: { item: EventRow }) {
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const deleteMutation = useMutation({
-    mutationFn: () => client.events.delete({ id: item.id }),
-    onSuccess: () => {
-      toast.success("Event deleted");
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      setDeleteOpen(false);
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const deleteMutation = useMutation(
+    orpc.admin.events.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success("Event deleted");
+        queryClient.invalidateQueries({ queryKey: orpc.events.key() });
+        setDeleteOpen(false);
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
-  const statusMutation = useMutation({
-    mutationFn: (status: "draft" | "published" | "archived") =>
-      client.events.update({ id: item.id, status, publishNow: status === "published" }),
-    onSuccess: () => {
-      toast.success("Status updated");
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const statusMutation = useMutation(
+    orpc.admin.events.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Status updated");
+        queryClient.invalidateQueries({ queryKey: orpc.events.key() });
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   return (
     <>
@@ -152,25 +138,41 @@ function ActionsMenu({ item }: { item: EventItem }) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {item.status === "draft" && (
-            <DropdownMenuItem onClick={() => statusMutation.mutate("published")}>
+            <DropdownMenuItem
+              onClick={() =>
+                statusMutation.mutate({ id: item.id, status: "published", publishNow: true })
+              }
+            >
               <IconSend className="size-4" />
               Publish
             </DropdownMenuItem>
           )}
           {item.status === "published" && (
             <>
-              <DropdownMenuItem onClick={() => statusMutation.mutate("draft")}>
+              <DropdownMenuItem
+                onClick={() =>
+                  statusMutation.mutate({ id: item.id, status: "draft", publishNow: false })
+                }
+              >
                 <IconRotate className="size-4" />
                 Unpublish
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => statusMutation.mutate("archived")}>
+              <DropdownMenuItem
+                onClick={() =>
+                  statusMutation.mutate({ id: item.id, status: "archived", publishNow: false })
+                }
+              >
                 <IconArchive className="size-4" />
                 Archive
               </DropdownMenuItem>
             </>
           )}
           {item.status === "archived" && (
-            <DropdownMenuItem onClick={() => statusMutation.mutate("draft")}>
+            <DropdownMenuItem
+              onClick={() =>
+                statusMutation.mutate({ id: item.id, status: "draft", publishNow: false })
+              }
+            >
               <IconRotate className="size-4" />
               Restore to Draft
             </DropdownMenuItem>
@@ -186,14 +188,15 @@ function ActionsMenu({ item }: { item: EventItem }) {
       <DeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onConfirm={() => deleteMutation.mutate()}
+        onConfirm={() => deleteMutation.mutate({ id: item.id })}
         title={item.title}
+        isPending={deleteMutation.isPending}
       />
     </>
   );
 }
 
-const columns: ColumnDef<EventItem, any>[] = [
+const columns: ColumnDef<EventRow, any>[] = [
   {
     accessorKey: "coverImage",
     header: "Cover",
@@ -328,26 +331,18 @@ function AdminEventsList() {
       ? (rawStatus as "draft" | "published" | "archived")
       : undefined;
 
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      "events",
-      pagination.pageIndex,
-      pagination.pageSize,
-      sort?.id,
-      sort?.desc,
-      search,
-      status,
-    ],
-    queryFn: () =>
-      client.events.list({
+  const { data, isLoading } = useQuery(
+    orpc.events.list.queryOptions({
+      input: {
         page: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
         sort: sort?.id,
         sortDir: sort?.desc ? "desc" : "asc",
         search,
         status,
-      }),
-  });
+      },
+    }),
+  );
 
   const items = data?.rows ?? [];
   const pageCount = data?.pageCount ?? 0;

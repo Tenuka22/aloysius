@@ -1,7 +1,7 @@
 "use client";
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
@@ -16,10 +16,13 @@ import {
   DialogTitle,
 } from "@aloysius-web/ui/components/dialog";
 import { IconPlus, IconUsers, IconCrown } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { useState } from "react";
 
 export const Route = createFileRoute("/admin/staff")({
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery(orpc.staff.list.queryOptions({ input: {} }));
+  },
   component: AdminStaff,
 });
 
@@ -28,22 +31,19 @@ function AdminStaff() {
   const [newYearOpen, setNewYearOpen] = useState(false);
   const [newYear, setNewYear] = useState("");
 
-  const { data: staff = [], isLoading } = useQuery({
-    queryKey: ["staff", "all"],
-    queryFn: () => client.staff.list({}),
-  });
+  const { data: staff } = useSuspenseQuery(orpc.staff.list.queryOptions({ input: {} }));
 
-  const { data: principals } = useQuery({
-    queryKey: ["principals", "published"],
-    queryFn: () =>
-      client.principals.list({
+  const { data: principals } = useQuery(
+    orpc.principals.list.queryOptions({
+      input: {
         page: 1,
         pageSize: 100,
         status: "published",
         sort: "sortOrder",
         sortDir: "asc",
-      }),
-  });
+      },
+    }),
+  );
 
   const principalRows = principals?.rows ?? [];
   const principalByYear = new Map<string, (typeof principalRows)[number]>();
@@ -91,9 +91,7 @@ function AdminStaff() {
             Principal profiles page.
           </p>
         </div>
-        {isLoading ? (
-          <div className="text-center text-muted-foreground py-8">Loading...</div>
-        ) : years.length === 0 ? (
+        {years.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             No staff years yet. Create a new year to start building the staff roster.
           </div>

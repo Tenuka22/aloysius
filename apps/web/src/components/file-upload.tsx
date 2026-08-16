@@ -21,7 +21,7 @@ import {
 } from "@aloysius-web/ui/components/dialog";
 import { Button } from "@aloysius-web/ui/components/button";
 import { ImageCropDialog } from "@aloysius-web/ui/components/image-crop-dialog";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 
 type UploadState = "idle" | "uploading" | "processing" | "error" | "done";
 
@@ -45,7 +45,6 @@ interface UploadedFile {
 }
 
 export interface FileUploadProps {
-  queryKey?: string[];
   maxFiles?: number;
   maxSize?: number;
   className?: string;
@@ -77,7 +76,6 @@ function isImageFile(type: string): boolean {
 }
 
 export function FileUpload({
-  queryKey = ["files", "list"],
   maxFiles = 10,
   maxSize = 10 * 1024 * 1024,
   className,
@@ -87,10 +85,7 @@ export function FileUpload({
   const [infoFile, setInfoFile] = useState<PendingFile | UploadedFile | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
 
-  const { data: existingFiles = [] } = useQuery({
-    queryKey,
-    queryFn: () => client.files.listFiles(),
-  });
+  const { data: existingFiles = [] } = useQuery(orpc.files.listFiles.queryOptions());
 
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const allFiles = [...existingFiles, ...uploadedFiles];
@@ -99,13 +94,14 @@ export function FileUpload({
     setUploadedFiles((prev) => prev.filter((f) => f.id !== id));
   }, []);
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => client.files.deleteFile({ id }),
-    onSuccess: (_data, id) => {
-      removeUploadedFile(id);
-      queryClient.invalidateQueries({ queryKey });
-    },
-  });
+  const deleteMutation = useMutation(
+    orpc.files.deleteFile.mutationOptions({
+      onSuccess: (_data, variables) => {
+        removeUploadedFile(variables.id);
+        queryClient.invalidateQueries({ queryKey: orpc.files.key() });
+      },
+    }),
+  );
 
   const uploadFile = useCallback(async (entry: PendingFile) => {
     setPendingFiles((prev) =>
@@ -179,7 +175,7 @@ export function FileUpload({
 
       const uploaded = allFiles.find((f) => f.id === id);
       if (uploaded) {
-        deleteMutation.mutate(id);
+        deleteMutation.mutate({ id });
       }
     },
     [pendingFiles, allFiles, removeUploadedFile, deleteMutation],

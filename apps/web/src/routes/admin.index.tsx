@@ -1,20 +1,24 @@
 "use client";
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 
 export const Route = createFileRoute("/admin/")({
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery(
+      orpc.events.list.queryOptions({ input: { page: 1, pageSize: 1 } }),
+    );
+  },
   component: AdminDashboard,
 });
 
 function AdminDashboard() {
-  const { data: eventsData, isLoading: eventsLoading } = useQuery({
-    queryKey: ["events", "dashboard"],
-    queryFn: () => client.events.list({ page: 1, pageSize: 1 }),
-  });
+  const { data: eventsData } = useSuspenseQuery(
+    orpc.events.list.queryOptions({ input: { page: 1, pageSize: 1 } }),
+  );
 
   return (
     <div className="flex flex-col">
@@ -36,9 +40,7 @@ function AdminDashboard() {
           </div>
           <div className="rounded-lg border p-4">
             <div className="text-sm text-muted-foreground">Events</div>
-            <div className="text-2xl font-bold">
-              {eventsLoading ? "-" : (eventsData?.total ?? 0)}
-            </div>
+            <div className="text-2xl font-bold">{eventsData?.total ?? 0}</div>
           </div>
           <div className="rounded-lg border p-4">
             <div className="text-sm text-muted-foreground">Student Works</div>

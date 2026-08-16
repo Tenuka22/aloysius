@@ -1,16 +1,17 @@
 "use client";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnFiltersState,
   type PaginationState,
   type SortingState,
 } from "@tanstack/react-table";
+import { z } from "zod";
+import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Input } from "@aloysius-web/ui/components/input";
-import { Card, CardContent } from "@aloysius-web/ui/components/card";
 import {
   Dialog,
   DialogContent,
@@ -46,51 +47,25 @@ import {
   IconCheck,
   IconArchive,
   IconPlus,
-  IconBrandAppgallery,
 } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
+import type { OBEvent, OBEventGallery } from "@/lib/api-types";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
-
-type OBEvent = {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  coverImage: string | null;
-  location: string | null;
-  eventDate: string | null;
-  endDate: string | null;
-  isAllDay: boolean;
-  status: string;
-  publishedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-type OBEventGallery = {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  coverImage: string | null;
-  status: string;
-  publishedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
 
 function DeleteEventDialog({
   open,
   onOpenChange,
   onConfirm,
   title,
+  isPending,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title: string;
+  isPending: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -102,11 +77,11 @@ function DeleteEventDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete
+          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+            {isPending ? "Deleting…" : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -114,60 +89,34 @@ function DeleteEventDialog({
   );
 }
 
-function ReleaseGalleryDialog({
-  open,
-  onOpenChange,
-  onConfirm,
-  eventTitle,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
-  eventTitle: string;
-}) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Release Event Gallery</DialogTitle>
-          <DialogDescription>
-            Create and release a gallery for <strong>{eventTitle}</strong>? The gallery will be
-            published and visible to the public.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={onConfirm}>Release Gallery</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
+const eventsSearchSchema = z.object({
+  status: z.enum(["draft", "published", "archived"]).optional(),
+  search: z.string().optional(),
+});
 
 export const Route = createFileRoute("/ob-admin/events")({
+  validateSearch: (search) => eventsSearchSchema.parse(search),
+  loaderDeps: ({ search: { status, search } }) => ({ status, search }),
+  loader: async ({ context, deps }) => {
+    await context.queryClient.prefetchQuery(orpc.ob.obEvents.list.queryOptions({ input: deps }));
+  },
   component: OBAdminEvents,
 });
 
 function OBAdminEvents() {
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [releaseOpen, setReleaseOpen] = useState(false);
-  const [releaseEventId, setReleaseEventId] = useState<string | null>(null);
-  const [releaseEventTitle, setReleaseEventTitle] = useState("");
 
-  const { data: events = [], isLoading: eventsLoading } = useQuery({
-    queryKey: ["ob-events"],
-    queryFn: () => client.ob.obEvents.list({}),
-  });
+  const { data: events = [] } = useSuspenseQuery(orpc.ob.obEvents.list.queryOptions({ input: search }));
 
   const { data: galleries = [] } = useQuery({
-    queryKey: ["ob-event-galleries"],
+    queryKey: orpc.ob.obEventGalleries.key(),
     queryFn: async () => {
       const all: OBEventGallery[] = [];
       for (const e of events) {
@@ -184,52 +133,34 @@ function OBAdminEvents() {
     if (g.obEventId) galleryByEvent.set(g.obEventId, g);
   }
 
-  const deleteMutation = useMutation({
-    mutationFn: () => {
-      if (!deleteId) return Promise.resolve({ success: true });
-      return client.ob.obEvents.delete({ id: deleteId });
-    },
-    onSuccess: () => {
-      toast.success("Event deleted");
-      setDeleteOpen(false);
-      setDeleteId(null);
-    },
-  });
+  const deleteMutation = useMutation(
+    orpc.ob.obEvents.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success("Event deleted");
+        setDeleteOpen(false);
+        setDeleteId(null);
+        queryClient.invalidateQueries({ queryKey: orpc.ob.obEvents.key() });
+      },
+    }),
+  );
 
-  const publishMutation = useMutation({
-    mutationFn: (id: string) =>
-      client.ob.obEvents.update({ id, status: "published", publishNow: true }),
-    onSuccess: () => {
-      toast.success("Event published");
-    },
-  });
+  const publishMutation = useMutation(
+    orpc.ob.obEvents.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Event published");
+        queryClient.invalidateQueries({ queryKey: orpc.ob.obEvents.key() });
+      },
+    }),
+  );
 
-  const archiveMutation = useMutation({
-    mutationFn: (id: string) => client.ob.obEvents.update({ id, status: "archived" }),
-    onSuccess: () => {
-      toast.success("Event archived");
-    },
-  });
-
-  const releaseGalleryMutation = useMutation({
-    mutationFn: () => {
-      if (!releaseEventId) return Promise.resolve(null);
-      return client.ob.obEventGalleries.create({
-        obEventId: releaseEventId,
-        title: events.find((e) => e.id === releaseEventId)?.title || "Event Gallery",
-      });
-    },
-    onSuccess: async (gallery) => {
-      if (gallery) {
-        await client.ob.obEventGalleries.release({ id: gallery.id });
-        toast.success("Gallery released");
-      }
-      setReleaseOpen(false);
-      setReleaseEventId(null);
-      setReleaseEventTitle("");
-      queryClient.invalidateQueries({ queryKey: ["ob-event-galleries"] });
-    },
-  });
+  const archiveMutation = useMutation(
+    orpc.ob.obEvents.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Event archived");
+        queryClient.invalidateQueries({ queryKey: orpc.ob.obEvents.key() });
+      },
+    }),
+  );
 
   const columns: ColumnDef<OBEvent, any>[] = [
     {
@@ -300,14 +231,12 @@ function OBAdminEvents() {
           </span>
         );
       },
-      filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
     {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => {
         const e = row.original;
-        const gallery = galleryByEvent.get(e.id);
         return (
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
@@ -315,50 +244,22 @@ function OBAdminEvents() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                render={<Link to={`/admin/ob/events/$id/edit`} params={{ id: e.id }} />}
+                render={<Link to={`/ob-admin/events/$id/edit`} params={{ id: e.id }} />}
               >
                 <IconPencil className="size-4" /> Edit
               </DropdownMenuItem>
               {e.status === "published" && (
-                <DropdownMenuItem onClick={() => archiveMutation.mutate(e.id)}>
+                <DropdownMenuItem onClick={() => archiveMutation.mutate({ id: e.id, status: "archived" })}>
                   <IconArchive className="size-4" /> Archive
                 </DropdownMenuItem>
               )}
               {(e.status === "draft" || e.status === "archived") && (
-                <DropdownMenuItem onClick={() => publishMutation.mutate(e.id)}>
+                <DropdownMenuItem
+                  onClick={() =>
+                    publishMutation.mutate({ id: e.id, status: "published", publishNow: true })
+                  }
+                >
                   <IconCheck className="size-4" /> Publish
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              {!gallery ? (
-                <DropdownMenuItem
-                  onClick={() => {
-                    setReleaseEventId(e.id);
-                    setReleaseEventTitle(e.title);
-                    setReleaseOpen(true);
-                  }}
-                >
-                  <IconBrandAppgallery className="size-4" /> Release Gallery
-                </DropdownMenuItem>
-              ) : gallery.status === "published" ? (
-                <DropdownMenuItem
-                  onClick={async () => {
-                    await client.ob.obEventGalleries.unrelease({ id: gallery.id });
-                    toast.success("Gallery unreleased");
-                    queryClient.invalidateQueries({ queryKey: ["ob-event-galleries"] });
-                  }}
-                >
-                  <IconArchive className="size-4" /> Unrelease Gallery
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  onClick={async () => {
-                    await client.ob.obEventGalleries.release({ id: gallery.id });
-                    toast.success("Gallery released");
-                    queryClient.invalidateQueries({ queryKey: ["ob-event-galleries"] });
-                  }}
-                >
-                  <IconCheck className="size-4" /> Release Gallery
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -381,8 +282,9 @@ function OBAdminEvents() {
   return (
     <div className="flex flex-col">
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <h1 className="text-lg font-semibold">OB Events</h1>
+        <h1 className="text-lg font-semibold">Events</h1>
         <div className="ml-auto">
           <Button size="sm" render={<Link to="/ob-admin/events/new" />} nativeButton={false}>
             <IconPlus className="mr-1 size-4" />
@@ -394,67 +296,67 @@ function OBAdminEvents() {
         <DataTable
           columns={columns}
           data={events}
-          loading={eventsLoading}
           pageCount={0}
-          pagination={{ pageIndex: 0, pageSize: 10 }}
-          onPaginationChange={() => {}}
-          toolbar={(table) => {
-            const filters = table.getState().columnFilters;
-            const isFiltered = filters.length > 0;
-            const setFilter = (id: string, value: string) => {
-              const next = filters.filter((f) => f.id !== id);
-              if (value) next.push({ id, value });
-              table.setColumnFilters(next);
-            };
-            return (
-              <div className="flex items-center justify-between">
-                <div className="flex flex-1 items-center gap-2">
-                  <Input
-                    placeholder="Filter by title..."
-                    value={(filters.find((f) => f.id === "title")?.value as string) ?? ""}
-                    onChange={(e) => setFilter("title", e.target.value)}
-                    className="h-8 w-[200px] lg:w-[250px]"
-                  />
-                  <Select
-                    value={(filters.find((f) => f.id === "status")?.value as string) ?? ""}
-                    onValueChange={(val) => setFilter("status", val ?? "")}
+          pagination={pagination}
+          onPaginationChange={setPagination}
+          sorting={sorting}
+          columnFilters={columnFilters}
+          onSortingChange={setSorting}
+          onColumnFiltersChange={setColumnFilters}
+          toolbar={(table) => (
+            <div className="flex items-center justify-between">
+              <div className="flex flex-1 items-center gap-2">
+                <Input
+                  placeholder="Search by title..."
+                  value={search.search ?? ""}
+                  onChange={(e) =>
+                    navigate({ search: (prev) => ({ ...prev, search: e.target.value || undefined }) })
+                  }
+                  className="h-8 w-[200px] lg:w-[250px]"
+                />
+                <Select
+                  value={search.status ?? "all"}
+                  onValueChange={(val) =>
+                    navigate({
+                      search: (prev) => ({
+                        ...prev,
+                        status: val === "all" ? undefined : (val as typeof search.status),
+                      }),
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-8 w-[140px]">
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+                {(search.search || search.status) && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => navigate({ search: {} })}
+                    className="h-8 px-2 lg:px-3"
                   >
-                    <SelectTrigger className="h-8 w-[140px]">
-                      <SelectValue placeholder="All statuses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {isFiltered && (
-                    <Button
-                      variant="ghost"
-                      onClick={() => table.resetColumnFilters()}
-                      className="h-8 px-2 lg:px-3"
-                    >
-                      Reset
-                    </Button>
-                  )}
-                </div>
-                <DataTableViewOptions table={table} />
+                    Reset
+                  </Button>
+                )}
               </div>
-            );
-          }}
+              <DataTableViewOptions table={table} />
+            </div>
+          )}
+          paginationBar={(table) => <DataTablePagination table={table} />}
         />
       </div>
       <DeleteEventDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onConfirm={() => deleteMutation.mutate()}
+        onConfirm={() => deleteMutation.mutate({ id: deleteId! })}
         title={deleteId ? events.find((e) => e.id === deleteId)?.title || "" : ""}
-      />
-      <ReleaseGalleryDialog
-        open={releaseOpen}
-        onOpenChange={setReleaseOpen}
-        onConfirm={() => releaseGalleryMutation.mutate()}
-        eventTitle={releaseEventTitle}
+        isPending={deleteMutation.isPending}
       />
     </div>
   );

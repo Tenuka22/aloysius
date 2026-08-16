@@ -1,18 +1,26 @@
 import { eq } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
-import { obMembers } from "@aloysius-web/db/schema";
+import { siteSettings } from "@aloysius-web/db/schema";
 import { getUserEmail } from "./club-access";
 
+/** The `siteSettings` key holding the single, site-wide OB admin email. */
+export const OB_ADMIN_EMAIL_KEY = "ob_admin_email";
+
 /**
- * A user is an OB admin when their Clerk email matches the `adminEmail` stored on
- * any approved OB member row. The admin is designated by email, so it does not
- * matter which row the site admin happened to store `adminEmail` on — the check
- * is purely user-email vs DB-email.
+ * A user is the OB admin when their Clerk email matches the single, site-wide
+ * OB admin email in `siteSettings`. There is exactly one OB admin at a time —
+ * set by the site admin directly, with no per-year scoping and no lookup
+ * against any OB member row.
  */
 export async function isOBAdmin(userId: string): Promise<boolean> {
   const userEmail = await getUserEmail(userId);
   if (!userEmail) return false;
   const db = createDb();
-  const rows = await db.select().from(obMembers).where(eq(obMembers.status, "approved")).all();
-  return rows.some((r) => !!r.adminEmail && r.adminEmail.toLowerCase() === userEmail);
+  const row = await db
+    .select()
+    .from(siteSettings)
+    .where(eq(siteSettings.key, OB_ADMIN_EMAIL_KEY))
+    .get();
+  const adminEmail = row?.value?.trim().toLowerCase();
+  return !!adminEmail && adminEmail === userEmail;
 }

@@ -49,24 +49,10 @@ import {
   IconArchive,
   IconRotate,
 } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
-
-type AchievementItem = {
-  id: string;
-  title: string;
-  description: string | null;
-  category: string;
-  recipientNames: string[];
-  recipientType: string;
-  year: number | null;
-  coverImage: string | null;
-  tags: string[] | null;
-  status: string;
-  publishedAt: string | null;
-  createdAt: string;
-};
+import type { AchievementRow } from "@/lib/api-types";
 
 const categoryBadgeColors: Record<string, string> = {
   academic: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
@@ -82,11 +68,13 @@ function DeleteDialog({
   onOpenChange,
   onConfirm,
   title,
+  isPending,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title: string;
+  isPending: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,11 +86,11 @@ function DeleteDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete
+          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+            {isPending ? "Deleting…" : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -110,33 +98,34 @@ function DeleteDialog({
   );
 }
 
-function ActionsMenu({ item }: { item: AchievementItem }) {
+function ActionsMenu({ item }: { item: AchievementRow }) {
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const deleteMutation = useMutation({
-    mutationFn: () => client.achievements.delete({ id: item.id }),
-    onSuccess: () => {
-      toast.success("Achievement deleted");
-      queryClient.invalidateQueries({ queryKey: ["achievements"] });
-      setDeleteOpen(false);
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const deleteMutation = useMutation(
+    orpc.admin.achievements.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success("Achievement deleted");
+        queryClient.invalidateQueries({ queryKey: orpc.achievements.key() });
+        setDeleteOpen(false);
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
-  const statusMutation = useMutation({
-    mutationFn: (status: "draft" | "published" | "archived") =>
-      client.achievements.update({ id: item.id, status, publishNow: status === "published" }),
-    onSuccess: () => {
-      toast.success("Status updated");
-      queryClient.invalidateQueries({ queryKey: ["achievements"] });
-    },
-    onError: (err) => {
-      toast.error(err.message);
-    },
-  });
+  const statusMutation = useMutation(
+    orpc.admin.achievements.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Status updated");
+        queryClient.invalidateQueries({ queryKey: orpc.achievements.key() });
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }),
+  );
 
   return (
     <>
@@ -153,25 +142,41 @@ function ActionsMenu({ item }: { item: AchievementItem }) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {item.status === "draft" && (
-            <DropdownMenuItem onClick={() => statusMutation.mutate("published")}>
+            <DropdownMenuItem
+              onClick={() =>
+                statusMutation.mutate({ id: item.id, status: "published", publishNow: true })
+              }
+            >
               <IconSend className="size-4" />
               Publish
             </DropdownMenuItem>
           )}
           {item.status === "published" && (
             <>
-              <DropdownMenuItem onClick={() => statusMutation.mutate("draft")}>
+              <DropdownMenuItem
+                onClick={() =>
+                  statusMutation.mutate({ id: item.id, status: "draft", publishNow: false })
+                }
+              >
                 <IconRotate className="size-4" />
                 Unpublish
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => statusMutation.mutate("archived")}>
+              <DropdownMenuItem
+                onClick={() =>
+                  statusMutation.mutate({ id: item.id, status: "archived", publishNow: false })
+                }
+              >
                 <IconArchive className="size-4" />
                 Archive
               </DropdownMenuItem>
             </>
           )}
           {item.status === "archived" && (
-            <DropdownMenuItem onClick={() => statusMutation.mutate("draft")}>
+            <DropdownMenuItem
+              onClick={() =>
+                statusMutation.mutate({ id: item.id, status: "draft", publishNow: false })
+              }
+            >
               <IconRotate className="size-4" />
               Restore to Draft
             </DropdownMenuItem>
@@ -187,14 +192,15 @@ function ActionsMenu({ item }: { item: AchievementItem }) {
       <DeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onConfirm={() => deleteMutation.mutate()}
+        onConfirm={() => deleteMutation.mutate({ id: item.id })}
         title={item.title}
+        isPending={deleteMutation.isPending}
       />
     </>
   );
 }
 
-const columns: ColumnDef<AchievementItem, any>[] = [
+const columns: ColumnDef<AchievementRow, any>[] = [
   {
     accessorKey: "coverImage",
     header: "Cover",
@@ -307,19 +313,9 @@ function AdminAchievementsList() {
       ? (rawCategory as "academic" | "sports" | "arts" | "clubs" | "community" | "other")
       : undefined;
 
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      "achievements",
-      pagination.pageIndex,
-      pagination.pageSize,
-      sort?.id,
-      sort?.desc,
-      search,
-      status,
-      category,
-    ],
-    queryFn: () =>
-      client.achievements.list({
+  const { data, isLoading } = useQuery(
+    orpc.achievements.list.queryOptions({
+      input: {
         page: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
         sort: sort?.id,
@@ -327,8 +323,9 @@ function AdminAchievementsList() {
         search,
         status,
         category,
-      }),
-  });
+      },
+    }),
+  );
 
   const items = data?.rows ?? [];
   const pageCount = data?.pageCount ?? 0;

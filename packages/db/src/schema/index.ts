@@ -1,4 +1,20 @@
 import { sqliteTable, text, integer, uniqueIndex, index } from "drizzle-orm/sqlite-core";
+import {
+  ACTIVITY_TYPES,
+  ACHIEVEMENT_CATEGORIES,
+  AUDIENCES,
+  AUTHOR_TYPES,
+  CLUB_MEMBER_ROLES,
+  CONTENT_STATUSES,
+  DONATION_STATUSES,
+  EVENT_OUTCOMES,
+  EXAM_TYPES,
+  MEMBERSHIP_STATUSES,
+  NOTIFICATION_TYPES,
+  REVIEW_STATUSES,
+  STREAMS,
+  STUDENT_WORK_CATEGORIES,
+} from "../enums";
 
 export const files = sqliteTable("files", {
   id: text("id").primaryKey(),
@@ -27,9 +43,9 @@ export const news = sqliteTable(
     excerpt: text("excerpt"),
     coverImage: text("cover_image"),
     authorName: text("author_name"),
-    authorType: text("author_type", { enum: ["student", "faculty", "club", "org"] }),
+    authorType: text("author_type", { enum: AUTHOR_TYPES }),
     tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
-    status: text("status", { enum: ["draft", "published", "archived"] })
+    status: text("status", { enum: CONTENT_STATUSES })
       .notNull()
       .default("draft"),
     publishedAt: integer("published_at", { mode: "timestamp" }),
@@ -41,7 +57,7 @@ export const news = sqliteTable(
       .$defaultFn(() => new Date()),
     userId: text("user_id").notNull(),
     activityId: text("activity_id").references(() => activities.id, { onDelete: "set null" }),
-    reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] })
+    reviewStatus: text("review_status", { enum: REVIEW_STATUSES })
       .notNull()
       .default("approved"),
     reviewedBy: text("reviewed_by"),
@@ -63,12 +79,12 @@ export const announcements = sqliteTable(
     excerpt: text("excerpt"),
     coverImage: text("cover_image"),
     authorName: text("author_name"),
-    authorType: text("author_type", { enum: ["student", "faculty", "club", "org"] }),
+    authorType: text("author_type", { enum: AUTHOR_TYPES }),
     tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
-    status: text("status", { enum: ["draft", "published", "archived"] })
+    status: text("status", { enum: CONTENT_STATUSES })
       .notNull()
       .default("draft"),
-    audience: text("audience", { enum: ["all", "students", "parents", "staff", "alumni"] })
+    audience: text("audience", { enum: AUDIENCES })
       .notNull()
       .default("all"),
     addressedTo: text("addressed_to"),
@@ -81,7 +97,7 @@ export const announcements = sqliteTable(
       .$defaultFn(() => new Date()),
     userId: text("user_id").notNull(),
     activityId: text("activity_id").references(() => activities.id, { onDelete: "set null" }),
-    reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] })
+    reviewStatus: text("review_status", { enum: REVIEW_STATUSES })
       .notNull()
       .default("approved"),
     reviewedBy: text("reviewed_by"),
@@ -106,7 +122,7 @@ export const events = sqliteTable(
     purpose: text("purpose"),
     organization: text("organization"),
     organizerName: text("organizer_name"),
-    organizerType: text("organizer_type", { enum: ["student", "faculty", "club", "org"] }),
+    organizerType: text("organizer_type", { enum: AUTHOR_TYPES }),
     location: text("location"),
     startDate: integer("start_date", { mode: "timestamp" }).notNull(),
     endDate: integer("end_date", { mode: "timestamp" }),
@@ -114,7 +130,7 @@ export const events = sqliteTable(
     isAllDay: integer("is_all_day", { mode: "boolean" }).notNull().default(false),
     recurrenceRule: text("recurrence_rule"),
     tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
-    status: text("status", { enum: ["draft", "published", "archived"] })
+    status: text("status", { enum: CONTENT_STATUSES })
       .notNull()
       .default("draft"),
     publishedAt: integer("published_at", { mode: "timestamp" }),
@@ -126,7 +142,7 @@ export const events = sqliteTable(
       .$defaultFn(() => new Date()),
     userId: text("user_id").notNull(),
     activityId: text("activity_id").references(() => activities.id, { onDelete: "set null" }),
-    reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] })
+    reviewStatus: text("review_status", { enum: REVIEW_STATUSES })
       .notNull()
       .default("approved"),
     reviewedBy: text("reviewed_by"),
@@ -143,7 +159,7 @@ export const eventRecords = sqliteTable("event_records", {
   eventId: text("event_id")
     .notNull()
     .references(() => events.id, { onDelete: "cascade" }),
-  outcome: text("outcome", { enum: ["success", "postponed", "failed"] }).notNull(),
+  outcome: text("outcome", { enum: EVENT_OUTCOMES }).notNull(),
   reason: text("reason"),
   notes: text("notes"),
   recordedAt: integer("recorded_at", { mode: "timestamp" })
@@ -164,19 +180,17 @@ export const achievements = sqliteTable(
     slug: text("slug").notNull().default(""),
     title: text("title").notNull(),
     description: text("description"),
-    category: text("category", {
-      enum: ["academic", "sports", "arts", "clubs", "community", "other"],
-    })
+    category: text("category", { enum: ACHIEVEMENT_CATEGORIES })
       .notNull()
       .default("other"),
     recipientNames: text("recipient_names", { mode: "json" }).$type<string[]>().default([]),
-    recipientType: text("recipient_type", { enum: ["student", "faculty", "club", "org"] })
+    recipientType: text("recipient_type", { enum: AUTHOR_TYPES })
       .notNull()
       .default("student"),
     year: integer("year"),
     coverImage: text("cover_image"),
     tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
-    status: text("status", { enum: ["draft", "published", "archived"] })
+    status: text("status", { enum: CONTENT_STATUSES })
       .notNull()
       .default("draft"),
     publishedAt: integer("published_at", { mode: "timestamp" }),
@@ -202,6 +216,9 @@ export const gallery = sqliteTable(
     description: text("description"),
     eventId: text("event_id").references(() => events.id, { onDelete: "set null" }),
     obEventId: text("ob_event_id").references(() => obEvents.id, { onDelete: "set null" }),
+    obDonationId: text("ob_donation_id").references(() => obDonations.id, {
+      onDelete: "set null",
+    }),
     studentWorkId: text("student_work_id").references(() => studentWorks.id, {
       onDelete: "set null",
     }),
@@ -210,9 +227,9 @@ export const gallery = sqliteTable(
     }),
     coverImage: text("cover_image"),
     authorName: text("author_name"),
-    authorType: text("author_type", { enum: ["student", "faculty", "club", "org"] }),
+    authorType: text("author_type", { enum: AUTHOR_TYPES }),
     tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
-    status: text("status", { enum: ["draft", "published", "archived"] })
+    status: text("status", { enum: CONTENT_STATUSES })
       .notNull()
       .default("draft"),
     publishedAt: integer("published_at", { mode: "timestamp" }),
@@ -251,18 +268,16 @@ export const studentWorks = sqliteTable(
     slug: text("slug").notNull().default(""),
     title: text("title").notNull(),
     description: text("description"),
-    category: text("category", {
-      enum: ["film", "art", "music", "writing", "design", "photography", "code", "other"],
-    })
+    category: text("category", { enum: STUDENT_WORK_CATEGORIES })
       .notNull()
       .default("other"),
     studentNames: text("student_names", { mode: "json" }).$type<string[]>().default([]),
     studentGrade: text("student_grade"),
-    authorType: text("author_type", { enum: ["student", "faculty", "club", "org"] }),
+    authorType: text("author_type", { enum: AUTHOR_TYPES }),
     coverImage: text("cover_image"),
     contentUrl: text("content_url"),
     tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
-    status: text("status", { enum: ["draft", "published", "archived"] })
+    status: text("status", { enum: CONTENT_STATUSES })
       .notNull()
       .default("draft"),
     publishedAt: integer("published_at", { mode: "timestamp" }),
@@ -274,7 +289,7 @@ export const studentWorks = sqliteTable(
       .$defaultFn(() => new Date()),
     userId: text("user_id").notNull(),
     activityId: text("activity_id").references(() => activities.id, { onDelete: "set null" }),
-    reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] })
+    reviewStatus: text("review_status", { enum: REVIEW_STATUSES })
       .notNull()
       .default("approved"),
     reviewedBy: text("reviewed_by"),
@@ -325,7 +340,7 @@ export const bigMatches = sqliteTable(
     eventId: text("event_id").references(() => events.id, { onDelete: "set null" }),
     galleryId: text("gallery_id").references(() => gallery.id, { onDelete: "set null" }),
     sortOrder: integer("sort_order").notNull().default(0),
-    status: text("status", { enum: ["draft", "published", "archived"] })
+    status: text("status", { enum: CONTENT_STATUSES })
       .notNull()
       .default("draft"),
     createdAt: integer("created_at", { mode: "timestamp" })
@@ -350,13 +365,13 @@ export const activities = sqliteTable(
     coverImage: text("cover_image"),
     logoUrl: text("logo_url"),
     bannerUrl: text("banner_url"),
-    images: text("images", { mode: "json" }).default([]),
-    type: text("type", { enum: ["club", "sport", "other"] })
+    images: text("images", { mode: "json" }).$type<string[]>().default([]),
+    type: text("type", { enum: ACTIVITY_TYPES })
       .notNull()
       .default("club"),
     adminEmail: text("admin_email"),
     sortOrder: integer("sort_order").notNull().default(0),
-    status: text("status", { enum: ["draft", "published", "archived"] })
+    status: text("status", { enum: CONTENT_STATUSES })
       .notNull()
       .default("draft"),
     createdAt: integer("created_at", { mode: "timestamp" })
@@ -380,10 +395,10 @@ export const clubMembers = sqliteTable(
       .references(() => activities.id, { onDelete: "cascade" }),
     userId: text("user_id").notNull(),
     name: text("name"),
-    role: text("role", { enum: ["admin", "member"] })
+    role: text("role", { enum: CLUB_MEMBER_ROLES })
       .notNull()
       .default("member"),
-    status: text("status", { enum: ["pending", "approved", "rejected", "revoked"] })
+    status: text("status", { enum: MEMBERSHIP_STATUSES })
       .notNull()
       .default("pending"),
     reason: text("reason"),
@@ -411,10 +426,10 @@ export const clubAlbums = sqliteTable(
     title: text("title").notNull(),
     description: text("description"),
     coverImage: text("cover_image"),
-    status: text("status", { enum: ["draft", "published", "archived"] })
+    status: text("status", { enum: CONTENT_STATUSES })
       .notNull()
       .default("draft"),
-    reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] })
+    reviewStatus: text("review_status", { enum: REVIEW_STATUSES })
       .notNull()
       .default("pending"),
     reviewedBy: text("reviewed_by"),
@@ -453,10 +468,10 @@ export const examResults = sqliteTable(
   "exam_results",
   {
     id: text("id").primaryKey(),
-    examType: text("exam_type", { enum: ["scholarship", "ol", "al"] }).notNull(),
+    examType: text("exam_type", { enum: EXAM_TYPES }).notNull(),
     examYear: integer("exam_year").notNull(),
     resultsYear: integer("results_year").notNull(),
-    status: text("status", { enum: ["draft", "published", "archived"] })
+    status: text("status", { enum: CONTENT_STATUSES })
       .notNull()
       .default("draft"),
     createdAt: integer("created_at", { mode: "timestamp" })
@@ -484,9 +499,7 @@ export const examStudents = sqliteTable(
     quote: text("quote"),
     marks: integer("marks"),
     overallGrade: text("overall_grade"),
-    stream: text("stream", {
-      enum: ["physical_science", "biological_science", "commerce", "arts", "technology"],
-    }),
+    stream: text("stream", { enum: STREAMS }),
     subjects: text("subjects", { mode: "json" })
       .$type<{ subject: string; grade: string }[]>()
       .default([]),
@@ -515,7 +528,7 @@ export const principals = sqliteTable(
     year: text("year").notNull().default(""),
     portrait: text("portrait"),
     sortOrder: integer("sort_order").notNull().default(0),
-    status: text("status", { enum: ["draft", "published", "archived"] })
+    status: text("status", { enum: CONTENT_STATUSES })
       .notNull()
       .default("draft"),
     createdAt: integer("created_at", { mode: "timestamp" })
@@ -564,12 +577,11 @@ export const obMembers = sqliteTable(
     name: text("name").notNull(),
     role: text("role").notNull(),
     email: text("email"),
-    adminEmail: text("admin_email"),
     photo: text("photo"),
     bio: text("bio"),
     year: text("year").notNull().default(""),
     sortOrder: integer("sort_order").notNull().default(0),
-    status: text("status", { enum: ["pending", "approved", "rejected", "revoked"] })
+    status: text("status", { enum: MEMBERSHIP_STATUSES })
       .notNull()
       .default("approved"),
     decidedBy: text("decided_by"),
@@ -602,7 +614,7 @@ export const obEvents = sqliteTable(
     eventDate: integer("event_date", { mode: "timestamp" }),
     endDate: integer("end_date", { mode: "timestamp" }),
     isAllDay: integer("is_all_day", { mode: "boolean" }).notNull().default(false),
-    status: text("status", { enum: ["draft", "published", "archived"] })
+    status: text("status", { enum: CONTENT_STATUSES })
       .notNull()
       .default("draft"),
     publishedAt: integer("published_at", { mode: "timestamp" }),
@@ -631,7 +643,7 @@ export const obDonations = sqliteTable(
     message: text("message"),
     image: text("image"),
     isAnonymous: integer("is_anonymous", { mode: "boolean" }).notNull().default(false),
-    status: text("status", { enum: ["pending", "confirmed", "cancelled"] })
+    status: text("status", { enum: DONATION_STATUSES })
       .notNull()
       .default("pending"),
     donatedAt: integer("donated_at", { mode: "timestamp" }),
@@ -646,6 +658,62 @@ export const obDonations = sqliteTable(
   (table) => [index("ob_donations_status_idx").on(table.status)],
 );
 
+// --- OB News table (Old Boys' Association self-published news; OB admin
+// publishes directly, no site-admin approval gate) ---
+
+export const obNews = sqliteTable(
+  "ob_news",
+  {
+    id: text("id").primaryKey(),
+    slug: text("slug").notNull().default(""),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    excerpt: text("excerpt"),
+    coverImage: text("cover_image"),
+    status: text("status", { enum: CONTENT_STATUSES })
+      .notNull()
+      .default("draft"),
+    publishedAt: integer("published_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    userId: text("user_id").notNull(),
+  },
+  (table) => [uniqueIndex("ob_news_slug_idx").on(table.slug)],
+);
+
+// --- OB Announcements table (targeted communications from the OB admin) ---
+
+export const obAnnouncements = sqliteTable(
+  "ob_announcements",
+  {
+    id: text("id").primaryKey(),
+    slug: text("slug").notNull().default(""),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    excerpt: text("excerpt"),
+    coverImage: text("cover_image"),
+    audience: text("audience", { enum: AUDIENCES })
+      .notNull()
+      .default("alumni"),
+    status: text("status", { enum: CONTENT_STATUSES })
+      .notNull()
+      .default("draft"),
+    publishedAt: integer("published_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    userId: text("user_id").notNull(),
+  },
+  (table) => [uniqueIndex("ob_announcements_slug_idx").on(table.slug)],
+);
+
 // --- Notifications table (in-app alerts for membership/content decisions) ---
 
 export const notifications = sqliteTable(
@@ -653,16 +721,7 @@ export const notifications = sqliteTable(
   {
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
-    type: text("type", {
-      enum: [
-        "membership_request",
-        "membership_approved",
-        "membership_rejected",
-        "membership_revoked",
-        "content_approved",
-        "content_rejected",
-      ],
-    }).notNull(),
+    type: text("type", { enum: NOTIFICATION_TYPES }).notNull(),
     title: text("title").notNull(),
     body: text("body"),
     link: text("link"),

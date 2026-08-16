@@ -1,0 +1,1 @@
+ALTER TABLE `gallery` ADD `ob_donation_id` text REFERENCES ob_donations(id);

@@ -3,10 +3,9 @@ import { eq, desc, asc, like, and, count } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
 import { principals } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
-import { protectedProcedure, publicProcedure } from "../index";
-import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
-
-const sortDirection = z.enum(["asc", "desc"]);
+import { publicProcedure } from "../index";
+import { contentStatusSchema, sortDirectionSchema } from "../schemas";
+import { checkSlugUnique } from "../lib/slug";
 
 function serializePrincipal(row: typeof principals.$inferSelect) {
   return {
@@ -36,22 +35,28 @@ export const principalsRouter = {
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).max(100).default(10),
         sort: z.string().optional(),
-        sortDir: sortDirection.default("desc"),
+        sortDir: sortDirectionSchema.default("desc"),
         search: z.string().optional(),
-        status: z.enum(["draft", "published", "archived"]).optional(),
+        status: contentStatusSchema.optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const db = createDb();
       const { page, pageSize, sort, sortDir, search, status } = input;
       const offset = (page - 1) * pageSize;
+      const isSiteAdmin = context.auth?.adminCalled ?? false;
 
       const conditions = [];
       if (search) {
         conditions.push(like(principals.name, `%${search}%`));
       }
       if (status) {
+        if (status !== "published" && !isSiteAdmin) {
+          throw new ORPCError("UNAUTHORIZED", { message: "Site admin access required." });
+        }
         conditions.push(eq(principals.status, status));
+      } else if (!isSiteAdmin) {
+        conditions.push(eq(principals.status, "published"));
       }
       const where = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -90,7 +95,7 @@ export const principalsRouter = {
 
   get: publicProcedure
     .input(z.union([z.object({ id: z.string() }), z.object({ slug: z.string() })]))
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const db = createDb();
       const row =
         "id" in input
@@ -98,6 +103,10 @@ export const principalsRouter = {
           : await db.select().from(principals).where(eq(principals.slug, input.slug)).get();
 
       if (!row) {
+        throw new ORPCError("NOT_FOUND", { message: "Principal not found" });
+      }
+
+      if (row.status !== "published" && !(context.auth?.adminCalled ?? false)) {
         throw new ORPCError("NOT_FOUND", { message: "Principal not found" });
       }
 
@@ -120,141 +129,6 @@ export const principalsRouter = {
 
     return serializePrincipal(row);
   }),
-
-  create: protectedProcedure
-    .input(
-      z.object({
-        name: z.string().min(1),
-        title: z.string().optional(),
-        quote: z.string().optional(),
-        message: z.string().optional(),
-        bio: z.string().optional(),
-        education: z.string().optional(),
-        tenure: z.string().optional(),
-        year: z.string().optional(),
-        portrait: z.string().optional(),
-        sortOrder: z.number().optional(),
-        publishNow: z.boolean().optional(),
-      }),
-    )
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const id = crypto.randomUUID();
-      const now = new Date();
-      const slug = await generateUniqueSlug(principals, input.name);
-
-      const db = createDb();
-      const record = await db
-        .insert(principals)
-        .values({
-          id,
-          slug,
-          name: input.name,
-          title: input.title ?? "Principal",
-          quote: input.quote ?? null,
-          message: input.message ?? null,
-          bio: input.bio ?? null,
-          education: input.education ?? null,
-          tenure: input.tenure ?? null,
-          year: input.year ?? "",
-          portrait: input.portrait ?? null,
-          sortOrder: input.sortOrder ?? 0,
-          status: input.publishNow ? "published" : "draft",
-          createdAt: now,
-          updatedAt: now,
-          userId: context.auth.userId,
-        })
-        .returning()
-        .get();
-
-      return serializePrincipal(record);
-    }),
-
-  update: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        name: z.string().min(1).optional(),
-        title: z.string().optional(),
-        quote: z.string().optional(),
-        message: z.string().optional(),
-        bio: z.string().optional(),
-        education: z.string().optional(),
-        tenure: z.string().optional(),
-        year: z.string().optional(),
-        portrait: z.string().optional(),
-        sortOrder: z.number().optional(),
-        status: z.enum(["draft", "published", "archived"]).optional(),
-        publishNow: z.boolean().optional(),
-      }),
-    )
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      const existing = await db.select().from(principals).where(eq(principals.id, input.id)).get();
-
-      if (!existing) {
-        throw new ORPCError("NOT_FOUND", { message: "Principal not found" });
-      }
-
-      const now = new Date();
-      const updateData: Record<string, unknown> = {
-        updatedAt: now,
-      };
-
-      if (input.name !== undefined) {
-        updateData.name = input.name;
-        updateData.slug = await generateUniqueSlug(principals, input.name, input.id);
-      }
-      if (input.title !== undefined) updateData.title = input.title;
-      if (input.quote !== undefined) updateData.quote = input.quote;
-      if (input.message !== undefined) updateData.message = input.message;
-      if (input.bio !== undefined) updateData.bio = input.bio;
-      if (input.education !== undefined) updateData.education = input.education;
-      if (input.tenure !== undefined) updateData.tenure = input.tenure;
-      if (input.year !== undefined) updateData.year = input.year;
-      if (input.portrait !== undefined) updateData.portrait = input.portrait;
-      if (input.sortOrder !== undefined) updateData.sortOrder = input.sortOrder;
-      if (input.status !== undefined) {
-        updateData.status = input.status;
-      } else if (input.publishNow === true) {
-        updateData.status = "published";
-      }
-
-      const record = await db
-        .update(principals)
-        .set(updateData)
-        .where(eq(principals.id, input.id))
-        .returning()
-        .get();
-
-      return serializePrincipal(record);
-    }),
-
-  delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .handler(async ({ input, context }) => {
-      if (!context.auth?.userId) {
-        throw new ORPCError("UNAUTHORIZED");
-      }
-
-      const db = createDb();
-      const existing = await db.select().from(principals).where(eq(principals.id, input.id)).get();
-
-      if (!existing) {
-        throw new ORPCError("NOT_FOUND", { message: "Principal not found" });
-      }
-
-      await db.delete(principals).where(eq(principals.id, input.id)).run();
-
-      return { success: true };
-    }),
 
   checkSlug: publicProcedure
     .input(z.object({ slug: z.string(), excludeId: z.string().optional() }))

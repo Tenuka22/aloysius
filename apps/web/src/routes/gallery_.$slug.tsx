@@ -2,27 +2,17 @@
 
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
-import { client } from "@/utils/orpc";
-
-type AlbumImage = {
-  id: string;
-  url: string;
-  caption: string | null;
-};
-
-type Album = {
-  id: string;
-  title: string;
-  description: string | null;
-  eventId: string | null;
-  coverImage: string | null;
-  images: AlbumImage[];
-};
+import { orpc } from "@/utils/orpc";
 
 export const Route = createFileRoute("/gallery_/$slug")({
+  loader: async ({ context, params }) => {
+    await context.queryClient.prefetchQuery(
+      orpc.gallery.get.queryOptions({ input: { slug: params.slug } }),
+    );
+  },
   component: AlbumDetailPage,
 });
 
@@ -30,12 +20,9 @@ function AlbumDetailPage() {
   const { slug } = Route.useParams();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const { data: album, isLoading } = useQuery({
-    queryKey: ["gallery", slug],
-    queryFn: () => client.gallery.get({ slug }),
-  });
+  const { data: album } = useSuspenseQuery(orpc.gallery.get.queryOptions({ input: { slug } }));
 
-  const images = (album as Album | undefined)?.images ?? [];
+  const images = album.images;
 
   const openLightbox = (index: number) => setLightboxIndex(index);
   const closeLightbox = () => setLightboxIndex(null);
@@ -72,26 +59,13 @@ function AlbumDetailPage() {
                 &larr; Back to Gallery
               </Link>
             </div>
-            {isLoading ? (
-              <div className="text-muted-foreground py-8">Loading album...</div>
-            ) : !(album as Album | undefined) ? (
-              <div className="text-center py-16">
-                <h1 className="text-2xl font-bold mb-2">Album not found</h1>
-                <p className="text-muted-foreground">
-                  This album may not exist or has not been published.
-                </p>
-              </div>
-            ) : (
-              <>
-                <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-                  {(album as Album).title}
-                </h1>
-                {(album as Album).description && (
-                  <p className="text-muted-foreground text-lg max-w-2xl">
-                    {(album as Album).description}
-                  </p>
-                )}
-              </>
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
+              {album.title}
+            </h1>
+            {album.description && (
+              <p className="text-muted-foreground text-lg max-w-2xl">
+                {album.description}
+              </p>
             )}
           </div>
         </section>
@@ -126,12 +100,9 @@ function AlbumDetailPage() {
                 ))}
               </div>
             ) : (
-              !isLoading &&
-              (album as Album | undefined) && (
-                <div className="text-center text-muted-foreground py-16">
-                  No photos in this album yet.
-                </div>
-              )
+              <div className="text-center text-muted-foreground py-16">
+                No photos in this album yet.
+              </div>
             )}
           </div>
         </section>

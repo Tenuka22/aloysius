@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Dropzone } from "@/components/file-upload";
 import {
@@ -15,13 +15,11 @@ import {
 } from "@aloysius-web/ui/components/combobox";
 import { cn } from "@aloysius-web/ui/lib/utils";
 import { HOMEPAGE_KEYS, HOMEPAGE_DEFAULTS } from "@aloysius-web/db/homepage-settings";
-import { client } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
 import { withAspectRatio, getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 import { toast } from "sonner";
 import { IconX } from "@tabler/icons-react";
-
-type SettingsRecord = Record<string, string>;
 
 function Field({
   label,
@@ -74,10 +72,11 @@ function TopAnnouncementField({
   onChange: (v: string) => void;
   description?: string;
 }) {
-  const { data: announcementsData } = useQuery({
-    queryKey: ["announcements", "list", "published", "top-announcement"],
-    queryFn: () => client.announcements.list({ page: 1, pageSize: 100, status: "published" }),
-  });
+  const { data: announcementsData } = useQuery(
+    orpc.announcements.list.queryOptions({
+      input: { page: 1, pageSize: 100, status: "published" },
+    }),
+  );
   const announcements = announcementsData?.rows ?? [];
   const selected = announcements.find((a) => a.id === value) ?? null;
 
@@ -162,7 +161,7 @@ function ImageField({
       try {
         const webp = await convertToWebp(file);
         const result = await client.files.uploadFile(webp);
-        onChange(withAspectRatio(result.url, aspect));
+        onChange(aspect ? withAspectRatio(result.url, aspect) : result.url);
       } catch {
         toast.error("Failed to upload image");
       } finally {
@@ -226,19 +225,17 @@ function HomepageEditor() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<Record<string, string>>({});
 
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ["settings", "homepage"],
-    queryFn: () => client.settings.getAll(),
-  });
+  const { data: settings } = useSuspenseQuery(orpc.settings.getAll.queryOptions());
 
-  const mutation = useMutation({
-    mutationFn: (items: { key: string; value: string }[]) => client.settings.setMany({ items }),
-    onSuccess: () => {
-      toast.success("Homepage updated");
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const mutation = useMutation(
+    orpc.admin.settings.setMany.mutationOptions({
+      onSuccess: () => {
+        toast.success("Homepage updated");
+        queryClient.invalidateQueries({ queryKey: orpc.settings.key() });
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
   const getValue = (key: string) =>
     form[key] ?? settings?.[key] ?? HOMEPAGE_DEFAULTS[key as keyof typeof HOMEPAGE_DEFAULTS] ?? "";
@@ -252,21 +249,8 @@ function HomepageEditor() {
       key,
       value: getValue(key),
     }));
-    mutation.mutate(items);
+    mutation.mutate({ items });
   };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6 p-6">
-        <div className="h-8 w-48 bg-muted animate-pulse" />
-        <div className="space-y-4">
-          <div className="h-10 bg-muted animate-pulse" />
-          <div className="h-20 bg-muted animate-pulse" />
-          <div className="h-10 bg-muted animate-pulse" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8 p-6 w-full max-w-4xl">
@@ -1001,5 +985,8 @@ function HomepageEditor() {
 }
 
 export const Route = createFileRoute("/admin/homepage")({
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery(orpc.settings.getAll.queryOptions());
+  },
   component: HomepageEditor,
 });

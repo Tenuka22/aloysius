@@ -4,6 +4,7 @@ import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { aspectRatioClass, getAspectRatio } from "@/lib/image-ratio";
+import { MediaImage } from "@/components-client/media-image";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -58,15 +59,12 @@ function ImageTile({
 
   const inner = (
     <div className="group relative w-full overflow-hidden">
-      {tile.image ? (
-        <img
-          src={tile.image}
-          alt={label}
-          className={`w-full ${aspect} object-cover transition-transform duration-500 group-hover:scale-105`}
-        />
-      ) : (
-        <div className={`w-full ${aspect} ${bgClass || "bg-green-dark/10"}`} />
-      )}
+      <MediaImage
+        src={tile.image}
+        alt={label}
+        className={`w-full ${aspect} object-cover transition-transform duration-500 group-hover:scale-105`}
+        fallback={<div className={`w-full ${aspect} ${bgClass || "bg-green-dark/10"}`} />}
+      />
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
       {label && (
         <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">

@@ -2,14 +2,14 @@
 
 import { useCallback, useState } from "react";
 import { useStore } from "@tanstack/react-form";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@aloysius-web/ui/components/button";
 import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
 import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
 import { IconX, IconPlus, IconGripVertical } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import * as v from "valibot";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
@@ -113,6 +113,9 @@ const updateExamResultSchema = v.object({
 
 type UpdateExamResultValues = v.InferOutput<typeof updateExamResultSchema>;
 
+type FormValues = CreateExamResultValues | UpdateExamResultValues;
+type StudentRow = v.InferOutput<typeof studentSchema>;
+
 const fields: FieldEntry<CreateExamResultValues | UpdateExamResultValues>[] = [
   { name: "examType", kind: "text", label: "Exam Type", hidden: true, required: true },
   { name: "examYear", kind: "text", label: "Exam Year", hidden: true, required: true },
@@ -129,8 +132,8 @@ const textareaClass =
 
 function ExamTypeField() {
   const form = useBuildForm();
-  const examType = useStore(form.store, (state: any) => state.values.examType) as string;
-  const students = (useStore(form.store, (state: any) => state.values.students) as any[]) ?? [];
+  const examType = useStore(form.store, (state: { values: FormValues }) => state.values.examType) as string;
+  const students = (useStore(form.store, (state: { values: FormValues }) => state.values.students) as StudentRow[]) ?? [];
 
   return (
     <div className="space-y-1.5">
@@ -170,8 +173,8 @@ function ExamTypeField() {
 
 function YearFields() {
   const form = useBuildForm();
-  const examYear = useStore(form.store, (state: any) => state.values.examYear) as string;
-  const resultsYear = useStore(form.store, (state: any) => state.values.resultsYear) as string;
+  const examYear = useStore(form.store, (state: { values: FormValues }) => state.values.examYear) as string;
+  const resultsYear = useStore(form.store, (state: { values: FormValues }) => state.values.resultsYear) as string;
 
   return (
     <div className="grid grid-cols-2 gap-4">
@@ -234,10 +237,10 @@ function StudentCard({
   onChange,
   onRemove,
 }: {
-  student: any;
+  student: StudentRow;
   index: number;
   examType: string;
-  onChange: (updated: any) => void;
+  onChange: (updated: StudentRow) => void;
   onRemove: () => void;
 }) {
   const [uploading, setUploading] = useState(false);
@@ -259,7 +262,7 @@ function StudentCard({
   );
 
   const setSubject = (i: number, patch: Partial<{ subject: string; grade: string }>) => {
-    const subjects = (student.subjects ?? []).map((s: any, si: number) =>
+    const subjects = (student.subjects ?? []).map((s, si: number) =>
       si === i ? { ...s, ...patch } : s,
     );
     onChange({ ...student, subjects });
@@ -393,7 +396,7 @@ function StudentCard({
                 </label>
                 {(student.subjects ?? []).length > 0 ? (
                   <div className="space-y-1.5">
-                    {(student.subjects ?? []).map((s: any, i: number) => (
+                    {(student.subjects ?? []).map((s, i: number) => (
                       <div key={i} className="flex items-center gap-2">
                         <select
                           value={s.subject}
@@ -439,10 +442,10 @@ function StudentCard({
 
 function StudentsEditor() {
   const form = useBuildForm();
-  const examType = useStore(form.store, (state: any) => state.values.examType) as string;
-  const students = (useStore(form.store, (state: any) => state.values.students) as any[]) ?? [];
+  const examType = useStore(form.store, (state: { values: FormValues }) => state.values.examType) as string;
+  const students = (useStore(form.store, (state: { values: FormValues }) => state.values.students) as StudentRow[]) ?? [];
 
-  const updateStudent = (index: number, updated: any) => {
+  const updateStudent = (index: number, updated: StudentRow) => {
     form.setFieldValue(
       "students",
       students.map((s, i) => (i === index ? updated : s)),
@@ -509,11 +512,34 @@ export function ExamResultForm({
 }) {
   const queryClient = useQueryClient();
 
-  const existing = useQuery({
-    queryKey: ["examResults", id],
-    queryFn: () => client.examResults.get({ id: id! }),
-    enabled: mode === "edit" && !!id,
-  });
+  const existing = useQuery(
+    orpc.examResults.get.queryOptions({
+      input: { id: id! },
+      enabled: mode === "edit" && !!id,
+    }),
+  );
+
+  const createMutation = useMutation(
+    orpc.admin.examResults.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("Exam result created");
+        queryClient.invalidateQueries({ queryKey: orpc.examResults.key() });
+        onSuccess?.();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
+
+  const updateMutation = useMutation(
+    orpc.admin.examResults.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Exam result updated");
+        queryClient.invalidateQueries({ queryKey: orpc.examResults.key() });
+        onSuccess?.();
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
   const config: FormConfig<CreateExamResultValues | UpdateExamResultValues> = {
     fields,
@@ -531,29 +557,28 @@ export function ExamResultForm({
     renderBelowFields: () => <StudentsEditor />,
   };
 
-  const onSave = async (values: CreateExamResultValues | UpdateExamResultValues) => {
-    const payload = {
-      examType: values.examType,
-      examYear: Number(values.examYear),
-      resultsYear: Number(values.resultsYear),
-      publishNow: values.publishNow,
-      students: (values.students ?? []).map((s) => ({
-        name: s.name,
-        photo: s.photo || undefined,
-        quote: s.quote || undefined,
-        marks: typeof s.marks === "number" ? s.marks : s.marks ? Number(s.marks) : undefined,
-        overallGrade: s.overallGrade || undefined,
-        stream: (s.stream as any) || undefined,
-        subjects: (s.subjects ?? []).filter((x: any) => x.subject.trim()),
-        sortOrder: s.sortOrder == null || s.sortOrder === "" ? undefined : Number(s.sortOrder),
-      })),
-    };
-    if (mode === "create") {
-      return client.examResults.create(payload as any);
-    }
-    return client.examResults.update({ id: id!, ...payload } as any);
-  };
-
+  const buildPayload = (values: CreateExamResultValues | UpdateExamResultValues) => ({
+    examType: values.examType,
+    examYear: Number(values.examYear),
+    resultsYear: Number(values.resultsYear),
+    publishNow: values.publishNow,
+    students: (values.students ?? []).map((s) => ({
+      name: s.name,
+      photo: s.photo || undefined,
+      quote: s.quote || undefined,
+      marks: typeof s.marks === "number" ? s.marks : s.marks ? Number(s.marks) : undefined,
+      overallGrade: s.overallGrade || undefined,
+      stream: (s.stream || undefined) as
+        | "physical_science"
+        | "biological_science"
+        | "commerce"
+        | "arts"
+        | "technology"
+        | undefined,
+      subjects: (s.subjects ?? []).filter((subject) => subject.subject.trim()),
+      sortOrder: s.sortOrder == null || s.sortOrder === "" ? undefined : Number(s.sortOrder),
+    })),
+  });
   if (mode === "edit" && existing.isLoading) {
     return (
       <div className="space-y-6 p-1">
@@ -568,7 +593,7 @@ export function ExamResultForm({
     return <div className="p-4 text-center text-muted-foreground">Exam result not found.</div>;
   }
 
-  const result = existing.data as any;
+  const result = existing.data;
 
   return (
     <FormBuilder
@@ -581,7 +606,7 @@ export function ExamResultForm({
               examYear: String(result.examYear),
               resultsYear: String(result.resultsYear),
               publishNow: result.status === "published",
-              students: (result.students ?? []).map((s: any, i: number) => ({
+              students: (result.students ?? []).map((s, i: number) => ({
                 id: s.id ?? i,
                 name: s.name,
                 photo: s.photo ?? "",
@@ -605,13 +630,15 @@ export function ExamResultForm({
             }
       }
       onSubmit={async (values) => {
-        try {
-          await onSave(values);
-          toast.success(mode === "create" ? "Exam result created" : "Exam result updated");
-          queryClient.invalidateQueries({ queryKey: ["examResults"] });
-          onSuccess?.();
-        } catch (err: any) {
-          toast.error(err.message);
+        const payload = buildPayload(values);
+        if (mode === "create") {
+          await createMutation.mutateAsync(
+            payload as Parameters<typeof createMutation.mutateAsync>[0],
+          );
+        } else {
+          await updateMutation.mutateAsync(
+            { id: id!, ...payload } as Parameters<typeof updateMutation.mutateAsync>[0],
+          );
         }
       }}
     />

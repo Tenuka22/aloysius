@@ -2,14 +2,14 @@
 
 import { useCallback, useState } from "react";
 import { useStore } from "@tanstack/react-form";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@aloysius-web/ui/components/button";
 import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
 import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
 import { IconX, IconChevronDown } from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
-import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import * as v from "valibot";
 import { Popover, PopoverTrigger, PopoverContent } from "@aloysius-web/ui/components/popover";
@@ -56,6 +56,8 @@ const updateGallerySchema = v.object({
 
 type UpdateGalleryValues = v.InferOutput<typeof updateGallerySchema>;
 
+type FormValues = CreateGalleryValues | UpdateGalleryValues;
+
 const fields: FieldEntry<CreateGalleryValues | UpdateGalleryValues>[] = [
   {
     name: "title",
@@ -70,12 +72,11 @@ const fields: FieldEntry<CreateGalleryValues | UpdateGalleryValues>[] = [
     kind: "custom",
     label: "Slug",
     required: false,
-    customRenderer: () => null,
-    renderField: (name, value, onChange) => (
+    customRenderer: ({ value, onChange }) => (
       <SlugFieldInline
         routerName="gallery"
         value={(value as string) ?? ""}
-        onChange={(v) => onChange(v)}
+        onChange={onChange}
       />
     ),
   },
@@ -115,7 +116,7 @@ const fields: FieldEntry<CreateGalleryValues | UpdateGalleryValues>[] = [
 
 function TitleField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.title) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.title) as string;
 
   return (
     <div className="space-y-1.5">
@@ -135,7 +136,7 @@ function TitleField() {
 
 function CoverImageField() {
   const form = useBuildForm();
-  const coverImage = useStore(form.store, (state: any) => state.values.coverImage) as
+  const coverImage = useStore(form.store, (state: { values: FormValues }) => state.values.coverImage) as
     | string
     | undefined;
   const [uploading, setUploading] = useState(false);
@@ -232,14 +233,15 @@ function TagsField() {
 
 function EventField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.eventId) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.eventId) as string;
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const eventsQuery = useQuery({
-    queryKey: ["events", "combobox", search],
-    queryFn: () => client.events.list({ page: 1, pageSize: 50, search: search || undefined }),
-  });
+  const eventsQuery = useQuery(
+    orpc.events.list.queryOptions({
+      input: { page: 1, pageSize: 50, search: search || undefined },
+    }),
+  );
 
   const events = eventsQuery.data?.rows ?? [];
   const selectedEvent = events.find((e) => e.id === value);
@@ -316,14 +318,15 @@ function EventField() {
 
 function StudentWorkField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.studentWorkId) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.studentWorkId) as string;
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const worksQuery = useQuery({
-    queryKey: ["studentWorks", "combobox", search],
-    queryFn: () => client.studentWorks.list({ page: 1, pageSize: 50, search: search || undefined }),
-  });
+  const worksQuery = useQuery(
+    orpc.studentWorks.list.queryOptions({
+      input: { page: 1, pageSize: 50, search: search || undefined },
+    }),
+  );
 
   const works = worksQuery.data?.rows ?? [];
   const selectedWork = works.find((w) => w.id === value);
@@ -399,14 +402,15 @@ function StudentWorkField() {
 
 function AchievementField() {
   const form = useBuildForm();
-  const value = useStore(form.store, (state: any) => state.values.achievementId) as string;
+  const value = useStore(form.store, (state: { values: FormValues }) => state.values.achievementId) as string;
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const achievementsQuery = useQuery({
-    queryKey: ["achievements", "combobox", search],
-    queryFn: () => client.achievements.list({ page: 1, pageSize: 50, search: search || undefined }),
-  });
+  const achievementsQuery = useQuery(
+    orpc.achievements.list.queryOptions({
+      input: { page: 1, pageSize: 50, search: search || undefined },
+    }),
+  );
 
   const achievements = achievementsQuery.data?.rows ?? [];
   const selectedAchievement = achievements.find((a) => a.id === value);
@@ -502,11 +506,15 @@ export function GalleryForm({
 }) {
   const queryClient = useQueryClient();
 
-  const existingGallery = useQuery({
-    queryKey: ["gallery", id],
-    queryFn: () => client.gallery.get({ id: id! }),
-    enabled: mode === "edit" && !!id,
-  });
+  const existingGallery = useQuery(
+    orpc.gallery.get.queryOptions({
+      input: { id: id! },
+      enabled: mode === "edit" && !!id,
+    }),
+  );
+
+  const createMutation = useMutation(orpc.admin.gallery.create.mutationOptions());
+  const updateMutation = useMutation(orpc.admin.gallery.update.mutationOptions());
 
   const gallery = existingGallery.data;
 
@@ -527,7 +535,7 @@ export function GalleryForm({
       }),
       onSuccess: () => {
         toast.success(mode === "create" ? "Gallery album created" : "Gallery album updated");
-        queryClient.invalidateQueries({ queryKey: ["gallery"] });
+        queryClient.invalidateQueries({ queryKey: orpc.gallery.key() });
         onSuccess?.();
       },
       onError: (err) => {
@@ -577,10 +585,10 @@ export function GalleryForm({
               slug: gallery.slug ?? "",
               description: gallery.description ?? "",
               eventId: gallery.eventId ?? "",
-              studentWorkId: (gallery as any).studentWorkId ?? "",
-              achievementId: (gallery as any).achievementId ?? "",
-              authorName: (gallery as any).authorName ?? "",
-              authorType: (gallery as any).authorType ?? "",
+              studentWorkId: gallery.studentWorkId ?? "",
+              achievementId: gallery.achievementId ?? "",
+              authorName: gallery.authorName ?? "",
+              authorType: gallery.authorType ?? "",
               coverImage: gallery.coverImage ?? "",
               tags: gallery.tags ?? [],
               publishNow: gallery.status === "published",
@@ -601,9 +609,13 @@ export function GalleryForm({
       }
       onSubmit={async (values) => {
         if (mode === "create") {
-          return client.gallery.create(values as CreateGalleryValues);
+          return createMutation.mutateAsync(
+            values as Parameters<typeof createMutation.mutateAsync>[0],
+          );
         }
-        return client.gallery.update({ id: id!, ...values });
+        return updateMutation.mutateAsync(
+          { id: id!, ...values } as Parameters<typeof updateMutation.mutateAsync>[0],
+        );
       }}
     />
   );

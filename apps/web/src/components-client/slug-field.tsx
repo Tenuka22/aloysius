@@ -4,15 +4,21 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { client } from "@/utils/orpc";
 import { cn } from "@aloysius-web/ui/lib/utils";
 
-function toSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
+type SlugCheckInput = { slug: string };
+type SlugCheckResult = { unique: boolean; suggestion?: string | null };
+
+const checkSlugRouters: Record<
+  string,
+  (input: SlugCheckInput) => Promise<SlugCheckResult>
+> = {
+  news: client.news.checkSlug,
+  events: client.events.checkSlug,
+  announcements: client.announcements.checkSlug,
+  achievements: client.achievements.checkSlug,
+  activities: client.activities.checkSlug,
+  gallery: client.gallery.checkSlug,
+  studentWorks: client.studentWorks.checkSlug,
+};
 
 export function SlugFieldInline({
   sourceField = "title",
@@ -41,7 +47,7 @@ export function SlugFieldInline({
       }
       setChecking(true);
       try {
-        const result = await (client as any)[routerName].checkSlug({ slug: slugValue });
+        const result = await checkSlugRouters[routerName]({ slug: slugValue });
         if (!result.unique) {
           setError(`Slug already exists. Suggestion: ${result.suggestion}`);
         } else {

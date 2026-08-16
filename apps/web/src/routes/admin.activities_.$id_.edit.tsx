@@ -9,7 +9,7 @@ import {
 } from "@aloysius-web/ui/components/dialog";
 import { ActivitiesForm } from "@/components-client/activities-form";
 
-export const Route = createFileRoute("/admin/activities_/$id/edit")({
+export const Route = createFileRoute("/admin/activities_/$id_/edit")({
   component: EditActivityDialog,
 });
 

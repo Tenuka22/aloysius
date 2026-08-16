@@ -3,18 +3,6 @@ import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
 
-type NewsItem = {
-  id: string;
-  title: string;
-  content: string | null;
-  excerpt: string | null;
-  coverImage: string | null;
-  tags: string[] | null;
-  authorName: string | null;
-  authorType: string | null;
-  publishedAt: string | null;
-};
-
 const authorTypeLabels: Record<string, string> = {
   student: "Student",
   faculty: "Faculty",
@@ -32,7 +20,7 @@ export const Route = createFileRoute("/news_/$slug")({
 });
 
 function NewsDetailPage() {
-  const { newsItem } = Route.useLoaderData() as { newsItem: NewsItem };
+  const { newsItem } = Route.useLoaderData();
 
   return (
     <div className="min-h-screen bg-background">

@@ -1,7 +1,7 @@
 "use client";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
   type ColumnFiltersState,
   type PaginationState,
@@ -10,7 +10,6 @@ import {
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Input } from "@aloysius-web/ui/components/input";
-import { Card, CardContent } from "@aloysius-web/ui/components/card";
 import {
   DataTable,
   DataTableColumnHeader,
@@ -18,18 +17,26 @@ import {
   DataTableViewOptions,
 } from "@aloysius-web/ui/components/data-table";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@aloysius-web/ui/components/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@aloysius-web/ui/components/select";
-import { IconArrowLeft, IconShieldCheck } from "@tabler/icons-react";
-import { client } from "@/utils/orpc";
-import { toast } from "sonner";
+import { IconArrowLeft, IconShieldCheck, IconDotsVertical, IconPencil } from "@tabler/icons-react";
+import { orpc } from "@/utils/orpc";
+import type { OBMember } from "@/lib/api-types";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useState, useEffect, useMemo } from "react";
-import { OBCommitteeEditor, type OBMember } from "@/components-client/ob-committee-editor";
+import { useState, useMemo } from "react";
+import { OBCommitteeEditor } from "@/components-client/ob-committee-editor";
+
+const OB_ADMIN_EMAIL_KEY = "ob_admin_email";
 
 const HEAD_ROLES = [
   "PRESIDENT",
@@ -49,63 +56,54 @@ function isHeadRole(role: string): boolean {
 }
 
 export const Route = createFileRoute("/admin/ob/members_/$year")({
+  loader: async ({ context, params }) => {
+    await context.queryClient.prefetchQuery(
+      orpc.ob.obMembers.list.queryOptions({ input: { year: params.year } }),
+    );
+    await context.queryClient.prefetchQuery(
+      orpc.settings.get.queryOptions({ input: { key: OB_ADMIN_EMAIL_KEY } }),
+    );
+  },
   component: AdminOBMembersYear,
 });
 
 function AdminOBMembersYear() {
   const { year } = Route.useParams();
-  const queryClient = useQueryClient();
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [obAdminEmail, setObAdminEmail] = useState("");
 
-  const { data: members = [], isLoading } = useQuery({
-    queryKey: ["ob-members", { year }],
-    queryFn: () => client.ob.obMembers.list({ year }),
-  });
+  const { data: members } = useSuspenseQuery(
+    orpc.ob.obMembers.list.queryOptions({ input: { year } }),
+  );
 
-  const { data: allMembers = [] } = useQuery({
-    queryKey: ["ob-members", "all"],
-    queryFn: () => client.ob.obMembers.list({}),
-  });
+  const { data: allMembers = [] } = useQuery(orpc.ob.obMembers.list.queryOptions({ input: {} }));
+
+  const { data: adminEmailSetting } = useSuspenseQuery(
+    orpc.settings.get.queryOptions({ input: { key: OB_ADMIN_EMAIL_KEY } }),
+  );
+  const obAdminEmail = adminEmailSetting?.value?.toLowerCase() ?? "";
 
   const visibleMembers = useMemo(
-    () => members.filter((m: any) => m.role !== "ADMINISTRATOR"),
+    () => members.filter((m: OBMember) => m.role !== "ADMINISTRATOR"),
     [members],
   );
   const visibleAllMembers = useMemo(
-    () => allMembers.filter((m: any) => m.role !== "ADMINISTRATOR"),
+    () => allMembers.filter((m: OBMember) => m.role !== "ADMINISTRATOR"),
     [allMembers],
   );
 
-  // The OB admin is any member of this year whose row carries the admin email —
-  // not necessarily the President.
-  useEffect(() => {
-    const admin = visibleMembers.find((m: any) => m.adminEmail);
-    setObAdminEmail(admin?.adminEmail || "");
-  }, [visibleMembers, year]);
-
-  const saveAdminMutation = useMutation({
-    mutationFn: (email: string) => client.ob.obMembers.setOBAdmin({ year, email: email || null }),
-    onSuccess: () => {
-      toast.success("OB admin email saved");
-      queryClient.invalidateQueries({ queryKey: ["ob-members"] });
-    },
-    onError: (err) => toast.error(err.message),
-  });
-
-  const approvedMembers = visibleMembers.filter((m: any) => m.status === "approved");
-  const pendingMembers = visibleMembers.filter((m: any) => m.status === "pending");
-  const pool = visibleAllMembers.filter((m: any) => m.status === "approved");
+  const approvedMembers = visibleMembers.filter((m: OBMember) => m.status === "approved");
+  const pendingMembers = visibleMembers.filter((m: OBMember) => m.status === "pending");
+  const pool = visibleAllMembers.filter((m: OBMember) => m.status === "approved");
 
   const filteredMembers =
     roleFilter === "all"
       ? visibleMembers
       : roleFilter === "head"
-        ? visibleMembers.filter((m: any) => isHeadRole(m.role))
-        : visibleMembers.filter((m: any) => !isHeadRole(m.role));
+        ? visibleMembers.filter((m: OBMember) => isHeadRole(m.role))
+        : visibleMembers.filter((m: OBMember) => !isHeadRole(m.role));
 
   const columns: ColumnDef<OBMember, any>[] = [
     {
@@ -126,8 +124,8 @@ function AdminOBMembersYear() {
         return (
           <div className="flex items-center gap-2">
             <span>{m.name}</span>
-            {m.adminEmail && (
-              <IconShieldCheck className="size-3.5 text-gold shrink-0" title="OB Admin" />
+            {!!obAdminEmail && m.email?.toLowerCase() === obAdminEmail && (
+              <IconShieldCheck className="size-3.5 text-primary shrink-0" title="OB Admin" />
             )}
           </div>
         );
@@ -141,11 +139,11 @@ function AdminOBMembersYear() {
         const isHead = isHeadRole(role);
         return (
           <div className="flex items-center gap-2">
-            <span className={isHead ? "text-gold font-medium" : "text-muted-foreground"}>
+            <span className={isHead ? "text-primary font-medium" : "text-muted-foreground"}>
               {role}
             </span>
             {isHead && (
-              <span className="text-[10px] bg-gold/10 text-gold px-1.5 py-0.5 rounded-full font-bold tracking-wider">
+              <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold tracking-wider">
                 HEAD
               </span>
             )}
@@ -185,6 +183,31 @@ function AdminOBMembersYear() {
       },
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+            <IconDotsVertical className="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              render={
+                <Link
+                  to="/admin/ob/members/$id/edit"
+                  params={{ id: row.original.id }}
+                  search={{ returnTo: `/admin/ob/members/${year}` }}
+                />
+              }
+            >
+              <IconPencil className="size-4" /> Edit
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+      size: 50,
+    },
   ];
 
   return (
@@ -206,70 +229,35 @@ function AdminOBMembersYear() {
         </div>
       </header>
       <div className="flex-1 p-6 space-y-6">
-        {/* OB Admin — the only thing the site admin can change here */}
-        <section>
-          <h2 className="text-sm font-bold tracking-[0.2em] text-foreground mb-3">OB ADMIN</h2>
-          <Card className="border-secondary/20">
-            <CardContent className="p-4 flex flex-wrap items-center gap-4">
-              <div className="flex-1 min-w-[240px]">
-                <label className="text-xs text-muted-foreground block mb-1">
-                  OB Admin Email{" "}
-                  <span className="text-muted-foreground/70">
-                    (the member who manages the committee)
-                  </span>
-                </label>
-                <Input
-                  placeholder="admin@example.com"
-                  value={obAdminEmail}
-                  onChange={(e) => setObAdminEmail(e.target.value)}
-                  className="h-9"
-                />
-                <p className="text-[11px] text-muted-foreground mt-1.5">
-                  Must match the email of an approved member in {year} — the admin is not
-                  necessarily the President.
-                </p>
-              </div>
-              <div className="flex items-end gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => saveAdminMutation.mutate(obAdminEmail)}
-                  disabled={saveAdminMutation.isPending}
-                  className="self-end"
-                >
-                  {saveAdminMutation.isPending ? "Saving..." : "Save"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Committee + All members side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Committee, then All members below */}
+        <div className="space-y-6">
           {/* Committee — read-only for the site admin */}
           <section>
-            {isLoading ? (
-              <div className="text-center text-muted-foreground py-8">Loading...</div>
-            ) : (
-              <OBCommitteeEditor
-                year={year}
-                members={approvedMembers as OBMember[]}
-                pool={pool as OBMember[]}
-                readOnly
-              />
-            )}
+            <OBCommitteeEditor
+              year={year}
+              members={approvedMembers}
+              pool={pool}
+              readOnly
+            />
           </section>
 
-          {/* All members — read-only view */}
-          {members.length > 0 && (
-            <section>
-              <h2 className="text-sm font-bold tracking-[0.2em] text-foreground mb-4">
-                ALL MEMBERS
-              </h2>
+          {/* All members */}
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold tracking-[0.2em] text-foreground">ALL MEMBERS</h2>
+              <Button
+                size="sm"
+                variant="outline"
+                render={<Link to="/admin/ob/members/new" search={{ year }} />}
+              >
+                Add Member
+              </Button>
+            </div>
+            {members.length > 0 && (
               <div className="rounded-lg border border-foreground/15 p-2 bg-card">
                 <DataTable
                   columns={columns}
                   data={filteredMembers}
-                  loading={isLoading}
                   pageCount={0}
                   pagination={pagination}
                   onPaginationChange={setPagination}
@@ -324,8 +312,8 @@ function AdminOBMembersYear() {
                   paginationBar={(table) => <DataTablePagination table={table} />}
                 />
               </div>
-            </section>
-          )}
+            )}
+          </section>
         </div>
       </div>
     </div>
