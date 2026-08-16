@@ -25,7 +25,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { orpc } from "@/utils/orpc";
 
-export const Route = createFileRoute("/activities-admin_/$activityId/")({
+export const Route = createFileRoute("/activities-admin/$activityId/")({
   component: ActivityAdminDashboard,
 });
 
@@ -35,7 +35,7 @@ function formatDate(value: string | null) {
 }
 
 function ActivityAdminDashboard() {
-  const { activityId } = useParams({ from: "/activities-admin_/$activityId" });
+  const { activityId } = useParams({ from: "/activities-admin/$activityId" });
   const { data: members = [] } = useQuery(orpc.clubs.listMembers.queryOptions({ input: { activityId } }));
   const { data: eventsData } = useQuery(orpc.events.list.queryOptions({ input: { activityId, pageSize: 100 } }));
   const { data: newsData } = useQuery(orpc.news.list.queryOptions({ input: { activityId, pageSize: 100 } }));
@@ -193,3 +193,5 @@ function ActivityAdminDashboard() {
     </div>
   );
 }
+
+

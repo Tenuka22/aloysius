@@ -79,12 +79,12 @@ const rejectConfig: FormConfig<RejectFormValues> = {
   layout: [{ columns: [{ fields: ["reason"], span: 12 }] }],
 };
 
-export const Route = createFileRoute("/activities-admin_/$activityId/news")({
+export const Route = createFileRoute("/activities-admin/$activityId/news")({
   component: ActivityAdminNews,
 });
 
 function ActivityAdminNews() {
-  const { activityId } = useParams({ from: "/activities-admin_/$activityId" });
+  const { activityId } = useParams({ from: "/activities-admin/$activityId" });
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [rejectItem, setRejectItem] = useState<{ id: string; title: string } | null>(null);
@@ -202,3 +202,5 @@ function ActivityAdminNews() {
     </div>
   );
 }
+
+

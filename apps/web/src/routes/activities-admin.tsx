@@ -67,8 +67,10 @@ const requireAnyClubAdmin = createServerFn({ method: "GET" }).handler(async () =
 });
 
 export const Route = createFileRoute("/activities-admin")({
-  beforeLoad: async () => {
-    await requireAnyClubAdmin();
+  beforeLoad: async ({ location }) => {
+    if (location.pathname === "/activities-admin" || location.pathname === "/activities-admin/") {
+      await requireAnyClubAdmin();
+    }
   },
   component: ActivitiesAdminLayout,
 });

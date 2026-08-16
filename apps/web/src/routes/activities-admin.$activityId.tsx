@@ -56,9 +56,11 @@ const requireClubAdmin = createServerFn({ method: "GET" })
   };
 });
 
-export const Route = createFileRoute("/activities-admin_/$activityId")({
+export const Route = createFileRoute("/activities-admin/$activityId")({
   loader: async ({ params }) => {
     await requireClubAdmin({ data: { activityId: params.activityId } });
   },
   component: ActivitiesAdminLayout,
 });
+
+

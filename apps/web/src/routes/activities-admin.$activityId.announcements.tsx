@@ -17,7 +17,7 @@ import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
 import { IconPlus, IconCheck, IconX } from "@tabler/icons-react";
 import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
-import { EventForm } from "@/components-client/event-form";
+import { AnnouncementForm } from "@/components-client/announcement-form";
 
 type ContentItem = {
   id: string;
@@ -79,54 +79,54 @@ const rejectConfig: FormConfig<RejectFormValues> = {
   layout: [{ columns: [{ fields: ["reason"], span: 12 }] }],
 };
 
-export const Route = createFileRoute("/activities-admin_/$activityId/events")({
-  component: ActivityAdminEvents,
+export const Route = createFileRoute("/activities-admin/$activityId/announcements")({
+  component: ActivityAdminAnnouncements,
 });
 
-function ActivityAdminEvents() {
-  const { activityId } = useParams({ from: "/activities-admin_/$activityId" });
+function ActivityAdminAnnouncements() {
+  const { activityId } = useParams({ from: "/activities-admin/$activityId" });
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [rejectItem, setRejectItem] = useState<{ id: string; title: string } | null>(null);
 
-  const eventsQuery = useQuery(
-    orpc.events.list.queryOptions({ input: { activityId, pageSize: 100 } }),
+  const announcementsQuery = useQuery(
+    orpc.announcements.list.queryOptions({ input: { activityId, pageSize: 100 } }),
   );
 
   const reviewMutation = useMutation(
     orpc.admin.clubs.reviewContent.mutationOptions({
       onSuccess: () => {
         toast.success("Review submitted");
-        queryClient.invalidateQueries({ queryKey: orpc.events.key() });
+        queryClient.invalidateQueries({ queryKey: orpc.announcements.key() });
         setRejectItem(null);
       },
       onError: (err) => toast.error(err.message),
     }),
   );
 
-  const eventItems = (eventsQuery.data?.rows ?? []) as ContentItem[];
+  const announcementItems = (announcementsQuery.data?.rows ?? []) as ContentItem[];
 
   return (
     <div className="flex flex-col">
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <h1 className="text-lg font-semibold">Events</h1>
+        <h1 className="text-lg font-semibold">Announcements</h1>
         <div className="ml-auto">
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <IconPlus className="mr-1 size-4" />
-            New Event
+            New Announcement
           </Button>
         </div>
       </header>
       <div className="flex-1 p-6">
-        {eventsQuery.isLoading ? (
+        {announcementsQuery.isLoading ? (
           <SectionSkeleton />
-        ) : eventItems.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">No events yet.</div>
+        ) : announcementItems.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">No announcements yet.</div>
         ) : (
           <div className="space-y-3">
-            {eventItems.map((item) => (
+            {announcementItems.map((item) => (
               <div
                 key={item.id}
                 className="flex items-center gap-4 rounded-lg border bg-card p-3"
@@ -143,7 +143,7 @@ function ActivityAdminEvents() {
                 </div>
                 {item.reviewStatus === "pending" && (
                   <div className="flex shrink-0 gap-2">
-                    <Button size="sm" onClick={() => reviewMutation.mutate({ type: "event", id: item.id, action: "approve" })} disabled={reviewMutation.isPending}>
+                    <Button size="sm" onClick={() => reviewMutation.mutate({ type: "announcement", id: item.id, action: "approve" })} disabled={reviewMutation.isPending}>
                       <IconCheck className="mr-1 size-4" />
                       Approve
                     </Button>
@@ -168,14 +168,14 @@ function ActivityAdminEvents() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>New Event</DialogTitle>
+            <DialogTitle>New Announcement</DialogTitle>
           </DialogHeader>
-          <EventForm
+          <AnnouncementForm
             mode="create"
             activityId={activityId}
             onSuccess={() => {
               setCreateOpen(false);
-              queryClient.invalidateQueries({ queryKey: orpc.events.key() });
+              queryClient.invalidateQueries({ queryKey: orpc.announcements.key() });
             }}
           />
         </DialogContent>
@@ -184,14 +184,14 @@ function ActivityAdminEvents() {
       <EntityDialog<RejectFormValues>
         open={!!rejectItem}
         onOpenChange={(open) => !open && setRejectItem(null)}
-        title={`Reject ${rejectItem ? "Event" : "Content"}`}
+        title={`Reject ${rejectItem ? "Announcement" : "Content"}`}
         description="The author will see this reason on their club page."
         config={rejectConfig}
         defaultValues={{ reason: "" }}
         onSubmit={async (values) => {
           if (!rejectItem) return;
           await reviewMutation.mutateAsync({
-            type: "event",
+            type: "announcement",
             id: rejectItem.id,
             action: "reject",
             reason: values.reason || undefined,
@@ -202,3 +202,5 @@ function ActivityAdminEvents() {
     </div>
   );
 }
+
+
