@@ -7,9 +7,11 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@aloysius-web/ui/components/sidebar";
+import { useQuery } from "@tanstack/react-query";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import { ActivitySwitcher } from "@/components/activity-switcher";
+import { useParams } from "@tanstack/react-router";
 import {
   IconDashboard,
   IconUsers,
@@ -19,47 +21,50 @@ import {
   IconPhoto,
 } from "@tabler/icons-react";
 
-const overviewItems = [
-  {
-    title: "Dashboard",
-    url: "/activities-admin/$activityId",
-    icon: <IconDashboard />,
-    isActive: true,
-  },
-];
-
-const membershipItems = [
-  {
-    title: "Members",
-    url: "/activities-admin/$activityId/members",
-    icon: <IconUsers />,
-  },
-];
-
-const contentItems = [
-  {
-    title: "Events",
-    url: "/activities-admin/$activityId/events",
-    icon: <IconCalendarEvent />,
-  },
-  {
-    title: "News",
-    url: "/activities-admin/$activityId/news",
-    icon: <IconNews />,
-  },
-  {
-    title: "Announcements",
-    url: "/activities-admin/$activityId/announcements",
-    icon: <IconSpeakerphone />,
-  },
-  {
-    title: "Gallery",
-    url: "/activities-admin/$activityId/gallery",
-    icon: <IconPhoto />,
-  },
-];
-
 export function ActivitiesAdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { activityId } = useParams({ from: "/activities-admin/$activityId" });
+  const base = `/activities-admin/${activityId}`;
+
+  const overviewItems = [
+    {
+      title: "Dashboard",
+      url: base,
+      icon: <IconDashboard />,
+      isActive: true,
+    },
+  ];
+
+  const membershipItems = [
+    {
+      title: "Members",
+      url: `${base}/members`,
+      icon: <IconUsers />,
+    },
+  ];
+
+  const contentItems = [
+    {
+      title: "Events",
+      url: `${base}/events`,
+      icon: <IconCalendarEvent />,
+    },
+    {
+      title: "News",
+      url: `${base}/news`,
+      icon: <IconNews />,
+    },
+    {
+      title: "Announcements",
+      url: `${base}/announcements`,
+      icon: <IconSpeakerphone />,
+    },
+    {
+      title: "Gallery",
+      url: `${base}/gallery`,
+      icon: <IconPhoto />,
+    },
+  ];
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
