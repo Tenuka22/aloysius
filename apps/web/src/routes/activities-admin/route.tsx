@@ -4,7 +4,6 @@ import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
 import { createDb } from "@aloysius-web/db";
 import { activities, clubMembers } from "@aloysius-web/db/schema";
 import { eq, sql } from "drizzle-orm";
-import { ActivitiesAdminLayout } from "@/components-client/activities-admin-layout";
 
 const requireAnyClubAdmin = createServerFn({ method: "GET" }).handler(async () => {
   const { isAuthenticated, userId } = await auth();
@@ -72,5 +71,4 @@ export const Route = createFileRoute("/activities-admin")({
       await requireAnyClubAdmin();
     }
   },
-  component: ActivitiesAdminLayout,
 });
