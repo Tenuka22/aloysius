@@ -9,6 +9,7 @@ import type { OBMember, OBEvent, OBDonation } from "@/lib/api-types";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
 import { MediaImage } from "@/components-client/media-image";
+import { sortByRole } from "@/lib/ob-sort";
 import {
   IconHeart,
   IconUsers,
@@ -86,11 +87,11 @@ function OBPage({ settings }: { settings?: Record<string, string> } = {}) {
   ];
 
   const headCommittee = useMemo(
-    () => yearMembers.filter((m: OBMember) => headRoles.includes(m.role.toUpperCase())),
+    () => sortByRole(yearMembers.filter((m: OBMember) => headRoles.includes(m.role.toUpperCase()))),
     [yearMembers],
   );
   const regularMembers = useMemo(
-    () => yearMembers.filter((m: OBMember) => !headRoles.includes(m.role.toUpperCase())),
+    () => sortByRole(yearMembers.filter((m: OBMember) => !headRoles.includes(m.role.toUpperCase()))),
     [yearMembers],
   );
 

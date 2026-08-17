@@ -31,6 +31,7 @@ import {
 } from "@aloysius-web/ui/components/select";
 import { IconArrowLeft, IconShieldCheck, IconDotsVertical, IconPencil } from "@tabler/icons-react";
 import { orpc } from "@/utils/orpc";
+import { sortByRole } from "@/lib/ob-sort";
 import type { OBMember } from "@/lib/api-types";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useState, useMemo } from "react";
@@ -98,12 +99,13 @@ function AdminOBMembersYear() {
   const pendingMembers = visibleMembers.filter((m: OBMember) => m.status === "pending");
   const pool = visibleAllMembers.filter((m: OBMember) => m.status === "approved");
 
-  const filteredMembers =
+  const filteredMembers = sortByRole(
     roleFilter === "all"
       ? visibleMembers
       : roleFilter === "head"
         ? visibleMembers.filter((m: OBMember) => isHeadRole(m.role))
-        : visibleMembers.filter((m: OBMember) => !isHeadRole(m.role));
+        : visibleMembers.filter((m: OBMember) => !isHeadRole(m.role)),
+  );
 
   const columns: ColumnDef<OBMember, any>[] = [
     {

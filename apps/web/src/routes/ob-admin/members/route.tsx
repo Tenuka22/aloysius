@@ -46,6 +46,7 @@ import {
 } from "@tabler/icons-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@aloysius-web/ui/components/avatar";
 import { orpc } from "@/utils/orpc";
+import { sortByRole } from "@/lib/ob-sort";
 import type { OBMember } from "@/lib/api-types";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -131,11 +132,12 @@ function OBAdminMembers() {
 
   const visibleMembers = members.filter((m: OBMember) => m.role !== "ADMINISTRATOR");
   const pendingMembers = visibleMembers.filter((m: OBMember) => m.status === "pending");
-  const filteredMembers = search.search
+  const filteredMembers = sortByRole(search.search
     ? visibleMembers.filter((m: OBMember) =>
         m.name.toLowerCase().includes(search.search!.toLowerCase()),
       )
-    : visibleMembers;
+    : visibleMembers,
+  );
 
   const columns: ColumnDef<OBMember, any>[] = [
     {

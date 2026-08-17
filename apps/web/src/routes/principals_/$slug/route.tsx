@@ -110,7 +110,7 @@ function PrincipalDetailPage() {
         <div className="py-16 sm:py-24 px-4 sm:px-6 lg:px-12">
           <div className="mx-auto max-w-[1080px] grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-10 lg:gap-[72px] items-start">
             {/* Portrait */}
-            <div data-animate className="relative max-w-[340px] mx-auto lg:mx-0 w-full">
+            <div data-animate className="relative max-w-[340px] mx-auto lg:mx-0 w-full lg:self-start lg:sticky lg:top-28">
               <div className="absolute -right-3.5 -bottom-3.5 w-full h-full border border-gold -z-10 pointer-events-none" />
               {principal.portrait ? (
                 <img

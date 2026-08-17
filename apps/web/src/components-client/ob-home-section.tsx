@@ -6,6 +6,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { MediaImage } from "@/components-client/media-image";
+import { sortByRole } from "@/lib/ob-sort";
 import type { OBMember, OBEvent, OBDonation } from "@/lib/api-types";
 
 export function OBHomeSection({
@@ -45,9 +46,9 @@ export function OBHomeSection({
     .filter((m) => m.status === "approved")
     .filter((m, idx, arr) => arr.findIndex((x) => x.id === m.id) === idx);
 
-  const headCommittee = approved.filter((m) =>
+  const headCommittee = sortByRole(approved.filter((m) =>
     HEAD_ROLES.includes((m.role || "").toUpperCase()),
-  );
+  ));
 
   const publishedEvents = (obEvents ?? []).filter(
     (e) => e.status === "published",

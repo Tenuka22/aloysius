@@ -18,6 +18,7 @@ import {
 } from "@aloysius-web/ui/components/dialog";
 import { IconPlus, IconUsers, IconShieldCheck } from "@tabler/icons-react";
 import { orpc } from "@/utils/orpc";
+import { sortByRole } from "@/lib/ob-sort";
 import type { OBMember } from "@/lib/api-types";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
@@ -90,8 +91,8 @@ function AdminOBMembers() {
 
   const getYearData = (year: string) => {
     const yearMembers = visibleMembers.filter((m: OBMember) => m.year === year);
-    const headCommittee = yearMembers.filter((m: OBMember) => isHeadRole(m.role));
-    const regularMembers = yearMembers.filter((m: OBMember) => !isHeadRole(m.role));
+    const headCommittee = sortByRole(yearMembers.filter((m: OBMember) => isHeadRole(m.role)));
+    const regularMembers = sortByRole(yearMembers.filter((m: OBMember) => !isHeadRole(m.role)));
     return {
       total: yearMembers.length,
       headCommittee,
