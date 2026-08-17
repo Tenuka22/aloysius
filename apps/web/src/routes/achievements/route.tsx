@@ -22,16 +22,6 @@ const categoryLabel = Object.fromEntries(
 );
 
 export const Route = createFileRoute("/achievements")({
-  head: () => ({
-    links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",
-      },
-    ],
-  }),
   loader: async ({ context }) => {
     await context.queryClient.prefetchQuery(
       orpc.achievements.list.queryOptions({
@@ -64,7 +54,7 @@ function AchievementsPage() {
   const selectCategory = (key: string) => setActiveCat(key);
 
   return (
-    <div className="min-h-screen bg-[#FFF8E7]" style={{ fontFamily: "'Manrope', sans-serif" }}>
+    <div className="min-h-screen bg-[#FFF8E7]">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:border focus:border-[#FFB203] focus:bg-[#013405] focus:px-4 focus:py-2 focus:text-sm focus:text-[#FFB203] focus:outline-none"
@@ -88,7 +78,7 @@ function AchievementsPage() {
                 HALL OF FAME
               </span>
             </div>
-            <h1 className="font-['Cormorant_Garamond'] font-semibold text-5xl sm:text-6xl lg:text-[72px] leading-[1.02] m-0">
+            <h1 className="font-heading font-semibold text-5xl sm:text-6xl lg:text-[72px] leading-[1.02] m-0">
               Our Achievements
             </h1>
             <p className="text-[15px] sm:text-base text-[#FFF8E7]/65 mt-6 max-w-[62ch]">
@@ -156,7 +146,7 @@ function AchievementsPage() {
                           </span>
                         )}
                       </div>
-                      <div className="font-['Cormorant_Garamond'] text-3xl sm:text-[38px] font-semibold leading-tight text-[#013405]">
+                      <div className="font-heading text-3xl sm:text-[38px] font-semibold leading-tight text-[#013405]">
                         {featured.title}
                       </div>
                       {featured.description && (
@@ -216,7 +206,7 @@ function AchievementsPage() {
                             </span>
                           )}
                         </div>
-                        <div className="font-['Cormorant_Garamond'] text-2xl font-semibold leading-tight text-[#013405] group-hover:underline decoration-[#FFB203] decoration-2 underline-offset-4">
+                        <div className="font-heading text-2xl font-semibold leading-tight text-[#013405] group-hover:underline decoration-[#FFB203] decoration-2 underline-offset-4">
                           {item.title}
                         </div>
                         {item.description && (

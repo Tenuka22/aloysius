@@ -1,8 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/manrope";
-@import "@fontsource-variable/playfair-display";
+@import "@fontsource/poppins";
+@import "@fontsource-variable/libre-baskerville";
 @source "../../../apps/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
 
@@ -89,9 +89,9 @@
 }
 
 @theme inline {
-  --font-sans: "Manrope Variable", sans-serif;
-  --font-mono: "Manrope Variable", monospace;
-  --font-heading: "Playfair Display Variable", serif;
+  --font-sans: "Poppins", sans-serif;
+  --font-mono: "Poppins", monospace;
+  --font-heading: "Libre Baskerville Variable", serif;
   --color-cream: var(--cream);
   --color-cream-light: var(--cream-light);
   --color-cream-warm: var(--cream-warm);

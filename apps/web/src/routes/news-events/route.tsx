@@ -65,16 +65,6 @@ function pageWindow(current: number, total: number): (number | "…")[] {
 }
 
 export const Route = createFileRoute("/news-events")({
-  head: () => ({
-    links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",
-      },
-    ],
-  }),
   loader: async ({ context }) => {
     const [newsData, eventsData, announcementsData, achievementsData, settings] = await Promise.all([
       client.news.list({ page: 1, pageSize: 50, status: "published" }),
@@ -180,7 +170,7 @@ function NewsEventsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8E7]" style={{ fontFamily: "'Manrope', sans-serif" }}>
+    <div className="min-h-screen bg-[#FFF8E7]">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:border focus:border-[#FFB203] focus:bg-[#013405] focus:px-4 focus:py-2 focus:text-sm focus:text-[#FFB203] focus:outline-none"
@@ -204,7 +194,7 @@ function NewsEventsPage() {
                 STORIES &amp; UPDATES
               </span>
             </div>
-            <h1 className="font-['Cormorant_Garamond'] font-semibold text-5xl sm:text-6xl lg:text-[72px] leading-[1.02] m-0">
+            <h1 className="font-heading font-semibold text-5xl sm:text-6xl lg:text-[72px] leading-[1.02] m-0">
               News &amp; Events
             </h1>
             <div className="flex gap-3 flex-wrap mt-11">
@@ -261,7 +251,7 @@ function NewsEventsPage() {
                   <span className="text-[#A51919]">FEATURED</span>
                   <span className="text-[#013405]/45">{formatDate(featured.date)}</span>
                 </div>
-                <h2 className="font-['Cormorant_Garamond'] font-semibold text-3xl sm:text-[44px] leading-[1.1] mb-5">
+                <h2 className="font-heading font-semibold text-3xl sm:text-[44px] leading-[1.1] mb-5">
                   <Link to={routeFor[featured.source]} params={{ slug: featured.slug }}>
                     {featured.title}
                   </Link>
@@ -317,7 +307,7 @@ function NewsEventsPage() {
                       <span style={{ color: story.catColor }}>{story.catLabel}</span>
                       <span className="text-[#013405]/45">{formatDate(story.date)}</span>
                     </div>
-                    <div className="font-['Cormorant_Garamond'] text-2xl font-semibold leading-tight">
+                    <div className="font-heading text-2xl font-semibold leading-tight">
                       {story.title}
                     </div>
                   </Link>
@@ -370,7 +360,7 @@ function NewsEventsPage() {
                 <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-4.5">
                   CALENDAR
                 </div>
-                <h2 className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl m-0">
+                <h2 className="font-heading font-semibold text-4xl sm:text-5xl m-0">
                   Upcoming Events
                 </h2>
               </div>
@@ -398,7 +388,7 @@ function NewsEventsPage() {
                       className="grid grid-cols-[auto_1fr_auto] gap-6 sm:gap-10 items-center py-7.5 border-b border-[#FFF8E7]/[0.12]"
                     >
                       <div className="text-center border border-[#FFB203]/40 px-2.5 py-3.5 w-21.5">
-                        <div className="font-['Cormorant_Garamond'] text-[34px] font-semibold text-[#FFB203] leading-none">
+                        <div className="font-heading text-[34px] font-semibold text-[#FFB203] leading-none">
                           {day}
                         </div>
                         <div className="text-[10px] tracking-[0.2em] text-[#FFF8E7]/60 mt-1.5">

@@ -9,16 +9,6 @@ import { orpc } from "@/utils/orpc";
 import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 
 export const Route = createFileRoute("/gallery_/$slug")({
-  head: () => ({
-    links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",
-      },
-    ],
-  }),
   loader: async ({ context, params }) => {
     await Promise.all([
       context.queryClient.prefetchQuery(
@@ -57,7 +47,7 @@ function AlbumDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8E7]" style={{ fontFamily: "'Manrope', sans-serif" }}>
+    <div className="min-h-screen bg-[#FFF8E7]">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:border focus:border-[#FFB203] focus:bg-[#013405] focus:px-4 focus:py-2 focus:text-sm focus:text-[#FFB203] focus:outline-none"
@@ -85,7 +75,7 @@ function AlbumDetailPage() {
               ALBUM
             </span>
           </div>
-          <h1 className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] m-0">
+          <h1 className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] leading-[1.05] m-0">
             {album.title}
           </h1>
           {album.description && (
@@ -221,7 +211,7 @@ function AlbumDetailPage() {
               className="max-w-full max-h-[85vh] object-contain"
             />
             {images[lightboxIndex].caption && (
-              <p className="text-[#FFF8E7]/80 text-center mt-3 text-sm font-['Cormorant_Garamond'] italic">
+              <p className="text-[#FFF8E7]/80 text-center mt-3 text-sm font-heading italic">
                 {images[lightboxIndex].caption}
               </p>
             )}

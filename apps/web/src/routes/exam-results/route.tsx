@@ -25,16 +25,6 @@ const FILTERS: { value: Filter; label: string }[] = [
 ];
 
 export const Route = createFileRoute("/exam-results")({
-  head: () => ({
-    links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",
-      },
-    ],
-  }),
   loader: async () => {
     const [resultsData, settings] = await Promise.all([
       client.examResults.list({
@@ -71,7 +61,7 @@ function ExamResultsPage() {
   }, [results, filter]);
 
   return (
-    <div className="min-h-screen bg-[#FFF8E7]" style={{ fontFamily: "'Manrope', sans-serif" }}>
+    <div className="min-h-screen bg-[#FFF8E7]">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:border focus:border-[#FFB203] focus:bg-[#013405] focus:px-4 focus:py-2 focus:text-sm focus:text-[#FFB203] focus:outline-none"
@@ -95,7 +85,7 @@ function ExamResultsPage() {
               TOP SCORES
             </span>
           </div>
-          <h1 className="font-['Cormorant_Garamond'] font-semibold text-5xl sm:text-6xl lg:text-[72px] leading-[1.02] m-0">
+          <h1 className="font-heading font-semibold text-5xl sm:text-6xl lg:text-[72px] leading-[1.02] m-0">
             Exam Results
           </h1>
           <p className="text-[15px] sm:text-base text-[#FFF8E7]/65 mt-6 max-w-[62ch]">
@@ -175,7 +165,7 @@ function ResultSection({ result }: { result: ExamResult }) {
               {EXAM_TYPE_SHORT[result.examType] ?? result.examType.toUpperCase()}
             </span>
           </div>
-          <h2 className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-[44px] leading-none text-[#013405] m-0">
+          <h2 className="font-heading font-semibold text-4xl sm:text-[44px] leading-none text-[#013405] m-0">
             {examYearLabel(result)}
           </h2>
           <p className="text-sm text-[#013405]/55 mt-3">
@@ -203,7 +193,7 @@ function ResultSection({ result }: { result: ExamResult }) {
                   />
                 ) : (
                   <div className="size-16 sm:size-18 bg-[#013405]/10 flex items-center justify-center">
-                    <span className="font-['Cormorant_Garamond'] text-2xl font-semibold text-[#013405]/40">
+                    <span className="font-heading text-2xl font-semibold text-[#013405]/40">
                       {student.name.charAt(0)}
                     </span>
                   </div>
@@ -219,7 +209,7 @@ function ResultSection({ result }: { result: ExamResult }) {
                       </span>
                     )}
                   </div>
-                  <div className="font-['Cormorant_Garamond'] text-xl sm:text-[22px] font-semibold leading-tight text-[#013405] truncate">
+                  <div className="font-heading text-xl sm:text-[22px] font-semibold leading-tight text-[#013405] truncate">
                     {student.name}
                   </div>
                   {gradeSummary(student) && (
@@ -245,7 +235,7 @@ function ResultSection({ result }: { result: ExamResult }) {
               )}
 
               {student.quote && (
-                <p className="font-['Cormorant_Garamond'] italic text-[16px] leading-relaxed text-[#013405]/60">
+                <p className="font-heading italic text-[16px] leading-relaxed text-[#013405]/60">
                   &ldquo;{student.quote}&rdquo;
                 </p>
               )}
@@ -280,12 +270,12 @@ function ResultSection({ result }: { result: ExamResult }) {
                     />
                   ) : (
                     <div className="size-11 shrink-0 bg-[#FFF8E7]/10 flex items-center justify-center">
-                      <span className="font-['Cormorant_Garamond'] text-lg font-semibold text-[#FFB203]/60">
+                      <span className="font-heading text-lg font-semibold text-[#FFB203]/60">
                         {admission.studentName.charAt(0)}
                       </span>
                     </div>
                   )}
-                  <div className="font-['Cormorant_Garamond'] text-lg leading-snug font-semibold text-[#FFF8E7] min-w-0">
+                  <div className="font-heading text-lg leading-snug font-semibold text-[#FFF8E7] min-w-0">
                     {admission.studentName}
                   </div>
                 </div>

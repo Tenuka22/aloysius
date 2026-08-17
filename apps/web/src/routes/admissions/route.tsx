@@ -55,16 +55,6 @@ const DEFAULTS: Record<string, string> = {
 };
 
 export const Route = createFileRoute("/admissions")({
-  head: () => ({
-    links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",
-      },
-    ],
-  }),
   loader: async () => {
     const settings = await client.settings.getAll();
     return { settings };
@@ -126,7 +116,7 @@ function AdmissionsPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-[#FFF8E7]" style={{ fontFamily: "'Manrope', sans-serif" }}>
+    <div className="min-h-screen bg-[#FFF8E7]">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground focus:outline-none"
@@ -156,7 +146,7 @@ function AdmissionsPage() {
             </div>
             <h1
               data-animate
-              className="font-['Cormorant_Garamond'] font-semibold text-5xl sm:text-6xl lg:text-[76px] leading-[1.02] mb-6 max-w-[14ch]"
+              className="font-heading font-semibold text-5xl sm:text-6xl lg:text-[76px] leading-[1.02] mb-6 max-w-[14ch]"
             >
               {s("admissions_title")}
             </h1>
@@ -214,14 +204,14 @@ function AdmissionsPage() {
             </div>
             <h2
               data-animate
-              className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-17.5"
+              className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-17.5"
             >
               The Application Process
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {steps.map((step) => (
                 <div key={step.num} data-animate className="border-t-2 border-[#FFB203] pt-6.5">
-                  <div className="font-['Cormorant_Garamond'] text-5xl font-semibold text-[#013405]/25 leading-none">
+                  <div className="font-heading text-5xl font-semibold text-[#013405]/25 leading-none">
                     {step.num}
                   </div>
                   <div className="font-bold text-lg mt-4 mb-2.5">{step.title}</div>
@@ -242,7 +232,7 @@ function AdmissionsPage() {
               <div className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
                 REQUIREMENTS
               </div>
-              <h2 className="font-['Cormorant_Garamond'] font-semibold text-3xl sm:text-[44px] mb-9">
+              <h2 className="font-heading font-semibold text-3xl sm:text-[44px] mb-9">
                 What You&rsquo;ll Need
               </h2>
               <div className="flex flex-col">
@@ -261,7 +251,7 @@ function AdmissionsPage() {
               <div className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
                 IMPORTANT DATES
               </div>
-              <h2 className="font-['Cormorant_Garamond'] font-semibold text-3xl sm:text-[44px] mb-9">
+              <h2 className="font-heading font-semibold text-3xl sm:text-[44px] mb-9">
                 Key Dates
               </h2>
               <div className="bg-[#013405] text-[#FFF8E7] py-3">
@@ -294,7 +284,7 @@ function AdmissionsPage() {
             </div>
             <h2
               data-animate
-              className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-15"
+              className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-15"
             >
               Forms &amp; Documents
             </h2>
@@ -331,7 +321,7 @@ function AdmissionsPage() {
             </div>
             <h2
               data-animate
-              className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-12.5"
+              className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-12.5"
             >
               Frequently Asked Questions
             </h2>
@@ -345,7 +335,7 @@ function AdmissionsPage() {
                       className="w-full flex justify-between items-center gap-5 py-6.5 text-left"
                     >
                       <span className="font-bold text-[17px]">{faq.q}</span>
-                      <span className="font-['Cormorant_Garamond'] text-3xl text-[#FFB203] leading-none shrink-0">
+                      <span className="font-heading text-3xl text-[#FFB203] leading-none shrink-0">
                         {open ? "−" : "+"}
                       </span>
                     </button>
@@ -363,7 +353,7 @@ function AdmissionsPage() {
               className="mt-15 bg-[#062B0A] text-[#FFF8E7] px-6 sm:px-12 py-11 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6"
             >
               <div>
-                <div className="font-['Cormorant_Garamond'] text-2xl sm:text-[28px] font-semibold">
+                <div className="font-heading text-2xl sm:text-[28px] font-semibold">
                   {s("admissions_cta_title")}
                 </div>
                 <div className="text-sm text-[#FFF8E7]/65 mt-1.5">{s("admissions_cta_desc")}</div>

@@ -10,16 +10,6 @@ import { IconX, IconEye } from "@tabler/icons-react";
 import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 
 export const Route = createFileRoute("/gallery")({
-  head: () => ({
-    links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",
-      },
-    ],
-  }),
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.prefetchQuery(
@@ -65,7 +55,7 @@ function QuickPeekModal({
       >
         <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-[#013405]/10">
           <div className="min-w-0">
-            <h2 className="font-['Cormorant_Garamond'] font-semibold text-2xl sm:text-3xl text-[#013405] leading-snug">
+            <h2 className="font-heading font-semibold text-2xl sm:text-3xl text-[#013405] leading-snug">
               {albumTitle}
             </h2>
             {albumDescription && (
@@ -170,7 +160,7 @@ function AlbumCard({
 
       <div className="px-4 py-3 flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-['Cormorant_Garamond'] font-semibold text-base sm:text-lg text-[#013405] truncate">
+          <h3 className="font-heading font-semibold text-base sm:text-lg text-[#013405] truncate">
             {album.title}
           </h3>
           {album.description && (
@@ -203,7 +193,7 @@ function GalleryPage() {
   const peekAlbum = albums.find((a) => a.id === peekId);
 
   return (
-    <div className="min-h-screen bg-[#FFF8E7]" style={{ fontFamily: "'Manrope', sans-serif" }}>
+    <div className="min-h-screen bg-[#FFF8E7]">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:border focus:border-[#FFB203] focus:bg-[#013405] focus:px-4 focus:py-2 focus:text-sm focus:text-[#FFB203] focus:outline-none"
@@ -227,7 +217,7 @@ function GalleryPage() {
               PHOTO ALBUMS
             </span>
           </div>
-          <h1 className="font-['Cormorant_Garamond'] font-semibold text-5xl sm:text-6xl lg:text-[72px] leading-[1.02] m-0">
+          <h1 className="font-heading font-semibold text-5xl sm:text-6xl lg:text-[72px] leading-[1.02] m-0">
             Photo Gallery
           </h1>
           <p className="text-[15px] sm:text-base text-[#FFF8E7]/65 mt-6 max-w-[62ch]">

@@ -409,7 +409,7 @@ function AboutPage() {
             </div>
             <h2
               data-animate
-              className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-15"
+              className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-15"
             >
               {s("about_founders_title")}
             </h2>
@@ -444,7 +444,7 @@ function AboutPage() {
             </div>
             <h2
               data-animate
-              className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-17.5"
+              className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-17.5"
             >
               {s("about_history_title")}
             </h2>
@@ -455,7 +455,7 @@ function AboutPage() {
                   data-animate
                   className="grid grid-cols-1 sm:grid-cols-[140px_2px_1fr] lg:grid-cols-[180px_2px_minmax(0,1fr)_minmax(0,320px)] gap-6 lg:gap-11 py-8 sm:py-11 border-b border-[#013405]/10 items-start"
                 >
-                  <div className="font-['Cormorant_Garamond'] text-4xl sm:text-[46px] font-semibold text-[#FFB203] leading-none">
+                  <div className="font-heading text-4xl sm:text-[46px] font-semibold text-[#FFB203] leading-none">
                     {t.year}
                   </div>
                   <div className="hidden sm:block bg-[#FFB203] h-full min-h-20" />
@@ -489,7 +489,7 @@ function AboutPage() {
               <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-5.5">
                 VISION
               </div>
-              <p className="font-['Cormorant_Garamond'] text-2xl sm:text-[30px] leading-[1.4] font-medium m-0">
+              <p className="font-heading text-2xl sm:text-[30px] leading-[1.4] font-medium m-0">
                 {s("about_vision_statement")}
               </p>
             </div>
@@ -497,7 +497,7 @@ function AboutPage() {
               <div className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203] mb-5.5">
                 MISSION
               </div>
-              <p className="font-['Cormorant_Garamond'] text-2xl sm:text-[30px] leading-[1.4] font-medium m-0">
+              <p className="font-heading text-2xl sm:text-[30px] leading-[1.4] font-medium m-0">
                 {s("about_mission_statement")}
               </p>
             </div>
@@ -521,13 +521,13 @@ function AboutPage() {
               THE COLLEGE MOTTO
             </div>
             <div
-              className="font-['Cormorant_Garamond'] font-semibold tracking-[0.04em] leading-none"
+              className="font-heading font-semibold tracking-[0.04em] leading-none"
               style={{ fontSize: "clamp(56px, 8vw, 110px)" }}
             >
               CERTA VIRILITER
             </div>
             <div className="w-14 h-0.5 bg-[#FFB203] my-9 mx-auto" />
-            <p className="font-['Cormorant_Garamond'] italic text-2xl sm:text-[26px] text-[#FFF8E7]/80 m-0">
+            <p className="font-heading italic text-2xl sm:text-[26px] text-[#FFF8E7]/80 m-0">
               &ldquo;Strive Manfully&rdquo;
             </p>
           </div>
@@ -556,11 +556,11 @@ function AboutPage() {
               <div className="text-[11px] tracking-[0.4em] font-bold text-[#A51919] mb-4.5">
                 PRINCIPAL&rsquo;S MESSAGE
               </div>
-              <h2 className="font-['Cormorant_Garamond'] font-semibold text-3xl sm:text-[44px] mb-6">
+              <h2 className="font-heading font-semibold text-3xl sm:text-[44px] mb-6">
                 {displayHeading}
               </h2>
               <p className="text-base leading-[1.75] text-[#013405]/80 mb-6.5">{displayMessage}</p>
-              <div className="font-['Cormorant_Garamond'] italic text-2xl sm:text-[28px] text-[#013405]/50">
+              <div className="font-heading italic text-2xl sm:text-[28px] text-[#013405]/50">
                 &mdash; {displayName}
               </div>
               <a
@@ -588,7 +588,7 @@ function AboutPage() {
             </div>
             <h2
               data-animate
-              className="font-['Cormorant_Garamond'] font-semibold text-3xl sm:text-[50px] mb-10"
+              className="font-heading font-semibold text-3xl sm:text-[50px] mb-10"
             >
               {s("about_anthem_title")}
             </h2>
@@ -653,14 +653,14 @@ function AboutPage() {
                                     : ""
                                 }`}
                               >
-                                <span className="shrink-0 font-['Cormorant_Garamond'] text-sm font-bold text-[#FFB203] tabular-nums pt-0.5 w-5">
+                                <span className="shrink-0 font-heading text-sm font-bold text-[#FFB203] tabular-nums pt-0.5 w-5">
                                   {si + 1}
                                 </span>
                                 <div className="min-w-0">
                                   {stanza.map((line, li) => (
                                     <p
                                       key={li}
-                                      className="font-['Cormorant_Garamond'] text-lg leading-relaxed text-[#013405]/85"
+                                      className="font-heading text-lg leading-relaxed text-[#013405]/85"
                                     >
                                       {line}
                                     </p>
@@ -770,7 +770,7 @@ function AboutPage() {
             </div>
             <h2
               data-animate
-              className="font-['Cormorant_Garamond'] font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-15"
+              className="font-heading font-semibold text-4xl sm:text-5xl lg:text-[54px] mb-15"
             >
               {s("about_administration_heading")}
             </h2>
