@@ -22,6 +22,55 @@ export const STREAM_LABELS: Record<string, string> = {
   technology: "TECHNOLOGY",
 };
 
+/** Curated Sri Lankan universities for the A/L university admissions editor. */
+export const SL_UNIVERSITIES = [
+  "University of Colombo",
+  "University of Peradeniya",
+  "University of Moratuwa",
+  "University of Kelaniya",
+  "University of Sri Jayewardenepura",
+  "University of Ruhuna",
+  "University of Jaffna",
+  "University of Rajarata",
+  "South Eastern University of Sri Lanka",
+  "Sabaragamuwa University of Sri Lanka",
+  "Wayamba University of Sri Lanka",
+  "Uva Wellassa University",
+  "Eastern University of Sri Lanka",
+  "The Open University of Sri Lanka",
+  "General Sir John Kotelawala Defence University",
+  "University of the Visual and Performing Arts",
+  "Sri Lanka Institute of Information Technology (SLIIT)",
+  "National School of Business Management (NSBM)",
+] as const;
+
+/** Common degree fields offered to A/L qualifiers at Sri Lankan universities. */
+export const UNIVERSITY_COURSES = [
+  "BSc (Hons) Engineering",
+  "BSc (Hons) Software Engineering",
+  "BSc Computer Science",
+  "BSc Information Technology",
+  "BSc Engineering Technology",
+  "BSc Biomedical Sciences",
+  "MBBS (Medicine)",
+  "BSc Nursing",
+  "BSc Pharmacy",
+  "BSc Dentistry",
+  "BSc Agricultural Sciences",
+  "BSc Physical Science",
+  "BSc Biological Science",
+  "BSc Marine Science",
+  "LLB (Law)",
+  "BCom (Commerce)",
+  "BSc Business Administration",
+  "BSc Actuarial Science",
+  "BSc Statistics",
+  "BA (Arts)",
+  "BEd (Education)",
+  "BArch (Architecture)",
+  "BSc Quantity Surveying",
+] as const;
+
 export type ExamStudent = {
   id: string;
   name: string;
@@ -41,6 +90,17 @@ export type ExamResult = {
   resultsYear: number;
   status: string;
   students: ExamStudent[];
+  universityAdmissions?: UniversityAdmission[];
+};
+
+export type UniversityAdmission = {
+  id: string;
+  examResultId: string;
+  studentName: string;
+  university: string;
+  course: string;
+  sortOrder: number;
+  createdAt: string;
 };
 
 /** "2025 (Held 2026)" or just "2025" if held same year. */

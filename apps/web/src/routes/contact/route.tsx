@@ -1,9 +1,8 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
-import { toast } from "sonner";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -34,11 +33,6 @@ function ContactPage() {
   const heroRef = useRef<HTMLElement>(null);
   const detailsRef = useRef<HTMLElement>(null);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
-
   useEffect(() => {
     const ctx = gsap.context(() => {
       for (const ref of [heroRef, detailsRef]) {
@@ -59,18 +53,6 @@ function ContactPage() {
     return () => ctx.revert();
   }, []);
 
-  const handleSend = () => {
-    if (!name.trim() || !email.trim() || !message.trim()) {
-      toast.error("Please fill in your name, email and message.");
-      return;
-    }
-    const to = s("contact_email");
-    const body = `From: ${name} <${email}>\n\n${message}`;
-    const mailto = `mailto:${to}?subject=${encodeURIComponent(subject || "Website enquiry")}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailto;
-    toast.success("Opening your email client to send the message.");
-  };
-
   const address = s("address");
   const mapQuery = encodeURIComponent(address.replace(/\n/g, ", "));
 
@@ -82,7 +64,7 @@ function ContactPage() {
       >
         Skip to main content
       </a>
-      <Navbar />
+      <Navbar settings={settings} />
       <main id="main-content">
         {/* Hero */}
         <section
@@ -171,70 +153,68 @@ function ContactPage() {
               </div>
             </div>
 
-            <div
-              data-animate
-              className="bg-cream-warm border border-green-dark/12 border-t-2 border-t-gold px-8 sm:px-12 py-13"
-            >
-              <h2 className="text-2xl sm:text-[38px] mb-2.5">Send a Message</h2>
-              <p className="text-sm text-green-dark/65 mb-9">{s("contact_form_note")}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5.5">
-                <label className="block">
-                  <span className="block text-[11px] tracking-[0.14em] font-bold mb-2">
-                    FULL NAME
-                  </span>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your name"
-                    className="w-full box-border border border-green-dark/25 bg-cream px-3.5 py-3.25 text-sm text-green-dark outline-none"
-                  />
-                </label>
-                <label className="block">
-                  <span className="block text-[11px] tracking-[0.14em] font-bold mb-2">EMAIL</span>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full box-border border border-green-dark/25 bg-cream px-3.5 py-3.25 text-sm text-green-dark outline-none"
-                  />
-                </label>
-                <label className="block sm:col-span-2">
-                  <span className="block text-[11px] tracking-[0.14em] font-bold mb-2">
-                    SUBJECT
-                  </span>
-                  <input
-                    type="text"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    placeholder="e.g. Admissions enquiry"
-                    className="w-full box-border border border-green-dark/25 bg-cream px-3.5 py-3.25 text-sm text-green-dark outline-none"
-                  />
-                </label>
-                <label className="block sm:col-span-2">
-                  <span className="block text-[11px] tracking-[0.14em] font-bold mb-2">
-                    MESSAGE
-                  </span>
-                  <textarea
-                    rows={6}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Your message"
-                    className="w-full box-border border border-green-dark/25 bg-cream px-3.5 py-3.25 text-sm text-green-dark outline-none resize-y"
-                  />
-                </label>
+            <div data-animate className="flex flex-col gap-8">
+              {/* College photo */}
+              <div className="overflow-hidden border border-green-dark/12">
+                <img
+                  src="/old1.png"
+                  alt="St. Aloysius' College"
+                  className="w-full h-auto object-cover"
+                />
               </div>
-              <div className="flex items-center justify-between gap-5 mt-7.5 flex-wrap">
-                <span className="text-xs text-green-dark/50">
-                  Responses within school working days.
-                </span>
-                <button
-                  onClick={handleSend}
-                  className="bg-green-dark text-gold font-extrabold text-sm tracking-wider px-9 py-3.5"
-                >
-                  SEND MESSAGE
-                </button>
+
+              {/* Social links */}
+              <div className="border border-green-dark/12 border-t-2 border-t-gold bg-cream-warm px-8 py-10">
+                <h2 className="text-2xl sm:text-[38px] mb-2.5">Connect With Us</h2>
+                <p className="text-sm text-green-dark/65 mb-9">
+                  Follow the college on social media for updates and events.
+                </p>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    {
+                      key: "footer_social_facebook",
+                      label: "Facebook",
+                      icon: (
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                        </svg>
+                      ),
+                    },
+                    {
+                      key: "footer_social_instagram",
+                      label: "Instagram",
+                      icon: (
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                        </svg>
+                      ),
+                    },
+                    {
+                      key: "footer_social_youtube",
+                      label: "YouTube",
+                      icon: (
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                      ),
+                    },
+                  ].map((social) => {
+                    const url = s(social.key);
+                    if (!url) return null;
+                    return (
+                      <a
+                        key={social.key}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex flex-col items-center justify-center bg-green-dark text-gold py-8 px-4 hover:bg-green-dark/90 transition-colors"
+                      >
+                        <span className="mb-3">{social.icon}</span>
+                        <span className="text-[11px] tracking-[0.18em] font-bold">{social.label.toUpperCase()}</span>
+                      </a>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>

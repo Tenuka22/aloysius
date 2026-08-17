@@ -127,6 +127,20 @@
       "when": 1786793688312,
       "tag": "0017_narrow_professor_monster",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1786941952138,
+      "tag": "0018_smart_xavin",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1786944454185,
+      "tag": "0019_round_vengeance",
+      "breakpoints": true
     }
   ]
 }

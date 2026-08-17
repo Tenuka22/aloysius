@@ -51,6 +51,9 @@ export type BigMatchRow = ListRow<typeof client.bigMatches.list>;
 
 // --- Exam Results ---
 export type ExamResultRow = ListRow<typeof client.examResults.list>;
+export type UniversityAdmissionRow = ListRow<
+  typeof client.admin.universityAdmissions.list
+>;
 
 // --- Clubs ---
 export type ClubMembership = ProcedureOutput<typeof client.clubs.membership>;

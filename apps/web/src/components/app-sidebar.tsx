@@ -129,6 +129,10 @@ const cmsItems = [
     title: "Exam Results",
     url: "/admin/exam-results",
     icon: <IconReportAnalytics />,
+    items: [
+      { title: "All Exam Results", url: "/admin/exam-results" },
+      { title: "University Admissions", url: "/admin/university-admissions" },
+    ],
   },
   {
     title: "Activities",

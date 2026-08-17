@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, desc, asc, and, count } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
-import { examResults, examStudents } from "@aloysius-web/db/schema";
+import { examResults, examStudents, universityAdmissions } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { publicProcedure } from "../index";
 import { contentStatusSchema, examTypeSchema, sortDirectionSchema } from "../schemas";
@@ -17,6 +17,18 @@ function serializeStudent(row: typeof examStudents.$inferSelect) {
     overallGrade: row.overallGrade,
     stream: row.stream,
     subjects: row.subjects ?? [],
+    sortOrder: row.sortOrder,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+function serializeAdmission(row: typeof universityAdmissions.$inferSelect) {
+  return {
+    id: row.id,
+    examResultId: row.examResultId,
+    studentName: row.studentName,
+    university: row.university,
+    course: row.course,
     sortOrder: row.sortOrder,
     createdAt: row.createdAt.toISOString(),
   };
@@ -123,9 +135,17 @@ export const examResultsRouter = {
         .orderBy(asc(examStudents.sortOrder), asc(examStudents.createdAt))
         .all();
 
+      const admissions = await db
+        .select()
+        .from(universityAdmissions)
+        .where(eq(universityAdmissions.examResultId, row.id))
+        .orderBy(asc(universityAdmissions.sortOrder), asc(universityAdmissions.createdAt))
+        .all();
+
       return {
         ...serializeResult(row),
         students: students.map(serializeStudent),
+        universityAdmissions: admissions.map(serializeAdmission),
       };
     }),
 
@@ -154,9 +174,16 @@ export const examResultsRouter = {
           .where(eq(examStudents.examResultId, row.id))
           .orderBy(asc(examStudents.sortOrder), asc(examStudents.createdAt))
           .all();
+        const admissions = await db
+          .select()
+          .from(universityAdmissions)
+          .where(eq(universityAdmissions.examResultId, row.id))
+          .orderBy(asc(universityAdmissions.sortOrder), asc(universityAdmissions.createdAt))
+          .all();
         results.push({
           ...serializeResult(row),
           students: students.map(serializeStudent),
+          universityAdmissions: admissions.map(serializeAdmission),
         });
       }
       return results;

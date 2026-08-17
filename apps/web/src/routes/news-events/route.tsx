@@ -5,6 +5,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
 import { client } from "@/utils/orpc";
+import { orpc } from "@/utils/orpc";
+import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
 
 type StorySource = "news" | "events" | "announcements" | "achievement";
 
@@ -63,18 +65,30 @@ function pageWindow(current: number, total: number): (number | "…")[] {
 }
 
 export const Route = createFileRoute("/news-events")({
-  loader: async () => {
-    const [newsData, eventsData, announcementsData, achievementsData] = await Promise.all([
+  head: () => ({
+    links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap",
+      },
+    ],
+  }),
+  loader: async ({ context }) => {
+    const [newsData, eventsData, announcementsData, achievementsData, settings] = await Promise.all([
       client.news.list({ page: 1, pageSize: 50, status: "published" }),
       client.events.list({ page: 1, pageSize: 50, status: "published" }),
       client.announcements.list({ page: 1, pageSize: 50, status: "published" }),
       client.achievements.list({ page: 1, pageSize: 50, status: "published" }),
+      context.queryClient.prefetchQuery(orpc.settings.getAll.queryOptions()),
     ]);
     return {
       news: newsData.rows,
       events: eventsData.rows,
       announcements: announcementsData.rows,
       achievements: achievementsData.rows,
+      settings,
     };
   },
   staleTime: 5 * 60_000,
@@ -82,7 +96,7 @@ export const Route = createFileRoute("/news-events")({
 });
 
 function NewsEventsPage() {
-  const { news, events, announcements, achievements } = Route.useLoaderData();
+  const { news, events, announcements, achievements, settings } = Route.useLoaderData();
   const [activeCat, setActiveCat] = useState("ALL");
   const [page, setPage] = useState(1);
 
@@ -169,20 +183,26 @@ function NewsEventsPage() {
     <div className="min-h-screen bg-[#FFF8E7]" style={{ fontFamily: "'Manrope', sans-serif" }}>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:top-2 focus:left-2 focus:border focus:border-[#FFB203] focus:bg-[#013405] focus:px-4 focus:py-2 focus:text-sm focus:text-[#FFB203] focus:outline-none"
       >
         Skip to main content
       </a>
-      <Navbar />
+      <Navbar settings={settings} />
       <main id="main-content">
         {/* Hero */}
-        <section className="bg-[#013405] text-[#FFF8E7] pt-27.5 pb-17.5 px-4 sm:px-6 lg:px-12">
+        <section className="bg-[#013405] text-[#FFF8E7] pt-20 pb-16 sm:pt-24 sm:pb-19 px-4 sm:px-6 lg:px-12">
           <div className="mx-auto max-w-295">
             <div className="text-xs tracking-[0.2em] text-[#FFF8E7]/60 mb-6.5">
-              <a href="/" className="hover:text-[#FFB203] transition-colors">
+              <Link to="/" className="hover:text-[#FFB203] transition-colors">
                 HOME
-              </a>
+              </Link>
               &nbsp;/&nbsp;<span className="text-[#FFB203]">NEWS &amp; EVENTS</span>
+            </div>
+            <div className="flex items-center gap-4.5 mb-6.5">
+              <span className="h-px w-12 bg-[#FFB203]/50 shrink-0" />
+              <span className="text-[11px] tracking-[0.4em] font-bold text-[#FFB203]">
+                STORIES &amp; UPDATES
+              </span>
             </div>
             <h1 className="font-['Cormorant_Garamond'] font-semibold text-5xl sm:text-6xl lg:text-[72px] leading-[1.02] m-0">
               News &amp; Events
@@ -216,16 +236,24 @@ function NewsEventsPage() {
               <Link
                 to={routeFor[featured.source]}
                 params={{ slug: featured.slug }}
-                className="block"
+                className="block overflow-hidden"
               >
                 {featured.image ? (
-                  <img
-                    src={featured.image}
-                    alt={featured.title}
-                    className="w-full h-70 sm:h-115 object-cover"
-                  />
+                  (() => {
+                    const ratio = getAspectRatio(featured.image);
+                    const aspectClass = aspectRatioClass(ratio);
+                    return (
+                      <div className={aspectClass || ""}>
+                        <img
+                          src={featured.image}
+                          alt={featured.title}
+                          className={`w-full h-full object-cover${aspectClass ? "" : " h-auto"}`}
+                        />
+                      </div>
+                    );
+                  })()
                 ) : (
-                  <div className="w-full h-70 sm:h-115 bg-gradient-to-br from-[#013405]/10 to-[#013405]/5" />
+                  <div className="w-full aspect-[16/9] bg-gradient-to-br from-[#013405]/10 to-[#013405]/5" />
                 )}
               </Link>
               <div>
@@ -264,17 +292,27 @@ function NewsEventsPage() {
                     key={story.id}
                     to={routeFor[story.source]}
                     params={{ slug: story.slug }}
-                    className="block"
+                    className="block group"
                   >
-                    {story.image ? (
-                      <img
-                        src={story.image}
-                        alt={story.title}
-                        className="w-full h-57.5 object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-57.5 bg-gradient-to-br from-[#013405]/10 to-[#013405]/5" />
-                    )}
+                    <div className="overflow-hidden">
+                      {story.image ? (
+                        (() => {
+                          const ratio = getAspectRatio(story.image);
+                          const aspectClass = aspectRatioClass(ratio);
+                          return (
+                            <div className={aspectClass || ""}>
+                              <img
+                                src={story.image}
+                                alt={story.title}
+                                className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500${aspectClass ? "" : " h-auto"}`}
+                              />
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        <div className="w-full aspect-[16/10] bg-gradient-to-br from-[#013405]/10 to-[#013405]/5" />
+                      )}
+                    </div>
                     <div className="flex gap-3.5 text-[10.5px] tracking-[0.14em] font-bold my-4.5">
                       <span style={{ color: story.catColor }}>{story.catLabel}</span>
                       <span className="text-[#013405]/45">{formatDate(story.date)}</span>
@@ -388,7 +426,7 @@ function NewsEventsPage() {
           </div>
         </section>
       </main>
-      <Footer />
+      <Footer settings={settings} />
     </div>
   );
 }

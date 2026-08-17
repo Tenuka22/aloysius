@@ -511,6 +511,28 @@ export const examStudents = sqliteTable(
   (table) => [index("exam_students_result_idx").on(table.examResultId)],
 );
 
+// --- University Admissions table (A/L students offered places at Sri Lankan
+// universities, listed separately from top performers so every qualified
+// student can be recorded) ---
+
+export const universityAdmissions = sqliteTable(
+  "university_admissions",
+  {
+    id: text("id").primaryKey(),
+    examResultId: text("exam_result_id")
+      .notNull()
+      .references(() => examResults.id, { onDelete: "cascade" }),
+    studentName: text("student_name").notNull(),
+    university: text("university").notNull(),
+    course: text("course").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("university_admissions_result_idx").on(table.examResultId)],
+);
+
 // --- Principals table (school principal profiles and messages) ---
 
 export const principals = sqliteTable(

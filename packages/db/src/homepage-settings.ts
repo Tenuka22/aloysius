@@ -280,7 +280,7 @@ export const HOMEPAGE_DEFAULTS: Record<HomepageSettingKey, string> = {
 
   // Footer
   footer_copyright: "\u00A9 {year} St. Aloysius' College, Galle. All Rights Reserved.",
-  footer_social_facebook: "https://facebook.com/aloysiuscollege",
-  footer_social_instagram: "https://instagram.com/aloysiuscollege",
-  footer_social_youtube: "https://youtube.com/@aloysiuscollege",
+  footer_social_facebook: "https://www.facebook.com/SAC.Galle",
+  footer_social_instagram: "https://www.instagram.com/aloysiuscollegegalle/",
+  footer_social_youtube: "https://www.youtube.com/@staloysiuscollege",
 };

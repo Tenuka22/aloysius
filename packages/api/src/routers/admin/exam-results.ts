@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, asc } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
-import { examResults, examStudents } from "@aloysius-web/db/schema";
+import { examResults, examStudents, universityAdmissions } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { adminProcedure } from "../../index";
 import { contentStatusSchema, examTypeSchema, streamSchema } from "../../schemas";
@@ -14,6 +14,13 @@ const studentInput = z.object({
   overallGrade: z.string().optional(),
   stream: streamSchema.optional(),
   subjects: z.array(z.object({ subject: z.string(), grade: z.string() })).default([]),
+  sortOrder: z.number().optional(),
+});
+
+const admissionInput = z.object({
+  studentName: z.string().min(1, "Student name is required"),
+  university: z.string().min(1, "University is required"),
+  course: z.string().min(1, "Course is required"),
   sortOrder: z.number().optional(),
 });
 
@@ -46,6 +53,34 @@ function serializeResult(row: typeof examResults.$inferSelect) {
   };
 }
 
+function serializeAdmission(row: typeof universityAdmissions.$inferSelect) {
+  return {
+    id: row.id,
+    examResultId: row.examResultId,
+    studentName: row.studentName,
+    university: row.university,
+    course: row.course,
+    sortOrder: row.sortOrder,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+function mapAdmission(
+  admission: z.infer<typeof admissionInput>,
+  examResultId: string,
+  now: Date,
+) {
+  return {
+    id: crypto.randomUUID(),
+    examResultId,
+    studentName: admission.studentName,
+    university: admission.university,
+    course: admission.course,
+    sortOrder: admission.sortOrder ?? 0,
+    createdAt: now,
+  };
+}
+
 /**
  * Super-user tier for exam results. Site admin only (see admin/index.ts) —
  * exam results have no self-service/club-scoped authoring concept.
@@ -59,6 +94,7 @@ export const adminExamResultsRouter = {
         resultsYear: z.number().int().min(1900).max(2100),
         publishNow: z.boolean().optional(),
         students: z.array(studentInput).default([]),
+        universityAdmissions: z.array(admissionInput).default([]),
       }),
     )
     .handler(async ({ input, context }) => {
@@ -102,6 +138,13 @@ export const adminExamResultsRouter = {
           .run();
       }
 
+      if (input.universityAdmissions.length > 0) {
+        await db
+          .insert(universityAdmissions)
+          .values(input.universityAdmissions.map((a) => mapAdmission(a, id, now)))
+          .run();
+      }
+
       return {
         ...serializeResult(record),
         students: input.students.map((s, index) => ({
@@ -117,6 +160,15 @@ export const adminExamResultsRouter = {
           sortOrder: s.sortOrder ?? index,
           createdAt: now.toISOString(),
         })),
+        universityAdmissions: input.universityAdmissions.map((a) => ({
+          id: "",
+          examResultId: id,
+          studentName: a.studentName,
+          university: a.university,
+          course: a.course,
+          sortOrder: a.sortOrder ?? 0,
+          createdAt: now.toISOString(),
+        })),
       };
     }),
 
@@ -130,6 +182,7 @@ export const adminExamResultsRouter = {
         status: contentStatusSchema.optional(),
         publishNow: z.boolean().optional(),
         students: z.array(studentInput).optional(),
+        universityAdmissions: z.array(admissionInput).optional(),
       }),
     )
     .handler(async ({ input }) => {
@@ -189,6 +242,19 @@ export const adminExamResultsRouter = {
         }
       }
 
+      if (input.universityAdmissions !== undefined) {
+        await db
+          .delete(universityAdmissions)
+          .where(eq(universityAdmissions.examResultId, input.id))
+          .run();
+        if (input.universityAdmissions.length > 0) {
+          await db
+            .insert(universityAdmissions)
+            .values(input.universityAdmissions.map((a) => mapAdmission(a, input.id, now)))
+            .run();
+        }
+      }
+
       const students = await db
         .select()
         .from(examStudents)
@@ -196,9 +262,17 @@ export const adminExamResultsRouter = {
         .orderBy(asc(examStudents.sortOrder), asc(examStudents.createdAt))
         .all();
 
+      const admissions = await db
+        .select()
+        .from(universityAdmissions)
+        .where(eq(universityAdmissions.examResultId, input.id))
+        .orderBy(asc(universityAdmissions.sortOrder), asc(universityAdmissions.createdAt))
+        .all();
+
       return {
         ...serializeResult(record),
         students: students.map(serializeStudent),
+        universityAdmissions: admissions.map(serializeAdmission),
       };
     }),
 

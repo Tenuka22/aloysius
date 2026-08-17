@@ -14,6 +14,7 @@ import { adminActivitiesRouter } from "./activities";
 import { adminStaffRouter } from "./staff";
 import { adminPrincipalsRouter } from "./principals";
 import { adminExamResultsRouter } from "./exam-results";
+import { adminUniversityAdmissionsRouter } from "./university-admissions";
 import { adminBigMatchesRouter } from "./big-matches";
 import { adminSettingsRouter } from "./settings";
 import { adminStatsRouter } from "./stats";
@@ -32,6 +33,7 @@ export const adminRouter = {
   staff: adminStaffRouter,
   principals: adminPrincipalsRouter,
   examResults: adminExamResultsRouter,
+  universityAdmissions: adminUniversityAdmissionsRouter,
   bigMatches: adminBigMatchesRouter,
   settings: adminSettingsRouter,
   stats: adminStatsRouter,

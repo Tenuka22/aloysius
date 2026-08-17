@@ -13,6 +13,7 @@ import { orpc } from "@/utils/orpc";
 import { toast } from "sonner";
 import * as v from "valibot";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
+import { SL_UNIVERSITIES, UNIVERSITY_COURSES } from "@/lib/exam-results";
 
 const EXAM_TYPES = [
   { value: "scholarship", label: "G5 Scholarship" },
@@ -81,6 +82,14 @@ const subjectRowSchema = v.object({
   grade: v.string(),
 });
 
+const universityAdmissionSchema = v.object({
+  id: v.optional(v.string()),
+  studentName: v.string(),
+  university: v.string(),
+  course: v.string(),
+  sortOrder: v.optional(v.union([v.number(), v.string()])),
+});
+
 const studentSchema = v.object({
   id: v.optional(v.string()),
   name: v.pipe(v.string(), v.minLength(1, "Name is required")),
@@ -99,6 +108,7 @@ const createExamResultSchema = v.object({
   resultsYear: v.pipe(v.string(), v.minLength(1, "Exam held year is required")),
   publishNow: v.boolean(),
   students: v.array(studentSchema),
+  universityAdmissions: v.array(universityAdmissionSchema),
 });
 
 type CreateExamResultValues = v.InferOutput<typeof createExamResultSchema>;
@@ -109,12 +119,14 @@ const updateExamResultSchema = v.object({
   resultsYear: v.pipe(v.string(), v.minLength(1, "Exam held year is required")),
   publishNow: v.boolean(),
   students: v.array(studentSchema),
+  universityAdmissions: v.array(universityAdmissionSchema),
 });
 
 type UpdateExamResultValues = v.InferOutput<typeof updateExamResultSchema>;
 
 type FormValues = CreateExamResultValues | UpdateExamResultValues;
 type StudentRow = v.InferOutput<typeof studentSchema>;
+type AdmissionRow = v.InferOutput<typeof universityAdmissionSchema>;
 
 const fields: FieldEntry<CreateExamResultValues | UpdateExamResultValues>[] = [
   { name: "examType", kind: "text", label: "Exam Type", hidden: true, required: true },
@@ -122,6 +134,13 @@ const fields: FieldEntry<CreateExamResultValues | UpdateExamResultValues>[] = [
   { name: "resultsYear", kind: "text", label: "Exam Held Year", hidden: true, required: true },
   { name: "publishNow", kind: "checkbox", label: "Publish immediately", required: false },
   { name: "students", kind: "text", label: "Students", hidden: true, required: false },
+  {
+    name: "universityAdmissions",
+    kind: "text",
+    label: "University Admissions",
+    hidden: true,
+    required: false,
+  },
 ];
 
 const inputClass =
@@ -501,6 +520,132 @@ function StudentsEditor() {
   );
 }
 
+function AdmissionsEditor() {
+  const form = useBuildForm();
+  const examType = useStore(form.store, (state: { values: FormValues }) => state.values.examType) as string;
+  const admissions = (useStore(form.store, (state: { values: FormValues }) => state.values.universityAdmissions) as AdmissionRow[]) ?? [];
+
+  if (examType !== "al") {
+    return (
+      <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+        University admissions apply to G.C.E. A/L results only.
+      </div>
+    );
+  }
+
+  const updateAdmission = (index: number, updated: AdmissionRow) => {
+    form.setFieldValue(
+      "universityAdmissions",
+      admissions.map((a, i) => (i === index ? updated : a)),
+    );
+  };
+
+  const removeAdmission = (index: number) => {
+    form.setFieldValue(
+      "universityAdmissions",
+      admissions.filter((_, i) => i !== index).map((a, i) => ({ ...a, sortOrder: i })),
+    );
+  };
+
+  const addAdmission = () => {
+    const next: AdmissionRow = {
+      id: `new-${Date.now()}`,
+      studentName: "",
+      university: "",
+      course: "",
+      sortOrder: admissions.length,
+    };
+    form.setFieldValue("universityAdmissions", [...admissions, next]);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold">University Admissions</h3>
+          <p className="text-xs text-muted-foreground">
+            Students offered places at Sri Lankan universities (A/L qualifiers).
+          </p>
+        </div>
+        <Button type="button" variant="outline" size="sm" onClick={addAdmission}>
+          <IconPlus className="mr-1 size-4" />
+          Add Admission
+        </Button>
+      </div>
+
+      {admissions.length === 0 ? (
+        <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+          No university admissions recorded yet.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {admissions.map((admission, index) => (
+            <div key={admission.id ?? index} className="rounded-xl border bg-card p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                  <IconGripVertical className="size-4 shrink-0" />
+                  Admission #{index + 1}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  type="button"
+                  onClick={() => removeAdmission(index)}
+                >
+                  <IconX className="size-4" />
+                </Button>
+              </div>
+
+              <input
+                type="text"
+                value={admission.studentName}
+                onChange={(e) => updateAdmission(index, { ...admission, studentName: e.target.value })}
+                placeholder="Student name"
+                className={inputClass}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium leading-none">University</label>
+                  <input
+                    type="text"
+                    list="sl-universities"
+                    value={admission.university}
+                    onChange={(e) => updateAdmission(index, { ...admission, university: e.target.value })}
+                    placeholder="e.g. University of Moratuwa"
+                    className={inputClass}
+                  />
+                  <datalist id="sl-universities">
+                    {SL_UNIVERSITIES.map((u) => (
+                      <option key={u} value={u} />
+                    ))}
+                  </datalist>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium leading-none">Course</label>
+                  <input
+                    type="text"
+                    list="university-courses"
+                    value={admission.course}
+                    onChange={(e) => updateAdmission(index, { ...admission, course: e.target.value })}
+                    placeholder="e.g. BSc Software Engineering"
+                    className={inputClass}
+                  />
+                  <datalist id="university-courses">
+                    {UNIVERSITY_COURSES.map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ExamResultForm({
   mode,
   id,
@@ -554,7 +699,12 @@ export function ExamResultForm({
         </div>
       </div>
     ),
-    renderBelowFields: () => <StudentsEditor />,
+    renderBelowFields: () => (
+      <>
+        <StudentsEditor />
+        <AdmissionsEditor />
+      </>
+    ),
   };
 
   const buildPayload = (values: CreateExamResultValues | UpdateExamResultValues) => ({
@@ -578,6 +728,14 @@ export function ExamResultForm({
       subjects: (s.subjects ?? []).filter((subject) => subject.subject.trim()),
       sortOrder: s.sortOrder == null || s.sortOrder === "" ? undefined : Number(s.sortOrder),
     })),
+    universityAdmissions: (values.universityAdmissions ?? [])
+      .filter((a) => a.studentName.trim())
+      .map((a) => ({
+        studentName: a.studentName,
+        university: a.university,
+        course: a.course,
+        sortOrder: a.sortOrder == null || a.sortOrder === "" ? undefined : Number(a.sortOrder),
+      })),
   });
   if (mode === "edit" && existing.isLoading) {
     return (
@@ -620,14 +778,22 @@ export function ExamResultForm({
                     : defaultSubjects(result.examType, s.stream ?? "physical_science"),
                 sortOrder: s.sortOrder ?? i,
               })),
+              universityAdmissions: (result.universityAdmissions ?? []).map((a, i) => ({
+                id: a.id ?? i,
+                studentName: a.studentName,
+                university: a.university,
+                course: a.course,
+                sortOrder: a.sortOrder ?? i,
+              })),
             }
-          : {
-              examType: "scholarship",
-              examYear: "",
-              resultsYear: "",
-              publishNow: false,
-              students: [],
-            }
+: {
+                  examType: "scholarship",
+                  examYear: "",
+                  resultsYear: "",
+                  publishNow: false,
+                  students: [],
+                  universityAdmissions: [],
+                }
       }
       onSubmit={async (values) => {
         const payload = buildPayload(values);

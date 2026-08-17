@@ -26,6 +26,10 @@ function toSlug(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
+// Single admin email used across the whole seed: site settings (OB admin),
+// every activity's adminEmail, and all staff / OB / donor contact emails.
+const ADMIN_EMAIL = "tenukaomaljith2009@gmail.com";
+
 // Thematic photo pools, keyed by subject, so every seeded item gets an image
 // that actually matches what it is about instead of a random unrelated one.
 // Every id below has been verified reachable (no dead Unsplash links).
@@ -119,6 +123,7 @@ export async function seed() {
   await db.delete(schema.activities);
   await db.delete(schema.staffMembers);
   await db.delete(schema.examStudents);
+  await db.delete(schema.universityAdmissions);
   await db.delete(schema.examResults);
   await db.delete(schema.files);
   await db.delete(schema.stats);
@@ -159,7 +164,7 @@ export async function seed() {
   for (const [key, value] of Object.entries(HOMEPAGE_DEFAULTS)) {
     settingsMap.set(key, value);
   }
-  settingsMap.set("ob_admin_email", "obadmin@aloysiuscollege.lk");
+  settingsMap.set("ob_admin_email", ADMIN_EMAIL);
   settingsMap.set("heritage_image_1", unsplash(pick(HERITAGE_PHOTOS, 0), 800, 600));
   settingsMap.set("heritage_image_2", unsplash(pick(HERITAGE_PHOTOS, 1), 800, 600));
   const settings = Array.from(settingsMap.entries()).map(([key, value]) => ({ key, value }));
@@ -1062,6 +1067,16 @@ export async function seed() {
           ],
         },
       ],
+      universityAdmissions: [
+        { studentName: "Nethmi Jayawardena", university: "University of Colombo", course: "MBBS (Medicine)", sortOrder: 0 },
+        { studentName: "Sachini Karunaratne", university: "University of Peradeniya", course: "BSc Nursing", sortOrder: 1 },
+        { studentName: "Hiruni Bandara", university: "University of Moratuwa", course: "BSc (Hons) Engineering", sortOrder: 2 },
+        { studentName: "Isuru Weerasinghe", university: "University of Moratuwa", course: "BSc (Hons) Software Engineering", sortOrder: 3 },
+        { studentName: "Malith De Silva", university: "University of Kelaniya", course: "BCom (Commerce)", sortOrder: 4 },
+        { studentName: "Chamath Liyanage", university: "University of Sri Jayewardenepura", course: "BSc Business Administration", sortOrder: 5 },
+        { studentName: "Yasas Wickramasinghe", university: "University of Kelaniya", course: "BA (Arts)", sortOrder: 6 },
+        { studentName: "Gayathri Herath", university: "University of the Visual and Performing Arts", course: "BA (Arts)", sortOrder: 7 },
+      ],
     },
   ];
   for (const item of examResultsData) {
@@ -1089,6 +1104,17 @@ export async function seed() {
         stream: (s as any).stream ?? null,
         subjects: (s as any).subjects ?? [],
         sortOrder: i,
+        createdAt: now,
+      });
+    }
+    for (const a of (item as any).universityAdmissions ?? []) {
+      await db.insert(schema.universityAdmissions).values({
+        id: faker.string.uuid(),
+        examResultId: resultId,
+        studentName: a.studentName,
+        university: a.university,
+        course: a.course,
+        sortOrder: a.sortOrder ?? 0,
         createdAt: now,
       });
     }
@@ -1169,7 +1195,7 @@ export async function seed() {
         "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=800&h=400&fit=crop",
         "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop",
       ],
-      adminEmail: "robotics@aloysius.lk",
+      adminEmail: ADMIN_EMAIL,
       status: "published" as const,
     },
     {
@@ -1186,7 +1212,7 @@ export async function seed() {
         "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&h=400&fit=crop",
         "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=400&fit=crop",
       ],
-      adminEmail: "cricket@aloysius.lk",
+      adminEmail: ADMIN_EMAIL,
       status: "published" as const,
     },
     {
@@ -1200,7 +1226,7 @@ export async function seed() {
       bannerUrl:
         "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=1200&h=400&fit=crop",
       images: ["https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=400&fit=crop"],
-      adminEmail: "debate@aloysius.lk",
+      adminEmail: ADMIN_EMAIL,
       status: "published" as const,
     },
     {
@@ -1214,7 +1240,7 @@ export async function seed() {
       bannerUrl:
         "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=1200&h=400&fit=crop",
       images: ["https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800&h=400&fit=crop"],
-      adminEmail: "music@aloysius.lk",
+      adminEmail: ADMIN_EMAIL,
       status: "published" as const,
     },
     {
@@ -1228,7 +1254,7 @@ export async function seed() {
       bannerUrl:
         "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1200&h=400&fit=crop",
       images: ["https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&h=400&fit=crop"],
-      adminEmail: "ecowarriors@aloysius.lk",
+      adminEmail: ADMIN_EMAIL,
       status: "published" as const,
     },
   ];
