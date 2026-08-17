@@ -138,7 +138,7 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
                 }}
               />
             </div>
-            <span className="logo-text leading-[1.15] origin-left hidden sm:block">
+            <span className="logo-text leading-[1.15] origin-left block xl:hidden ">
               <span className="block font-extrabold text-[15px] tracking-[0.08em]">{schoolName}</span>
               <span className="block text-[10px] tracking-[0.32em] text-gold/90 font-semibold">
                 GALLE &bull; SRI LANKA
