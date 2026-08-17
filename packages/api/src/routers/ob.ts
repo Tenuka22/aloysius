@@ -756,7 +756,7 @@ export const obEventsRouter = {
     )
     .handler(async ({ input, context }) => {
       const db = createDb();
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
       const canSeeAll = isSiteAdmin || (userId !== null && (await isOBAdmin(userId)));
       const conditions = [];
@@ -807,7 +807,7 @@ export const obEventsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "OB event not found" });
       }
       if (row.status !== "published") {
-        const isSiteAdmin = context.auth?.adminCalled ?? false;
+        const isSiteAdmin = context.auth?.role === "admin";
         const userId = context.auth?.userId ?? null;
         const isAuthor = userId !== null && userId === row.userId;
         const callerIsOBAdmin = userId !== null && (await isOBAdmin(userId));
@@ -1004,7 +1004,7 @@ export const obDonationsRouter = {
     )
     .handler(async ({ input, context }) => {
       const db = createDb();
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
       const canSeeAll = isSiteAdmin || (userId !== null && (await isOBAdmin(userId)));
       const conditions = [];
@@ -1052,7 +1052,7 @@ export const obDonationsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Donation not found" });
       }
       if (row.status !== "confirmed") {
-        const isSiteAdmin = context.auth?.adminCalled ?? false;
+        const isSiteAdmin = context.auth?.role === "admin";
         const userId = context.auth?.userId ?? null;
         const isAuthor = userId !== null && userId === row.userId;
         const callerIsOBAdmin = userId !== null && (await isOBAdmin(userId));
@@ -1226,7 +1226,7 @@ export const obEventGalleriesRouter = {
     .input(z.object({ obEventId: z.string() }))
     .handler(async ({ input, context }) => {
       const db = createDb();
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
       const callerIsOBAdmin = userId !== null && (await isOBAdmin(userId));
       const canSeeDrafts = isSiteAdmin || callerIsOBAdmin;
@@ -1265,7 +1265,7 @@ export const obDonationGalleriesRouter = {
     .input(z.object({ obDonationId: z.string() }))
     .handler(async ({ input, context }) => {
       const db = createDb();
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
       const callerIsOBAdmin = userId !== null && (await isOBAdmin(userId));
       const canSeeDrafts = isSiteAdmin || callerIsOBAdmin;
@@ -1518,7 +1518,7 @@ export const obNewsRouter = {
     )
     .handler(async ({ input, context }) => {
       const db = createDb();
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
       const canSeeAll = isSiteAdmin || (userId !== null && (await isOBAdmin(userId)));
       const conditions = [];
@@ -1566,7 +1566,7 @@ export const obNewsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "OB news not found" });
       }
       if (row.status !== "published") {
-        const isSiteAdmin = context.auth?.adminCalled ?? false;
+        const isSiteAdmin = context.auth?.role === "admin";
         const userId = context.auth?.userId ?? null;
         const isAuthor = userId !== null && userId === row.userId;
         const callerIsOBAdmin = userId !== null && (await isOBAdmin(userId));
@@ -1739,7 +1739,7 @@ export const obAnnouncementsRouter = {
     )
     .handler(async ({ input, context }) => {
       const db = createDb();
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
       const canSeeAll = isSiteAdmin || (userId !== null && (await isOBAdmin(userId)));
       const conditions = [];
@@ -1795,7 +1795,7 @@ export const obAnnouncementsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "OB announcement not found" });
       }
       if (row.status !== "published") {
-        const isSiteAdmin = context.auth?.adminCalled ?? false;
+        const isSiteAdmin = context.auth?.role === "admin";
         const userId = context.auth?.userId ?? null;
         const isAuthor = userId !== null && userId === row.userId;
         const callerIsOBAdmin = userId !== null && (await isOBAdmin(userId));
@@ -2003,7 +2003,7 @@ export const obGalleryRouter = {
   list: publicProcedure.handler(async ({ context }) => {
     const db = createDb();
     const userId = context.auth?.userId ?? null;
-    const canSeeAll = (context.auth?.adminCalled ?? false) || (userId !== null && (await isOBAdmin(userId)));
+    const canSeeAll = (context.auth?.role === "admin") || (userId !== null && (await isOBAdmin(userId)));
     if (!canSeeAll) {
       return [];
     }

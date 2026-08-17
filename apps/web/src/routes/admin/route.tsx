@@ -1,22 +1,21 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { auth } from "@clerk/tanstack-react-start/server";
+import { getServerSession } from "@/utils/auth";
 import { AdminLayout } from "@/components-client/admin-layout";
 
 const requireAdmin = createServerFn({ method: "GET" }).handler(async () => {
-  const { isAuthenticated, sessionClaims } = await auth();
+  const session = await getServerSession();
+  const user = session?.user;
 
-  if (!isAuthenticated) {
-    throw redirect({ to: "/", hash: "signin" });
+  if (!user) {
+    throw redirect({ to: "/auth/$path", params: { path: "sign-in" } });
   }
 
-  const role = (sessionClaims as any)?.metadata?.role;
-
-  if (role !== "admin") {
+  if (user.role !== "admin") {
     throw redirect({ to: "/" });
   }
 
-  return { role };
+  return { role: user.role };
 });
 
 export const Route = createFileRoute("/admin")({

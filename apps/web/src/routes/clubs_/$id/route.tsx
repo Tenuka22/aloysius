@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@clerk/tanstack-react-start";
+import { useAuthSession } from "@/lib/auth-client";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
 import { Button } from "@aloysius-web/ui/components/button";
@@ -74,9 +74,9 @@ export const Route = createFileRoute("/clubs_/$id")({
 
 function ClubPage() {
   const { id } = Route.useParams();
-  const { sessionClaims } = useAuth();
+  const { user } = useAuthSession();
   const queryClient = useQueryClient();
-  const isSiteAdmin = sessionClaims?.metadata?.role === "admin";
+  const isSiteAdmin = user?.role === "admin";
 
   const [activeTab, setActiveTab] = useState<string>("events");
   const [createType, setCreateType] = useState<

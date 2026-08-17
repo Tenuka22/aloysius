@@ -20,7 +20,7 @@ export const activitiesRouter = {
     )
     .handler(async ({ input, context }) => {
       const db = createDb();
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       const conditions = [];
       if (input?.status) {
         if (input.status !== "published" && !isSiteAdmin) {
@@ -74,7 +74,7 @@ export const activitiesRouter = {
       }
 
       if (row.status !== "published") {
-        const isSiteAdmin = context.auth?.adminCalled ?? false;
+        const isSiteAdmin = context.auth?.role === "admin";
         const userId = context.auth?.userId ?? null;
         let canView = isSiteAdmin;
         if (!canView && userId) {
@@ -127,7 +127,7 @@ export const activitiesRouter = {
         throw new ORPCError("UNAUTHORIZED");
       }
 
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       const db = createDb();
       const existing = await db.select().from(activities).where(eq(activities.id, input.id)).get();
 

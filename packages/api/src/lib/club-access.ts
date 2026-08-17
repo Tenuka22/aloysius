@@ -1,14 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
-import { clubMembers, activities } from "@aloysius-web/db/schema";
+import { clubMembers, activities, user } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
-import { createClerkClient } from "@clerk/backend";
-import { env } from "@aloysius-web/env/server";
-
-const clerkClient = createClerkClient({
-  secretKey: env.CLERK_SECRET_KEY,
-  publishableKey: env.CLERK_PUBLISHABLE_KEY,
-});
 
 export type MembershipStatus = "pending" | "approved" | "rejected" | "revoked";
 export type MembershipRole = "admin" | "member";
@@ -43,12 +36,12 @@ export function serializeMembership(row: MembershipRow) {
   };
 }
 
-/** The user's primary (or first) email from Clerk, lowercased, or null. */
+/** The user's email from the Better Auth user table, lowercased, or null. */
 export async function getUserEmail(userId: string): Promise<string | null> {
   try {
-    const user = await clerkClient.users.getUser(userId);
-    const email = user.primaryEmailAddress?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress;
-    return email?.toLowerCase() ?? null;
+    const db = createDb();
+    const row = db.select({ email: user.email }).from(user).where(eq(user.id, userId)).get();
+    return row?.email?.toLowerCase() ?? null;
   } catch {
     return null;
   }
@@ -113,8 +106,9 @@ export function assertClubAdmin(membership: MembershipRow | undefined, isSiteAdm
  * Resolves a user's effective access to a club:
  * - site admins can do everything
  * - club admins come from the DB row (role=admin + approved)
- * - otherwise the activity's `adminEmail` is compared against the user's Clerk
- *   email, so an admin designated by email gets access without any metadata sync.
+ * - otherwise the activity's `adminEmail` is compared against the user's
+ *   email from the Better Auth user table, so an admin designated by email
+ *   gets access without any metadata sync.
  */
 export async function resolveClubAccess(
   db: ReturnType<typeof createDb>,

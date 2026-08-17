@@ -1,33 +1,25 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
+import { getServerSession } from "@/utils/auth";
 import { createDb } from "@aloysius-web/db";
-import { activities, clubMembers } from "@aloysius-web/db/schema";
+import { activities, clubMembers, user } from "@aloysius-web/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 const requireAnyClubAdmin = createServerFn({ method: "GET" }).handler(async () => {
-  const { isAuthenticated, userId } = await auth();
+  const session = await getServerSession();
+  const currentUser = session?.user;
 
-  if (!isAuthenticated || !userId) {
-    throw redirect({ to: "/", hash: "signin" });
-  }
-
-  let email: string | null = null;
-  try {
-    const user = await clerkClient().users.getUser(userId);
-    email =
-      user.primaryEmailAddress?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress ?? null;
-    email = email?.toLowerCase() ?? null;
-  } catch {
-    // fall through to the redirect below
+  if (!currentUser) {
+    throw redirect({ to: "/auth/$path", params: { path: "sign-in" } });
   }
 
   const db = createDb();
+  const email = currentUser.email?.toLowerCase() ?? null;
 
   const membershipRows = await db
     .select()
     .from(clubMembers)
-    .where(eq(clubMembers.userId, userId))
+    .where(eq(clubMembers.userId, currentUser.id))
     .all();
 
   const activityIds = membershipRows.map((r) => r.activityId);

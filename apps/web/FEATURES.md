@@ -228,7 +228,7 @@ Behind `/activities-admin/$activityId/`, guarded by email match to activity's `a
 ### Three-Tier Authentication
 1. **`publicProcedure`** — No auth required
 2. **`protectedProcedure`** — Requires `auth.userId` (any logged-in user)
-3. **`adminProcedure`** — Requires `auth.userId` AND `auth.adminCalled` (site admin only)
+3. **`adminProcedure`** — Requires `auth.userId` AND `auth.role === "admin"` (site admin only)
 
 ### Specialized Access Layers
 - **OB Admin**: Single email match against `siteSettings.ob_admin_email` — one OB admin for the entire site
@@ -237,7 +237,7 @@ Behind `/activities-admin/$activityId/`, guarded by email match to activity's `a
 - **Site Admin Bypass**: Site admins always bypass all club-level and activity-level checks
 
 ### Client-Side Auth
-- Clerk JWT token getter pattern
+- Better Auth session token pattern
 - Automatic `Authorization: Bearer` header injection on all oRPC calls
 
 ---

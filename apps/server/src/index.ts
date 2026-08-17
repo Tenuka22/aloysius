@@ -5,6 +5,7 @@ import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { createContext } from "@aloysius-web/api/context";
 import { appRouter } from "@aloysius-web/api/routers/index";
+import { createAuth } from "@aloysius-web/auth";
 import { seed } from "@aloysius-web/db/seed";
 import { env } from "@aloysius-web/env/server";
 import { Hono } from "hono";
@@ -19,9 +20,12 @@ app.use(
   cors({
     origin: env.CORS_ORIGIN,
     allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "x-captcha-response"],
+    credentials: true,
   }),
 );
+
+app.on(["POST", "GET"], "/api/auth/*", (c) => createAuth().handler(c.req.raw));
 
 export const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [

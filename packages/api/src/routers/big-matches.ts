@@ -12,7 +12,7 @@ export const bigMatchesRouter = {
     .input(z.object({ status: contentStatusSchema.optional() }).optional())
     .handler(async ({ input, context }) => {
       const db = createDb();
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       let query = db.select().from(bigMatches).orderBy(asc(bigMatches.sortOrder));
 
       if (input?.status) {
@@ -55,7 +55,7 @@ export const bigMatchesRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Big match not found" });
       }
 
-      if (row.status !== "published" && !(context.auth?.adminCalled ?? false)) {
+      if (row.status !== "published" && !(context.auth?.role === "admin")) {
         throw new ORPCError("NOT_FOUND", { message: "Big match not found" });
       }
       return {

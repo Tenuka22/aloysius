@@ -29,7 +29,7 @@ export const achievementsRouter = {
       const db = createDb();
       const { page, pageSize, sort, sortDir, search, status, category, year } = input;
       const offset = (page - 1) * pageSize;
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
 
       const conditions = [];
       if (search) {
@@ -115,7 +115,7 @@ export const achievementsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Achievement not found" });
       }
 
-      if (row.status !== "published" && !(context.auth?.adminCalled ?? false)) {
+      if (row.status !== "published" && !(context.auth?.role === "admin")) {
         throw new ORPCError("NOT_FOUND", { message: "Achievement not found" });
       }
 

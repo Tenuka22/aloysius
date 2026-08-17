@@ -33,7 +33,7 @@ export const newsRouter = {
       const offset = (page - 1) * pageSize;
 
       const userId = context.auth?.userId ?? null;
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       let canSeeNonApproved = isSiteAdmin;
       if (input.activityId && userId) {
         const { membership, isClubAdmin } = await resolveClubAccess(
@@ -134,7 +134,7 @@ export const newsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "News not found" });
       }
 
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
       const isAuthor = userId !== null && userId === row.userId;
       const needsGating = row.status !== "published" || (!!row.activityId && row.reviewStatus !== "approved");
@@ -206,13 +206,13 @@ export const newsRouter = {
         db,
         input.activityId,
         context.auth.userId,
-        context.auth.adminCalled,
+        context.auth.role === "admin",
       );
-      assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
+      assertClubMember(membership, context.auth.role === "admin", isClubAdmin);
 
-      const reviewStatus: "pending" | "approved" = context.auth.adminCalled ? "approved" : "pending";
+      const reviewStatus: "pending" | "approved" = context.auth.role === "admin" ? "approved" : "pending";
       const status: "draft" | "published" =
-        context.auth.adminCalled && input.publishNow ? "published" : "draft";
+        context.auth.role === "admin" && input.publishNow ? "published" : "draft";
       const publishedAt: Date | null = status === "published" ? new Date() : null;
 
       const id = crypto.randomUUID();
@@ -299,16 +299,16 @@ export const newsRouter = {
         db,
         existing.activityId,
         context.auth.userId,
-        context.auth.adminCalled,
+        context.auth.role === "admin",
       );
-      assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
+      assertClubMember(membership, context.auth.role === "admin", isClubAdmin);
 
       const now = new Date();
       const updateData: Record<string, unknown> = {
         updatedAt: now,
       };
 
-      if (!context.auth.adminCalled) {
+      if (!context.auth.role === "admin") {
         updateData.reviewStatus = "pending";
         updateData.status = "draft";
         updateData.publishedAt = null;
@@ -329,7 +329,7 @@ export const newsRouter = {
       if (input.tags !== undefined) updateData.tags = input.tags;
       if (input.authorName !== undefined) updateData.authorName = input.authorName;
       if (input.authorType !== undefined) updateData.authorType = input.authorType;
-      if (context.auth.adminCalled && input.publishNow === true && !existing.publishedAt) {
+      if (context.auth.role === "admin" && input.publishNow === true && !existing.publishedAt) {
         updateData.publishedAt = now;
         updateData.status = "published";
       }
@@ -386,7 +386,7 @@ export const newsRouter = {
         db,
         existing.activityId,
         context.auth.userId,
-        context.auth.adminCalled,
+        context.auth.role === "admin",
       );
       const isAuthor = existing.userId === context.auth.userId;
       if (!isAuthor && !isClubAdmin) {

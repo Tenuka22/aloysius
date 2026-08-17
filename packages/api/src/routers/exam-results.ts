@@ -63,7 +63,7 @@ export const examResultsRouter = {
       const db = createDb();
       const { page, pageSize, sort, sortDir, examType, status } = input;
       const offset = (page - 1) * pageSize;
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
 
       const conditions = [];
       if (examType) {
@@ -124,7 +124,7 @@ export const examResultsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Exam result not found" });
       }
 
-      if (row.status !== "published" && !(context.auth?.adminCalled ?? false)) {
+      if (row.status !== "published" && !(context.auth?.role === "admin")) {
         throw new ORPCError("NOT_FOUND", { message: "Exam result not found" });
       }
 

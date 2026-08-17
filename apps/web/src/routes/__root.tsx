@@ -1,34 +1,17 @@
-import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { Toaster } from "@aloysius-web/ui/components/sonner";
-import { useEffect } from "react";
-
-import { setClerkAuthTokenGetter } from "@/utils/clerk-auth";
-
-import appCss from "../index.css?url";
-
-function ClerkApiAuthBridge() {
-  const { getToken } = useAuth();
-
-  useEffect(() => {
-    setClerkAuthTokenGetter(getToken);
-
-    return () => {
-      setClerkAuthTokenGetter(null);
-    };
-  }, [getToken]);
-
-  return null;
-}
+import { Providers } from "@/components-client/providers";
 
 import type { orpc } from "@/utils/orpc";
 export interface RouterAppContext {
   orpc: typeof orpc;
   queryClient: QueryClient;
 }
+
+import appCss from "../index.css?url";
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
@@ -57,22 +40,19 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootDocument() {
   return (
-    <ClerkProvider>
-      <ClerkApiAuthBridge />
-      <html lang="en" className="light">
-        <head>
-          <HeadContent />
-        </head>
-        <body>
-          <div>
-            <Outlet />
-          </div>
-          <Toaster richColors />
-          <TanStackRouterDevtools position="bottom-left" />
-          <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
-          <Scripts />
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en" className="light">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <Providers>
+          <Outlet />
+        </Providers>
+        <Toaster richColors />
+        <TanStackRouterDevtools position="bottom-left" />
+        <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
+        <Scripts />
+      </body>
+    </html>
   );
 }

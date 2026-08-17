@@ -5,7 +5,6 @@ export const env = createEnv({
   clientPrefix: "VITE_",
   client: {
     VITE_SERVER_URL: z.url(),
-    VITE_CLERK_PUBLISHABLE_KEY: z.string().min(1),
   },
   runtimeEnv: (import.meta as any).env,
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

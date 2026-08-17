@@ -35,7 +35,7 @@ export const eventsRouter = {
       // Review visibility: non-members can only see approved club content.
       // Site admins always see everything.
       const userId = context.auth?.userId ?? null;
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       let canSeeNonApproved = isSiteAdmin;
       if (input.activityId && userId) {
         const { membership, isClubAdmin } = await resolveClubAccess(
@@ -149,7 +149,7 @@ export const eventsRouter = {
       }
 
       // Non-published/non-approved content is only visible to the author, club members/admins, or site admins.
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
       const isAuthor = userId !== null && userId === row.userId;
       const needsGating = row.status !== "published" || (!!row.activityId && row.reviewStatus !== "approved");
@@ -239,13 +239,13 @@ export const eventsRouter = {
         db,
         input.activityId,
         context.auth.userId,
-        context.auth.adminCalled,
+        context.auth.role === "admin",
       );
-      assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
+      assertClubMember(membership, context.auth.role === "admin", isClubAdmin);
 
-      const reviewStatus: "pending" | "approved" = context.auth.adminCalled ? "approved" : "pending";
+      const reviewStatus: "pending" | "approved" = context.auth.role === "admin" ? "approved" : "pending";
       const status: "draft" | "published" =
-        context.auth.adminCalled && input.publishNow ? "published" : "draft";
+        context.auth.role === "admin" && input.publishNow ? "published" : "draft";
       const publishedAt: Date | null = status === "published" ? new Date() : null;
 
       const id = crypto.randomUUID();
@@ -359,16 +359,16 @@ export const eventsRouter = {
         db,
         existing.activityId,
         context.auth.userId,
-        context.auth.adminCalled,
+        context.auth.role === "admin",
       );
-      assertClubMember(membership, context.auth.adminCalled, isClubAdmin);
+      assertClubMember(membership, context.auth.role === "admin", isClubAdmin);
 
       const now = new Date();
       const updateData: Record<string, unknown> = {
         updatedAt: now,
       };
 
-      if (!context.auth.adminCalled) {
+      if (!context.auth.role === "admin") {
         updateData.reviewStatus = "pending";
         updateData.status = "draft";
         updateData.publishedAt = null;
@@ -402,7 +402,7 @@ export const eventsRouter = {
       if (input.isAllDay !== undefined) updateData.isAllDay = input.isAllDay;
       if (input.recurrenceRule !== undefined) updateData.recurrenceRule = input.recurrenceRule;
       if (input.tags !== undefined) updateData.tags = input.tags;
-      if (context.auth.adminCalled && input.publishNow === true && !existing.publishedAt) {
+      if (context.auth.role === "admin" && input.publishNow === true && !existing.publishedAt) {
         updateData.publishedAt = now;
         updateData.status = "published";
       }
@@ -468,7 +468,7 @@ export const eventsRouter = {
         db,
         existing.activityId,
         context.auth.userId,
-        context.auth.adminCalled,
+        context.auth.role === "admin",
       );
       const isAuthor = existing.userId === context.auth.userId;
       if (!isAuthor && !isClubAdmin) {

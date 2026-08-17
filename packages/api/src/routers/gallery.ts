@@ -30,7 +30,7 @@ export const galleryRouter = {
       const { page, pageSize, sort, sortDir, search, status, eventId, obEventId, obDonationId, scope } =
         input;
       const offset = (page - 1) * pageSize;
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
 
       const conditions = [];
       if (search) {
@@ -124,7 +124,7 @@ export const galleryRouter = {
       }
 
       if (row.status !== "published") {
-        const isSiteAdmin = context.auth?.adminCalled ?? false;
+        const isSiteAdmin = context.auth?.role === "admin";
         const userId = context.auth?.userId ?? null;
         const isAuthor = userId !== null && userId === row.userId;
         const isObScopeGallery = !row.eventId && !row.studentWorkId && !row.achievementId;

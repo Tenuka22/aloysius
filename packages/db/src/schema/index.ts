@@ -754,3 +754,6 @@ export const notifications = sqliteTable(
   },
   (table) => [index("notifications_user_read_idx").on(table.userId, table.read)],
 );
+
+// Re-export auth tables from auth.ts
+export { user, session, account, verification, userRelations, sessionRelations, accountRelations } from "./auth";

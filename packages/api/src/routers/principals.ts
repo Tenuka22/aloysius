@@ -44,7 +44,7 @@ export const principalsRouter = {
       const db = createDb();
       const { page, pageSize, sort, sortDir, search, status } = input;
       const offset = (page - 1) * pageSize;
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
 
       const conditions = [];
       if (search) {
@@ -106,7 +106,7 @@ export const principalsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Principal not found" });
       }
 
-      if (row.status !== "published" && !(context.auth?.adminCalled ?? false)) {
+      if (row.status !== "published" && !(context.auth?.role === "admin")) {
         throw new ORPCError("NOT_FOUND", { message: "Principal not found" });
       }
 

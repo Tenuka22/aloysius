@@ -7,10 +7,10 @@ import { getUserEmail } from "./club-access";
 export const OB_ADMIN_EMAIL_KEY = "ob_admin_email";
 
 /**
- * A user is the OB admin when their Clerk email matches the single, site-wide
- * OB admin email in `siteSettings`. There is exactly one OB admin at a time —
- * set by the site admin directly, with no per-year scoping and no lookup
- * against any OB member row.
+ * A user is the OB admin when their email from the Better Auth user table
+ * matches the single, site-wide OB admin email in `siteSettings`. There is
+ * exactly one OB admin at a time — set by the site admin directly, with no
+ * per-year scoping and no lookup against any OB member row.
  */
 export async function isOBAdmin(userId: string): Promise<boolean> {
   const userEmail = await getUserEmail(userId);

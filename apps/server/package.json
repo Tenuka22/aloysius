@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@aloysius-web/api": "workspace:*",
+    "@aloysius-web/auth": "workspace:*",
     "@aloysius-web/db": "workspace:*",
     "@aloysius-web/env": "workspace:*",
     "@orpc/openapi": "catalog:",

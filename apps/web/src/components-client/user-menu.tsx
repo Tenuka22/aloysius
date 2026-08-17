@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Show, useAuth } from "@clerk/tanstack-react-start";
+import { useAuthSession } from "@/lib/auth-client";
 import { IconSettings, IconShieldCheck, IconUserShield, IconUsers } from "@tabler/icons-react";
 import { orpc } from "@/utils/orpc";
 
@@ -13,8 +13,8 @@ const pillClass =
   "inline-flex size-9 items-center justify-center rounded-md border border-gold/40 text-gold transition-colors hover:bg-gold hover:text-green-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-green-dark active:scale-[0.97]";
 
 function AdminLink() {
-  const { sessionClaims } = useAuth();
-  const role = sessionClaims?.metadata?.role;
+  const { user } = useAuthSession();
+  const role = user?.role;
 
   if (role !== "admin") return null;
 
@@ -29,7 +29,8 @@ function AdminLink() {
  *  If they are a club admin (of one or more clubs) the icon and tooltip change
  *  so they know /activities-admin is their management entry point. */
 function MyClubsLink() {
-  const { isSignedIn } = useAuth();
+  const { user } = useAuthSession();
+  const isSignedIn = !!user;
 
   const { data } = useQuery(
     orpc.clubs.myClubs.queryOptions({
@@ -57,7 +58,8 @@ function MyClubsLink() {
 /** Shown in the navbar when the signed-in user is the designated OB admin.
  *  Links to the OB admin panel (/ob-admin). */
 function OBAdminLink() {
-  const { isSignedIn } = useAuth();
+  const { user } = useAuthSession();
+  const isSignedIn = !!user;
 
   const { data } = useQuery(
     orpc.ob.obMembers.myMembership.queryOptions({
@@ -81,13 +83,15 @@ function OBAdminLink() {
 }
 
 export function UserMenu() {
+  const { user } = useAuthSession();
+
+  if (!user) return null;
+
   return (
-    <Show when="signed-in">
-      <div className="flex items-center gap-2">
-        <MyClubsLink />
-        <OBAdminLink />
-        <AdminLink />
-      </div>
-    </Show>
+    <div className="flex items-center gap-2">
+      <MyClubsLink />
+      <OBAdminLink />
+      <AdminLink />
+    </div>
   );
 }

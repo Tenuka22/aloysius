@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser, useAuth } from "@clerk/tanstack-react-start";
+import { useAuthSession, authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@aloysius-web/ui/components/avatar";
 import {
   DropdownMenu,
@@ -21,15 +21,14 @@ import { IconSelector, IconLogout, IconHome } from "@tabler/icons-react";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
-  const { user } = useUser();
-  const { signOut } = useAuth();
+  const { user } = useAuthSession();
 
   if (!user) return null;
 
-  const firstName = user.firstName || "User";
-  const lastName = user.lastName || "";
-  const email = user.emailAddresses?.[0]?.emailAddress || "";
-  const avatarUrl = user.imageUrl;
+  const firstName = user.name?.split(" ")[0] || "User";
+  const lastName = user.name?.split(" ").slice(1).join(" ") || "";
+  const email = user.email || "";
+  const avatarUrl = user.image;
 
   return (
     <SidebarMenu>
@@ -39,7 +38,7 @@ export function NavUser() {
             render={<SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />}
           >
             <Avatar>
-              <AvatarImage src={avatarUrl} alt={firstName} />
+              <AvatarImage src={avatarUrl ?? undefined} alt={firstName} />
               <AvatarFallback>
                 {firstName[0]}
                 {lastName[0]}
@@ -63,7 +62,7 @@ export function NavUser() {
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar>
-                    <AvatarImage src={avatarUrl} alt={firstName} />
+                    <AvatarImage src={avatarUrl ?? undefined} alt={firstName} />
                     <AvatarFallback>
                       {firstName[0]}
                       {lastName[0]}
@@ -86,7 +85,7 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut()}>
+            <DropdownMenuItem onClick={() => authClient.signOut()}>
               <IconLogout />
               Log out
             </DropdownMenuItem>

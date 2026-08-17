@@ -11,9 +11,9 @@
   },
   "scripts": {},
   "dependencies": {
+    "@aloysius-web/auth": "workspace:*",
     "@aloysius-web/db": "workspace:*",
     "@aloysius-web/env": "workspace:*",
-    "@clerk/backend": "^3.10.0",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",

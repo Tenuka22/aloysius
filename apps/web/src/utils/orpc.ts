@@ -7,8 +7,6 @@ import type { AppRouter } from "@aloysius-web/api/routers/index";
 import { env } from "@aloysius-web/env/web";
 import { toast } from "sonner";
 
-import { getClerkAuthToken } from "@/utils/clerk-auth";
-
 export function createQueryClient() {
   return new QueryClient({
     queryCache: new QueryCache({
@@ -54,10 +52,13 @@ function getServerUrl(url: string) {
 
   return `http://localhost:3000${normalized}`;
 }
+
 const link = new RPCLink({
   url: `${getServerUrl(env.VITE_SERVER_URL)}/rpc`,
   headers: async () => {
-    const token = await getClerkAuthToken();
+    if (typeof document === "undefined") return {};
+    const match = document.cookie.match(/better-auth\.session_token=([^;]+)/);
+    const token = match?.[1];
     return token ? { Authorization: `Bearer ${token}` } : {};
   },
 });

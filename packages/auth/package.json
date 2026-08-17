@@ -1,0 +1,24 @@
+{
+  "name": "@aloysius-web/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@aloysius-web/db": "workspace:*",
+    "@aloysius-web/env": "workspace:*",
+    "better-auth": "^1.6.23",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@aloysius-web/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

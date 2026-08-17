@@ -1,7 +1,7 @@
 // --- Super-user tier ---
 // Every procedure reachable under `client.admin.*` is gated exclusively by
 // `adminProcedure` (site-admin only, see packages/api/src/index.ts). This is
-// the ONLY namespace allowed to check `context.auth.adminCalled` — domain
+// the ONLY namespace allowed to check `context.auth.role === "admin"` — domain
 // routers (news, events, ob, clubs, ...) must never fold a site-admin bypass
 // into their own scoped-admin/author checks; site admins act through here.
 import { adminNewsRouter } from "./news";

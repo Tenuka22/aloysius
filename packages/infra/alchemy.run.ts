@@ -64,8 +64,8 @@ export const server = await Worker("server", {
     PUBLIC_ASSETS_BUCKET: publicAssetsBucket,
     R2_PUBLIC_URL: process.env.R2_PUBLIC_URL || r2PublicUrl || "",
     CORS_ORIGIN: alchemy.env.CORS_ORIGIN!,
-    CLERK_SECRET_KEY: alchemy.secret.env.CLERK_SECRET_KEY!,
-    CLERK_PUBLISHABLE_KEY: alchemy.env.CLERK_PUBLISHABLE_KEY!,
+    BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET!,
+    BETTER_AUTH_URL: alchemy.env.BETTER_AUTH_URL!,
     NODE_ENV: process.env.NODE_ENV ?? "development",
   },
   dev: {
@@ -79,8 +79,8 @@ export const web = await TanStackStart("web", {
     VITE_SERVER_URL: server.url!,
     DB: db,
     CORS_ORIGIN: alchemy.env.CORS_ORIGIN!,
-    CLERK_SECRET_KEY: alchemy.secret.env.CLERK_SECRET_KEY!,
-    CLERK_PUBLISHABLE_KEY: alchemy.env.CLERK_PUBLISHABLE_KEY!,
+    BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET!,
+    BETTER_AUTH_URL: alchemy.env.BETTER_AUTH_URL!,
   },
 });
 

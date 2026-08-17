@@ -1,10 +1,8 @@
 import { z } from "zod";
 import { and, eq, desc, asc, inArray, sql } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
-import { activities, clubMembers } from "@aloysius-web/db/schema";
+import { activities, clubMembers, user } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
-import { createClerkClient } from "@clerk/backend";
-import { env } from "@aloysius-web/env/server";
 import { protectedProcedure } from "../index";
 import {
   getMembership,
@@ -16,11 +14,6 @@ import {
   type MembershipRow,
 } from "../lib/club-access";
 import { createNotification, createNotifications } from "../lib/notifications";
-
-const clerkClient = createClerkClient({
-  secretKey: env.CLERK_SECRET_KEY,
-  publishableKey: env.CLERK_PUBLISHABLE_KEY,
-});
 
 function serializeActivity(row: typeof activities.$inferSelect) {
   return {
@@ -143,7 +136,7 @@ export const clubsRouter = {
         db,
         input.activityId,
         userId,
-        context.auth?.adminCalled ?? false,
+        context.auth?.role === "admin",
       );
 
       if (!isClubAdmin && !isApprovedMember(membership)) {
@@ -213,11 +206,9 @@ export const clubsRouter = {
 
       let name: string | null = null;
       try {
-        const user = await clerkClient.users.getUser(userId);
-        name =
-          user.firstName || user.lastName
-            ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
-            : null;
+        const db2 = createDb();
+        const userRow = db2.select({ name: user.name }).from(user).where(eq(user.id, userId)).get();
+        name = userRow?.name ?? null;
       } catch {
         // name is optional
       }
@@ -279,7 +270,7 @@ export const clubsRouter = {
         db,
         membership.activityId,
         userId,
-        context.auth?.adminCalled ?? false,
+        context.auth?.role === "admin",
       );
       if (!isClubAdmin) {
         throw new ORPCError("UNAUTHORIZED", {
@@ -332,7 +323,7 @@ export const clubsRouter = {
         db,
         membership.activityId,
         userId,
-        context.auth?.adminCalled ?? false,
+        context.auth?.role === "admin",
       );
       if (!isClubAdmin) {
         throw new ORPCError("UNAUTHORIZED", {
@@ -385,7 +376,7 @@ export const clubsRouter = {
         db,
         membership.activityId,
         userId,
-        context.auth?.adminCalled ?? false,
+        context.auth?.role === "admin",
       );
       if (!isClubAdmin) {
         throw new ORPCError("UNAUTHORIZED", {

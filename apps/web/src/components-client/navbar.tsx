@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import gsap from "gsap";
 import { Link } from "@tanstack/react-router";
-import { useAuth } from "@clerk/tanstack-react-start";
+import { useAuthSession } from "@/lib/auth-client";
 import { UserMenu } from "@/components-client/user-menu";
 import { IconMenu2 } from "@tabler/icons-react";
 
@@ -25,7 +25,8 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
   const ctaRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { isSignedIn } = useAuth();
+  const { user } = useAuthSession();
+  const isSignedIn = !!user;
 
   const schoolName = settings?.school_name || "ST. ALOYSIUS\u2019 COLLEGE";
 
@@ -184,14 +185,16 @@ export function Navbar({ settings }: { settings?: Record<string, string> } = {})
             {!isSignedIn && (
               <div className="flex gap-2">
                 <Link
-                  to="/sign-in"
+                  to="/auth/$path"
+                  params={{ path: "sign-in" }}
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex-1 text-center border border-gold/50 text-gold px-3 py-2.5 text-[12px] font-bold tracking-wider hover:bg-gold/10 transition-colors duration-300"
                 >
                   Sign In
                 </Link>
                 <Link
-                  to="/sign-up"
+                  to="/auth/$path"
+                  params={{ path: "sign-up" }}
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex-1 text-center border border-gold/50 text-gold px-3 py-2.5 text-[12px] font-bold tracking-wider hover:bg-gold/10 transition-colors duration-300"
                 >

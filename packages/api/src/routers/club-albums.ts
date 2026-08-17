@@ -80,7 +80,7 @@ export const clubAlbumsRouter = {
       const offset = (page - 1) * pageSize;
 
       const userId = context.auth?.userId ?? null;
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       let canSeeNonApproved = isSiteAdmin;
       if (userId) {
         const { membership, isClubAdmin } = await resolveClubAccess(
@@ -154,7 +154,7 @@ export const clubAlbumsRouter = {
 
     if (result.album.reviewStatus !== "approved") {
       const userId = context.auth?.userId ?? null;
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       const isAuthor = userId !== null && userId === result.album.userId;
       let canView = isSiteAdmin || isAuthor;
       if (!canView && userId) {
@@ -239,11 +239,11 @@ export const clubAlbumsRouter = {
         db,
         input.activityId,
         userId,
-        context.auth?.adminCalled ?? false,
+        context.auth?.role === "admin",
       );
-      assertClubMember(membership, context.auth?.adminCalled ?? false, isClubAdmin);
+      assertClubMember(membership, context.auth?.role === "admin", isClubAdmin);
 
-      const isSiteAdmin = context.auth?.adminCalled ?? false;
+      const isSiteAdmin = context.auth?.role === "admin";
       const reviewStatus = isSiteAdmin ? "approved" : "pending";
       const now = new Date();
 
@@ -291,9 +291,9 @@ export const clubAlbumsRouter = {
         db,
         existing.activityId,
         userId,
-        context.auth?.adminCalled ?? false,
+        context.auth?.role === "admin",
       );
-      assertClubMember(membership, context.auth?.adminCalled ?? false, isClubAdmin);
+      assertClubMember(membership, context.auth?.role === "admin", isClubAdmin);
 
       const isAuthor = existing.userId === userId;
       if (!isAuthor && !isClubAdmin) {
@@ -307,7 +307,7 @@ export const clubAlbumsRouter = {
       if (input.title !== undefined) updateData.title = input.title;
       if (input.description !== undefined) updateData.description = input.description;
 
-      if (!context.auth?.adminCalled) {
+      if (!context.auth?.role === "admin") {
         updateData.reviewStatus = "pending";
         updateData.status = "draft";
         updateData.reviewedBy = null;
@@ -341,7 +341,7 @@ export const clubAlbumsRouter = {
         db,
         existing.activityId,
         userId,
-        context.auth?.adminCalled ?? false,
+        context.auth?.role === "admin",
       );
       const isAuthor = existing.userId === userId;
       if (!isAuthor && !isClubAdmin) {
@@ -379,9 +379,9 @@ export const clubAlbumsRouter = {
         db,
         album.activityId,
         userId,
-        context.auth?.adminCalled ?? false,
+        context.auth?.role === "admin",
       );
-      assertClubMember(membership, context.auth?.adminCalled ?? false, isClubAdmin);
+      assertClubMember(membership, context.auth?.role === "admin", isClubAdmin);
 
       const isAuthor = album.userId === userId;
       if (!isAuthor && !isClubAdmin) {
@@ -418,7 +418,7 @@ export const clubAlbumsRouter = {
           .run();
       }
 
-      if (!context.auth?.adminCalled) {
+      if (!context.auth?.role === "admin") {
         await db
           .update(clubAlbums)
           .set({
@@ -463,9 +463,9 @@ export const clubAlbumsRouter = {
         db,
         album.activityId,
         userId,
-        context.auth?.adminCalled ?? false,
+        context.auth?.role === "admin",
       );
-      assertClubMember(membership, context.auth?.adminCalled ?? false, isClubAdmin);
+      assertClubMember(membership, context.auth?.role === "admin", isClubAdmin);
 
       const isAuthor = album.userId === userId;
       if (!isAuthor && !isClubAdmin) {
@@ -492,7 +492,7 @@ export const clubAlbumsRouter = {
           .run();
       }
 
-      if (!context.auth?.adminCalled) {
+      if (!context.auth?.role === "admin") {
         await db
           .update(clubAlbums)
           .set({
