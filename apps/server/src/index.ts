@@ -5,7 +5,7 @@ import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { createContext } from "@aloysius-web/api/context";
 import { appRouter } from "@aloysius-web/api/routers/index";
-import { createAuth } from "@aloysius-web/auth";
+import { createAuth, ensureSiteAdmin, ensureOBAdmin } from "@aloysius-web/auth";
 import { seed } from "@aloysius-web/db/seed";
 import { env } from "@aloysius-web/env/server";
 import { Hono } from "hono";
@@ -25,7 +25,19 @@ app.use(
   }),
 );
 
-app.on(["POST", "GET"], "/api/auth/*", (c) => createAuth().handler(c.req.raw));
+const auth = createAuth();
+
+let adminEnsured = false;
+app.use("/*", async (c, next) => {
+  if (!adminEnsured) {
+    adminEnsured = true;
+    await ensureSiteAdmin(auth);
+    await ensureOBAdmin(auth);
+  }
+  await next();
+});
+
+app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 export const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [

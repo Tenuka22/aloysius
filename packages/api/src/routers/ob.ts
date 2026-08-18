@@ -226,7 +226,7 @@ export const obMembersRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      const callerIsOBAdmin = await isOBAdmin(context.auth.userId);
+      const callerIsOBAdmin = isOBAdmin(context.auth.role);
       if (!callerIsOBAdmin) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
@@ -289,7 +289,7 @@ export const obMembersRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      const callerIsOBAdmin = await isOBAdmin(context.auth.userId);
+      const callerIsOBAdmin = isOBAdmin(context.auth.role);
       if (!callerIsOBAdmin) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
@@ -343,7 +343,7 @@ export const obMembersRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      const callerIsOBAdmin = await isOBAdmin(context.auth.userId);
+      const callerIsOBAdmin = isOBAdmin(context.auth.role);
       if (!callerIsOBAdmin) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
@@ -360,10 +360,10 @@ export const obMembersRouter = {
     if (!userId) return null;
     const db = createDb();
     const row = await db.select().from(obMembers).where(eq(obMembers.userId, userId)).get();
-    const isAdmin = await isOBAdmin(userId);
+    const isAdmin = isOBAdmin(context.auth?.role);
     if (!row) {
-      // Designated OB admin by email but no member row of their own yet
-      // (e.g. the site admin set the OB admin email for a year with no members).
+      // Designated OB admin by role but no member row of their own yet
+      // (e.g. the OB admin role for a year with no members).
       if (!isAdmin) return null;
       return {
         id: null,
@@ -510,7 +510,7 @@ export const obMembersRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "Only the OB admin can approve members." });
       }
       const db = createDb();
@@ -550,7 +550,7 @@ export const obMembersRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "Only the OB admin can reject members." });
       }
       const db = createDb();
@@ -590,7 +590,7 @@ export const obMembersRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "Only the OB admin can revoke members." });
       }
       const db = createDb();
@@ -651,7 +651,7 @@ export const obMembersRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      const callerIsOBAdmin = await isOBAdmin(context.auth.userId);
+      const callerIsOBAdmin = isOBAdmin(context.auth.role);
       if (!callerIsOBAdmin) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
@@ -758,7 +758,7 @@ export const obEventsRouter = {
       const db = createDb();
       const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
-      const canSeeAll = isSiteAdmin || (userId !== null && (await isOBAdmin(userId)));
+      const canSeeAll = isSiteAdmin || (userId !== null && isOBAdmin(context.auth?.role));
       const conditions = [];
       if (input.status) {
         if (!canSeeAll && input.status !== "published") {
@@ -810,7 +810,7 @@ export const obEventsRouter = {
         const isSiteAdmin = context.auth?.role === "admin";
         const userId = context.auth?.userId ?? null;
         const isAuthor = userId !== null && userId === row.userId;
-        const callerIsOBAdmin = userId !== null && (await isOBAdmin(userId));
+        const callerIsOBAdmin = userId !== null && isOBAdmin(context.auth?.role);
         if (!isSiteAdmin && !isAuthor && !callerIsOBAdmin) {
           throw new ORPCError("NOT_FOUND", { message: "OB event not found" });
         }
@@ -850,7 +850,7 @@ export const obEventsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      const callerIsOBAdmin = await isOBAdmin(context.auth.userId);
+      const callerIsOBAdmin = isOBAdmin(context.auth.role);
       if (!callerIsOBAdmin) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
@@ -915,7 +915,7 @@ export const obEventsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      const callerIsOBAdmin = await isOBAdmin(context.auth.userId);
+      const callerIsOBAdmin = isOBAdmin(context.auth.role);
       if (!callerIsOBAdmin) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
@@ -983,7 +983,7 @@ export const obEventsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1006,7 +1006,7 @@ export const obDonationsRouter = {
       const db = createDb();
       const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
-      const canSeeAll = isSiteAdmin || (userId !== null && (await isOBAdmin(userId)));
+      const canSeeAll = isSiteAdmin || (userId !== null && isOBAdmin(context.auth?.role));
       const conditions = [];
       if (input.status) {
         if (!canSeeAll && input.status !== "confirmed") {
@@ -1055,7 +1055,7 @@ export const obDonationsRouter = {
         const isSiteAdmin = context.auth?.role === "admin";
         const userId = context.auth?.userId ?? null;
         const isAuthor = userId !== null && userId === row.userId;
-        const callerIsOBAdmin = userId !== null && (await isOBAdmin(userId));
+        const callerIsOBAdmin = userId !== null && isOBAdmin(context.auth?.role);
         if (!isSiteAdmin && !isAuthor && !callerIsOBAdmin) {
           throw new ORPCError("NOT_FOUND", { message: "Donation not found" });
         }
@@ -1096,7 +1096,7 @@ export const obDonationsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1155,7 +1155,7 @@ export const obDonationsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1210,7 +1210,7 @@ export const obDonationsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1228,7 +1228,7 @@ export const obEventGalleriesRouter = {
       const db = createDb();
       const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
-      const callerIsOBAdmin = userId !== null && (await isOBAdmin(userId));
+      const callerIsOBAdmin = userId !== null && isOBAdmin(context.auth?.role);
       const canSeeDrafts = isSiteAdmin || callerIsOBAdmin;
       const conditions = [eq(gallery.obEventId, input.obEventId)];
       if (!canSeeDrafts) {
@@ -1267,7 +1267,7 @@ export const obDonationGalleriesRouter = {
       const db = createDb();
       const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
-      const callerIsOBAdmin = userId !== null && (await isOBAdmin(userId));
+      const callerIsOBAdmin = userId !== null && isOBAdmin(context.auth?.role);
       const canSeeDrafts = isSiteAdmin || callerIsOBAdmin;
       const conditions = [eq(gallery.obDonationId, input.obDonationId)];
       if (!canSeeDrafts) {
@@ -1298,7 +1298,7 @@ export const obDonationGalleriesRouter = {
     if (!context.auth?.userId) {
       throw new ORPCError("UNAUTHORIZED");
     }
-    if (!(await isOBAdmin(context.auth.userId))) {
+    if (!(isOBAdmin(context.auth.role))) {
       throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
     }
     const db = createDb();
@@ -1331,7 +1331,7 @@ export const obDonationGalleriesRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1390,7 +1390,7 @@ export const obDonationGalleriesRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1440,7 +1440,7 @@ export const obDonationGalleriesRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1475,7 +1475,7 @@ export const obDonationGalleriesRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1520,7 +1520,7 @@ export const obNewsRouter = {
       const db = createDb();
       const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
-      const canSeeAll = isSiteAdmin || (userId !== null && (await isOBAdmin(userId)));
+      const canSeeAll = isSiteAdmin || (userId !== null && isOBAdmin(context.auth?.role));
       const conditions = [];
       if (input.status) {
         if (!canSeeAll && input.status !== "published") {
@@ -1569,7 +1569,7 @@ export const obNewsRouter = {
         const isSiteAdmin = context.auth?.role === "admin";
         const userId = context.auth?.userId ?? null;
         const isAuthor = userId !== null && userId === row.userId;
-        const callerIsOBAdmin = userId !== null && (await isOBAdmin(userId));
+        const callerIsOBAdmin = userId !== null && isOBAdmin(context.auth?.role);
         if (!isSiteAdmin && !isAuthor && !callerIsOBAdmin) {
           throw new ORPCError("NOT_FOUND", { message: "OB news not found" });
         }
@@ -1603,7 +1603,7 @@ export const obNewsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1657,7 +1657,7 @@ export const obNewsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1716,7 +1716,7 @@ export const obNewsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1741,7 +1741,7 @@ export const obAnnouncementsRouter = {
       const db = createDb();
       const isSiteAdmin = context.auth?.role === "admin";
       const userId = context.auth?.userId ?? null;
-      const canSeeAll = isSiteAdmin || (userId !== null && (await isOBAdmin(userId)));
+      const canSeeAll = isSiteAdmin || (userId !== null && isOBAdmin(context.auth?.role));
       const conditions = [];
       if (input.status) {
         if (!canSeeAll && input.status !== "published") {
@@ -1798,7 +1798,7 @@ export const obAnnouncementsRouter = {
         const isSiteAdmin = context.auth?.role === "admin";
         const userId = context.auth?.userId ?? null;
         const isAuthor = userId !== null && userId === row.userId;
-        const callerIsOBAdmin = userId !== null && (await isOBAdmin(userId));
+        const callerIsOBAdmin = userId !== null && isOBAdmin(context.auth?.role);
         if (!isSiteAdmin && !isAuthor && !callerIsOBAdmin) {
           throw new ORPCError("NOT_FOUND", { message: "OB announcement not found" });
         }
@@ -1834,7 +1834,7 @@ export const obAnnouncementsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1891,7 +1891,7 @@ export const obAnnouncementsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -1956,7 +1956,7 @@ export const obAnnouncementsRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -2003,7 +2003,7 @@ export const obGalleryRouter = {
   list: publicProcedure.handler(async ({ context }) => {
     const db = createDb();
     const userId = context.auth?.userId ?? null;
-    const canSeeAll = (context.auth?.role === "admin") || (userId !== null && (await isOBAdmin(userId)));
+    const canSeeAll = (context.auth?.role === "admin") || (userId !== null && isOBAdmin(context.auth?.role));
     if (!canSeeAll) {
       return [];
     }
@@ -2089,7 +2089,7 @@ export const obGalleryRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -2129,7 +2129,7 @@ export const obGalleryRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -2159,7 +2159,7 @@ export const obGalleryRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -2184,7 +2184,7 @@ export const obGalleryRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -2224,7 +2224,7 @@ export const obGalleryRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -2252,7 +2252,7 @@ export const obGalleryRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -2289,7 +2289,7 @@ export const obGalleryRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();
@@ -2319,7 +2319,7 @@ export const obGalleryRouter = {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!(await isOBAdmin(context.auth.userId))) {
+      if (!(isOBAdmin(context.auth.role))) {
         throw new ORPCError("FORBIDDEN", { message: "OB admin access required." });
       }
       const db = createDb();

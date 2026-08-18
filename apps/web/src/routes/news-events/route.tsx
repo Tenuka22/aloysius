@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
+import { PageError } from "@/components-client/page-error";
 import { client } from "@/utils/orpc";
 import { orpc } from "@/utils/orpc";
 import { getAspectRatio, aspectRatioClass } from "@/lib/image-ratio";
@@ -82,6 +83,7 @@ export const Route = createFileRoute("/news-events")({
     };
   },
   staleTime: 5 * 60_000,
+  errorComponent: PageError,
   component: NewsEventsPage,
 });
 

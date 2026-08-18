@@ -4,6 +4,8 @@ import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanst
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { Toaster } from "@aloysius-web/ui/components/sonner";
 import { Providers } from "@/components-client/providers";
+import { PageLoading } from "@/components-client/page-loading";
+import { PageError } from "@/components-client/page-error";
 
 import type { orpc } from "@/utils/orpc";
 export interface RouterAppContext {
@@ -35,6 +37,8 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     ],
   }),
 
+  pendingComponent: PageLoading,
+  errorComponent: PageError,
   component: RootDocument,
 });
 

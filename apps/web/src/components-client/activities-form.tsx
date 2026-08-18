@@ -9,7 +9,13 @@ import { FormBuilder, useBuildForm } from "@aloysius-web/ui/lib/form-builder";
 import { MinimalTiptapEditor } from "@aloysius-web/ui/components/minimal-tiptap";
 import { Dropzone } from "@/components/file-upload";
 import { uploadImageWithRatio } from "@/lib/upload-image";
-import { IconX, IconGripVertical, IconShieldCheck } from "@tabler/icons-react";
+import {
+  IconX,
+  IconGripVertical,
+  IconShieldCheck,
+  IconKey,
+  IconCopy,
+} from "@tabler/icons-react";
 import { cn } from "@aloysius-web/ui/lib/utils";
 import { client, orpc } from "@/utils/orpc";
 import { convertToWebp } from "@/utils/convert-to-webp";
@@ -17,6 +23,19 @@ import { toast } from "sonner";
 import { SlugFieldInline } from "@/components-client/slug-field";
 import * as v from "valibot";
 import type { FormConfig, FieldEntry } from "@aloysius-web/ui/lib/form-builder";
+import { Input } from "@aloysius-web/ui/components/input";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@aloysius-web/ui/components/alert-dialog";
+
+const activityAdminEmailDomain = "aloysiuscollege.lk";
+const activityAdminEmailClient = (slug: string) => `${slug}@${activityAdminEmailDomain}`;
 
 const createActivitySchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, "Name is required")),
@@ -345,32 +364,137 @@ function TypeField() {
   );
 }
 
-function AdminEmailField() {
+function AdminEmailField({ id }: { id?: string }) {
   const form = useBuildForm();
-  const value = (useStore(form.store, (state: { values: FormValues }) => state.values.adminEmail) as string) ?? "";
+  const slug = (useStore(form.store, (state: { values: FormValues }) => state.values.slug) as string) ?? "";
   const type = useStore(form.store, (state: { values: FormValues }) => state.values.type) as string;
+  const queryClient = useQueryClient();
+  const [rotateDialogOpen, setRotateDialogOpen] = useState(false);
+  const [rotateConfirmText, setRotateConfirmText] = useState("");
+  const [lastPassword, setLastPassword] = useState<string | null>(null);
+
+  const credentialsQuery = useQuery(
+    orpc.admin.activities.getCredentials.queryOptions({
+      input: { id: id! },
+      enabled: !!id,
+    }),
+  );
+
+  const rotateCredentialsMutation = useMutation(
+    orpc.admin.activities.rotateCredentials.mutationOptions({
+      onSuccess: (data) => {
+        setLastPassword(data.password);
+        toast.success("Password rotated");
+        setRotateDialogOpen(false);
+        setRotateConfirmText("");
+        queryClient.invalidateQueries({ queryKey: orpc.admin.activities.key() });
+        queryClient.invalidateQueries({ queryKey: orpc.activities.key() });
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
+
+  const credentials = credentialsQuery.data;
+  const email = slug ? activityAdminEmailClient(slug) : credentials?.email ?? "";
+  const canRotate = rotateConfirmText.trim() === slug;
+
+  const copyPassword = async () => {
+    if (!lastPassword) return;
+    try {
+      await navigator.clipboard.writeText(lastPassword);
+      toast.success("Password copied");
+    } catch {
+      toast.error("Couldn't copy to clipboard");
+    }
+  };
 
   return (
     <Card className="border-secondary/20">
-      <CardContent className="p-4 flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-[240px]">
-          <label className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
-            <IconShieldCheck className="size-3.5 text-primary shrink-0" />
-            Club Admin Email
-          </label>
-          <input
-            type="email"
-            value={value}
-            onChange={(e) => form.setFieldValue("adminEmail", e.target.value)}
-            placeholder="admin@example.com"
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-          <p className="text-[11px] text-muted-foreground mt-1.5">
-            The person responsible for managing this {type}&apos;s roster and content. They can
-            sign in with this email to moderate submissions without being a site admin.
-          </p>
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <IconShieldCheck className="size-4 text-primary shrink-0" />
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Club Admin Login Credentials
+              </span>
+            </div>
+            <p className="text-sm font-semibold text-foreground break-all mb-1.5">{email}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              The admin responsible for this {type}&apos;s roster and content signs in with these
+              credentials to moderate submissions without being a site admin.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 mt-1">
+            {lastPassword && (
+              <div className="flex items-center gap-1.5 rounded-md border bg-muted/60 px-2.5 py-1.5">
+                <code className="font-mono text-sm text-foreground">{lastPassword}</code>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={copyPassword}
+                  aria-label="Copy new password"
+                  className="size-7"
+                >
+                  <IconCopy className="size-3.5" />
+                </Button>
+              </div>
+            )}
+            {id ? (
+              <Button size="sm" variant="outline" onClick={() => setRotateDialogOpen(true)}>
+                <IconKey className="mr-1.5 size-4" />
+                {credentials?.hasPassword ? "Rotate" : "Generate"}
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" disabled>
+                <IconKey className="mr-1.5 size-4" />
+                Save to generate
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
+
+      <AlertDialog open={rotateDialogOpen} onOpenChange={setRotateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {credentials?.hasPassword ? "Rotate admin password" : "Generate admin password"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {credentials?.hasPassword
+                ? "A new random password will be generated and the old one will stop working immediately. Type the slug to confirm."
+                : "An auto-generated password will be created for the admin of this activity. Type the slug to confirm."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div>
+            <label className="text-xs font-medium text-foreground">
+              Type <span className="font-mono">{slug}</span> to confirm
+            </label>
+            <Input
+              value={rotateConfirmText}
+              onChange={(e) => setRotateConfirmText(e.target.value)}
+              placeholder={slug}
+              className="mt-2"
+              autoFocus
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={!canRotate || rotateCredentialsMutation.isPending}
+              onClick={() => id && rotateCredentialsMutation.mutate({ id })}
+            >
+              {rotateCredentialsMutation.isPending
+                ? "Rotating…"
+                : credentials?.hasPassword
+                  ? "Rotate password"
+                  : "Generate password"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
@@ -638,13 +762,13 @@ export function ActivitiesForm({
         description: values.description || undefined,
         coverImage: values.coverImage || undefined,
         type: values.type as "club" | "sport" | "other",
-        adminEmail: values.adminEmail || undefined,
+        adminEmail: values.slug ? activityAdminEmailClient(values.slug) : undefined,
         status: values.status as "draft" | "published" | "archived",
       }),
     },
     renderAboveFields: () => (
       <div className="space-y-6">
-        <AdminEmailField />
+        <AdminEmailField id={mode === "edit" ? id : undefined} />
         <div className="flex gap-6">
           <div className="w-[280px] shrink-0">
             <CoverImageField />

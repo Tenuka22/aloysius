@@ -29,15 +29,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@aloysius-web/ui/components/select";
-import { IconArrowLeft, IconShieldCheck, IconDotsVertical, IconPencil } from "@tabler/icons-react";
+import {
+  IconArrowLeft,
+  IconDotsVertical,
+  IconPencil,
+} from "@tabler/icons-react";
 import { orpc } from "@/utils/orpc";
 import { sortByRole } from "@/lib/ob-sort";
 import type { OBMember } from "@/lib/api-types";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useState, useMemo } from "react";
 import { OBCommitteeEditor } from "@/components-client/ob-committee-editor";
-
-const OB_ADMIN_EMAIL_KEY = "ob_admin_email";
 
 const HEAD_ROLES = [
   "PRESIDENT",
@@ -61,9 +63,6 @@ export const Route = createFileRoute("/admin/ob/members_/$year")({
     await context.queryClient.prefetchQuery(
       orpc.ob.obMembers.list.queryOptions({ input: { year: params.year } }),
     );
-    await context.queryClient.prefetchQuery(
-      orpc.settings.get.queryOptions({ input: { key: OB_ADMIN_EMAIL_KEY } }),
-    );
   },
   component: AdminOBMembersYear,
 });
@@ -80,11 +79,6 @@ function AdminOBMembersYear() {
   );
 
   const { data: allMembers = [] } = useQuery(orpc.ob.obMembers.list.queryOptions({ input: {} }));
-
-  const { data: adminEmailSetting } = useSuspenseQuery(
-    orpc.settings.get.queryOptions({ input: { key: OB_ADMIN_EMAIL_KEY } }),
-  );
-  const obAdminEmail = adminEmailSetting?.value?.toLowerCase() ?? "";
 
   const visibleMembers = useMemo(
     () => members.filter((m: OBMember) => m.role !== "ADMINISTRATOR"),
@@ -121,17 +115,7 @@ function AdminOBMembersYear() {
     {
       accessorKey: "name",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
-      cell: ({ row }) => {
-        const m = row.original;
-        return (
-          <div className="flex items-center gap-2">
-            <span>{m.name}</span>
-            {!!obAdminEmail && m.email?.toLowerCase() === obAdminEmail && (
-              <IconShieldCheck className="size-3.5 text-primary shrink-0" title="OB Admin" />
-            )}
-          </div>
-        );
-      },
+      cell: ({ row }) => <span>{row.original.name}</span>,
     },
     {
       accessorKey: "role",

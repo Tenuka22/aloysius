@@ -168,7 +168,7 @@ All behind `/admin` prefix, guarded by `role === "admin"` in Clerk session metad
 
 ## 3. OB Admin Panel (`/ob-admin`)
 
-Behind `/ob-admin`, guarded by email match against `siteSettings.ob_admin_email`. Single site-wide OB admin — no per-year scoping.
+Behind `/ob-admin`, guarded by the `ob:admin` auth role (auto-provisioned from `obadmin@aloysiuscollege.lk`). Single site-wide OB admin — no per-year scoping.
 
 ### Dashboard (`/ob-admin`)
 - Stats strip: Members count, Published events, Confirmed donations, Published news/announcements
@@ -209,10 +209,11 @@ Behind `/ob-admin`, guarded by email match against `siteSettings.ob_admin_email`
 - Create/edit donation records
 
 ---
-
 ## 4. Activity Admin Panel (`/activities-admin/$activityId/`)
 
-Behind `/activities-admin/$activityId/`, guarded by email match to activity's `adminEmail` OR being an approved club member. Dual-path access control.
+Behind `/activities-admin/$activityId/`, guarded by email match to the activity's auto-generated 
+per-activity credential (`<slug>@aloysiuscollege.lk`) whose auth role is `<slug>:admin`, the 
+legacy `adminEmail`, OR being an approved club member. Multi-path access control.
 
 - **Dashboard**: Activity overview
 - **Announcements**: Activity-specific announcements
@@ -231,14 +232,15 @@ Behind `/activities-admin/$activityId/`, guarded by email match to activity's `a
 3. **`adminProcedure`** — Requires `auth.userId` AND `auth.role === "admin"` (site admin only)
 
 ### Specialized Access Layers
-- **OB Admin**: Single email match against `siteSettings.ob_admin_email` — one OB admin for the entire site
-- **Activity Admin**: Dual-path — matches admin email OR approved club membership
+- **OB Admin**: Auth role `ob:admin` — one OB admin for the entire site, provisioned from `obadmin@aloysiuscollege.lk`
+- **Activity Admin**: Multi-path — auto-generated credential email (`<slug>@aloysiuscollege.lk`) 
+  with auth role `<slug>:admin`, legacy `adminEmail`, or approved club membership
 - **Club Access**: Resolves admin/member status via `clubMembers` DB row or email match
 - **Site Admin Bypass**: Site admins always bypass all club-level and activity-level checks
 
 ### Client-Side Auth
-- Better Auth session token pattern
-- Automatic `Authorization: Bearer` header injection on all oRPC calls
+- Better Auth session token pattern (httpOnly cookie)
+- All oRPC calls carry cookies via `credentials: "include"`
 
 ---
 
@@ -374,7 +376,7 @@ Both share the same `appRouter` and `createContext`.
 8. **Slot-Based Committee Editor**: Fixed organizational chart with batch save
 9. **Principal Auto-Sync**: Publishes to staff + OB President simultaneously
 10. **Content Review Queue**: 5 content types in one unified moderation interface
-11. **Dual-Path Activity Admin**: Email match OR club membership for access
+11. **Per-Activity Credential Admins**: Auto-generated `<slug>@aloysiuscollege.lk` admin login with rotatable password (scrypt-hashed) and auth role `<slug>:admin`, shown as a navbar pill; site/OB admin passwords are reset to known defaults on every boot
 12. **Cross-Table Tag Aggregation**: Tags aggregated across 5+ tables via SQLite `json_each()`
 13. **Image Aspect Ratio Metadata**: Preserved via URL query parameter
 14. **Auto-Slug Generation**: Collision-safe slugs with `-1`, `-2` suffixes

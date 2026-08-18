@@ -52,6 +52,8 @@ export function PrincipalMessage({
     return () => ctx.revert();
   }, []);
 
+  if (!displayName && !displayQuote && !photo) return null;
+
   return (
     <section
       ref={sectionRef}

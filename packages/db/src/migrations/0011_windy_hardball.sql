@@ -1,1 +1,0 @@
-ALTER TABLE `exam_students` ADD `overall_grade` text;

@@ -21,7 +21,12 @@ export const user = sqliteTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [check("user_role_check", sql`${table.role} IN ('user', 'admin')`)],
+  (table) => [
+    check(
+      "user_role_check",
+      sql`${table.role} IN ('user', 'admin', 'ob:admin') OR ${table.role} LIKE '%:admin'`,
+    ),
+  ],
 );
 
 export const session = sqliteTable(

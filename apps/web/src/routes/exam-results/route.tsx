@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
+import { PageError } from "@/components-client/page-error";
 import { client } from "@/utils/orpc";
 import {
   EXAM_TYPE_LABELS,
@@ -45,6 +46,7 @@ export const Route = createFileRoute("/exam-results")({
     return { results, settings };
   },
   staleTime: 5 * 60_000,
+  errorComponent: PageError,
   component: ExamResultsPage,
 });
 

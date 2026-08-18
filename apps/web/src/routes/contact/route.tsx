@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
+import { PageError } from "@/components-client/page-error";
 import { client } from "@/utils/orpc";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/contact")({
     return { settings };
   },
   staleTime: 5 * 60_000,
+  errorComponent: PageError,
   component: ContactPage,
 });
 

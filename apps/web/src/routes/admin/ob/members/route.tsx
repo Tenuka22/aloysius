@@ -2,12 +2,12 @@
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
-import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { SidebarTrigger } from "@aloysius-web/ui/components/sidebar";
 import { Separator } from "@aloysius-web/ui/components/separator";
 import { Button } from "@aloysius-web/ui/components/button";
 import { Input } from "@aloysius-web/ui/components/input";
-import { Card, CardContent } from "@aloysius-web/ui/components/card";
+import { Card } from "@aloysius-web/ui/components/card";
 import {
   Dialog,
   DialogContent,
@@ -16,14 +16,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@aloysius-web/ui/components/dialog";
-import { IconPlus, IconUsers, IconShieldCheck } from "@tabler/icons-react";
+import { IconPlus, IconUsers } from "@tabler/icons-react";
 import { orpc } from "@/utils/orpc";
 import { sortByRole } from "@/lib/ob-sort";
 import type { OBMember } from "@/lib/api-types";
-import { toast } from "sonner";
-import { useState, useEffect } from "react";
-
-const OB_ADMIN_EMAIL_KEY = "ob_admin_email";
+import { useState } from "react";
 
 const HEAD_ROLES = [
   "PRESIDENT",
@@ -45,45 +42,21 @@ function isHeadRole(role: string): boolean {
 export const Route = createFileRoute("/admin/ob/members")({
   loader: async ({ context }) => {
     await context.queryClient.prefetchQuery(orpc.ob.obMembers.list.queryOptions({ input: {} }));
-    await context.queryClient.prefetchQuery(
-      orpc.settings.get.queryOptions({ input: { key: OB_ADMIN_EMAIL_KEY } }),
-    );
   },
   component: AdminOBMembers,
 });
 
 function AdminOBMembers() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [newYearOpen, setNewYearOpen] = useState(false);
   const [newYear, setNewYear] = useState("");
-  const [obAdminEmail, setObAdminEmail] = useState("");
 
   const { data: members = [] } = useSuspenseQuery(
     orpc.ob.obMembers.list.queryOptions({ input: {} }),
   );
-  const { data: adminEmailSetting } = useSuspenseQuery(
-    orpc.settings.get.queryOptions({ input: { key: OB_ADMIN_EMAIL_KEY } }),
-  );
 
   const visibleMembers = members.filter((m: OBMember) => m.role !== "ADMINISTRATOR");
   const approvedMembers = visibleMembers.filter((m: OBMember) => m.status === "approved");
-
-  // There is a single, site-wide OB admin email — always load the latest saved
-  // value directly, with no per-member lookup.
-  useEffect(() => {
-    setObAdminEmail(adminEmailSetting?.value ?? "");
-  }, [adminEmailSetting]);
-
-  const saveAdminMutation = useMutation(
-    orpc.admin.settings.set.mutationOptions({
-      onSuccess: () => {
-        toast.success("OB admin email saved");
-        queryClient.invalidateQueries({ queryKey: orpc.settings.key() });
-      },
-      onError: (err) => toast.error(err.message),
-    }),
-  );
 
   const years = Array.from(new Set(approvedMembers.map((m: OBMember) => m.year).filter(Boolean)))
     .sort()
@@ -122,37 +95,6 @@ function AdminOBMembers() {
           </Button>
         </div>
       </header>
-      <div className="p-6 pb-0">
-        <Card className="border-secondary/20">
-          <CardContent className="p-4 flex flex-wrap items-center gap-4">
-            <div className="flex-1 min-w-[240px]">
-              <label className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
-                <IconShieldCheck className="size-3.5 text-primary shrink-0" />
-                OB Admin Email
-              </label>
-              <Input
-                placeholder="admin@example.com"
-                value={obAdminEmail}
-                onChange={(e) => setObAdminEmail(e.target.value)}
-                className="h-9"
-              />
-              <p className="text-[11px] text-muted-foreground mt-1.5">
-                The single OB admin manages the OB dashboard for every committee year — this
-                need not be an approved member and is not necessarily the President.
-              </p>
-            </div>
-            <Button
-              size="sm"
-              onClick={() =>
-                saveAdminMutation.mutate({ key: OB_ADMIN_EMAIL_KEY, value: obAdminEmail.trim() })
-              }
-              disabled={saveAdminMutation.isPending}
-            >
-              {saveAdminMutation.isPending ? "Saving..." : "Save"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
       <div className="flex-1 p-6">
         {years.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">

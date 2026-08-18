@@ -1,11 +1,19 @@
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
-import { activities } from "@aloysius-web/db/schema";
+import { activities, account, user } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
 import { adminProcedure } from "../../index";
 import { activityTypeSchema, contentStatusSchema } from "../../schemas";
 import { generateUniqueSlug } from "../../lib/slug";
+import {
+  ACTIVITY_ADMIN_EMAIL_DOMAIN,
+  activityAdminEmail,
+  activityAdminRole,
+  createAuth,
+  generateRandomPassword,
+  hashPassword,
+} from "@aloysius-web/auth";
 
 /**
  * Super-user tier for activities (clubs/sports). Site admin only (see
@@ -157,4 +165,102 @@ export const adminActivitiesRouter = {
     await db.delete(activities).where(eq(activities.id, input.id)).run();
     return { success: true };
   }),
+
+  /**
+   * Reports the auto-generated login email for the activity's admin and
+   * whether a password has been generated yet. The password itself is never
+   * returned — only rotated.
+   */
+  getCredentials: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .handler(async ({ input }) => {
+      const db = createDb();
+      const existing = await db
+        .select()
+        .from(activities)
+        .where(eq(activities.id, input.id))
+        .get();
+      if (!existing) {
+        throw new ORPCError("NOT_FOUND", { message: "Activity not found" });
+      }
+      return {
+        email: activityAdminEmail(existing.slug),
+        hasPassword: !!existing.adminPasswordHash,
+      };
+    }),
+
+  /**
+   * Generates a fresh random password for the activity admin login, stores its
+   * scrypt hash on the activity row, and keeps the underlying Better Auth
+   * credential account in sync so the old password stops working immediately.
+   */
+  rotateCredentials: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .handler(async ({ input }) => {
+      const db = createDb();
+      const existing = await db
+        .select()
+        .from(activities)
+        .where(eq(activities.id, input.id))
+        .get();
+      if (!existing) {
+        throw new ORPCError("NOT_FOUND", { message: "Activity not found" });
+      }
+
+      const email = activityAdminEmail(existing.slug);
+      const role = activityAdminRole(existing.slug);
+      const password = generateRandomPassword();
+      const hash = await hashPassword(password);
+
+      const existingUser = await db
+        .select()
+        .from(user)
+        .where(eq(user.email, email))
+        .get();
+
+      if (!existingUser) {
+        await createAuth().api.createUser({
+          body: { email, password, name: existing.name, role } as never,
+        });
+      } else {
+        await db.update(user).set({ role }).where(eq(user.id, existingUser.id)).run();
+        const existingAccount = await db
+          .select()
+          .from(account)
+          .where(
+            and(eq(account.userId, existingUser.id), eq(account.providerId, "credential")),
+          )
+          .get();
+        if (existingAccount) {
+          await db
+            .update(account)
+            .set({ password: hash })
+            .where(eq(account.id, existingAccount.id))
+            .run();
+        } else {
+          await db
+            .insert(account)
+            .values({
+              id: crypto.randomUUID(),
+              accountId: existingUser.id,
+              providerId: "credential",
+              userId: existingUser.id,
+              password: hash,
+            })
+            .run();
+        }
+      }
+
+      await db
+        .update(activities)
+        .set({ adminPasswordHash: hash })
+        .where(eq(activities.id, input.id))
+        .run();
+
+      return {
+        email,
+        password,
+        domain: ACTIVITY_ADMIN_EMAIL_DOMAIN,
+      };
+    }),
 };

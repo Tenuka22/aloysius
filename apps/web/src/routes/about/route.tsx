@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Navbar } from "@/components-client/navbar";
 import { Footer } from "@/components-client/footer";
 import { AnthemScore } from "@/components-client/anthem-score";
+import { PageError } from "@/components-client/page-error";
 import { client } from "@/utils/orpc";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -221,6 +222,7 @@ export const Route = createFileRoute("/about")({
     return { settings, principal: principalData, staff: staffData.rows };
   },
   staleTime: 5 * 60_000,
+  errorComponent: PageError,
   component: AboutPage,
 });
 

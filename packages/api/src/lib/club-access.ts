@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
 import { clubMembers, activities, user } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
+import { activityAdminEmail } from "@aloysius-web/auth";
 
 export type MembershipStatus = "pending" | "approved" | "rejected" | "revoked";
 export type MembershipRole = "admin" | "member";
@@ -123,9 +124,13 @@ export async function resolveClubAccess(
 
   if (!isClubAdmin) {
     const activity = await db.select().from(activities).where(eq(activities.id, activityId)).get();
-    if (activity?.adminEmail) {
+    if (activity) {
       const userEmail = await getUserEmail(userId);
-      if (userEmail && userEmail === activity.adminEmail.toLowerCase()) {
+      if (
+        userEmail &&
+        (userEmail === activity.adminEmail?.toLowerCase() ||
+          userEmail === activityAdminEmail(activity.slug))
+      ) {
         isClubAdmin = true;
       }
     }

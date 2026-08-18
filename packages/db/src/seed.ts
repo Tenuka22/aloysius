@@ -26,8 +26,8 @@ function toSlug(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
-// Single admin email used across the whole seed: site settings (OB admin),
-// every activity's adminEmail, and all staff / OB / donor contact emails.
+// Single admin email used across the whole seed: the site admin's email for
+// everything admin-related (every activity's adminEmail, staff and donor emails).
 const ADMIN_EMAIL = "tenukaomaljith2009@gmail.com";
 
 // Thematic photo pools, keyed by subject, so every seeded item gets an image
@@ -164,7 +164,6 @@ export async function seed() {
   for (const [key, value] of Object.entries(HOMEPAGE_DEFAULTS)) {
     settingsMap.set(key, value);
   }
-  settingsMap.set("ob_admin_email", ADMIN_EMAIL);
   settingsMap.set("heritage_image_1", unsplash(pick(HERITAGE_PHOTOS, 0), 800, 600));
   settingsMap.set("heritage_image_2", unsplash(pick(HERITAGE_PHOTOS, 1), 800, 600));
   const settings = Array.from(settingsMap.entries()).map(([key, value]) => ({ key, value }));

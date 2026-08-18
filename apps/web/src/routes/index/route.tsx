@@ -11,6 +11,7 @@ import { Achievements } from "@/components-client/achievements";
 import { Gallery } from "@/components-client/gallery";
 import { OBHomeSection } from "@/components-client/ob-home-section";
 import { Footer } from "@/components-client/footer";
+import { PageError } from "@/components-client/page-error";
 import { client } from "@/utils/orpc";
 import type { LifeTile } from "@/components-client/student-life";
 import type { GalleryImage } from "@/components-client/gallery";
@@ -138,6 +139,7 @@ export const Route = createFileRoute("/")({
     };
   },
   staleTime: 5 * 60_000,
+  errorComponent: PageError,
   component: Home,
 });
 

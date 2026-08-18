@@ -19,6 +19,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@aloysius-web/ui/components/sidebar";
+import { useAuthSession } from "@/lib/auth-client";
 import { orpc } from "@/utils/orpc";
 
 const typeIcons: Record<string, string> = {
@@ -37,7 +38,13 @@ export function ActivitySwitcher() {
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
   const params = useParams({ strict: false });
-  const { data: myClubs = [] } = useQuery(orpc.clubs.myClubs.queryOptions());
+  const { user } = useAuthSession();
+  const isSignedIn = !!user;
+  const { data: myClubs = [] } = useQuery(
+    orpc.clubs.myClubs.queryOptions({
+      enabled: isSignedIn,
+    }),
+  );
 
   const adminClubs = myClubs.filter((c: any) => c.membership?.isAdmin);
   const activeId = params.activityId;

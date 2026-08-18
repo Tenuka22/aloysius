@@ -892,12 +892,6 @@ function HomepageEditor() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <Field
-            label="OB Admin Email"
-            value={getValue("ob_admin_email")}
-            onChange={(v) => setField("ob_admin_email", v)}
-            placeholder="obadmin@aloysiuscollege.lk"
-          />
-          <Field
             label="Primary Button Text"
             value={getValue("alumni_cta1_text")}
             onChange={(v) => setField("alumni_cta1_text", v)}

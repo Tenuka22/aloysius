@@ -4,6 +4,7 @@ import { getServerSession } from "@/utils/auth";
 import { createDb } from "@aloysius-web/db";
 import { activities, clubMembers } from "@aloysius-web/db/schema";
 import { and, eq } from "drizzle-orm";
+import { activityAdminEmail } from "@aloysius-web/auth";
 import { ActivitiesAdminLayout } from "@/components-client/activities-admin-layout";
 
 const requireClubAdmin = createServerFn({ method: "GET" })
@@ -40,7 +41,9 @@ const requireClubAdmin = createServerFn({ method: "GET" })
 
     const isAdminByMembership = membership?.role === "admin" && membership?.status === "approved";
     const isAdminByEmail =
-      !!email && !!activity.adminEmail && email === activity.adminEmail.toLowerCase();
+      !!email &&
+      (!!activity.adminEmail && email === activity.adminEmail.toLowerCase()) ||
+      (!!email && !!activity.slug && email === activityAdminEmail(activity.slug));
 
     if (!isAdminByMembership && !isAdminByEmail) {
       throw redirect({ to: "/clubs" });

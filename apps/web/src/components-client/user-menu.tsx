@@ -2,7 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuthSession } from "@/lib/auth-client";
-import { IconSettings, IconShieldCheck, IconUserShield, IconUsers } from "@tabler/icons-react";
+import {
+  IconSettings,
+  IconShieldCheck,
+  IconUserShield,
+  IconUsers,
+  IconKey,
+} from "@tabler/icons-react";
 import { orpc } from "@/utils/orpc";
 
 /** Shared pill style for navbar admin / membership links on the dark-green header.
@@ -31,15 +37,21 @@ function AdminLink() {
 function MyClubsLink() {
   const { user } = useAuthSession();
   const isSignedIn = !!user;
+  const role = user?.role;
+
+  // Role-based activity admins get their dedicated pill (ActivityAdminLink),
+  // so the membership query only drives the pill for plain club members.
+  const isRoleActivityAdmin =
+    !!role && role.endsWith(":admin") && role !== "ob:admin";
 
   const { data } = useQuery(
     orpc.clubs.myClubs.queryOptions({
-      enabled: isSignedIn,
+      enabled: isSignedIn && !isRoleActivityAdmin,
       staleTime: 60_000,
     }),
   );
 
-  if (!isSignedIn || !data || data.length === 0) return null;
+  if (!isSignedIn || isRoleActivityAdmin || !data || data.length === 0) return null;
 
   const isClubAdmin = data.some((c) => c.membership.isAdmin === true);
   const label = isClubAdmin ? "Manage your club(s) as admin" : "Your clubs";
@@ -51,6 +63,27 @@ function MyClubsLink() {
       ) : (
         <IconUsers className="size-4" aria-hidden="true" />
       )}
+    </a>
+  );
+}
+
+/** Shown in the navbar when the signed-in user carries a per-activity admin
+ *  role (`<slug>:admin`, e.g. `chess:admin`). Links to their activity admin
+ *  panel. Site admin and OB admin roles are handled by their own links. */
+function ActivityAdminLink() {
+  const { user } = useAuthSession();
+  const role = user?.role;
+
+  if (!role || !role.endsWith(":admin") || role === "ob:admin") return null;
+
+  return (
+    <a
+      href="/activities-admin"
+      title="Manage your activity as admin"
+      aria-label="Manage your activity as admin"
+      className={pillClass}
+    >
+      <IconKey className="size-4" aria-hidden="true" />
     </a>
   );
 }
@@ -91,6 +124,7 @@ export function UserMenu() {
     <div className="flex items-center gap-2">
       <MyClubsLink />
       <OBAdminLink />
+      <ActivityAdminLink />
       <AdminLink />
     </div>
   );

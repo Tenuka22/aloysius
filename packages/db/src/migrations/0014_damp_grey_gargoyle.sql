@@ -1,1 +1,0 @@
-ALTER TABLE `gallery` ADD `ob_event_id` text REFERENCES ob_events(id);

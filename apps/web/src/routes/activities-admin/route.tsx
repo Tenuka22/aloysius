@@ -2,8 +2,9 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getServerSession } from "@/utils/auth";
 import { createDb } from "@aloysius-web/db";
-import { activities, clubMembers, user } from "@aloysius-web/db/schema";
+import { activities, clubMembers } from "@aloysius-web/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { activityAdminEmail } from "@aloysius-web/auth";
 
 const requireAnyClubAdmin = createServerFn({ method: "GET" }).handler(async () => {
   const session = await getServerSession();
@@ -34,7 +35,9 @@ const requireAnyClubAdmin = createServerFn({ method: "GET" }).handler(async () =
     const adminActivities = await db
       .select()
       .from(activities)
-      .where(sql`lower(${activities.adminEmail}) = ${email}`)
+      .where(
+        sql`lower(${activities.adminEmail}) = ${email} OR lower(${activities.slug}) = ${email.split("@")[0] ?? ""}`,
+      )
       .all();
     for (const a of adminActivities) {
       if (activityMap.has(a.id)) continue;
@@ -45,7 +48,10 @@ const requireAnyClubAdmin = createServerFn({ method: "GET" }).handler(async () =
   const adminActivities = [...activityMap.values()].filter((a) => {
     const membership = membershipRows.find((r) => r.activityId === a.id);
     const isAdminByMembership = membership?.role === "admin" && membership?.status === "approved";
-    const isAdminByEmail = !!email && !!a.adminEmail && email === a.adminEmail.toLowerCase();
+    const isAdminByEmail =
+      !!email &&
+      (!!a.adminEmail && email === a.adminEmail.toLowerCase()) ||
+      (!!email && !!a.slug && email === activityAdminEmail(a.slug));
     return isAdminByMembership || isAdminByEmail;
   });
 

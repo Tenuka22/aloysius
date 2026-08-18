@@ -42,7 +42,6 @@ import {
   IconRotate,
   IconTrash,
   IconX,
-  IconShieldCheck,
 } from "@tabler/icons-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@aloysius-web/ui/components/avatar";
 import { orpc } from "@/utils/orpc";
@@ -60,12 +59,7 @@ const membersSearchSchema = z.object({
 export const Route = createFileRoute("/ob-admin/members")({
   validateSearch: (search) => membersSearchSchema.parse(search),
   loader: async ({ context }) => {
-    await Promise.all([
-      context.queryClient.prefetchQuery(orpc.ob.obMembers.list.queryOptions({ input: {} })),
-      context.queryClient.prefetchQuery(
-        orpc.settings.get.queryOptions({ input: { key: "ob_admin_email" } }),
-      ),
-    ]);
+    await context.queryClient.prefetchQuery(orpc.ob.obMembers.list.queryOptions({ input: {} }));
   },
   component: OBAdminMembers,
 });
@@ -82,10 +76,6 @@ function OBAdminMembers() {
   const [deleting, setDeleting] = useState<OBMember | null>(null);
 
   const { data: members = [] } = useSuspenseQuery(orpc.ob.obMembers.list.queryOptions({ input: {} }));
-  const { data: adminEmailSetting } = useSuspenseQuery(
-    orpc.settings.get.queryOptions({ input: { key: "ob_admin_email" } }),
-  );
-  const obAdminEmail = adminEmailSetting?.value?.toLowerCase() ?? "";
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: orpc.ob.obMembers.key() });
 
@@ -158,17 +148,7 @@ function OBAdminMembers() {
     {
       accessorKey: "name",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
-      cell: ({ row }) => {
-        const m = row.original;
-        return (
-          <div className="flex items-center gap-2">
-            <span>{m.name}</span>
-            {!!obAdminEmail && m.email?.toLowerCase() === obAdminEmail && (
-              <IconShieldCheck className="size-3.5 text-primary shrink-0" title="OB Admin" />
-            )}
-          </div>
-        );
-      },
+      cell: ({ row }) => <span>{row.original.name}</span>,
     },
     {
       accessorKey: "role",

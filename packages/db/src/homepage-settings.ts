@@ -128,7 +128,6 @@ export const HOMEPAGE_KEYS = [
   // Old Boys
   "ob_archival_image_1",
   "ob_archival_image_2",
-  "ob_admin_email",
 
   // Gallery
   "gallery_eyebrow",
@@ -186,13 +185,12 @@ export const HOMEPAGE_DEFAULTS: Record<HomepageSettingKey, string> = {
   heritage_image_1: "",
   heritage_image_2: "",
 
-  // Principal's message
+  // Principal's message (fallback when no principal record exists in DB)
   principal_eyebrow: "FROM THE PRINCIPAL",
   principal_photo: "",
-  principal_quote:
-    "Every Aloysian carries forward a tradition of faith, discipline and excellence - certa viriliter. Our mission is to form men and women who will serve as a light to the world through knowledge, compassion and integrity.",
-  principal_name: "The Principal",
-  principal_title: "Principal",
+  principal_quote: "",
+  principal_name: "",
+  principal_title: "",
   principal_cta_text: "Read the Full Message",
   principal_cta_url: "/principals",
 
@@ -270,7 +268,6 @@ export const HOMEPAGE_DEFAULTS: Record<HomepageSettingKey, string> = {
   // Old Boys
   ob_archival_image_1: "",
   ob_archival_image_2: "",
-  ob_admin_email: "",
 
   // Gallery
   gallery_eyebrow: "MEDIA",

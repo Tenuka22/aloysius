@@ -12,7 +12,6 @@ export const getRouter = () => {
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
     context: { orpc, queryClient },
-    defaultPendingComponent: () => undefined,
     defaultNotFoundComponent: () => <div>Not Found</div>,
   });
 

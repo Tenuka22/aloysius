@@ -1,0 +1,1 @@
+ALTER TABLE `activities` ADD `admin_password_hash` text;

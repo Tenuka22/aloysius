@@ -1,1 +1,0 @@
-ALTER TABLE `ob_members` DROP COLUMN `admin_email`;

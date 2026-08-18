@@ -370,6 +370,7 @@ export const activities = sqliteTable(
       .notNull()
       .default("club"),
     adminEmail: text("admin_email"),
+    adminPasswordHash: text("admin_password_hash"),
     sortOrder: integer("sort_order").notNull().default(0),
     status: text("status", { enum: CONTENT_STATUSES })
       .notNull()

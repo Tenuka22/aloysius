@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAuthSession, authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@aloysius-web/ui/components/avatar";
 import {
@@ -22,8 +23,11 @@ import { IconSelector, IconLogout, IconHome } from "@tabler/icons-react";
 export function NavUser() {
   const { isMobile } = useSidebar();
   const { user } = useAuthSession();
+  const [mounted, setMounted] = useState(false);
 
-  if (!user) return null;
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted || !user) return null;
 
   const firstName = user.name?.split(" ")[0] || "User";
   const lastName = user.name?.split(" ").slice(1).join(" ") || "";

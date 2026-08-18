@@ -3,6 +3,7 @@ import { and, eq, desc, asc, inArray, sql } from "drizzle-orm";
 import { createDb } from "@aloysius-web/db";
 import { activities, clubMembers, user } from "@aloysius-web/db/schema";
 import { ORPCError } from "@orpc/server";
+import { activityAdminEmail } from "@aloysius-web/auth";
 import { protectedProcedure } from "../index";
 import {
   getMembership,
@@ -62,7 +63,9 @@ export const clubsRouter = {
       const adminActivities = await db
         .select()
         .from(activities)
-        .where(sql`lower(${activities.adminEmail}) = ${userEmail}`)
+        .where(
+          sql`lower(${activities.adminEmail}) = ${userEmail} OR lower(${activities.slug}) = ${userEmail.split("@")[0] ?? ""}`,
+        )
         .all();
       for (const a of adminActivities) {
         if (activityMap.has(a.id)) continue;
@@ -89,7 +92,9 @@ export const clubsRouter = {
         const activity = activityMap.get(r.activityId)!;
         const isAdmin =
           (r.role === "admin" && r.status === "approved") ||
-          (!!userEmail && !!activity.adminEmail && userEmail === activity.adminEmail.toLowerCase());
+          (!!userEmail &&
+            (!!activity.adminEmail && userEmail === activity.adminEmail.toLowerCase()) ||
+            (!!userEmail && !!activity.slug && userEmail === activityAdminEmail(activity.slug)));
         return {
           membership: { ...serializeMembership(r as MembershipRow), isAdmin },
           activity: serializeActivity(activity),
@@ -115,9 +120,12 @@ export const clubsRouter = {
           .from(activities)
           .where(eq(activities.id, input.activityId))
           .get();
-        if (activity?.adminEmail) {
+        if (activity) {
           const userEmail = await getUserEmail(userId);
-          isAdmin = !!userEmail && userEmail === activity.adminEmail.toLowerCase();
+          isAdmin =
+            !!userEmail &&
+            ((!!activity.adminEmail && userEmail === activity.adminEmail.toLowerCase()) ||
+              (!!activity.slug && userEmail === activityAdminEmail(activity.slug)));
         }
       }
 

@@ -158,6 +158,7 @@
         "@aloysius-web/env": "workspace:*",
         "better-auth": "^1.6.23",
         "dotenv": "catalog:",
+        "drizzle-orm": "^0.45.2",
         "zod": "catalog:",
       },
       "devDependencies": {

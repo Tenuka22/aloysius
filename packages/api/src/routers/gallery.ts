@@ -128,8 +128,7 @@ export const galleryRouter = {
         const userId = context.auth?.userId ?? null;
         const isAuthor = userId !== null && userId === row.userId;
         const isObScopeGallery = !row.eventId && !row.studentWorkId && !row.achievementId;
-        const callerIsOBAdmin =
-          userId !== null && isObScopeGallery && (await isOBAdmin(userId));
+        const callerIsOBAdmin = isObScopeGallery && isOBAdmin(context.auth?.role);
         if (!isSiteAdmin && !isAuthor && !callerIsOBAdmin) {
           throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
         }
