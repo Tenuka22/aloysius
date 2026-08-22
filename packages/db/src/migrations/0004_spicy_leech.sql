@@ -1,0 +1,1 @@
+ALTER TABLE `activities` ADD `capabilities` text DEFAULT '[]';

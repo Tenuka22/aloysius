@@ -48,6 +48,7 @@ const createActivitySchema = v.object({
   images: v.array(v.string()),
   type: v.string(),
   adminEmail: v.optional(v.string()),
+  capabilities: v.array(v.string()),
   sortOrder: v.number(),
   status: v.string(),
 });
@@ -65,6 +66,7 @@ const updateActivitySchema = v.object({
   images: v.array(v.string()),
   type: v.string(),
   adminEmail: v.optional(v.string()),
+  capabilities: v.array(v.string()),
   sortOrder: v.number(),
   status: v.string(),
 });
@@ -73,7 +75,18 @@ type UpdateActivityValues = v.InferOutput<typeof updateActivitySchema>;
 
 type FormValues = CreateActivityValues | UpdateActivityValues;
 
-const fields: FieldEntry<CreateActivityValues | UpdateActivityValues>[] = [
+export function ActivitiesForm({
+  mode,
+  id,
+  onSuccess,
+}: {
+  mode: "create" | "edit";
+  id?: string;
+  onSuccess: () => void;
+}) {
+  const queryClient = useQueryClient();
+
+  const fields: FieldEntry<CreateActivityValues | UpdateActivityValues>[] = [
   {
     name: "name",
     kind: "text",
@@ -93,6 +106,7 @@ const fields: FieldEntry<CreateActivityValues | UpdateActivityValues>[] = [
         sourceField="name"
         value={(value as string) ?? ""}
         onChange={(v) => onChange(v)}
+        excludeId={mode === "edit" ? id : undefined}
       />
     ),
   },
@@ -521,6 +535,76 @@ function StatusField() {
   );
 }
 
+const CAPABILITY_OPTIONS = [
+  { value: "manage_news", label: "News articles", description: "Create and manage news articles" },
+  { value: "manage_events", label: "Events", description: "Create and manage events" },
+  { value: "manage_announcements", label: "Club announcements", description: "Announcements scoped to this activity" },
+  { value: "manage_announcements_global", label: "School-wide announcements", description: "Announcements visible across the entire school" },
+  { value: "manage_gallery", label: "Photo albums", description: "Manage photo albums for this activity" },
+  { value: "manage_student_works", label: "Student works", description: "Create and manage student works" },
+] as const;
+
+function CapabilitiesField() {
+  const form = useBuildForm();
+  const capabilities = (useStore(form.store, (state: { values: FormValues }) => state.values.capabilities) as string[]) ?? [];
+
+  const toggle = useCallback(
+    (cap: string) => {
+      const next = capabilities.includes(cap)
+        ? capabilities.filter((c: string) => c !== cap)
+        : [...capabilities, cap];
+      form.setFieldValue("capabilities", next);
+    },
+    [form, capabilities],
+  );
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="text-sm font-medium leading-none">Capabilities</label>
+        <p className="text-xs text-muted-foreground mt-1">
+          Control what content types this activity can manage. Only site admins can edit these.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {CAPABILITY_OPTIONS.map((opt) => {
+          const enabled = capabilities.includes(opt.value);
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => toggle(opt.value)}
+              className={cn(
+                "flex items-start gap-3 rounded-lg border p-3 text-left transition-colors",
+                enabled
+                  ? "border-primary bg-primary/5"
+                  : "border-input bg-transparent hover:bg-muted/50",
+              )}
+            >
+              <div
+                className={cn(
+                  "mt-0.5 h-4 w-4 shrink-0 rounded-sm border flex items-center justify-center",
+                  enabled ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground",
+                )}
+              >
+                {enabled && (
+                  <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium">{opt.label}</div>
+                <div className="text-xs text-muted-foreground">{opt.description}</div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function SortOrderField() {
   const form = useBuildForm();
   const value = useStore(form.store, (state: { values: FormValues }) => state.values.sortOrder) as number;
@@ -685,17 +769,6 @@ function DescriptionEditorField() {
   );
 }
 
-export function ActivitiesForm({
-  mode,
-  id,
-  onSuccess,
-}: {
-  mode: "create" | "edit";
-  id?: string;
-  onSuccess: () => void;
-}) {
-  const queryClient = useQueryClient();
-
   const { data: activity, isLoading: isLoadingItem } = useQuery(
     orpc.activities.get.queryOptions({
       input: { id: id! },
@@ -715,7 +788,7 @@ export function ActivitiesForm({
   );
 
   const updateMutation = useMutation(
-    orpc.activities.update.mutationOptions({
+    orpc.admin.activities.update.mutationOptions({
       onSuccess: () => {
         toast.success("Activity updated");
         queryClient.invalidateQueries({ queryKey: orpc.activities.key() });
@@ -799,6 +872,7 @@ export function ActivitiesForm({
           />
         </div>
         <ImagesField />
+        <CapabilitiesField />
         <DescriptionEditorField />
       </div>
     ),
@@ -820,6 +894,7 @@ export function ActivitiesForm({
               images: (activity.images as string[]) ?? [],
               type: activity.type,
               adminEmail: activity.adminEmail ?? "",
+              capabilities: (activity.capabilities as string[]) ?? [],
               sortOrder: activity.sortOrder,
               status: activity.status,
             }
@@ -834,6 +909,7 @@ export function ActivitiesForm({
               images: [] as string[],
               type: "club",
               adminEmail: "",
+              capabilities: [] as string[],
               sortOrder: 0,
               status: "draft",
             }

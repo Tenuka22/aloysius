@@ -13,6 +13,11 @@ import {
 } from "../schemas";
 import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 import { resolveClubAccess, assertClubMember } from "../lib/club-access";
+import {
+  CAPABILITY_MANAGE_STUDENT_WORKS,
+  fetchActivityCapabilities,
+  assertCapability,
+} from "../lib/capabilities";
 
 export const studentWorksRouter = {
   list: publicProcedure
@@ -220,6 +225,8 @@ export const studentWorksRouter = {
       }
 
       const db = createDb();
+      const capabilities = await fetchActivityCapabilities(db, input.activityId);
+      assertCapability(capabilities, CAPABILITY_MANAGE_STUDENT_WORKS);
       const { membership, isClubAdmin } = await resolveClubAccess(
         db,
         input.activityId,
@@ -337,7 +344,7 @@ export const studentWorksRouter = {
         updatedAt: now,
       };
 
-      if (!context.auth.role === "admin") {
+      if (context.auth.role !== "admin") {
         updateData.reviewStatus = "pending";
         updateData.status = "draft";
         updateData.publishedAt = null;

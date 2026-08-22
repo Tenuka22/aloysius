@@ -371,6 +371,9 @@ export const activities = sqliteTable(
       .default("club"),
     adminEmail: text("admin_email"),
     adminPasswordHash: text("admin_password_hash"),
+    capabilities: text("capabilities", { mode: "json" })
+      .$type<string[]>()
+      .default([]),
     sortOrder: integer("sort_order").notNull().default(0),
     status: text("status", { enum: CONTENT_STATUSES })
       .notNull()

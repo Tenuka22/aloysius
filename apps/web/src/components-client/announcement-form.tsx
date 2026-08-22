@@ -284,11 +284,13 @@ export function AnnouncementForm({
   id,
   onSuccess,
   activityId,
+  global,
 }: {
   mode: "create" | "edit";
   id?: string;
   onSuccess: () => void;
   activityId?: string;
+  global?: boolean;
 }) {
   const queryClient = useQueryClient();
 
@@ -336,11 +338,12 @@ export function AnnouncementForm({
           {
             ...values,
             activityId,
+            global: global ?? false,
             audience: values.audience as "all" | "students" | "parents" | "staff" | "alumni",
           } as Parameters<typeof createMutation.mutateAsync>[0],
         );
     },
-    [mode, id, activityId, createMutation, updateMutation],
+    [mode, id, activityId, global, createMutation, updateMutation],
   );
 
   if (mode === "edit" && isLoadingItem) {

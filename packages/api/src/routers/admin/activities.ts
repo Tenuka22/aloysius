@@ -35,6 +35,7 @@ export const adminActivitiesRouter = {
         images: z.array(z.string()).optional(),
         type: activityTypeSchema.default("club"),
         adminEmail: z.string().email().optional(),
+        capabilities: z.array(z.string()).optional(),
         sortOrder: z.number().optional(),
         status: contentStatusSchema.default("draft"),
       }),
@@ -60,6 +61,7 @@ export const adminActivitiesRouter = {
           images: input.images ?? [],
           type: input.type,
           adminEmail: input.adminEmail,
+          capabilities: input.capabilities ?? [],
           sortOrder: input.sortOrder ?? 0,
           status: input.status,
           createdAt: now,
@@ -79,6 +81,7 @@ export const adminActivitiesRouter = {
         images: record.images ?? [],
         type: record.type,
         adminEmail: record.adminEmail,
+        capabilities: record.capabilities ?? [],
         sortOrder: record.sortOrder,
         status: record.status,
         createdAt: record.createdAt.toISOString(),
@@ -99,6 +102,7 @@ export const adminActivitiesRouter = {
         images: z.array(z.string()).optional(),
         type: activityTypeSchema.optional(),
         adminEmail: z.string().email().optional().nullable(),
+        capabilities: z.array(z.string()).optional(),
         sortOrder: z.number().optional(),
         status: contentStatusSchema.optional(),
       }),
@@ -128,6 +132,7 @@ export const adminActivitiesRouter = {
       if (input.images !== undefined) updateData.images = input.images;
       if (input.type !== undefined) updateData.type = input.type;
       if (input.adminEmail !== undefined) updateData.adminEmail = input.adminEmail;
+      if (input.capabilities !== undefined) updateData.capabilities = input.capabilities;
       if (input.sortOrder !== undefined) updateData.sortOrder = input.sortOrder;
       if (input.status !== undefined) updateData.status = input.status;
 
@@ -149,6 +154,7 @@ export const adminActivitiesRouter = {
         images: record.images ?? [],
         type: record.type,
         adminEmail: record.adminEmail,
+        capabilities: record.capabilities ?? [],
         sortOrder: record.sortOrder,
         status: record.status,
         createdAt: record.createdAt.toISOString(),

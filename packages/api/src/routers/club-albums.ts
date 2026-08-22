@@ -5,6 +5,11 @@ import { clubAlbums, clubAlbumImages, activities } from "@aloysius-web/db/schema
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { resolveClubAccess, assertClubMember } from "../lib/club-access";
+import {
+  CAPABILITY_MANAGE_GALLERY,
+  fetchActivityCapabilities,
+  assertCapability,
+} from "../lib/capabilities";
 
 type AlbumRow = typeof clubAlbums.$inferSelect;
 type AlbumImageRow = typeof clubAlbumImages.$inferSelect;
@@ -226,6 +231,8 @@ export const clubAlbumsRouter = {
       if (!userId) throw new ORPCError("UNAUTHORIZED");
 
       const db = createDb();
+      const capabilities = await fetchActivityCapabilities(db, input.activityId);
+      assertCapability(capabilities, CAPABILITY_MANAGE_GALLERY);
       const activity = await db
         .select()
         .from(activities)
@@ -307,7 +314,7 @@ export const clubAlbumsRouter = {
       if (input.title !== undefined) updateData.title = input.title;
       if (input.description !== undefined) updateData.description = input.description;
 
-      if (!context.auth?.role === "admin") {
+      if (context.auth?.role !== "admin") {
         updateData.reviewStatus = "pending";
         updateData.status = "draft";
         updateData.reviewedBy = null;
@@ -418,7 +425,7 @@ export const clubAlbumsRouter = {
           .run();
       }
 
-      if (!context.auth?.role === "admin") {
+      if (context.auth?.role !== "admin") {
         await db
           .update(clubAlbums)
           .set({
@@ -492,7 +499,7 @@ export const clubAlbumsRouter = {
           .run();
       }
 
-      if (!context.auth?.role === "admin") {
+      if (context.auth?.role !== "admin") {
         await db
           .update(clubAlbums)
           .set({

@@ -13,6 +13,12 @@ import {
 } from "../schemas";
 import { generateUniqueSlug, checkSlugUnique } from "../lib/slug";
 import { resolveClubAccess, assertClubMember } from "../lib/club-access";
+import {
+  CAPABILITY_MANAGE_ANNOUNCEMENTS,
+  CAPABILITY_MANAGE_ANNOUNCEMENTS_GLOBAL,
+  fetchActivityCapabilities,
+  assertCapability,
+} from "../lib/capabilities";
 
 export const announcementsRouter = {
   list: publicProcedure
@@ -27,6 +33,7 @@ export const announcementsRouter = {
         audience: audienceSchema.optional(),
         activityId: z.string().optional(),
         reviewStatus: reviewStatusSchema.optional(),
+        global: z.boolean().optional(),
       }),
     )
     .handler(async ({ input, context }) => {
@@ -64,6 +71,12 @@ export const announcementsRouter = {
       }
       if (input.activityId) {
         conditions.push(eq(announcements.activityId, input.activityId));
+      }
+      if (input.global === true) {
+        conditions.push(eq(announcements.activityId, null));
+      } else if (input.global === false && !input.activityId) {
+        // When global is explicitly false and no activityId, show only activity-scoped
+        // (skip — site admins see all, non-site-admins see only published/approved)
       }
       if (input.reviewStatus) {
         if (input.reviewStatus !== "approved" && !canSeeNonApproved) {
@@ -122,6 +135,7 @@ export const announcementsRouter = {
           reviewedBy: row.reviewedBy,
           reviewedAt: row.reviewedAt?.toISOString() ?? null,
           rejectionReason: row.rejectionReason,
+          isGlobal: row.activityId === null,
         })),
         total,
         pageCount: Math.ceil(total / pageSize),
@@ -184,6 +198,7 @@ export const announcementsRouter = {
         reviewedBy: row.reviewedBy,
         reviewedAt: row.reviewedAt?.toISOString() ?? null,
         rejectionReason: row.rejectionReason,
+        isGlobal: row.activityId === null,
       };
     }),
 
@@ -202,30 +217,52 @@ export const announcementsRouter = {
         authorName: z.string().optional(),
         authorType: authorTypeSchema.optional(),
         activityId: z.string().optional(),
+        global: z.boolean().optional(),
       }),
     )
     .handler(async ({ input, context }) => {
       if (!context.auth?.userId) {
         throw new ORPCError("UNAUTHORIZED");
       }
-      if (!input.activityId) {
+
+      const db = createDb();
+      const isSiteAdmin = context.auth.role === "admin";
+
+      let resolvedActivityId: string | null = null;
+      let isGlobal = false;
+
+      if (input.global && input.activityId) {
+        const capabilities = await fetchActivityCapabilities(db, input.activityId);
+        assertCapability(capabilities, CAPABILITY_MANAGE_ANNOUNCEMENTS_GLOBAL);
+        const { membership, isClubAdmin } = await resolveClubAccess(
+          db,
+          input.activityId,
+          context.auth.userId,
+          isSiteAdmin,
+        );
+        assertClubMember(membership, isSiteAdmin, isClubAdmin);
+        resolvedActivityId = null;
+        isGlobal = true;
+      } else if (input.activityId) {
+        const capabilities = await fetchActivityCapabilities(db, input.activityId);
+        assertCapability(capabilities, CAPABILITY_MANAGE_ANNOUNCEMENTS);
+        const { membership, isClubAdmin } = await resolveClubAccess(
+          db,
+          input.activityId,
+          context.auth.userId,
+          isSiteAdmin,
+        );
+        assertClubMember(membership, isSiteAdmin, isClubAdmin);
+        resolvedActivityId = input.activityId;
+      } else if (!isSiteAdmin) {
         throw new ORPCError("FORBIDDEN", {
-          message: "A club (activityId) is required. General announcements are created via site admin.",
+          message: "An activityId or global flag is required.",
         });
       }
 
-      const db = createDb();
-      const { membership, isClubAdmin } = await resolveClubAccess(
-        db,
-        input.activityId,
-        context.auth.userId,
-        context.auth.role === "admin",
-      );
-      assertClubMember(membership, context.auth.role === "admin", isClubAdmin);
-
-      const reviewStatus: "pending" | "approved" = context.auth.role === "admin" ? "approved" : "pending";
+      const reviewStatus: "pending" | "approved" = isSiteAdmin ? "approved" : "pending";
       const status: "draft" | "published" =
-        context.auth.role === "admin" && input.publishNow ? "published" : "draft";
+        isSiteAdmin && input.publishNow ? "published" : "draft";
       const publishedAt: Date | null = status === "published" ? new Date() : null;
 
       const id = crypto.randomUUID();
@@ -250,7 +287,7 @@ export const announcementsRouter = {
           authorName: input.authorName ?? null,
           authorType: input.authorType ?? null,
           userId: context.auth.userId,
-          activityId: input.activityId,
+          activityId: resolvedActivityId,
           reviewStatus,
         })
         .returning()
@@ -277,6 +314,7 @@ export const announcementsRouter = {
         reviewedBy: record.reviewedBy,
         reviewedAt: record.reviewedAt?.toISOString() ?? null,
         rejectionReason: record.rejectionReason,
+        isGlobal,
       };
     }),
 
@@ -331,7 +369,7 @@ export const announcementsRouter = {
         updatedAt: now,
       };
 
-      if (!context.auth.role === "admin") {
+      if (context.auth.role !== "admin") {
         updateData.reviewStatus = "pending";
         updateData.status = "draft";
         updateData.publishedAt = null;

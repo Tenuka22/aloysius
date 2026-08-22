@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { client } from "@/utils/orpc";
 import { cn } from "@aloysius-web/ui/lib/utils";
 
-type SlugCheckInput = { slug: string };
+type SlugCheckInput = { slug: string; excludeId?: string };
 type SlugCheckResult = { unique: boolean; suggestion?: string | null };
 
 const checkSlugRouters: Record<
@@ -27,6 +27,7 @@ export function SlugFieldInline({
   onChange,
   label = "Slug",
   required = false,
+  excludeId,
 }: {
   sourceField?: string;
   routerName: string;
@@ -34,6 +35,7 @@ export function SlugFieldInline({
   onChange: (val: string) => void;
   label?: string;
   required?: boolean;
+  excludeId?: string;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -47,7 +49,7 @@ export function SlugFieldInline({
       }
       setChecking(true);
       try {
-        const result = await checkSlugRouters[routerName]({ slug: slugValue });
+        const result = await checkSlugRouters[routerName]({ slug: slugValue, excludeId });
         if (!result.unique) {
           setError(`Slug already exists. Suggestion: ${result.suggestion}`);
         } else {
@@ -59,7 +61,7 @@ export function SlugFieldInline({
         setChecking(false);
       }
     },
-    [routerName],
+    [routerName, excludeId],
   );
 
   useEffect(() => {
