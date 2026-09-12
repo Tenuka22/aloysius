@@ -21,12 +21,15 @@ Dockerfile
 **/Dockerfile
 docker-compose.yml
 
-# Env value files stay out of COPY layers; runtime env comes from compose env_file,
-# build-time configuration uses BuildKit secrets; public values use build args
+# Local/secret env files stay out of COPY layers; real secrets come from
+# compose env_file/environment at container runtime. .env.production is
+# checked in (non-secret Docker Compose topology + build-time placeholders
+# for required-but-runtime-overridden fields) and does need to be copied in.
 **/.env
 **/.env.*
 !**/.env.example
 !**/.env.schema
+!**/.env.production
 
 local.db
 local.db-*

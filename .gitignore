@@ -13,6 +13,9 @@ apps/web/src/routeTree.gen.ts
 local.db
 local.db-*
 
+# Local LMDB file storage (dev only; MinIO takes over in production)
+/data
+
 # Environment variables
 .env
 .env*.local

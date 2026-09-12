@@ -1,5 +1,5 @@
 {
-  "name": "@aloysius/api",
+  "name": "@aloysius/storage",
   "type": "module",
   "exports": {
     ".": {
@@ -14,20 +14,11 @@
   "scripts": {
     "build": "tsc -b",
     "check-types": "tsc -b",
-    "dev": "tsc -b --watch",
     "test": "vitest run"
   },
   "dependencies": {
-    "@aloysius/auth": "workspace:*",
-    "@aloysius/db": "workspace:*",
-    "@aloysius/storage": "workspace:*",
-    "@orpc/client": "catalog:",
-    "@orpc/openapi": "catalog:",
-    "@orpc/server": "catalog:",
-    "@orpc/zod": "catalog:",
-    "drizzle-orm": "^0.45.2",
-    "sharp": "^0.35.4",
-    "zod": "catalog:"
+    "lmdb": "^3.5.6",
+    "minio": "^8.0.7"
   },
   "devDependencies": {
     "@aloysius/config": "workspace:*",

@@ -1,14 +1,23 @@
-import { createAuth as createConfiguredAuth, ensureSiteAdmin } from "@aloysius/auth";
-import { type Database, createDb } from "@aloysius/db";
+import {
+  createAuth as createConfiguredAuth,
+  ensureSiteAdmin,
+} from "@aloysius/auth";
+import { createDb } from "@aloysius/db";
+import type { Database } from "@aloysius/db";
+import { createStorage } from "@aloysius/storage";
+import type { Storage } from "@aloysius/storage";
 
 import { env } from "./env.server";
 
 const db = createDb(env);
 
-export function getDb(): Database {
-  return db;
-}
+export const getDb = (): Database => db;
+
 export const auth = createConfiguredAuth(env, db);
+
+const storage = createStorage(env);
+
+export const getStorage = (): Storage => storage;
 
 /**
  * One-time server bootstrap: seeds the site admin account. Memoised so every
@@ -18,12 +27,16 @@ export const auth = createConfiguredAuth(env, db);
  */
 let bootstrapPromise: Promise<void> | undefined;
 
-export function ensureServerBootstrap(): Promise<void> {
+export const ensureServerBootstrap = (): Promise<void> => {
   if (!bootstrapPromise) {
-    bootstrapPromise = ensureSiteAdmin(auth, db, env).catch((error: unknown) => {
-      bootstrapPromise = undefined;
-      throw error;
-    });
+    bootstrapPromise = (async () => {
+      try {
+        await ensureSiteAdmin(auth, db, env);
+      } catch (error) {
+        bootstrapPromise = undefined;
+        throw error;
+      }
+    })();
   }
   return bootstrapPromise;
-}
+};
