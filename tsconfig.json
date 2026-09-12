@@ -1,0 +1,3 @@
+{
+  "extends": "@aloysius/config/tsconfig.base.json"
+}

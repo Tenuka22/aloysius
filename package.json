@@ -1,0 +1,60 @@
+{
+  "name": "aloysius",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "zod": "^4.5.4",
+      "typescript": "^6.0.3",
+      "varlock": "1.18.0",
+      "lucide-react": "^1.41.0",
+      "next-themes": "^0.4.6",
+      "react": "^19.2.8",
+      "react-dom": "^19.2.8",
+      "sonner": "^2.0.8",
+      "tailwindcss": "^4.3.3",
+      "@libsql/client": "0.18.0",
+      "libsql": "0.5.29",
+      "@orpc/server": "^1.15.0",
+      "@orpc/client": "^1.15.0",
+      "@orpc/openapi": "^1.15.0",
+      "@orpc/zod": "^1.15.0",
+      "better-auth": "1.7.3",
+      "@types/react": "^19.2.18",
+      "@types/react-dom": "^19.2.7"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "nx run-many -t dev",
+    "build": "nx run-many -t build",
+    "check-types": "nx run-many -t check-types",
+    "postinstall": "tsc -b packages/api && varlock codegen --path ./apps/web/ && varlock codegen --path ./packages/db/",
+    "dev:types": "tsc -b packages/api --watch",
+    "dev:web": "nx run-many -t dev --projects=web",
+    "db:push": "nx run-many -t db:push --projects=@aloysius/db",
+    "db:studio": "nx run-many -t db:studio --projects=@aloysius/db",
+    "db:generate": "nx run-many -t db:generate --projects=@aloysius/db",
+    "db:migrate": "nx run-many -t db:migrate --projects=@aloysius/db",
+    "db:local": "nx run-many -t db:local --projects=@aloysius/db",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "env:generate": "varlock codegen --path ./apps/web/ && varlock codegen --path ./packages/db/"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@aloysius/config": "workspace:*",
+    "@types/node": "^26.4.1",
+    "nx": "^23.2.0",
+    "typescript": "catalog:",
+    "varlock": "catalog:"
+  },
+  "packageManager": "bun@1.4.0"
+}
