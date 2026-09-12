@@ -1,4 +1,3 @@
-import { Toaster } from "@aloysius/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
@@ -6,9 +5,9 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import type { orpc } from "@/utils/orpc";
 
-import Header from "../components/header";
-
+import { DevStyleXInject } from "../components/dev-stylex-inject";
 import appCss from "../index.css?url";
+
 export interface RouterAppContext {
   orpc: typeof orpc;
   queryClient: QueryClient;
@@ -28,12 +27,6 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
         title: "My App",
       },
     ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
   }),
 
   component: RootDocument,
@@ -41,16 +34,13 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootDocument() {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <HeadContent />
+        <DevStyleXInject cssHref={appCss} />
       </head>
       <body>
-        <div className="grid h-svh grid-rows-[auto_1fr]">
-          <Header />
-          <Outlet />
-        </div>
-        <Toaster richColors />
+        <Outlet />
         <TanStackRouterDevtools position="bottom-left" />
         <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
         <Scripts />

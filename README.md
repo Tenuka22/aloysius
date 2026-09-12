@@ -6,8 +6,8 @@ This project was created with [Better-T-Stack](https://github.com/AmanVarshney01
 
 - **TypeScript** - For type safety and improved developer experience
 - **TanStack Start** - SSR framework with TanStack Router
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Shared UI package** - shadcn/ui primitives live in `packages/ui`
+- **StyleX** - Compile-time, type-safe styling for React
+- **Shared UI package** - StyleX-based primitives live in `packages/ui`
 - **oRPC** - End-to-end type-safe APIs with OpenAPI integration
 - **Drizzle** - TypeScript-first ORM
 - **SQLite/Turso** - Database engine
@@ -50,29 +50,16 @@ Open [http://localhost:3001](http://localhost:3001) in your browser to see the f
 
 ## UI Customization
 
-React web apps in this stack share shadcn/ui primitives through `packages/ui`.
+React web apps in this stack share StyleX-based primitives through `packages/ui`.
 
-- Change design tokens and global styles in `packages/ui/src/styles/globals.css`
 - Update shared primitives in `packages/ui/src/components/*`
-- Adjust shadcn aliases or style config in `packages/ui/components.json` and `apps/web/components.json`
-
-### Add more shared components
-
-Run this from the project root to add more primitives to the shared UI package:
-
-```bash
-npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
-```
+- Define styles with `stylex.create` and apply them with `stylex.props`
 
 Import shared components like this:
 
 ```tsx
-import { Button } from "@aloysius/ui/components/button";
+import { HelloWorld } from "@aloysius/ui/components/hello-world";
 ```
-
-### Add app-specific blocks
-
-If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.
 
 ## Environment Configuration
 
@@ -106,7 +93,7 @@ aloysius/
 ├── apps/
 │   └── web/         # Fullstack application (React + TanStack Start)
 ├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
+│   ├── ui/          # Shared StyleX-based UI components
 │   ├── api/         # API layer / business logic
 │   ├── auth/        # Authentication configuration & logic
 │   └── db/          # Database schema & queries

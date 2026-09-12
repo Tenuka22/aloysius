@@ -18,4 +18,4 @@ EXPOSE 3001
 
 # SSR chunks require workspace dependencies at runtime
 WORKDIR /app/apps/web
-CMD ["node", ".output/server/index.mjs"]
+CMD ["node", "--run", "start"]
