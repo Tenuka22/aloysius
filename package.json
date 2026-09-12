@@ -48,7 +48,10 @@
     "docker:up": "docker compose up -d --build",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "env:generate": "varlock codegen --path ./apps/web/ && varlock codegen --path ./packages/db/"
+    "env:generate": "varlock codegen --path ./apps/web/ && varlock codegen --path ./packages/db/",
+    "check": "ultracite check",
+    "fix": "ultracite fix",
+    "prepare": "husky"
   },
   "dependencies": {
     "zod": "catalog:"
@@ -56,8 +59,14 @@
   "devDependencies": {
     "@aloysius/config": "workspace:*",
     "@types/node": "^26.4.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.1",
     "nx": "^23.2.0",
+    "oxfmt": "^0.67.0",
+    "oxlint": "^1.82.0",
+    "oxlint-plugin-react-doctor": "^0.9.13",
     "typescript": "catalog:",
+    "ultracite": "7.11.1",
     "varlock": "catalog:"
   },
   "packageManager": "bun@1.4.0"
