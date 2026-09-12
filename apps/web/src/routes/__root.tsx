@@ -2,7 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-
+import { SmoothScroll } from "@aloysius/ui/components/smooth-scroll";
 import type { orpc } from "@/utils/orpc";
 
 import { DevStyleXInject } from "../components/dev-stylex-inject";
@@ -41,6 +41,7 @@ function RootDocument() {
       </head>
       <body>
         <Outlet />
+        <SmoothScroll />
         <TanStackRouterDevtools position="bottom-left" />
         <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
         <Scripts />

@@ -7,14 +7,12 @@ const styles = stylex.create({
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0a0a0a",
   },
   heading: {
     margin: 0,
     fontFamily: "system-ui, sans-serif",
     fontSize: "2rem",
     fontWeight: 600,
-    color: "#fafafa",
   },
 });
 
