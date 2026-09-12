@@ -22,7 +22,12 @@
       "@orpc/zod": "^1.15.0",
       "better-auth": "1.7.3",
       "@types/react": "^19.2.18",
-      "@types/react-dom": "^19.2.7"
+      "@types/react-dom": "^19.2.7",
+      "vitest": "^5.0.0",
+      "jsdom": "^30.0.1",
+      "@testing-library/react": "^16.3.3",
+      "@testing-library/dom": "^10.4.1",
+      "@testing-library/jest-dom": "^7.0.1"
     }
   },
   "type": "module",
@@ -30,6 +35,7 @@
     "dev": "nx run-many -t dev",
     "build": "nx run-many -t build",
     "check-types": "nx run-many -t check-types",
+    "test": "nx run-many -t test",
     "postinstall": "tsc -b packages/api && varlock codegen --path ./apps/web/ && varlock codegen --path ./packages/db/",
     "dev:types": "tsc -b packages/api --watch",
     "dev:web": "nx run-many -t dev --projects=web",

@@ -15,6 +15,17 @@ export type AuthConfig = {
   ADMIN_PASSWORD: string;
 };
 
+/**
+ * The app's cookies are named off this instead of better-auth's "better-auth"
+ * default, so they don't collide with another app on the same top-level
+ * domain. The client (apps/web/src/lib/auth-client.ts) doesn't need this
+ * value itself - `createAuthClient` has no cookie-name option, since the
+ * browser sends whatever `Set-Cookie` the server issued - but it must stay in
+ * lockstep with whatever server plugins are enabled here, which is what the
+ * client's `adminClient()`/`multiSessionClient()` pairing is for.
+ */
+export const AUTH_COOKIE_PREFIX = "aloysius";
+
 export function createAuth(env: AuthConfig, database: Database) {
   const siteAdminEmail = env.ADMIN_EMAIL.toLowerCase();
 
@@ -24,6 +35,9 @@ export function createAuth(env: AuthConfig, database: Database) {
       schema,
     }),
     trustedOrigins: [env.BETTER_AUTH_URL],
+    advanced: {
+      cookiePrefix: AUTH_COOKIE_PREFIX,
+    },
     user: {
       additionalFields: {
         role: {

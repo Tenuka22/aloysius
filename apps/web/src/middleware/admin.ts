@@ -1,6 +1,7 @@
 import { createMiddleware } from "@tanstack/react-start";
 
 import { authMiddleware } from "./auth";
+import { assertSiteAdmin } from "./site-admin";
 
 /**
  * Site-admin gate for server functions. Layers on `authMiddleware`'s session
@@ -11,13 +12,7 @@ import { authMiddleware } from "./auth";
 export const requireSiteAdminMiddleware = createMiddleware()
   .middleware([authMiddleware])
   .server(async ({ next, context }) => {
-    const user = context.session?.user;
-    if (!user) {
-      throw new Error("UNAUTHORIZED");
-    }
-    if (user.role !== "admin") {
-      throw new Error("FORBIDDEN");
-    }
+    assertSiteAdmin(context.session);
     return next({
       context: { session: context.session },
     });

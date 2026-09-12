@@ -8,6 +8,7 @@
     "dev": "vite dev",
     "start": "node .output/server/index.mjs",
     "check-types": "tsc -b ../../packages/api && vite build && tsc --noEmit",
+    "test": "vitest run",
     "env:generate": "varlock codegen"
   },
   "dependencies": {
@@ -42,14 +43,16 @@
     "@stylexjs/unplugin": "^0.19.0",
     "@tanstack/react-query-devtools": "^5.102.8",
     "@tanstack/react-router-devtools": "^1.167.1",
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/react": "^16.3.3",
+    "@testing-library/dom": "catalog:",
+    "@testing-library/jest-dom": "catalog:",
+    "@testing-library/react": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "^6.1.1",
-    "jsdom": "^30.0.1",
+    "jsdom": "catalog:",
     "typescript": "catalog:",
     "vite": "^8.2.2",
+    "vitest": "catalog:",
     "web-vitals": "^6.2.1"
   }
 }

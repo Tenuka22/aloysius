@@ -13,7 +13,8 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "check-types": "tsc -b"
+    "check-types": "tsc -b",
+    "test": "vitest run"
   },
   "dependencies": {
     "@aloysius/db": "workspace:*",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@aloysius/config": "workspace:*",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

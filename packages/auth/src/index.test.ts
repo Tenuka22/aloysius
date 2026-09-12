@@ -1,0 +1,106 @@
+import { account, user } from "@aloysius/db/schema/auth";
+import { createTestDb } from "@aloysius/db/testing";
+import { hashPassword, verifyPassword } from "better-auth/crypto";
+import { eq } from "drizzle-orm";
+import { describe, expect, it } from "vitest";
+
+import { type AuthConfig, createAuth, ensureSiteAdmin } from "./index";
+
+const ENV: AuthConfig = {
+  BETTER_AUTH_URL: "http://localhost:3001",
+  BETTER_AUTH_SECRET: "test-secret-test-secret-32-bytes!",
+  ADMIN_EMAIL: "admin@example.com",
+  ADMIN_PASSWORD: "admin123456",
+};
+
+describe("createAuth role assignment", () => {
+  it("assigns the admin role to the configured ADMIN_EMAIL on sign-up", async () => {
+    const db = await createTestDb();
+    const auth = createAuth(ENV, db);
+
+    await auth.api.signUpEmail({
+      body: { email: ENV.ADMIN_EMAIL, password: "whatever12345", name: "Whoever" },
+    });
+
+    const row = await db.select().from(user).where(eq(user.email, ENV.ADMIN_EMAIL)).get();
+    expect(row?.role).toBe("admin");
+  });
+
+  it("assigns the default user role to any other email on sign-up", async () => {
+    const db = await createTestDb();
+    const auth = createAuth(ENV, db);
+
+    await auth.api.signUpEmail({
+      body: { email: "someone@example.com", password: "whatever12345", name: "Someone" },
+    });
+
+    const row = await db.select().from(user).where(eq(user.email, "someone@example.com")).get();
+    expect(row?.role).toBe("user");
+  });
+});
+
+describe("ensureSiteAdmin", () => {
+  it("creates the site admin with the configured credentials when none exists", async () => {
+    const db = await createTestDb();
+    const auth = createAuth(ENV, db);
+
+    await ensureSiteAdmin(auth, db, ENV);
+
+    const row = await db.select().from(user).where(eq(user.email, ENV.ADMIN_EMAIL)).get();
+    expect(row?.role).toBe("admin");
+
+    const acct = await db
+      .select()
+      .from(account)
+      .where(eq(account.userId, row!.id))
+      .get();
+    expect(acct?.password).toBeTruthy();
+    await expect(
+      verifyPassword({ hash: acct!.password!, password: ENV.ADMIN_PASSWORD }),
+    ).resolves.toBe(true);
+  });
+
+  it("rotates the existing site admin's password back to the configured default", async () => {
+    const db = await createTestDb();
+    const auth = createAuth(ENV, db);
+
+    await ensureSiteAdmin(auth, db, ENV);
+    const row = await db.select().from(user).where(eq(user.email, ENV.ADMIN_EMAIL)).get();
+    const acctBefore = await db
+      .select()
+      .from(account)
+      .where(eq(account.userId, row!.id))
+      .get();
+
+    // Someone changed the admin's password out-of-band.
+    await db
+      .update(account)
+      .set({ password: await hashPassword("something-else-entirely") })
+      .where(eq(account.id, acctBefore!.id));
+
+    await ensureSiteAdmin(auth, db, ENV);
+
+    const acctAfter = await db
+      .select()
+      .from(account)
+      .where(eq(account.userId, row!.id))
+      .get();
+    await expect(
+      verifyPassword({ hash: acctAfter!.password!, password: ENV.ADMIN_PASSWORD }),
+    ).resolves.toBe(true);
+    await expect(
+      verifyPassword({ hash: acctAfter!.password!, password: "something-else-entirely" }),
+    ).resolves.toBe(false);
+  });
+
+  it("does not duplicate the site admin user on repeated calls", async () => {
+    const db = await createTestDb();
+    const auth = createAuth(ENV, db);
+
+    await ensureSiteAdmin(auth, db, ENV);
+    await ensureSiteAdmin(auth, db, ENV);
+
+    const rows = await db.select().from(user).where(eq(user.email, ENV.ADMIN_EMAIL));
+    expect(rows).toHaveLength(1);
+  });
+});

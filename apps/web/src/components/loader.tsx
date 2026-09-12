@@ -30,7 +30,7 @@ const styles = stylex.create({
 
 export default function Loader() {
   return (
-    <div {...stylex.props(styles.container)}>
+    <div role="status" aria-label="Loading" {...stylex.props(styles.container)}>
       <div {...stylex.props(styles.spinner)} />
     </div>
   );

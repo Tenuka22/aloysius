@@ -14,7 +14,8 @@
   "scripts": {
     "build": "tsc -b",
     "check-types": "tsc -b",
-    "dev": "tsc -b --watch"
+    "dev": "tsc -b --watch",
+    "test": "vitest run"
   },
   "dependencies": {
     "@aloysius/auth": "workspace:*",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@aloysius/config": "workspace:*",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

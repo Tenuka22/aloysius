@@ -39,6 +39,12 @@
         "^default"
       ]
     },
+    "test": {
+      "inputs": [
+        "default",
+        "^default"
+      ]
+    },
     "dev": {
       "cache": false,
       "continuous": true
