@@ -30,11 +30,13 @@ The `web` service waits for both `turso-db` and `minio` to pass health checks be
 
 ## Dev vs Production
 
+Storage is **MinIO-only** — there is no local/dev-only backend. `bun run dev` still needs a reachable MinIO instance (`docker compose up minio`, or any S3-compatible endpoint pointed to by the `MINIO_*` env vars).
+
 ### Development (`NODE_ENV=development`)
 
 - **Database**: Local SQLite file at `../../data/local.db` (relative to `apps/web/`), resolved via `file:` URL
-- **Storage**: LMDB-backed local file store at `FILE_STORAGE_DIR` (default: `../../data`)
-- **No Docker needed**: Run the web app directly with `bun run dev`
+- **Storage**: MinIO, same as production — point `MINIO_ENDPOINT`/`MINIO_PORT` at a local container (`docker compose up minio`) or a remote bucket
+- **Docker optional for the web app itself**: run it directly with `bun run dev`, but MinIO (and libSQL, if not using the local SQLite file) still need to be up
 
 ### Production (`NODE_ENV=production`)
 
@@ -42,14 +44,14 @@ The `web` service waits for both `turso-db` and `minio` to pass health checks be
 - **Storage**: MinIO object store at `minio:9000`
 - **Docker Compose**: All services orchestrated together
 
-The storage backend is selected automatically in `packages/storage/src/index.ts`:
+`packages/storage/src/index.ts` no longer branches on `NODE_ENV`:
 
 ```ts
 export const createStorage = (config: StorageConfig): Storage =>
-  config.NODE_ENV === "production"
-    ? createMinioBackend(config)
-    : createLmdbBackend(config.FILE_STORAGE_DIR);
+  createMinioBackend(config);
 ```
+
+There used to be an LMDB-backed local-file store selected in development, plus a `normalizeStorageKey()` helper and a `FILE_STORAGE_DIR` env var. All three were removed when storage went MinIO-only — do not reintroduce assumptions about them.
 
 ## Storage Layer
 
@@ -66,31 +68,26 @@ export interface Storage {
   ) => Promise<void>;
   get: (key: string) => Promise<StoredObject | null>;
   remove: (key: string) => Promise<void>;
+  /** One-time presigned URL for direct client → S3/MinIO upload. */
+  getPresignedUploadUrl: (
+    key: string,
+    contentType: string,
+    expiresIn?: number
+  ) => Promise<string>;
 }
 ```
 
-### LMDB Backend (Development)
+### MinIO Backend (dev and production)
 
-- Uses `lmdb` (native binding, dynamically imported)
-- Data stored at `FILE_STORAGE_DIR/files.mdb`
-- Two prefixes: `d:` for data, `m:` for metadata (content type)
-- 4GB map size limit
-- Keys normalized with POSIX rules (no OS-specific path issues)
-
-### MinIO Backend (Production)
-
-- Uses `minio` client (dynamically imported)
-- Auto-creates bucket on first use
+- Uses the `minio` client (dynamically imported), lazily instantiated and memoized
+- Auto-creates the bucket on first use (`bucketExists` → `makeBucket`), memoized so concurrent first calls don't race
 - Bucket name from `MINIO_BUCKET` (default: `"aloysius"`)
-- Content type stored as object metadata
+- Content type stored as object metadata, read back via `statObject` on `get`
+- `getPresignedUploadUrl` returns a `presignedPutObject` URL; the URL itself carries no `Content-Type` — the uploading client must set that header explicitly
 
-### Key Normalization
+### Key Format
 
-All storage keys go through `normalizeStorageKey()`:
-
-- POSIX path normalization (no `\` conversion)
-- Rejects absolute paths and `..` traversal
-- Format: `{userId}/{uuid}.{extension}`
+Keys are not passed through any normalization helper (there is no `normalizeStorageKey()` anymore) — each caller builds its own key. The only caller today, `staff.getUploadUrl`, uses `admin/{uuid}.{extension}` (a fixed `admin/` prefix, not the uploading user's ID).
 
 ## Database
 
@@ -142,7 +139,6 @@ export default defineConfig({
 | `TURSO_AUTH_TOKEN` | `string` | — | — | Auth token for remote libSQL (unused for local `file:` URLs) |
 | `ADMIN_EMAIL` | `email` | `admin@example.com` | public | Site admin email |
 | `ADMIN_PASSWORD` | `string(min 8)` | — | sensitive | Site admin password (rotated on boot) |
-| `FILE_STORAGE_DIR` | `string(min 1)` | `../../data` | — | LMDB storage directory (dev only) |
 | `MINIO_ENDPOINT` | `string(min 1)` | `localhost` | public | MinIO host |
 | `MINIO_PORT` | `number` | `9000` | public | MinIO API port |
 | `MINIO_ACCESS_KEY` | `string(min 1)` | `minioadmin` | — | MinIO credentials |
@@ -163,7 +159,7 @@ export default defineConfig({
 bun run dev
 ```
 
-Uses local SQLite file and LMDB storage. No external services needed.
+Uses the local SQLite file for the database, but storage is MinIO-only — start it separately (`docker compose up minio`) or point `MINIO_*` at a remote bucket before running the web app.
 
 ### Full stack with Docker
 
