@@ -1,4 +1,5 @@
-import { qualification } from "@aloysius/db/schema/qualifications";
+import { qualificationInputSchema } from "@aloysius/db/constants/schemas";
+import { teacherQualification } from "@aloysius/db/schema/qualifications";
 import { staff } from "@aloysius/db/schema/staff";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
@@ -7,16 +8,14 @@ import { z } from "zod";
 import { protectedProcedure } from "../../index";
 
 /**
- * Upload a qualification/certification.
+ * Record a qualification and its supporting document.
  * Staff can upload for themselves; admin can upload for any staff member.
- * New uploads start with status "pending" requiring admin approval.
+ * New uploads start with documentStatus "pending" requiring admin approval.
  */
 export const uploadQualification = protectedProcedure
   .input(
-    z.object({
+    qualificationInputSchema.extend({
       staffId: z.string().optional(),
-      title: z.string().min(1),
-      fileId: z.string().min(1),
     })
   )
   .handler(async ({ input, context }) => {
@@ -53,13 +52,17 @@ export const uploadQualification = protectedProcedure
     const id = crypto.randomUUID();
 
     const record = await context.db
-      .insert(qualification)
+      .insert(teacherQualification)
       .values({
         id,
         staffId: targetStaffId,
-        title: input.title,
-        fileId: input.fileId,
-        status: "pending",
+        qualification: input.qualification,
+        yearObtained: input.yearObtained,
+        institution: input.institution,
+        subjectSpecialization: input.subjectSpecialization,
+        specializationCategory: input.specializationCategory,
+        documentFileId: input.documentFileId,
+        documentStatus: "pending",
       })
       .returning()
       .get();
@@ -67,9 +70,13 @@ export const uploadQualification = protectedProcedure
     return {
       id: record.id,
       staffId: record.staffId,
-      title: record.title,
-      fileId: record.fileId,
-      status: record.status,
+      qualification: record.qualification,
+      yearObtained: record.yearObtained,
+      institution: record.institution,
+      subjectSpecialization: record.subjectSpecialization,
+      specializationCategory: record.specializationCategory,
+      documentFileId: record.documentFileId,
+      documentStatus: record.documentStatus,
       createdAt: record.createdAt.toISOString(),
     };
   });

@@ -1,4 +1,4 @@
-import { qualification } from "@aloysius/db/schema/qualifications";
+import { teacherQualification } from "@aloysius/db/schema/qualifications";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -6,7 +6,7 @@ import { z } from "zod";
 import { adminProcedure } from "../../index";
 
 /**
- * Approve or reject a qualification.
+ * Approve or reject a qualification's supporting document.
  * Admin only. Sets the reviewedBy, reviewNote, and reviewedAt fields.
  */
 export const approveQualification = adminProcedure
@@ -20,8 +20,8 @@ export const approveQualification = adminProcedure
   .handler(async ({ input, context }) => {
     const existing = await context.db
       .select()
-      .from(qualification)
-      .where(eq(qualification.id, input.id))
+      .from(teacherQualification)
+      .where(eq(teacherQualification.id, input.id))
       .get();
 
     if (!existing) {
@@ -31,22 +31,22 @@ export const approveQualification = adminProcedure
     }
 
     const record = await context.db
-      .update(qualification)
+      .update(teacherQualification)
       .set({
-        status: input.status,
+        documentStatus: input.status,
         reviewedBy: context.session.user.id,
         reviewNote: input.reviewNote,
         reviewedAt: new Date(),
       })
-      .where(eq(qualification.id, input.id))
+      .where(eq(teacherQualification.id, input.id))
       .returning()
       .get();
 
     return {
       id: record.id,
       staffId: record.staffId,
-      title: record.title,
-      status: record.status,
+      qualification: record.qualification,
+      documentStatus: record.documentStatus,
       reviewedBy: record.reviewedBy,
       reviewNote: record.reviewNote,
       reviewedAt: record.reviewedAt?.toISOString() ?? null,

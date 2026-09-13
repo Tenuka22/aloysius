@@ -298,14 +298,14 @@ describe("qualification workflow", () => {
     const mockDb = makeMockDb({
       get: mockFn().mockResolvedValue({
         id: "q1",
-        status: "pending",
+        documentStatus: "pending",
       }),
       returning: mockFn().mockReturnValue({
         get: mockFn().mockResolvedValue({
           id: "q1",
           staffId: "s1",
-          title: "BSc Education",
-          status: "approved",
+          qualification: "bachelorEducation",
+          documentStatus: "approved",
           reviewedBy: "u1",
           reviewNote: "Verified",
           reviewedAt: new Date("2025-01-02"),
@@ -323,7 +323,7 @@ describe("qualification workflow", () => {
       reviewNote: "Verified",
     });
 
-    expect(result.status).toBe("approved");
+    expect(result.documentStatus).toBe("approved");
     expect(result.reviewNote).toBe("Verified");
   });
 });

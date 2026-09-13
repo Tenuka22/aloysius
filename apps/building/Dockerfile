@@ -24,9 +24,12 @@ COPY packages/api/package.json packages/api/
 COPY packages/auth/package.json packages/auth/
 COPY packages/config/package.json packages/config/
 COPY packages/db/package.json packages/db/
+COPY packages/storage/package.json packages/storage/
 COPY packages/ui/package.json packages/ui/
 
-RUN bun install --frozen-lockfile
+# `--ignore-scripts`: the root postinstall typechecks packages/api and runs
+# varlock codegen, neither of which has any source in this manifest-only layer.
+RUN bun install --frozen-lockfile --ignore-scripts
 
 ########################################################################
 # builder - compile the static placeholder page with Vite.

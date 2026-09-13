@@ -61,15 +61,17 @@ export const createAuth = (env: AuthConfig, database: Database) => {
               created.email?.toLowerCase() === siteAdminEmail
                 ? "admin"
                 : "user";
-            return { data: { ...created, role } };
+            // `before` is typed as returning a promise, and this hook has
+            // nothing to await, so the result is resolved eagerly.
+            return Promise.resolve({ data: { ...created, role } });
           },
         },
         update: {
           before: (updated) => {
             if (updated.email?.toLowerCase() !== siteAdminEmail) {
-              return { data: updated };
+              return Promise.resolve({ data: updated });
             }
-            return { data: { ...updated, role: "admin" } };
+            return Promise.resolve({ data: { ...updated, role: "admin" } });
           },
         },
       },

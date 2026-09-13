@@ -9,7 +9,7 @@ export type SiteAdminSession =
  * request context or a live database; `requireSiteAdminMiddleware` in
  * `./admin` is a thin request-time wrapper around it.
  */
-export function assertSiteAdmin(session: SiteAdminSession): void {
+export const assertSiteAdmin = (session?: SiteAdminSession): void => {
   const user = session?.user;
   if (!user) {
     throw new Error("UNAUTHORIZED");
@@ -17,4 +17,4 @@ export function assertSiteAdmin(session: SiteAdminSession): void {
   if (user.role !== "admin") {
     throw new Error("FORBIDDEN");
   }
-}
+};
