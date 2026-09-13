@@ -1,4 +1,7 @@
-export type SiteAdminSession = { user: { role?: string | null } } | null | undefined;
+export type SiteAdminSession =
+  | { user: { role?: string | null } }
+  | null
+  | undefined;
 
 /**
  * Throws when `session` isn't an authenticated site admin. Kept dependency-free

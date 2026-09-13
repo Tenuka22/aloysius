@@ -17,7 +17,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "lmdb": "^3.5.6",
     "minio": "^8.0.7"
   },
   "devDependencies": {

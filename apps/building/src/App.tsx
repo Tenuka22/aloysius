@@ -128,12 +128,18 @@ export default function App() {
   return (
     <div {...stylex.props(styles.page)}>
       <div {...stylex.props(styles.content)}>
-        <img src="/logo.png" alt="St. Aloysius' College Crest" {...stylex.props(styles.crest)} />
+        <img
+          src="/logo.png"
+          alt="St. Aloysius' College Crest"
+          {...stylex.props(styles.crest)}
+        />
         <p {...stylex.props(styles.established)}>Estd. 1862</p>
         <h1 {...stylex.props(styles.heading)}>St. Aloysius' College</h1>
         <p {...stylex.props(styles.location)}>Galle &bull; Sri Lanka</p>
         <div {...stylex.props(styles.divider)} />
-        <p {...stylex.props(styles.underConstruction)}>Our new website is being built</p>
+        <p {...stylex.props(styles.underConstruction)}>
+          Our new website is being built
+        </p>
         <p {...stylex.props(styles.enquiries)}>
           For admissions enquiries, please visit our admissions portal.
         </p>
@@ -145,7 +151,9 @@ export default function App() {
         >
           Go to Admissions
         </a>
-        <footer {...stylex.props(styles.footer)}>&copy; St. Aloysius' College, Galle</footer>
+        <footer {...stylex.props(styles.footer)}>
+          &copy; St. Aloysius' College, Galle
+        </footer>
       </div>
     </div>
   );

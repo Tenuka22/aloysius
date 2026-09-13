@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import Lenis from "lenis";
+import { useEffect } from "react";
 
 export function SmoothScroll() {
   useEffect(() => {

@@ -32,7 +32,9 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "nx run-many -t dev",
+    "dev": "bun run dev:infra && bun run dev:db && nx run-many -t dev",
+    "dev:infra": "docker compose -f docker-compose.dev.yml up -d",
+    "dev:db": "bun run db:push",
     "build": "nx run-many -t build",
     "check-types": "nx run-many -t check-types",
     "test": "nx run-many -t test",

@@ -4,7 +4,8 @@ import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { type AuthConfig, createAuth, ensureSiteAdmin } from "./index";
+import { createAuth, ensureSiteAdmin } from "./index";
+import type { AuthConfig } from "./index";
 
 const ENV: AuthConfig = {
   BETTER_AUTH_URL: "http://localhost:3001",
@@ -19,10 +20,18 @@ describe("createAuth role assignment", () => {
     const auth = createAuth(ENV, db);
 
     await auth.api.signUpEmail({
-      body: { email: ENV.ADMIN_EMAIL, password: "whatever12345", name: "Whoever" },
+      body: {
+        email: ENV.ADMIN_EMAIL,
+        password: "whatever12345",
+        name: "Whoever",
+      },
     });
 
-    const row = await db.select().from(user).where(eq(user.email, ENV.ADMIN_EMAIL)).get();
+    const row = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, ENV.ADMIN_EMAIL))
+      .get();
     expect(row?.role).toBe("admin");
   });
 
@@ -31,22 +40,34 @@ describe("createAuth role assignment", () => {
     const auth = createAuth(ENV, db);
 
     await auth.api.signUpEmail({
-      body: { email: "someone@example.com", password: "whatever12345", name: "Someone" },
+      body: {
+        email: "someone@example.com",
+        password: "whatever12345",
+        name: "Someone",
+      },
     });
 
-    const row = await db.select().from(user).where(eq(user.email, "someone@example.com")).get();
+    const row = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "someone@example.com"))
+      .get();
     expect(row?.role).toBe("user");
   });
 });
 
-describe("ensureSiteAdmin", () => {
+describe(ensureSiteAdmin, () => {
   it("creates the site admin with the configured credentials when none exists", async () => {
     const db = await createTestDb();
     const auth = createAuth(ENV, db);
 
     await ensureSiteAdmin(auth, db, ENV);
 
-    const row = await db.select().from(user).where(eq(user.email, ENV.ADMIN_EMAIL)).get();
+    const row = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, ENV.ADMIN_EMAIL))
+      .get();
     expect(row?.role).toBe("admin");
 
     const acct = await db
@@ -56,8 +77,8 @@ describe("ensureSiteAdmin", () => {
       .get();
     expect(acct?.password).toBeTruthy();
     await expect(
-      verifyPassword({ hash: acct!.password!, password: ENV.ADMIN_PASSWORD }),
-    ).resolves.toBe(true);
+      verifyPassword({ hash: acct!.password!, password: ENV.ADMIN_PASSWORD })
+    ).resolves.toBeTruthy();
   });
 
   it("rotates the existing site admin's password back to the configured default", async () => {
@@ -65,7 +86,11 @@ describe("ensureSiteAdmin", () => {
     const auth = createAuth(ENV, db);
 
     await ensureSiteAdmin(auth, db, ENV);
-    const row = await db.select().from(user).where(eq(user.email, ENV.ADMIN_EMAIL)).get();
+    const row = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, ENV.ADMIN_EMAIL))
+      .get();
     const acctBefore = await db
       .select()
       .from(account)
@@ -86,11 +111,17 @@ describe("ensureSiteAdmin", () => {
       .where(eq(account.userId, row!.id))
       .get();
     await expect(
-      verifyPassword({ hash: acctAfter!.password!, password: ENV.ADMIN_PASSWORD }),
-    ).resolves.toBe(true);
+      verifyPassword({
+        hash: acctAfter!.password!,
+        password: ENV.ADMIN_PASSWORD,
+      })
+    ).resolves.toBeTruthy();
     await expect(
-      verifyPassword({ hash: acctAfter!.password!, password: "something-else-entirely" }),
-    ).resolves.toBe(false);
+      verifyPassword({
+        hash: acctAfter!.password!,
+        password: "something-else-entirely",
+      })
+    ).resolves.toBeFalsy();
   });
 
   it("does not duplicate the site admin user on repeated calls", async () => {
@@ -100,7 +131,10 @@ describe("ensureSiteAdmin", () => {
     await ensureSiteAdmin(auth, db, ENV);
     await ensureSiteAdmin(auth, db, ENV);
 
-    const rows = await db.select().from(user).where(eq(user.email, ENV.ADMIN_EMAIL));
+    const rows = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, ENV.ADMIN_EMAIL));
     expect(rows).toHaveLength(1);
   });
 });

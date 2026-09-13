@@ -11,11 +11,13 @@ function setLocation(hostname: string, pathname: string, search: string) {
   });
 }
 
-describe("App", () => {
+describe(App, () => {
   afterEach(() => {
     document.cookie.split(";").forEach((entry) => {
       const name = entry.split("=")[0]?.trim();
-      if (name) document.cookie = `${name}=; max-age=0`;
+      if (name) {
+        document.cookie = `${name}=; max-age=0`;
+      }
     });
   });
 
@@ -23,17 +25,23 @@ describe("App", () => {
     setLocation("example.com", "/", "");
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: "St. Aloysius' College" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Go to Admissions" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "St. Aloysius' College" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Go to Admissions" })
+    ).toBeInTheDocument();
   });
 
   it("forwards the current path and query string to the admissions portal", () => {
     setLocation("example.com", "/application", "?key=abc123");
     render(<App />);
 
-    expect(screen.getByRole("link", { name: "Go to Admissions" })).toHaveAttribute(
+    expect(
+      screen.getByRole("link", { name: "Go to Admissions" })
+    ).toHaveAttribute(
       "href",
-      "https://admissions.aloysiuscollege.lk/application?key=abc123",
+      "https://admissions.aloysiuscollege.lk/application?key=abc123"
     );
   });
 });

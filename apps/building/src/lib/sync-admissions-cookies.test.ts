@@ -13,11 +13,13 @@ function setLocation(hostname: string) {
 function clearAllCookies() {
   for (const entry of document.cookie.split(";")) {
     const name = entry.split("=")[0]?.trim();
-    if (name) document.cookie = `${name}=; max-age=0`;
+    if (name) {
+      document.cookie = `${name}=; max-age=0`;
+    }
   }
 }
 
-describe("syncAdmissionsCookiesToSharedDomain", () => {
+describe(syncAdmissionsCookiesToSharedDomain, () => {
   afterEach(() => {
     vi.restoreAllMocks();
     clearAllCookies();
@@ -40,9 +42,9 @@ describe("syncAdmissionsCookiesToSharedDomain", () => {
 
     syncAdmissionsCookiesToSharedDomain();
 
-    expect(setCookie).toHaveBeenCalledTimes(1);
+    expect(setCookie).toHaveBeenCalledOnce();
     expect(setCookie.mock.calls[0]?.[0]).toBe(
-      "aloysius-admissions-application-key=abc%20123; path=/; max-age=31536000; samesite=lax; domain=aloysiuscollege.lk",
+      "aloysius-admissions-application-key=abc%20123; path=/; max-age=31536000; samesite=lax; domain=aloysiuscollege.lk"
     );
   });
 
@@ -53,7 +55,7 @@ describe("syncAdmissionsCookiesToSharedDomain", () => {
 
     syncAdmissionsCookiesToSharedDomain();
 
-    expect(setCookie).toHaveBeenCalledTimes(1);
+    expect(setCookie).toHaveBeenCalledOnce();
   });
 
   it("skips cookies that are not present", () => {

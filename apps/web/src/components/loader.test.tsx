@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import Loader from "./loader";
 
-describe("Loader", () => {
+describe(Loader, () => {
   it("renders an accessible loading status indicator", () => {
     render(<Loader />);
     expect(screen.getByRole("status", { name: "Loading" })).toBeInTheDocument();

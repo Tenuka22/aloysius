@@ -34,15 +34,24 @@ function isSharedDomainHost(hostname: string): boolean {
 // cookie's content (a JSON array for one of the three, a bare string for the other
 // two), only copy it across domains byte-for-byte.
 function readRawCookie(name: string): string | null {
-  const match = document.cookie.match(new RegExp(`(?:^|; )${encodeURIComponent(name)}=([^;]*)`));
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${encodeURIComponent(name)}=([^;]*)`)
+  );
   return match ? match[1]! : null;
 }
 
 export function syncAdmissionsCookiesToSharedDomain(): void {
-  if (typeof window === "undefined" || !isSharedDomainHost(window.location.hostname)) return;
+  if (
+    typeof window === "undefined" ||
+    !isSharedDomainHost(window.location.hostname)
+  ) {
+    return;
+  }
   for (const name of ADMISSIONS_COOKIE_NAMES) {
     const value = readRawCookie(name);
-    if (value === null) continue;
+    if (value === null) {
+      continue;
+    }
     document.cookie = `${encodeURIComponent(name)}=${value}; path=/; max-age=${365 * 24 * 60 * 60}; samesite=lax; domain=${SHARED_DOMAIN}`;
   }
 }

@@ -1,3 +1,4 @@
+import { ac, admin, user } from "@aloysius/auth/permissions";
 import { adminClient, multiSessionClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
@@ -8,5 +9,5 @@ import { createAuthClient } from "better-auth/react";
 // separate "cookie name" setting to pass here; the browser just sends
 // whatever `Set-Cookie` the server issued under its custom prefix.
 export const authClient = createAuthClient({
-  plugins: [adminClient(), multiSessionClient()],
+  plugins: [adminClient({ ac, roles: { admin, user } }), multiSessionClient()],
 });
