@@ -3,3 +3,6 @@
 // oxlint-disable-next-line no-barrel-file
 export * from "./auth";
 export * from "./files";
+export * from "./staff";
+export * from "./academics";
+export * from "./qualifications";

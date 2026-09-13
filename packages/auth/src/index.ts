@@ -1,9 +1,9 @@
 import type { Database } from "@aloysius/db";
+import * as schema from "@aloysius/db/schema/auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin as adminPlugin, multiSession } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
-import * as schema from "@aloysius/db/schema/auth";
 
 import { ac, admin as adminRole, user as userRole } from "./permissions";
 
@@ -56,7 +56,7 @@ export const createAuth = (env: AuthConfig, database: Database) => {
     databaseHooks: {
       user: {
         create: {
-          before: async (created) => {
+          before: (created) => {
             const role =
               created.email?.toLowerCase() === siteAdminEmail
                 ? "admin"
@@ -65,7 +65,7 @@ export const createAuth = (env: AuthConfig, database: Database) => {
           },
         },
         update: {
-          before: async (updated) => {
+          before: (updated) => {
             if (updated.email?.toLowerCase() !== siteAdminEmail) {
               return { data: updated };
             }

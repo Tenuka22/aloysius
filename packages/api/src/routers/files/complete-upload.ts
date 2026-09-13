@@ -13,8 +13,7 @@ export const completeUpload = adminProcedure
     })
   )
   .handler(async ({ input, context }) => {
-    const id =
-      input.key.split("/").pop()?.split(".")[0] ?? crypto.randomUUID();
+    const id = input.key.split("/").pop()?.split(".")[0] ?? crypto.randomUUID();
 
     const record = await context.db
       .insert(files)

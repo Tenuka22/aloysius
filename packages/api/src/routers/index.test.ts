@@ -1,7 +1,11 @@
 import { createRouterClient } from "@orpc/server";
 import { describe, expect, it, vi } from "vitest";
+
 import type { Context } from "../context";
 import { appRouter } from "./index";
+
+/** Chainable query-builder stub; the mock db is cast, so arg types are moot. */
+const mockFn = () => vi.fn<(...args: unknown[]) => unknown>();
 
 const makeContext = (overrides: Partial<Context> = {}): Context => ({
   auth: null,
@@ -13,7 +17,12 @@ const makeContext = (overrides: Partial<Context> = {}): Context => ({
 
 const makeAdminSession = () =>
   ({
-    user: { id: "u1", name: "Admin", email: "admin@example.com", role: "admin" },
+    user: {
+      id: "u1",
+      name: "Admin",
+      email: "admin@example.com",
+      role: "admin",
+    },
     session: { id: "s1" },
   }) as unknown as Context["session"];
 
@@ -25,29 +34,27 @@ const makeUserSession = () =>
 
 const makeMockDb = (overrides: Record<string, unknown> = {}) => {
   const chain = {
-    select: vi.fn().mockReturnThis(),
-    from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockReturnThis(),
-    get: vi.fn().mockResolvedValue(null),
-    all: vi.fn().mockResolvedValue([]),
-    insert: vi.fn().mockReturnThis(),
-    values: vi.fn().mockReturnThis(),
-    returning: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    run: vi.fn().mockResolvedValue(null),
+    select: mockFn().mockReturnThis(),
+    from: mockFn().mockReturnThis(),
+    where: mockFn().mockReturnThis(),
+    orderBy: mockFn().mockReturnThis(),
+    get: mockFn().mockResolvedValue(null),
+    all: mockFn().mockResolvedValue([]),
+    insert: mockFn().mockReturnThis(),
+    values: mockFn().mockReturnThis(),
+    returning: mockFn().mockReturnThis(),
+    delete: mockFn().mockReturnThis(),
+    run: mockFn().mockResolvedValue(null),
   };
   return { ...chain, ...overrides } as unknown as Context["db"];
 };
 
-const makeMockStorage = (
-  overrides: Record<string, unknown> = {}
-) =>
+const makeMockStorage = (overrides: Record<string, unknown> = {}) =>
   ({
-    put: vi.fn().mockResolvedValue(null),
-    get: vi.fn().mockResolvedValue(null),
-    remove: vi.fn().mockResolvedValue(null),
-    getPresignedUploadUrl: vi.fn().mockResolvedValue(
+    put: mockFn().mockResolvedValue(null),
+    get: mockFn().mockResolvedValue(null),
+    remove: mockFn().mockResolvedValue(null),
+    getPresignedUploadUrl: mockFn().mockResolvedValue(
       "http://minio:9000/bucket/key?presigned=true"
     ),
     ...overrides,
@@ -101,7 +108,7 @@ describe("adminProcedure enforcement", () => {
 describe("appRouter.files.listFiles", () => {
   it("allows admin callers and returns file list", async () => {
     const mockDb = makeMockDb({
-      all: vi.fn().mockResolvedValue([
+      all: mockFn().mockResolvedValue([
         {
           id: "f1",
           name: "test.png",
@@ -144,7 +151,11 @@ describe("appRouter.files.getUploadUrl", () => {
   it("rejects unauthenticated callers", async () => {
     const client = createRouterClient(appRouter, { context: makeContext() });
     await expect(
-      client.files.getUploadUrl({ name: "test.png", type: "image/png", size: 100 })
+      client.files.getUploadUrl({
+        name: "test.png",
+        type: "image/png",
+        size: 100,
+      })
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
@@ -153,7 +164,11 @@ describe("appRouter.files.getUploadUrl", () => {
       context: makeContext({ session: makeUserSession() }),
     });
     await expect(
-      client.files.getUploadUrl({ name: "test.png", type: "image/png", size: 100 })
+      client.files.getUploadUrl({
+        name: "test.png",
+        type: "image/png",
+        size: 100,
+      })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
@@ -219,8 +234,8 @@ describe("appRouter.files.completeUpload", () => {
 
   it("creates DB record for admin callers", async () => {
     const mockDb = makeMockDb({
-      returning: vi.fn().mockReturnValue({
-        get: vi.fn().mockResolvedValue({
+      returning: mockFn().mockReturnValue({
+        get: mockFn().mockResolvedValue({
           id: "f1",
           name: "test.png",
           size: 1000,
@@ -250,23 +265,23 @@ describe("appRouter.files.completeUpload", () => {
 describe("appRouter.files.deleteFile", () => {
   it("rejects unauthenticated callers", async () => {
     const client = createRouterClient(appRouter, { context: makeContext() });
-    await expect(
-      client.files.deleteFile({ id: "f1" })
-    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(client.files.deleteFile({ id: "f1" })).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
   });
 
   it("rejects non-admin callers", async () => {
     const client = createRouterClient(appRouter, {
       context: makeContext({ session: makeUserSession() }),
     });
-    await expect(
-      client.files.deleteFile({ id: "f1" })
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(client.files.deleteFile({ id: "f1" })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
   });
 
   it("returns NOT_FOUND for non-existent file", async () => {
     const mockDb = makeMockDb({
-      get: vi.fn().mockResolvedValue(null),
+      get: mockFn().mockResolvedValue(null),
     });
 
     const client = createRouterClient(appRouter, {
@@ -281,7 +296,7 @@ describe("appRouter.files.deleteFile", () => {
   it("deletes file and cleans up storage", async () => {
     const storage = makeMockStorage();
     const mockDb = makeMockDb({
-      get: vi.fn().mockResolvedValue({
+      get: mockFn().mockResolvedValue({
         id: "f1",
         key: "admin/f1.png",
       }),
@@ -301,10 +316,10 @@ describe("appRouter.files.deleteFile", () => {
 
   it("succeeds even when storage removal fails", async () => {
     const storage = makeMockStorage({
-      remove: vi.fn().mockRejectedValue(new Error("Storage error")),
+      remove: mockFn().mockRejectedValue(new Error("Storage error")),
     });
     const mockDb = makeMockDb({
-      get: vi.fn().mockResolvedValue({
+      get: mockFn().mockResolvedValue({
         id: "f1",
         key: "admin/f1.png",
       }),

@@ -19,13 +19,10 @@ export const ensureSiteAdmin = async (
 ) => {
   const email = env.ADMIN_EMAIL;
   const password = env.ADMIN_PASSWORD;
-  const hash = await hashPassword(password);
-
-  const existing = await database
-    .select()
-    .from(user)
-    .where(eq(user.email, email))
-    .get();
+  const [hash, existing] = await Promise.all([
+    hashPassword(password),
+    database.select().from(user).where(eq(user.email, email)).get(),
+  ]);
 
   if (!existing) {
     try {
@@ -43,30 +40,25 @@ export const ensureSiteAdmin = async (
     .select()
     .from(account)
     .where(
-      and(
-        eq(account.userId, existing.id),
-        eq(account.providerId, "credential")
-      )
+      and(eq(account.userId, existing.id), eq(account.providerId, "credential"))
     )
     .get();
 
-  if (existingAccount) {
-    await database
-      .update(account)
-      .set({ password: hash })
-      .where(eq(account.id, existingAccount.id))
-      .run();
-  } else {
-    await database
-      .insert(account)
-      .values({
-        id: crypto.randomUUID(),
-        accountId: existing.id,
-        providerId: "credential",
-        userId: existing.id,
-        password: hash,
-      })
-      .run();
-  }
+  await (existingAccount
+    ? database
+        .update(account)
+        .set({ password: hash })
+        .where(eq(account.id, existingAccount.id))
+        .run()
+    : database
+        .insert(account)
+        .values({
+          id: crypto.randomUUID(),
+          accountId: existing.id,
+          providerId: "credential",
+          userId: existing.id,
+          password: hash,
+        })
+        .run());
   console.log(`[auth] Rotated password for site admin: ${email}`);
 };

@@ -23,14 +23,14 @@ import { createAccessControl } from "better-auth/plugins/access";
 import { defaultStatements, adminAc } from "better-auth/plugins/admin/access";
 
 export const statement = {
-  ...defaultStatements,        // user + session from better-auth
-  file: ["create", "list", "delete"],  // custom resource
+  ...defaultStatements, // user + session from better-auth
+  file: ["create", "list", "delete"], // custom resource
 } as const;
 
 export const ac = createAccessControl(statement);
 
 export const admin = ac.newRole({
-  ...adminAc.statements,       // all default admin permissions
+  ...adminAc.statements, // all default admin permissions
   file: ["create", "list", "delete"],
 });
 
@@ -63,7 +63,12 @@ betterAuth({
   advanced: { cookiePrefix: "aloysius" },
   user: {
     additionalFields: {
-      role: { type: "string", required: false, defaultValue: "user", input: false },
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "user",
+        input: false,
+      },
     },
   },
   plugins: [
@@ -89,10 +94,7 @@ The client (`apps/web/src/lib/auth-client.ts`) must mirror the server plugins ex
 import { ac, admin, user } from "@aloysius/auth/permissions";
 
 createAuthClient({
-  plugins: [
-    adminClient({ ac, roles: { admin, user } }),
-    multiSessionClient(),
-  ],
+  plugins: [adminClient({ ac, roles: { admin, user } }), multiSessionClient()],
 });
 ```
 
@@ -150,11 +152,11 @@ export const adminProcedure = publicProcedure.use(requireAdmin);
 
 ### Procedure tiers
 
-| Procedure | Auth required | Role check | Used by |
-| --- | --- | --- | --- |
-| `publicProcedure` | No | None | `healthCheck` |
-| `protectedProcedure` | Yes | None | `privateData` |
-| `adminProcedure` | Yes | `role === "admin"` | `files.*` |
+| Procedure            | Auth required | Role check         | Used by       |
+| -------------------- | ------------- | ------------------ | ------------- |
+| `publicProcedure`    | No            | None               | `healthCheck` |
+| `protectedProcedure` | Yes           | None               | `privateData` |
+| `adminProcedure`     | Yes           | `role === "admin"` | `files.*`     |
 
 ## Web Middleware Auth Enforcement
 

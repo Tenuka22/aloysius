@@ -12,12 +12,38 @@ packages/api/src/
 ├── context.ts            # Context type
 └── routers/
     ├── index.ts          # Root appRouter
-    └── files/
-        ├── index.ts      # filesRouter barrel export
-        ├── get-upload-url.ts
-        ├── complete-upload.ts
-        ├── list-files.ts
-        └── delete-file.ts
+    ├── files/
+    │   ├── index.ts      # filesRouter barrel export
+    │   ├── get-upload-url.ts
+    │   ├── complete-upload.ts
+    │   ├── list-files.ts
+    │   └── delete-file.ts
+    └── staff/
+        ├── index.ts      # staffRouter barrel export (23 procedures)
+        ├── list-staff.ts
+        ├── get-staff.ts
+        ├── create-staff.ts
+        ├── update-staff.ts
+        ├── delete-staff.ts
+        ├── list-academic-years.ts
+        ├── create-academic-year.ts
+        ├── set-current-year.ts
+        ├── list-staff-positions.ts
+        ├── assign-position.ts
+        ├── remove-position.ts
+        ├── list-classes.ts
+        ├── create-class.ts
+        ├── assign-class-teacher.ts
+        ├── list-subject-assignments.ts
+        ├── assign-subject.ts
+        ├── list-subjects.ts
+        ├── list-grades.ts
+        ├── list-positions.ts
+        ├── update-profile.ts
+        ├── upload-qualification.ts
+        ├── list-qualifications.ts
+        ├── approve-qualification.ts
+        └── staff.test.ts
 ```
 
 ## Context

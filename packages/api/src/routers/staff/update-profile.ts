@@ -1,0 +1,50 @@
+import { staff } from "@aloysius/db/schema/staff";
+import { ORPCError } from "@orpc/server";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+
+import { protectedProcedure } from "../../index";
+
+/**
+ * Self-service profile update.
+ * Staff can update their own phone and portrait only.
+ * Admin fields (name, email, nic) are NOT editable here.
+ */
+export const updateProfile = protectedProcedure
+  .input(
+    z.object({
+      phone: z.string().optional().nullable(),
+      portraitFileId: z.string().optional().nullable(),
+    })
+  )
+  .handler(async ({ input, context }) => {
+    // Find the staff record linked to this user by email
+    const staffRecord = await context.db
+      .select()
+      .from(staff)
+      .where(eq(staff.email, context.session.user.email))
+      .get();
+
+    if (!staffRecord) {
+      throw new ORPCError("NOT_FOUND", {
+        message: "Staff profile not found for this user",
+      });
+    }
+
+    const record = await context.db
+      .update(staff)
+      .set({
+        phone: input.phone,
+        portraitFileId: input.portraitFileId,
+      })
+      .where(eq(staff.id, staffRecord.id))
+      .returning()
+      .get();
+
+    return {
+      id: record.id,
+      name: record.name,
+      phone: record.phone,
+      portraitFileId: record.portraitFileId,
+    };
+  });
