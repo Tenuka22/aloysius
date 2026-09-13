@@ -108,7 +108,7 @@ getData: protectedProcedure.handler(({ context }) => {
 }),
 
 // Admin — requires admin role
-uploadFile: adminProcedure.handler(({ context }) => {
+getUploadUrl: adminProcedure.handler(({ context }) => {
   // context.session.user.role === "admin" is guaranteed
 }),
 ```
@@ -121,6 +121,7 @@ uploadFile: adminProcedure.handler(({ context }) => {
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => "OK"),
   files: filesRouter,
+  staff: staffRouter,
   privateData: protectedProcedure.handler(({ context }) => ({
     message: "This is private",
     user: context.session?.user,
@@ -128,10 +129,11 @@ export const appRouter = {
 };
 ```
 
-| Route         | Procedure   | Description                            |
-| ------------- | ----------- | -------------------------------------- |
-| `healthCheck` | `public`    | Returns `"OK"`                         |
-| `files.*`     | `admin`     | File management (admin-only)           |
+| Route | Procedure | Description |
+| --- | --- | --- |
+| `healthCheck` | `public` | Returns `"OK"` |
+| `files.*` | `admin` | File management (admin-only) |
+| `staff.*` | mixed `admin`/`protected` | Staff, academic year, position, class, subject-assignment, and qualification management — 23 procedures, see [staff.md](./staff.md) for the full breakdown |
 | `privateData` | `protected` | Returns user info (test/example route) |
 
 ## Files Router

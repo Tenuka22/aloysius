@@ -53,7 +53,7 @@ A pure function with no service dependencies — makes it fully unit-testable:
 export type SiteAdminSession =
   { user: { role?: string | null } } | null | undefined;
 
-export function assertSiteAdmin(session: SiteAdminSession): void {
+export const assertSiteAdmin = (session?: SiteAdminSession): void => {
   const user = session?.user;
   if (!user) {
     throw new Error("UNAUTHORIZED");
@@ -61,7 +61,7 @@ export function assertSiteAdmin(session: SiteAdminSession): void {
   if (user.role !== "admin") {
     throw new Error("FORBIDDEN");
   }
-}
+};
 ```
 
 **Throws:**

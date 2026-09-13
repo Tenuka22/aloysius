@@ -30,13 +30,20 @@ packages/db/src/
 │   ├── grades.ts          # Grade levels 1-13, education stages
 │   ├── subjects.ts        # All curriculum subjects (MOE-defined)
 │   ├── positions.ts       # Staff position types and sectional scopes
-│   └── index.ts           # Barrel export
+│   ├── teachers.ts        # Gender/marital/blood group, appointment &
+│   │                      # employment types, qualification levels + order,
+│   │                      # Sri Lankan districts, document types
+│   └── schemas.ts         # Zod schemas derived from the above constants
 ├── config/
-│   └── school.ts          # School-specific config (hardcoded)
+│   ├── school.ts             # School-specific config (hardcoded)
+│   └── teacher-validation.ts # Validation helpers (NIC, phone, password
+│                              # strength, qualification labels, experience
+│                              # calculation) built on constants/schemas.ts
 └── schema/
-    ├── staff.ts           # Staff, academicYear, staffPosition tables
+    ├── staff.ts           # staff, academicYear, staffPosition tables
     ├── academics.ts       # class_, subjectAssignment tables
-    └── qualifications.ts  # Qualification upload/approval table
+    └── qualifications.ts  # teacherQualification, employmentVerification,
+                            # passwordRotationHistory tables
 
 packages/api/src/routers/staff/
 ├── index.ts               # Barrel composing 23 procedures
@@ -138,6 +145,46 @@ export const SECTIONAL_SCOPES = [
 
 **Key insight:** Sectional heads ARE teachers. A Grade 9 sectional head also teaches a subject. The `staffPosition` table tracks their administrative role; the `subjectAssignment` table tracks what they teach.
 
+### Teacher Constants
+
+`packages/db/src/constants/teachers.ts` — personal, employment, and qualification enums for the extended staff profile.
+
+| Constant | Shape | Notes |
+| --- | --- | --- |
+| `GENDERS` | `["male", "female"]` | Male or female only, per requirement |
+| `MARITAL_STATUSES` | `["single", "married", "divorced", "widowed"]` |  |
+| `BLOOD_GROUPS` | `["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]` |  |
+| `APPOINTMENT_TYPES` | 8 keys (`permanent`, `temporary`, `specifiedPeriod`, `directRecruitment`, `promoted`, `transferred`, `acting`, `contract`) | Each carries a `label`, `description`, and `requiresDocument` |
+| `APPOINTMENT_DOCUMENT_REQUIREMENTS` | `Record<AppointmentType, string[]>` | Documents needed per appointment type (e.g. `promoted` needs both a promotion letter and the previous appointment letter) |
+| `EMPLOYMENT_STATUSES` | `active`, `onLeave`, `suspended`, `retired`, `terminated` | Each with `label` + `description` |
+| `QUALIFICATION_LEVELS` | 13 keys from `gceOl` to `phD` | Each has a numeric `level` (1-9) for seniority comparison, a `label`, and a `description` |
+| `QUALIFICATION_ORDER` | Ordered array of the 13 qualification keys | Low-to-high, used for UI ordering |
+| `SRI_LANKA_DISTRICTS` | All 25 districts | Lowercase keys, e.g. `"colombo"`, `"anuradhapura"` |
+| `DOCUMENT_TYPES` | `nationalIdentityCard`, `passport`, `appointmentLetter`, `degreeCertificate`, `teachingLicense`, `marriageCertificate`, `birthCertificate` | Each declares which verification flow (`requiredFor`) it belongs to |
+| `SUBJECT_SPECIALIZATION_CATEGORIES` | 10 categories (primary, languages, mathematics, science, humanities, commerce, artsAesthetics, physicalEducation, technology, vocational) | Used to tag a qualification's subject specialization |
+
+Helper functions: `getQualificationLevel`, `compareQualifications`, `getHighestQualification` (all operate on `QUALIFICATION_LEVELS`' numeric `level`).
+
+### Validation Schemas
+
+`packages/db/src/constants/schemas.ts` builds Zod schemas directly from the constants above — a single source of truth so validation can never drift from the enum lists. Key exports:
+
+| Schema | Validates |
+| --- | --- |
+| `phoneSchema` | Sri Lankan mobile format: `+947XXXXXXXX` or `07XXXXXXXX` |
+| `nicSchema` | Old NIC (9 digits + `V`) or new NIC (12 digits) |
+| `dateSchema` | `YYYY-MM-DD` |
+| `addressSchema` | Address line 1/2, city, district, GN division, 5-digit postal code |
+| `qualificationInputSchema` | `{ qualification, yearObtained?, institution?, subjectSpecialization?, specializationCategory?, documentFileId? }` — the shape `uploadQualification` accepts |
+| `strongPasswordSchema` | 12+ chars, upper/lower/digit/special character |
+| `updateStaffSchema` | Full extended staff profile (personal, address, employment, portrait/NIC file IDs) — **not currently wired into `updateStaff`'s handler**, which still validates only `name/email/nic/phone` inline |
+| `qualificationReviewSchema` | `{ id, status, reviewNote? }` — the shape `approveQualification` accepts |
+| `rotatePasswordSchema` / `adminRotatePasswordSchema` | Self-service vs admin-initiated password rotation (no router uses these yet) |
+
+### Validation Helpers
+
+`packages/db/src/config/teacher-validation.ts` wraps the schemas above into ergonomic functions: `validatePasswordStrength`, `isPasswordStrongEnough`, `validateNIC`, `validatePhone`, `calculateYearsOfExperience` (derives experience from `appointmentDate`, not manually entered), `getQualificationLabel`, `validateStaffUpdate`, `getAppointmentTypeLabel`, `getDefaultEmploymentStatus`, and `validateGender`/`validateMaritalStatus`/`validateBloodGroup`/`validateDistrict`. None of these are called by the current staff routers yet — they exist ahead of the CRUD endpoints being extended to accept the new profile fields.
+
 ### School Config
 
 `packages/db/src/config/school.ts` — hardcoded, not database.
@@ -166,7 +213,7 @@ The `list-subjects` and `list-grades` API endpoints read from this config to fil
 
 ### Staff Table
 
-`packages/db/src/schema/staff.ts`
+`packages/db/src/schema/staff.ts` — a permanent record (not year-dependent). Only `id`, `name`, `email`, `nic`, `phone`, `portraitFileId` are currently read/written by the staff CRUD routers (`listStaff`/`getStaff`/`createStaff`/`updateStaff`/`updateProfile`); every other column below exists in the schema and has a matching Zod shape in `updateStaffSchema`, but no router accepts it yet.
 
 | Column | Type | Notes |
 | --- | --- | --- |
@@ -175,9 +222,29 @@ The `list-subjects` and `list-grades` API endpoints read from this config to fil
 | `email` | text UNIQUE | Work email (nullable) |
 | `nic` | text UNIQUE | National Identity Card (nullable) |
 | `phone` | text | Contact number (nullable) |
-| `portraitFileId` | text FK → files.id | Profile photo (nullable) |
+| `birthDate` | text (ISO date) | Not yet exposed via any router |
+| `gender` | text (`Gender`) | `"male"` \| `"female"` — not yet exposed |
+| `religion` | text | Not yet exposed |
+| `motherTongue` | text | Not yet exposed |
+| `bloodGroup` | text (`BloodGroup`) | Not yet exposed |
+| `maritalStatus` | text (`MaritalStatus`) | Not yet exposed |
+| `spouseName` | text | Not yet exposed |
+| `addressLine1` / `addressLine2` | text | Not yet exposed |
+| `city` | text | Not yet exposed |
+| `district` | text (`SriLankaDistrict`) | Not yet exposed |
+| `gramaNiladhariDivision` | text | Not yet exposed |
+| `postalCode` | text | Not yet exposed |
+| `emergencyContactName` / `emergencyContactPhone` | text | Not yet exposed |
+| `appointmentType` | text (`AppointmentType`) | Not yet exposed |
+| `appointmentDate` | text (ISO date) | Drives `calculateYearsOfExperience`; not yet exposed |
+| `teacherServiceNo` | text | Not yet exposed |
+| `employmentStatus` | text (`EmploymentStatus`) | Not yet exposed |
+| `portraitFileId` | text FK → files.id | Profile photo (nullable) — editable via `updateProfile` |
+| `nationalIdentityCardFileId` | text FK → files.id | NIC scan (nullable) — not yet exposed |
 | `createdAt` | integer (timestamp_ms) | Auto-set |
 | `updatedAt` | integer (timestamp_ms) | Auto-set |
+
+Indexes: `email`, `nic`, `appointmentType`, `employmentStatus`.
 
 ### Academic Year Table
 
@@ -308,27 +375,41 @@ assignSubject({
 
 ## Qualification/Certification System
 
-Staff can upload qualifications (degrees, certificates, etc.) that require admin approval before becoming verified.
+Staff can record qualifications (degrees, certificates, etc.) with an optional supporting document; the document requires admin approval before becoming verified. `packages/db/src/schema/qualifications.ts` defines three tables — only `teacherQualification` has routers today.
 
-### Qualification Table
+### Qualification Table (`teacherQualification`)
 
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | text PK | UUID |
-| `staffId` | text FK → staff.id | The staff member |
-| `title` | text NOT NULL | e.g., "BSc Education" |
-| `fileId` | text FK → files.id | The uploaded document |
-| `status` | text DEFAULT "pending" | "pending" \| "approved" \| "rejected" |
-| `reviewedBy` | text FK → staff.id | Admin who reviewed |
+| `staffId` | text FK → staff.id | Cascade delete |
+| `qualification` | text NOT NULL | `QualificationLevel` enum key (e.g., `"bachelorEducation"`) |
+| `yearObtained` | integer | Nullable |
+| `institution` | text | Nullable |
+| `subjectSpecialization` | text | Nullable, free text (e.g., "Mathematics") |
+| `specializationCategory` | text | Nullable, `SubjectSpecializationCategory` enum key |
+| `documentFileId` | text FK → files.id, `onDelete: "set null"` | Nullable — some qualifications have no uploaded doc |
+| `documentStatus` | text DEFAULT "pending" | "pending" \| "approved" \| "rejected" |
+| `reviewedBy` | text FK → staff.id, `onDelete: "set null"` | Admin who reviewed |
 | `reviewNote` | text | Admin's note |
-| `createdAt` | integer (timestamp_ms) | Auto-set |
 | `reviewedAt` | integer (timestamp_ms) | When reviewed |
+| `createdAt` / `updatedAt` | integer (timestamp_ms) | Auto-set |
+
+Unique constraint: `(staffId, qualification, yearObtained, institution)` — prevents duplicate records of the same credential. Indexed on `staffId` and `documentStatus`.
+
+### Employment Verification & Password History Tables (schema only)
+
+Two more tables live in `qualifications.ts` but have no API routers yet:
+
+- **`employmentVerification`** — `staffId`, `documentType` (e.g., `"appointmentLetter"`, `"nationalIdentityCard"`), `fileId`, `status`/`reviewedBy`/`reviewNote`/`reviewedAt` (same approval shape as qualifications). `employmentVerificationInputSchema` in `constants/schemas.ts` already defines its input shape.
+- **`passwordRotationHistory`** — audit log of password changes: `staffId`, `changedBy`, `changeMethod` (`"admin"` | `"self"`), `changedAt`. `rotatePasswordSchema`/`adminRotatePasswordSchema` exist for this but nothing writes to the table yet.
 
 ### Qualification Flow
 
-1. **Staff uploads**: `uploadQualification({ staffId, title, fileId })` → status = "pending"
-2. **Admin reviews**: `approveQualification({ id, status: "approved", reviewNote: "Verified" })`
-3. **Staff views**: `listQualifications({})` — sees own qualifications
+1. **Staff uploads own**: `uploadQualification({ qualification, yearObtained?, institution?, subjectSpecialization?, specializationCategory?, documentFileId? })` (no `staffId` — resolved from the caller's session) → `documentStatus = "pending"`
+2. **Admin uploads for anyone**: same call plus `staffId` — admin is the only role allowed to pass `staffId` explicitly
+3. **Admin reviews**: `approveQualification({ id, status: "approved" | "rejected", reviewNote? })`
+4. **Staff views**: `listQualifications({})` — sees only their own; admin can pass `staffId`/`status` to filter across everyone
 
 ### RBAC for Qualifications
 
@@ -437,9 +518,9 @@ export const statement = {
 
 | Endpoint | Auth | Input | Description |
 | --- | --- | --- | --- |
-| `staff.uploadQualification` | protected | `{ staffId, title, fileId }` | Upload doc |
-| `staff.listQualifications` | protected | `{ staffId?, status? }` | List (own or all) |
-| `staff.approveQualification` | admin | `{ id, status, reviewNote? }` | Approve/reject |
+| `staff.uploadQualification` | protected | `{ qualification, yearObtained?, institution?, subjectSpecialization?, specializationCategory?, documentFileId?, staffId? }` | Record a qualification; `staffId` required for admin, forbidden/defaulted-to-self for non-admin |
+| `staff.listQualifications` | protected | `{ staffId?, status? }` | List (own only for non-admin; admin can filter by any `staffId`) |
+| `staff.approveQualification` | admin | `{ id, status: "approved" \| "rejected", reviewNote? }` | Approve/reject the document |
 
 ## Year Transition
 

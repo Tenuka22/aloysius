@@ -24,7 +24,10 @@ import { defaultStatements, adminAc } from "better-auth/plugins/admin/access";
 
 export const statement = {
   ...defaultStatements, // user + session from better-auth
-  file: ["create", "list", "delete"], // custom resource
+  file: ["create", "list", "delete"],
+  staff: ["create", "read", "update", "delete"],
+  assignment: ["create", "read", "update", "delete"],
+  qualification: ["create", "read", "approve"],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -32,17 +35,22 @@ export const ac = createAccessControl(statement);
 export const admin = ac.newRole({
   ...adminAc.statements, // all default admin permissions
   file: ["create", "list", "delete"],
+  staff: ["create", "read", "update", "delete"],
+  assignment: ["create", "read", "update", "delete"],
+  qualification: ["create", "read", "approve"],
 });
 
-export const user = ac.newRole({});
+export const user = ac.newRole({
+  qualification: ["create", "read"],
+});
 ```
 
 ### Roles summary
 
 | Role | Capabilities |
 | --- | --- |
-| `"admin"` | Full control over all resources: user management, session management, file operations |
-| `"user"` (default) | Authenticated, can access protected routes. No file permissions |
+| `"admin"` | Full control over all resources: user/session management, file operations, staff/assignment CRUD, qualification approval |
+| `"user"` (default) | Authenticated, can access protected routes. Can create and read (own) qualifications only — no file, staff, or assignment permissions |
 
 ### Resources and permissions
 
@@ -51,6 +59,12 @@ export const user = ac.newRole({});
 | `user` | create, list, set-role, ban, impersonate, delete, set-password, set-email, get, update | admin |
 | `session` | list, revoke, delete | admin |
 | `file` | create, list, delete | admin |
+| `staff` | create, read, update, delete | admin |
+| `assignment` | create, read, update, delete | admin |
+| `qualification` | create, read | admin, user |
+| `qualification` | approve | admin only |
+
+See [staff.md](./staff.md) for how `staff`/`assignment`/`qualification` map to actual `staff.*` oRPC procedures — the access-control statements exist as the RBAC vocabulary, but only `adminProcedure`/`protectedProcedure` gate the handlers today; no handler currently calls `ac`/role-statement checks directly.
 
 ## Configuration
 
@@ -110,17 +124,20 @@ In `packages/auth/src/index.ts`, `databaseHooks` force the role on every `user.c
 databaseHooks: {
   user: {
     create: {
-      before: async (created) => {
-        const role = created.email?.toLowerCase() === siteAdminEmail ? "admin" : "user";
-        return { data: { ...created, role } };
+      before: (created) => {
+        const role =
+          created.email?.toLowerCase() === siteAdminEmail ? "admin" : "user";
+        // `before` is typed as returning a promise; there's nothing to await
+        // here, so the result is resolved eagerly rather than marked `async`.
+        return Promise.resolve({ data: { ...created, role } });
       },
     },
     update: {
-      before: async (updated) => {
+      before: (updated) => {
         if (updated.email?.toLowerCase() !== siteAdminEmail) {
-          return { data: updated };
+          return Promise.resolve({ data: updated });
         }
-        return { data: { ...updated, role: "admin" } };
+        return Promise.resolve({ data: { ...updated, role: "admin" } });
       },
     },
   },
@@ -137,8 +154,9 @@ databaseHooks: {
 
 `ensureSiteAdmin()` in `packages/auth/src/admin.ts` runs once at server start (`apps/web/src/services.ts`):
 
-1. If the admin user doesn't exist, it's created via `auth.api.createUser()`
-2. If it exists, the password is **rotated** to `ADMIN_PASSWORD` — a leaked password is always reset on boot
+1. Hashes `ADMIN_PASSWORD` and looks up the existing user by email **concurrently** (`Promise.all`) — the hash is computed either way, so there's no reason to serialize it after the lookup
+2. If the admin user doesn't exist, it's created via `auth.api.createUser()`
+3. If it exists, the password is **rotated** to the pre-computed hash — updating the `credential` account row directly (inserting one first if none exists) — a leaked password is always reset on boot
 
 ## API Layer Auth Enforcement
 
@@ -175,11 +193,11 @@ Layers on `authMiddleware` and rejects non-admin users via `assertSiteAdmin()`.
 Pure function — no auth service imports, fully unit-testable:
 
 ```ts
-export function assertSiteAdmin(session: SiteAdminSession): void {
+export const assertSiteAdmin = (session?: SiteAdminSession): void => {
   const user = session?.user;
   if (!user) throw new Error("UNAUTHORIZED");
   if (user.role !== "admin") throw new Error("FORBIDDEN");
-}
+};
 ```
 
 ## Auth Flow

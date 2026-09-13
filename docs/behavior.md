@@ -4,52 +4,40 @@ Critical behavioral patterns in the Aloysius codebase that aren't obvious from r
 
 ## File Deletion Order
 
-**DB record is deleted FIRST, then storage file is deleted.**
+**DB record is deleted FIRST, then storage object is deleted (best-effort).**
 
-In `packages/api/src/routers/files.ts`, `deleteFile`:
-
-```ts
-// 1. Delete from storage first
-await context.storage.remove(row.key);
-
-// 2. Then delete DB record
-await context.db.delete(files).where(...).run();
-```
-
-**Wait — this is storage-first, then DB.** Looking at the actual code more carefully:
+`packages/api/src/routers/files/delete-file.ts`:
 
 ```ts
-await context.storage.remove(row.key);     // storage first
-await context.db.delete(files).where(...);  // then DB
+// 1. Remove the DB record first — source of truth.
+await context.db.delete(files).where(eq(files.id, input.id)).run();
+
+// 2. Best-effort storage cleanup. If this fails the orphaned object
+//    can be reaped by a background job; the DB is already consistent.
+await context.storage.remove(row.key).catch((error) => {
+  console.error(
+    "[files] storage cleanup failed, orphaned key:",
+    row.key,
+    error
+  );
+});
 ```
 
-This means: if the DB delete fails after storage deletion, you have an orphaned DB record pointing to a non-existent file. If storage deletion fails, the DB record still exists and the file is still accessible.
-
-**The actual pattern is:** storage is deleted first, then the DB record. This is intentional — if storage deletion fails, the error propagates and the DB record remains as a reference to retry cleanup. The DB is the source of truth for what should exist.
+This means: if storage deletion fails, the error is caught and logged, not thrown — the caller still gets `{ success: true }` and the orphaned MinIO object is left for later cleanup. The DB is the source of truth for what should exist; a row in the DB is the contract that a file exists, and once that row is gone, storage catching up asynchronously is acceptable, but a delete succeeding in the DB while still showing up in storage is not a bug to "fix" by reordering.
 
 ## Admin-Only File Operations
 
-File management (upload, list, delete) requires admin access, enforced at two layers:
-
-1. **API layer**: All file procedures use `protectedProcedure` (requires any authenticated user)
-2. **Web middleware**: File-related server functions use `requireSiteAdminMiddleware` (requires `role === "admin"`)
-
-The API layer alone does NOT restrict file operations to admins — any authenticated user could theoretically call the oRPC endpoints directly. The admin restriction is enforced at the web middleware layer.
+File management (`getUploadUrl`, `completeUpload`, `listFiles`, `deleteFile`) is enforced at the **API layer directly** — every file procedure uses `adminProcedure` (requires an authenticated session with `role === "admin"`), not `protectedProcedure`. There is no separate web-middleware layer restricting file operations anymore; `adminProcedure` throwing `FORBIDDEN` for non-admin callers is the only gate.
 
 ## Presigned URL Uploads
 
-**This project does NOT use presigned URL uploads.** The user's request mentioned presigned URLs, but the actual implementation is different:
+**This project uses presigned URL uploads for direct client → MinIO transfer.** The server never receives the file bytes:
 
-- Files are uploaded directly to the server via oRPC (`uploadFile` procedure)
-- The server receives the full file data, processes it (image → WebP conversion), then stores it
-- The server never uses presigned URLs for client-to-S3 uploads
+1. Client calls `files.getUploadUrl({ name, type, size })` (admin only) → server generates a UUID, builds the key `admin/{uuid}.{extension}`, and returns a MinIO `presignedPutObject` URL (5 minute expiry, from `context.storage.getPresignedUploadUrl`)
+2. Client `PUT`s the file directly to that URL, setting the `Content-Type` header itself — the presigned URL does not encode content type
+3. Client calls `files.completeUpload({ key, name, type, size })` → server inserts the `files` DB record (id derived from the key's UUID segment) and returns the file's metadata + serving URL
 
-The presigned URL pattern is common in S3-based uploads but is not used here. The server acts as an intermediary:
-
-1. Client sends file to server via oRPC
-2. Server converts images to WebP (quality 82) via sharp
-3. Server writes to storage (LMDB dev / MinIO production)
-4. Server creates DB record
+There is no server-side image processing step in this flow — no WebP conversion, no `sharp` usage. The server only ever touches metadata; the object bytes flow client → MinIO directly.
 
 ## Role Enforcement
 
@@ -60,9 +48,12 @@ The `admin` role is hardcoded for the site admin email via `databaseHooks`:
 databaseHooks: {
   user: {
     create: {
-      before: async (created) => {
-        const role = created.email?.toLowerCase() === siteAdminEmail ? "admin" : "user";
-        return { data: { ...created, role } };
+      before: (created) => {
+        const role =
+          created.email?.toLowerCase() === siteAdminEmail ? "admin" : "user";
+        // Not `async` — there's nothing to await, so the promise the hook
+        // type requires is resolved eagerly instead.
+        return Promise.resolve({ data: { ...created, role } });
       },
     },
   },
@@ -95,57 +86,25 @@ Sessions are:
 
 ## Storage Key Format
 
-Keys follow the pattern: `{userId}/{uuid}.{extension}`
+Keys follow the pattern: `admin/{uuid}.{extension}` — a fixed `admin/` prefix, **not** the uploading user's ID.
 
 ```ts
-// packages/api/src/routers/files.ts
+// packages/api/src/routers/files/get-upload-url.ts
 const id = crypto.randomUUID();
-const key = `${context.session.user.id}/${id}.${extension}`;
+const extension = input.name.split(".").pop() || "bin";
+const key = `admin/${id}.${extension}`;
 ```
 
 Examples:
 
-- `user_abc123/550e8400-e29b-41d4-a716-446655440000.webp`
-- `user_abc123/660e8400-e29b-41d4-a716-446655440001.pdf`
+- `admin/550e8400-e29b-41d4-a716-446655440000.webp`
+- `admin/660e8400-e29b-41d4-a716-446655440001.pdf`
 
-This provides:
+Since only admins can call `getUploadUrl` (see [Admin-Only File Operations](#admin-only-file-operations)), there's currently no per-uploader isolation to preserve — every key lives under the same `admin/` prefix. `completeUpload`'s DB insert still records the actual uploader in `files.userId`, so ownership is tracked in the database even though the storage key doesn't encode it.
 
-- User isolation (each user's files are in their own prefix)
-- No filename collisions (UUID v4)
-- Logical grouping for bulk operations
+## No Server-Side Image Processing
 
-## Image Processing
-
-All uploaded images are normalized to WebP format:
-
-```ts
-// packages/api/src/routers/files.ts
-const IMAGE_TYPES: Record<string, true> = {
-  "image/jpeg": true,
-  "image/png": true,
-  "image/gif": true,
-  "image/webp": true,
-  "image/avif": true,
-  "image/bmp": true,
-  "image/tiff": true,
-};
-
-// If image → convert to WebP
-const { buffer, contentType, extension } = isImage
-  ? {
-      buffer: await sharp(originalBuffer)
-        .webp({ quality: WEBP_QUALITY })
-        .toBuffer(),
-      contentType: "image/webp",
-      extension: "webp",
-    }
-  : {/* keep original */};
-```
-
-- Quality: 82 (configurable via `WEBP_QUALITY` constant)
-- Input: JPEG, PNG, GIF, WebP, AVIF, BMP, TIFF
-- Output: WebP (universally supported, smaller files)
-- Non-image files: stored as-is with original content type
+Earlier revisions of this project converted uploaded images to WebP via `sharp` on the server. That flow is gone: uploads now go directly from the client to MinIO via a presigned URL (see [Presigned URL Uploads](#presigned-url-uploads)), so the server never has the bytes in hand to transcode. `sharp` remains listed as a dependency in `packages/api/package.json` and `apps/web/package.json` but nothing in the upload path imports it anymore — don't assume WebP conversion happens on upload.
 
 ## Server Bootstrap
 
@@ -186,7 +145,7 @@ Files are served via `apps/web/src/routes/api/files/$.ts`:
 - Cache headers: `Cache-Control: public, max-age=31536000, immutable` (1 year)
 - Storage keys are URL-decoded from the path
 
-This means file URLs like `/api/files/user_abc123/uuid.webp` are publicly accessible. The security model relies on:
+This means file URLs like `/api/files/admin/uuid.webp` are publicly accessible. The security model relies on:
 
 1. UUIDs being unguessable (v4 random)
-2. Only admins can create/list files (enforced by middleware)
+2. Only admins can create/list files (enforced by `adminProcedure` at the API layer — see [Admin-Only File Operations](#admin-only-file-operations))
