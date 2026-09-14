@@ -1,5 +1,15 @@
 import * as stylex from "@stylexjs/stylex";
-import { GripVertical } from "lucide-react";
+import {
+  Crown,
+  FileText,
+  Globe,
+  GripVertical,
+  Images,
+  LayoutGrid,
+  Megaphone,
+  Quote,
+  Rss,
+} from "lucide-react";
 import { useState } from "react";
 
 import { HOMEPAGE_BLOCKS, REVISIONS, formatCmsDate } from "../../content/cms";
@@ -86,19 +96,25 @@ const styles = stylex.create({
   blockItem: {
     display: "flex",
     alignItems: "center",
-    gap: space["3xs"],
+    gap: space["2xs"],
     borderBlockEndWidth: space.px,
     borderBlockEndStyle: "solid",
     borderBlockEndColor: color.border,
+  },
+  blockIcon: {
+    flexShrink: 0,
+    width: "1rem",
+    height: "1rem",
+    color: color.onSurfaceSubtle,
   },
   blockPick: {
     display: "flex",
     flex: 1,
     alignItems: "center",
-    gap: space["2xs"],
+    gap: space.xs,
     minWidth: 0,
-    minHeight: "2.75rem",
-    paddingBlock: space["2xs"],
+    minHeight: "2.25rem",
+    paddingBlock: space.xs,
     paddingInline: space["2xs"],
     borderWidth: 0,
     borderInlineStartWidth: "3px",
@@ -125,30 +141,33 @@ const styles = stylex.create({
   },
   grip: {
     flexShrink: 0,
-    width: "0.9rem",
-    height: "0.9rem",
+    width: "0.75rem",
+    height: "0.75rem",
     color: color.onSurfaceSubtle,
   },
   blockNum: {
     flexShrink: 0,
-    width: "1.3rem",
+    width: "1.1rem",
     fontFamily: font.mono,
     fontSize: font.size2xs,
     color: color.onSurfaceSubtle,
   },
   blockText: {
     flex: 1,
+    display: "flex",
+    flexDirection: "column",
     minWidth: 0,
+    gap: "0.1rem",
   },
   blockName: {
     margin: 0,
     fontSize: font.sizeSm,
     fontWeight: font.weightBold,
+    lineHeight: font.leadingSnug,
     overflowWrap: "break-word",
   },
   blockType: {
     margin: 0,
-    marginBlockStart: "0.1rem",
     fontSize: font.size2xs,
     letterSpacing: font.trackingWide,
     textTransform: "uppercase",
@@ -156,8 +175,8 @@ const styles = stylex.create({
   },
   blockToggle: {
     flexShrink: 0,
-    minWidth: "2.75rem",
-    minHeight: "2.75rem",
+    minWidth: "2.25rem",
+    minHeight: "2.25rem",
     paddingInline: space["3xs"],
     borderWidth: 0,
     backgroundColor: "transparent",
@@ -394,6 +413,18 @@ const REVISION_TONE = {
   Edited: styles.revisionEdited,
 } as const;
 
+const BLOCK_ICON: Record<string, typeof GripVertical> = {
+  Banner: Megaphone,
+  Hero: Crown,
+  "Text + media": FileText,
+  Quote,
+  "Card grid": LayoutGrid,
+  Mosaic: LayoutGrid,
+  Feed: Rss,
+  "Media grid": Images,
+  Global: Globe,
+};
+
 /** Fields the editor has typed into, keyed by field id. */
 type Draft = Record<string, string>;
 
@@ -457,6 +488,15 @@ export const HomepageEditor = () => {
                   <span aria-hidden="true" {...stylex.props(styles.blockNum)}>
                     {String(index + 1).padStart(2, "0")}
                   </span>
+                  {(() => {
+                    const Icon = BLOCK_ICON[block.type] ?? GripVertical;
+                    return (
+                      <Icon
+                        aria-hidden="true"
+                        {...stylex.props(styles.blockIcon)}
+                      />
+                    );
+                  })()}
                   <span {...stylex.props(styles.blockText)}>
                     <span {...stylex.props(styles.blockName)}>
                       {block.name}
