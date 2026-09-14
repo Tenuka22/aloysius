@@ -2,7 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 import { Eye, EyeOff, GripVertical } from "lucide-react";
 import { useState } from "react";
 
-import { HOMEPAGE_BLOCKS, REVISIONS, formatCmsDate } from "../../content/cms";
+import { HOMEPAGE_BLOCKS } from "../../content/cms";
 import type { BlockField } from "../../content/cms";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
@@ -240,55 +240,12 @@ const styles = stylex.create({
     marginBlockStart: space.md,
   },
 
-  /* ----------------------------------------------------------- revisions */
-  revisionRow: {
-    display: "grid",
-    gap: space["3xs"],
-    gridTemplateColumns: {
-      default: "minmax(0, 1fr)",
-      [bp.lg]: "6.5rem minmax(0, 1fr) auto auto",
-    },
-    alignItems: {
-      default: "start",
-      [bp.lg]: "center",
-    },
-    paddingBlock: space.xs,
-    borderBlockEndWidth: space.px,
-    borderBlockEndStyle: "solid",
-    borderBlockEndColor: color.border,
-  },
-  revisionLabel: {
-    fontSize: font.size2xs,
-    fontWeight: font.weightExtrabold,
-    letterSpacing: font.trackingWide,
-    textTransform: "uppercase",
-  },
-  revisionPublished: { color: color.onSurface },
-  revisionEdited: { color: "#7a5400" },
-  revisionNote: {
-    margin: 0,
-    minWidth: 0,
-    fontSize: font.sizeSm,
-    textWrap: "pretty",
-  },
-  revisionAt: {
-    fontFamily: font.mono,
-    fontSize: font.sizeXs,
-    color: color.onSurfaceSubtle,
-    whiteSpace: "nowrap",
-  },
-
   headerActions: {
     display: "flex",
     flexWrap: "wrap",
     gap: space["2xs"],
   },
 });
-
-const REVISION_TONE = {
-  Published: styles.revisionPublished,
-  Edited: styles.revisionEdited,
-} as const;
 
 /** Fields the editor has typed into, keyed by field id. */
 type Draft = Record<string, string>;
@@ -436,32 +393,6 @@ export const HomepageEditor = () => {
             </CmsButton>
             <CmsButton tone="dark">Apply to section</CmsButton>
           </div>
-        </Panel>
-
-        <Panel>
-          <PanelHead title="Revision history" />
-          {REVISIONS.map((revision) => (
-            <div key={revision.id} {...stylex.props(styles.revisionRow)}>
-              <span
-                {...stylex.props(
-                  styles.revisionLabel,
-                  REVISION_TONE[revision.label]
-                )}
-              >
-                {revision.label}
-              </span>
-              <p {...stylex.props(styles.revisionNote)}>{revision.note}</p>
-              <span {...stylex.props(styles.revisionAt)}>
-                {formatCmsDate(revision.at)}
-              </span>
-              <CmsButton tone="quiet">
-                <span aria-hidden="true">Restore</span>
-                <VisuallyHidden>
-                  {`Restore revision from ${formatCmsDate(revision.at)}`}
-                </VisuallyHidden>
-              </CmsButton>
-            </div>
-          ))}
         </Panel>
       </div>
     </div>
