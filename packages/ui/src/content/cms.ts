@@ -14,7 +14,6 @@
 
 export type ScreenId =
   | "dashboard"
-  | "pages"
   | "homepage"
   | "news"
   | "gallery"
@@ -40,8 +39,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { id: "dashboard", num: "01", label: "Dashboard", kind: "dashboard" },
-  { id: "pages", num: "02", label: "Pages", kind: "list", count: 9 },
-  { id: "homepage", num: "02a", label: "Homepage Editor", kind: "homepage" },
+  { id: "homepage", num: "02", label: "Homepage Editor", kind: "homepage" },
   { id: "news", num: "03", label: "News & Events", kind: "list", count: 24 },
   {
     id: "gallery",
@@ -488,23 +486,6 @@ export interface Entry {
 
 /** Seed rows per list screen. Replaced wholesale once the routers exist. */
 export const LIST_ENTRIES: Partial<Record<ScreenId, readonly Entry[]>> = {
-  pages: [
-    { id: "e1", title: "Homepage", status: "published", updated: "2026-09-02" },
-    {
-      id: "e2",
-      title: "About the College",
-      status: "published",
-      updated: "2026-08-19",
-    },
-    {
-      id: "e3",
-      title: "Academics",
-      status: "published",
-      updated: "2026-08-11",
-    },
-    { id: "e4", title: "Admissions", status: "draft", updated: "2026-09-09" },
-    { id: "e5", title: "Contact", status: "published", updated: "2026-06-30" },
-  ],
   news: [
     {
       id: "n1",
