@@ -18,7 +18,7 @@
  * height of every image styled with StyleX. Declaring the order up front and
  * putting the reset in the lowest layer keeps component styles authoritative.
  */
-@layer reset, priority1, priority2, priority3, priority4, priority5, priority6, priority7, priority8, priority9;
+@layer reset, astryx-base, astryx-theme, priority1, priority2, priority3, priority4, priority5, priority6, priority7, priority8, priority9;
 
 @layer reset {
   *,
