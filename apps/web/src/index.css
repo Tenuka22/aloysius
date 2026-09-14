@@ -1,25 +1,215 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+/*
+ * Global baseline. Everything component-scoped lives in StyleX; this file only
+ * covers what StyleX cannot express: @font-face, the document reset, and
+ * pseudo-elements on the document itself (scrollbars, selection).
+ *
+ * Fonts are self-hosted. Each family ships one variable woff2 per unicode subset
+ * with a `unicode-range`, so a latin-only visitor downloads exactly one file per
+ * family and `font-display: swap` keeps first paint unblocked.
+ */
+@import "@fontsource-variable/manrope/wght.css";
+@import "@fontsource-variable/cormorant-garamond/wght.css";
+@import "@fontsource-variable/cormorant-garamond/wght-italic.css";
 
-html {
-  color-scheme: light;
-}
+/*
+ * Layer order. StyleX (configured with `useCSSLayers`) emits its atomic rules
+ * into `priority1..priority9`, and *unlayered* CSS beats every layered rule -
+ * so an unlayered `img { height: auto }` here would silently override the
+ * height of every image styled with StyleX. Declaring the order up front and
+ * putting the reset in the lowest layer keeps component styles authoritative.
+ */
+@layer reset, priority1, priority2, priority3, priority4, priority5, priority6, priority7, priority8, priority9;
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-}
+@layer reset {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-body {
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    sans-serif;
-  background-color: #fff;
-  color: #0a0a0a;
-}
+  html {
+    /* Honours the OS until ThemeProvider writes an explicit override. */
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    /*
+     * Sticky header height, so #anchor targets are not hidden behind it. The
+     * header is 4rem up to 48rem and 4.875rem above it, so a single 6rem guess
+     * overshoots on phones and undershoots once the notice strip is in view.
+     * One custom property keeps the offset and the header in step.
+     */
+    --header-height: 4rem;
+    scroll-padding-block-start: calc(var(--header-height) + 1rem);
+    /* Reserve the scrollbar so opening a modal does not shift the layout. */
+    scrollbar-gutter: stable;
+  }
+
+  @media (min-width: 48rem) {
+    html {
+      --header-height: 4.875rem;
+    }
+  }
+
+  /*
+   * Lenis (momentum scrolling) and CSS `scroll-behavior: smooth` are mutually
+   * exclusive: Lenis drives the scroll position every frame, and the native
+   * smooth-scroll animation fights it, which shows up as anchor jumps that
+   * stutter and overshoot. Lenis puts `.lenis-smooth` on <html> only while it
+   * is actually running, so this hands control back to CSS for the touch,
+   * kiosk and reduced-motion users where Lenis stays switched off.
+   */
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+
+  html.lenis-smooth {
+    scroll-behavior: auto;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    min-height: 100svh;
+    font-family:
+      "Manrope Variable",
+      "Manrope",
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
+    font-synthesis-weight: none;
+    line-height: 1.45;
+    background-color: #fff8e7;
+    color: #013405;
+    /* Retina / high-DPI: keep strokes crisp without over-thinning on Windows. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Kiosks, smart boards and TVs: never let a stray wide child cause h-scroll. */
+    overflow-x: hidden;
+    /* Notched phones and foldables. */
+    padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+  }
+
+  /*
+ * Sinhala and Tamil need a taller line box and a fallback stack that actually
+ * has the glyphs - Manrope does not.
+ */
+  :lang(si),
+  :lang(ta) {
+    font-family:
+      "Noto Sans Sinhala", "Noto Sans Tamil", "Iskoola Pota", "Nirmala UI",
+      sans-serif;
+    line-height: 1.7;
+  }
+
+  img,
+  picture,
+  svg,
+  video,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  img,
+  video {
+    height: auto;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  /*
+ * A single, consistent focus ring. `:focus-visible` only, so pointer users never
+ * see it but keyboard, stylus-with-keyboard and TV-remote users always do.
+ */
+  /*
+   * No `border-radius` here: it rounds the *element's own* corners on focus, so
+   * every square button and card visibly changes shape the moment it is
+   * focused. The outline follows the element's existing radius by itself.
+   */
+  :focus-visible {
+    outline: 3px solid #a51919;
+    outline-offset: 2px;
+  }
+
+  /* Remove the ring for mouse clicks in browsers that still fire :focus. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: #ffb203;
+    color: #013405;
+  }
+
+  /* Firefox + WebKit/Blink scrollbar styling, brand-coloured, non-intrusive. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #ffb203 transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #ffb203;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 999px;
+  }
+
+  /*
+ * Reduced motion. This is a hard stop, not a softening: no transitions, no
+ * animations, no smooth scrolling. Motion-based reveals in React check the same
+ * query and render their final state directly.
+ */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Windows High Contrast / forced-colors: let the OS palette through. */
+  @media (forced-colors: active) {
+    * {
+      forced-color-adjust: auto;
+    }
+  }
+
+  @media print {
+    body {
+      background: #fff;
+      color: #000;
+    }
+  }
+} /* end @layer reset */
