@@ -250,12 +250,44 @@ const styles = stylex.create({
 /** Fields the editor has typed into, keyed by field id. */
 type Draft = Record<string, string>;
 
-export const HomepageEditor = () => {
+export const HomepageEditor = ({
+  initialBlocks,
+}: {
+  initialBlocks?: {
+    id: string;
+    hidden?: boolean;
+    fields?: { id: string; value?: string }[];
+  }[];
+}) => {
   const [selectedId, setSelectedId] = useState(
     HOMEPAGE_BLOCKS[1]?.id ?? "hero"
   );
-  const [hidden, setHidden] = useState<Record<string, boolean>>({});
-  const [draft, setDraft] = useState<Draft>({});
+  const [hidden, setHidden] = useState<Record<string, boolean>>(() => {
+    if (!initialBlocks) {
+      return {};
+    }
+    const h: Record<string, boolean> = {};
+    for (const b of initialBlocks) {
+      if (b.hidden) {
+        h[b.id] = true;
+      }
+    }
+    return h;
+  });
+  const [draft, setDraft] = useState<Draft>(() => {
+    if (!initialBlocks) {
+      return {};
+    }
+    const d: Draft = {};
+    for (const block of initialBlocks) {
+      for (const field of block.fields ?? []) {
+        if (field.value) {
+          d[field.id] = field.value;
+        }
+      }
+    }
+    return d;
+  });
 
   const selected =
     HOMEPAGE_BLOCKS.find((block) => block.id === selectedId) ??

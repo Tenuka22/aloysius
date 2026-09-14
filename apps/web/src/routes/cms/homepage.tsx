@@ -4,7 +4,11 @@ import {
 } from "@aloysius/ui/components/cms/homepage-editor";
 import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { Suspense } from "react";
+
+import { orpc } from "@/utils/orpc";
 
 const md = "@media (min-width: 40rem)";
 
@@ -60,6 +64,19 @@ const styles = stylex.create({
   },
 });
 
+// oRPC dynamic link for cache invalidation will be added here.
+// See: https://orpc.dev/docs/client/dynamic-link
+
+const HomepageContent = () => {
+  const { data: homepage } = useSuspenseQuery(
+    orpc.cms.getHomepage.queryOptions()
+  );
+
+  // homepage is null when no backend data exists yet — the editor falls back
+  // to the seed data in the UI package.
+  return <HomepageEditor initialBlocks={homepage?.blocks} />;
+};
+
 export const Route = createFileRoute("/cms/homepage")({
   head: () => ({
     meta: [
@@ -79,7 +96,9 @@ export const Route = createFileRoute("/cms/homepage")({
         </div>
         <HomepageEditorActions />
       </div>
-      <HomepageEditor />
+      <Suspense fallback={<div>Loading homepage…</div>}>
+        <HomepageContent />
+      </Suspense>
     </div>
   ),
 });
