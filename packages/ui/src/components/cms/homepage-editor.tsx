@@ -415,6 +415,7 @@ export const HomepageEditor = () => {
                 </div>
               ) : (
                 <Field
+                  dirty={field.id in draft}
                   hint={field.hint}
                   key={field.id}
                   kind={field.kind}

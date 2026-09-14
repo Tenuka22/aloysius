@@ -167,8 +167,12 @@ const styles = stylex.create({
     // exactly like the layout breaking.
     fontSize: "1rem",
     lineHeight: font.leadingNormal,
-    transitionProperty: "border-color",
+    transitionProperty: "border-color, background-color",
     transitionDuration: motionToken.fast,
+  },
+  controlDirty: {
+    backgroundColor: "rgba(255, 178, 3, 0.12)",
+    borderColor: color.accent,
   },
   textarea: {
     minHeight: "6rem",
@@ -458,6 +462,7 @@ export const Field = ({
   value,
   hint,
   wide = false,
+  dirty = false,
   onChange,
 }: {
   label: string;
@@ -465,6 +470,7 @@ export const Field = ({
   value?: string;
   hint?: string;
   wide?: boolean;
+  dirty?: boolean;
   onChange?: (next: string) => void;
 }) => {
   const id = useId();
@@ -490,7 +496,7 @@ export const Field = ({
           onChange={(event) => onChange?.(event.target.value)}
           type="text"
           value={value ?? ""}
-          {...stylex.props(styles.control)}
+          {...stylex.props(styles.control, dirty && styles.controlDirty)}
         />
       ) : null}
 
@@ -501,7 +507,11 @@ export const Field = ({
           onChange={(event) => onChange?.(event.target.value)}
           rows={3}
           value={value ?? ""}
-          {...stylex.props(styles.control, styles.textarea)}
+          {...stylex.props(
+            styles.control,
+            styles.textarea,
+            dirty && styles.controlDirty
+          )}
         />
       ) : null}
 
