@@ -138,10 +138,7 @@ const styles = stylex.create({
   },
   blockText: {
     flex: 1,
-    display: "flex",
-    flexDirection: "column",
     minWidth: 0,
-    gap: "0.1rem",
   },
   blockName: {
     margin: 0,
@@ -149,13 +146,6 @@ const styles = stylex.create({
     fontWeight: font.weightBold,
     lineHeight: font.leadingSnug,
     overflowWrap: "break-word",
-  },
-  blockType: {
-    margin: 0,
-    fontSize: font.size2xs,
-    letterSpacing: font.trackingWide,
-    textTransform: "uppercase",
-    color: color.onSurfaceSubtle,
   },
   blockToggle: {
     flexShrink: 0,
@@ -443,7 +433,7 @@ export const HomepageEditor = () => {
                 <button
                   aria-current={isActive ? "true" : undefined}
                   onClick={() => setSelectedId(block.id)}
-                  title={block.summary}
+                  title={block.type}
                   type="button"
                   {...stylex.props(
                     styles.blockPick,
@@ -466,9 +456,6 @@ export const HomepageEditor = () => {
                   <span {...stylex.props(styles.blockText)}>
                     <span {...stylex.props(styles.blockName)}>
                       {block.name}
-                    </span>
-                    <span {...stylex.props(styles.blockType)}>
-                      {block.type}
                     </span>
                   </span>
                 </button>
