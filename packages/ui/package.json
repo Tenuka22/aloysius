@@ -4,7 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./components/*": "./src/components/*.tsx"
+    "./components/*": "./src/components/*.tsx",
+    "./theme/*": "./src/theme/*.tsx",
+    "./tokens/*": "./src/tokens/*.ts",
+    "./lib/*": "./src/lib/*.ts",
+    "./content/*": "./src/content/*.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
@@ -15,6 +19,7 @@
     "@astryxdesign/theme-neutral": "^0.6.0",
     "@stylexjs/stylex": "catalog:",
     "lenis": "^1.3.26",
+    "lucide-react": "^0.563.0",
     "motion": "^13.2.0",
     "react": "catalog:",
     "react-dom": "catalog:"
