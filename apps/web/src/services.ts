@@ -31,7 +31,7 @@ export const ensureServerBootstrap = (): Promise<void> => {
   if (!bootstrapPromise) {
     bootstrapPromise = (async () => {
       try {
-        await ensureSiteAdmin(auth, db, env);
+        await ensureSiteAdmin(db, env);
       } catch (error) {
         bootstrapPromise = undefined;
         throw error;

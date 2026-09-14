@@ -63,9 +63,8 @@ describe("createAuth role assignment", () => {
 describe(ensureSiteAdmin, () => {
   it("creates the site admin with the configured credentials when none exists", async () => {
     const db = await createTestDb();
-    const auth = createAuth(ENV, db);
 
-    await ensureSiteAdmin(auth, db, ENV);
+    await ensureSiteAdmin(db, ENV);
 
     const row = await db
       .select()
@@ -87,9 +86,8 @@ describe(ensureSiteAdmin, () => {
 
   it("rotates the existing site admin's password back to the configured default", async () => {
     const db = await createTestDb();
-    const auth = createAuth(ENV, db);
 
-    await ensureSiteAdmin(auth, db, ENV);
+    await ensureSiteAdmin(db, ENV);
     const row = await db
       .select()
       .from(user)
@@ -107,7 +105,7 @@ describe(ensureSiteAdmin, () => {
       .set({ password: await hashPassword("something-else-entirely") })
       .where(eq(account.id, acctBefore!.id));
 
-    await ensureSiteAdmin(auth, db, ENV);
+    await ensureSiteAdmin(db, ENV);
 
     const acctAfter = await db
       .select()
@@ -130,10 +128,9 @@ describe(ensureSiteAdmin, () => {
 
   it("does not duplicate the site admin user on repeated calls", async () => {
     const db = await createTestDb();
-    const auth = createAuth(ENV, db);
 
-    await ensureSiteAdmin(auth, db, ENV);
-    await ensureSiteAdmin(auth, db, ENV);
+    await ensureSiteAdmin(db, ENV);
+    await ensureSiteAdmin(db, ENV);
 
     const rows = await db
       .select()

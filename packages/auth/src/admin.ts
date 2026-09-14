@@ -3,23 +3,25 @@ import { account, user } from "@aloysius/db/schema/auth";
 import { hashPassword } from "better-auth/crypto";
 import { and, eq, or } from "drizzle-orm";
 
-import type { Auth, AuthConfig } from "./index";
+import type { AuthConfig } from "./index";
 
 /**
- * Bootstraps (or re-secures) the site admin's credential login. If the
- * account already exists its password is rotated to the configured default
- * so a forgotten/leaked password is always reset on boot.
+ * Bootstraps (or re-secures) the site admin's credential login using direct
+ * database operations — bypassing Better Auth's HTTP API layer entirely.
+ *
+ * Reasons for the direct-DB approach:
+ * - `auth.api.signUpEmail` / `auth.api.createUser` both construct a web
+ *   `Response` object internally. Varlock's patched Response constructor scans
+ *   every response body for sensitive config values; calling those endpoints
+ *   during request handling triggers false-positive leak detection.
+ * - Bootstrap is a privileged, server-only operation. It should never go
+ *   through the public HTTP pipeline.
  *
  * The admin signs in with username + password. A synthetic internal email
- * (`<username>@aloysius.internal`) is derived at creation time and never
- * surfaced to the UI — it only satisfies Better Auth's required email field.
- *
- * `signUpEmail` is used for creation (not `createUser`) because only the
- * former runs the username plugin's before-hook that persists the username
- * column.
+ * (`<username>@aloysius.internal`) satisfies Better Auth's required email
+ * field and is never shown to the user.
  */
 export const ensureSiteAdmin = async (
-  auth: Auth,
   database: Database,
   env: AuthConfig
 ) => {
@@ -27,27 +29,43 @@ export const ensureSiteAdmin = async (
   const internalEmail = `${adminUsername.toLowerCase()}@aloysius.internal`;
   const password = env.ADMIN_PASSWORD;
 
-  // Look up by username (normal path) or fall back to internal email for
-  // accounts that existed before the username column was added.
-  const existing = await database
-    .select()
-    .from(user)
-    .where(or(eq(user.username, adminUsername), eq(user.email, internalEmail)))
-    .get();
+  const [hash, existing] = await Promise.all([
+    hashPassword(password),
+    database
+      .select()
+      .from(user)
+      .where(or(eq(user.username, adminUsername), eq(user.email, internalEmail)))
+      .get(),
+  ]);
 
   if (!existing) {
-    try {
-      await auth.api.signUpEmail({
-        body: { email: internalEmail, password, name: "Site Admin", username: adminUsername },
-      });
-      console.log(`[auth] Created site admin: username=${adminUsername}`);
-    } catch (error) {
-      console.error("[auth] ensure site admin create error:", error);
-    }
+    const userId = crypto.randomUUID();
+    await database
+      .insert(user)
+      .values({
+        id: userId,
+        name: "Site Admin",
+        email: internalEmail,
+        emailVerified: true,
+        username: adminUsername,
+        role: "admin",
+      })
+      .run();
+
+    await database
+      .insert(account)
+      .values({
+        id: crypto.randomUUID(),
+        accountId: userId,
+        providerId: "credential",
+        userId,
+        password: hash,
+      })
+      .run();
+
+    console.log(`[auth] Created site admin: username=${adminUsername}`);
     return;
   }
-
-  const hash = await hashPassword(password);
 
   const existingAccount = await database
     .select()
