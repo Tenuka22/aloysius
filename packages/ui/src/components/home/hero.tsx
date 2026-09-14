@@ -1,6 +1,11 @@
 import * as stylex from "@stylexjs/stylex";
 
-import { COLLEGE_LOCATION, COLLEGE_NAME, MOTTO } from "../../content/home";
+import {
+  ADMISSIONS_URL,
+  COLLEGE_LOCATION,
+  COLLEGE_NAME,
+  MOTTO,
+} from "../../content/home";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
 import { ButtonLink } from "../primitives/button";
@@ -134,7 +139,7 @@ export const Hero = ({
   background,
   crestSrc = "/logo.png",
   exploreHref = "/about",
-  admissionsHref = "/admissions",
+  admissionsHref = ADMISSIONS_URL,
 }: {
   tagline?: string;
   background?: ImageSource;

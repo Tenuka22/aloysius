@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import {
+  ADMISSIONS_URL,
   COLLEGE_LOCATION,
   COLLEGE_NAME,
   MOTTO,
@@ -202,7 +203,7 @@ const COLLEGE_LINKS = [
   { id: "about", label: "About", href: "/about" },
   { id: "academics", label: "Academics", href: "/academics" },
   { id: "students", label: "Students", href: "/students" },
-  { id: "admissions", label: "Admissions", href: "/admissions" },
+  { id: "admissions", label: "Admissions", href: ADMISSIONS_URL },
 ];
 
 const COMMUNITY_LINKS = [

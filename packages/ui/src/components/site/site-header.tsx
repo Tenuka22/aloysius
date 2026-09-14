@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import {
+  ADMISSIONS_URL,
   COLLEGE_LOCATION,
   COLLEGE_NAME,
   MOTTO,
@@ -305,7 +306,7 @@ const styles = stylex.create({
 export const SiteHeader = ({
   activeHref = "/",
   items = NAV_ITEMS,
-  admissionsHref = "/admissions",
+  admissionsHref = ADMISSIONS_URL,
   crestSrc = "/logo.png",
 }: {
   activeHref?: string;

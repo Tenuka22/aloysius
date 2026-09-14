@@ -159,6 +159,13 @@ export const COLLEGE_NAME = "St. Aloysius' College";
 export const COLLEGE_LOCATION = "Galle, Sri Lanka";
 export const FOUNDED_YEAR = 1862;
 
+/**
+ * Admissions is a separate application on its own subdomain, not a route in
+ * this site. Every "Admissions" link points here, so it is a cross-origin
+ * navigation - do not pass it to `<Link>`, which only handles in-app routes.
+ */
+export const ADMISSIONS_URL = "https://admissions.aloysiuscollege.lk";
+
 export const formatNewsDate = (iso?: string): string => {
   if (!iso) {
     return "";
