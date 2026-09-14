@@ -1,39 +1,67 @@
-import { Card } from "@astryxdesign/core/Card";
-import { Grid, GridSpan } from "@astryxdesign/core/Grid";
-import {
-  Layout,
-  LayoutContent,
-  LayoutHeader,
-  VStack,
-} from "@astryxdesign/core/Layout";
-import { Heading, Text } from "@astryxdesign/core/Text";
+import { Panel, PanelHead } from "@aloysius/ui/components/cms/cms-primitives";
+import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
+import * as stylex from "@stylexjs/stylex";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 import { orpc } from "@/utils/orpc";
 
+const md = "@media (min-width: 40rem)";
+
+const styles = stylex.create({
+  wrap: {
+    paddingBlockStart: space.md,
+    paddingBlockEnd: space.md,
+    paddingInlineStart: space.md,
+    paddingInlineEnd: space.md,
+    [md]: {
+      paddingBlockStart: space.lg,
+      paddingBlockEnd: space.lg,
+      paddingInlineStart: space.lg,
+      paddingInlineEnd: space.lg,
+    },
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "1fr",
+    gap: space.md,
+    [md]: {
+      gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
+    },
+  },
+  statCard: {
+    display: "flex",
+    flexDirection: "column",
+    gap: space["2xs"],
+  },
+  label: {
+    margin: 0,
+    fontSize: font.size2xs,
+    fontWeight: font.weightBold,
+    letterSpacing: font.trackingWidest,
+    textTransform: "uppercase",
+    color: color.accentOnSurface,
+  },
+  value: {
+    margin: 0,
+    fontSize: font.size3xl,
+    fontWeight: font.weightBold,
+    lineHeight: font.leadingTight,
+    color: color.onSurface,
+  },
+});
+
 export const Route = createFileRoute("/admin/")({
   loader: ({ context }) => {
     context.queryClient.prefetchQuery(orpc.staff.listStaff.queryOptions());
   },
   component: () => (
-    <Layout
-      content={
-        <LayoutContent padding={6}>
-          <Suspense fallback="Loading dashboard…">
-            <DashboardPage />
-          </Suspense>
-        </LayoutContent>
-      }
-      header={
-        <LayoutHeader>
-          <Heading level={1}>Dashboard</Heading>
-        </LayoutHeader>
-      }
-      height="fill"
-      padding={0}
-    />
+    <div {...stylex.props(styles.wrap)}>
+      <Suspense fallback="Loading dashboard">
+        <DashboardPage />
+      </Suspense>
+    </div>
   ),
 });
 
@@ -44,29 +72,25 @@ const DashboardPage = () => {
   const withPortrait = staff.filter((row) => row.portraitFileId).length;
 
   return (
-    <Grid columns={4} gap={4}>
-      <GridSpan columns={1}>
-        <StatCard label="Total staff" value={staff.length} />
-      </GridSpan>
-      <GridSpan columns={1}>
-        <StatCard label="With email on file" value={withEmail} />
-      </GridSpan>
-      <GridSpan columns={2}>
-        <StatCard label="With a portrait" value={withPortrait} />
-      </GridSpan>
-    </Grid>
+    <div {...stylex.props(styles.grid)}>
+      <Panel>
+        <PanelHead title="Total staff" />
+        <div {...stylex.props(styles.statCard)}>
+          <p {...stylex.props(styles.value)}>{staff.length}</p>
+        </div>
+      </Panel>
+      <Panel>
+        <PanelHead title="With email on file" />
+        <div {...stylex.props(styles.statCard)}>
+          <p {...stylex.props(styles.value)}>{withEmail}</p>
+        </div>
+      </Panel>
+      <Panel>
+        <PanelHead title="With a portrait" />
+        <div {...stylex.props(styles.statCard)}>
+          <p {...stylex.props(styles.value)}>{withPortrait}</p>
+        </div>
+      </Panel>
+    </div>
   );
 };
-
-const StatCard = ({ label, value }: { label: string; value: number }) => (
-  <Card padding={5}>
-    <VStack gap={1}>
-      <Text color="secondary" type="supporting">
-        {label}
-      </Text>
-      <Text size="3xl" weight="semibold">
-        {value}
-      </Text>
-    </VStack>
-  </Card>
-);

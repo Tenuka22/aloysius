@@ -1,59 +1,50 @@
-import { Theme } from "@astryxdesign/core";
-import { AppShell } from "@astryxdesign/core/AppShell";
-import { LinkProvider } from "@astryxdesign/core/Link";
-import {
-  SideNav,
-  SideNavHeading,
-  SideNavItem,
-  SideNavSection,
-} from "@astryxdesign/core/SideNav";
-import { neutralTheme } from "@astryxdesign/theme-neutral/built";
 import {
   createFileRoute,
   Outlet,
   useRouterState,
 } from "@tanstack/react-router";
+import { Suspense } from "react";
 
-import "@astryxdesign/core/reset.css";
-import "@astryxdesign/core/astryx.css";
-import "@astryxdesign/theme-neutral/theme.css";
-
-import { AstryxRouterLink } from "@/components/astryx-router-link";
+import { AdminShell } from "@/components/admin/admin-shell";
+import { authClient } from "@/lib/auth-client";
 
 const AdminLayout = () => {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+  const session = authClient.useSession();
+  const userName = session.data?.user?.username ?? "User";
+  const userRole = session.data?.user?.role ?? "user";
+
+  const navItems = [
+    {
+      num: "01",
+      label: "Dashboard",
+      href: "/admin",
+      active: pathname === "/admin",
+    },
+    {
+      num: "02",
+      label: "Staff",
+      href: "/admin/staff",
+      active: pathname.startsWith("/admin/staff"),
+    },
+  ];
 
   return (
-    <Theme theme={neutralTheme}>
-      <LinkProvider component={AstryxRouterLink}>
-        <AppShell
-          contentPadding={0}
-          sideNav={
-            <SideNav header={<SideNavHeading heading="Admin" />}>
-              <SideNavSection title="Overview">
-                <SideNavItem
-                  href="/admin"
-                  isSelected={pathname === "/admin"}
-                  label="Dashboard"
-                />
-              </SideNavSection>
-              <SideNavSection title="Staff">
-                <SideNavItem
-                  href="/admin/staff"
-                  isSelected={pathname.startsWith("/admin/staff")}
-                  label="Staff"
-                />
-              </SideNavSection>
-            </SideNav>
-          }
-        >
-          <Outlet />
-        </AppShell>
-      </LinkProvider>
-    </Theme>
+    <AdminShell
+      title="Admin"
+      navItems={navItems}
+      userName={userName}
+      userRole={userRole}
+    >
+      <Suspense fallback={<div>Loading…</div>}>
+        <Outlet />
+      </Suspense>
+    </AdminShell>
   );
 };
 
-export const Route = createFileRoute("/admin")({ component: AdminLayout });
+export const Route = createFileRoute("/admin")({
+  component: AdminLayout,
+});
