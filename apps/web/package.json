@@ -17,8 +17,6 @@
     "@aloysius/db": "workspace:*",
     "@aloysius/storage": "workspace:*",
     "@aloysius/ui": "workspace:*",
-    "@astryxdesign/core": "^0.6.0",
-    "@astryxdesign/theme-neutral": "^0.6.0",
     "@fontsource-variable/cormorant-garamond": "^5.3.0",
     "@fontsource-variable/manrope": "^5.3.0",
     "@libsql/client": "catalog:",

@@ -1,7 +1,6 @@
-import { Grid } from "@astryxdesign/core/Grid";
-import { VStack } from "@astryxdesign/core/Layout";
-import { Selector } from "@astryxdesign/core/Selector";
-import { TextInput } from "@astryxdesign/core/TextInput";
+import { Field, FieldGrid } from "@aloysius/ui/components/cms/cms-primitives";
+import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
+import * as stylex from "@stylexjs/stylex";
 
 import type { StaffFormValues } from "./staff-form-values";
 
@@ -41,20 +40,33 @@ const YEAR_OPTIONS = Array.from(
   }
 );
 
+const selectStyles = stylex.create({
+  select: {
+    width: "100%",
+    paddingBlock: space["2xs"],
+    paddingInline: space.xs,
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: color.borderStrong,
+    borderRadius: "0.25rem",
+    backgroundColor: color.surfaceSunken,
+    color: color.onSurface,
+    fontFamily: font.body,
+    fontSize: font.sizeMd,
+    lineHeight: font.leadingNormal,
+  },
+  dateRow: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gap: space["2xs"],
+  },
+});
+
 interface StaffFormProps {
   values: StaffFormValues;
   onChange: (values: StaffFormValues) => void;
 }
 
-/**
- * Shared field set for both the create and edit staff dialogs, so the two
- * flows stay in lockstep instead of drifting into separate field lists.
- *
- * Birth date uses three plain Selectors (day/month/year) rather than
- * Astryx's DateInput calendar: its own docs recommend against a calendar
- * for dates far in the past, since jumping back decades one month at a
- * time is slow.
- */
 export const StaffForm = ({ values, onChange }: StaffFormProps) => {
   const setField = <K extends keyof StaffFormValues>(
     key: K,
@@ -62,65 +74,113 @@ export const StaffForm = ({ values, onChange }: StaffFormProps) => {
   ) => onChange({ ...values, [key]: value });
 
   return (
-    <VStack gap={4}>
-      <TextInput
-        isRequired
+    <FieldGrid>
+      <Field
         label="Name"
-        onChange={(value) => setField("name", value)}
+        kind="text"
         value={values.name}
+        onChange={(value) => setField("name", value)}
       />
-      <TextInput
+      <Field
         label="Email"
-        onChange={(value) => setField("email", value)}
-        type="email"
+        kind="email"
         value={values.email}
+        onChange={(value) => setField("email", value)}
       />
-      <TextInput
+      <Field
         label="NIC"
-        onChange={(value) => setField("nic", value)}
+        kind="text"
         value={values.nic}
+        onChange={(value) => setField("nic", value)}
       />
-      <TextInput
+      <Field
         label="Phone"
-        onChange={(value) => setField("phone", value)}
+        kind="text"
         value={values.phone}
+        onChange={(value) => setField("phone", value)}
       />
-      <Selector
-        hasClear
-        label="Gender"
-        onChange={(value) => setField("gender", value ?? "")}
-        options={GENDER_OPTIONS}
-        value={values.gender || null}
-      />
-      <Grid columns={3} gap={2}>
-        <Selector
-          hasClear
-          hasSearch
-          label="Birth day"
-          onChange={(value) => setField("birthDay", value ?? "")}
-          options={DAY_OPTIONS}
-          value={values.birthDay || null}
-          width="100%"
-        />
-        <Selector
-          hasClear
-          hasSearch
-          label="Birth month"
-          onChange={(value) => setField("birthMonth", value ?? "")}
-          options={MONTH_OPTIONS}
-          value={values.birthMonth || null}
-          width="100%"
-        />
-        <Selector
-          hasClear
-          hasSearch
-          label="Birth year"
-          onChange={(value) => setField("birthYear", value ?? "")}
-          options={YEAR_OPTIONS}
-          value={values.birthYear || null}
-          width="100%"
-        />
-      </Grid>
-    </VStack>
+
+      {/* Gender select */}
+      <div>
+        <label
+          htmlFor="staff-gender"
+          style={{
+            display: "block",
+            marginBlockEnd: space["2xs"],
+            fontSize: font.sizeSm,
+            fontWeight: font.weightSemibold,
+            color: color.onSurface,
+          }}
+        >
+          Gender
+        </label>
+        <select
+          id="staff-gender"
+          {...stylex.props(selectStyles.select)}
+          value={values.gender}
+          onChange={(e) => setField("gender", e.currentTarget.value)}
+        >
+          <option value="">—</option>
+          {GENDER_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Birth date */}
+      <fieldset style={{ border: "none", padding: 0, margin: 0 }}>
+        <legend
+          style={{
+            display: "block",
+            marginBlockEnd: space["2xs"],
+            fontSize: font.sizeSm,
+            fontWeight: font.weightSemibold,
+            color: color.onSurface,
+          }}
+        >
+          Birth date
+        </legend>
+        <div {...stylex.props(selectStyles.dateRow)}>
+          <select
+            {...stylex.props(selectStyles.select)}
+            value={values.birthDay}
+            onChange={(e) => setField("birthDay", e.currentTarget.value)}
+          >
+            <option value="">Day</option>
+            {DAY_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <select
+            {...stylex.props(selectStyles.select)}
+            value={values.birthMonth}
+            onChange={(e) => setField("birthMonth", e.currentTarget.value)}
+          >
+            <option value="">Month</option>
+            {MONTH_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <select
+            {...stylex.props(selectStyles.select)}
+            value={values.birthYear}
+            onChange={(e) => setField("birthYear", e.currentTarget.value)}
+          >
+            <option value="">Year</option>
+            {YEAR_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </fieldset>
+    </FieldGrid>
   );
 };
