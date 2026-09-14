@@ -23,11 +23,11 @@
     "@aloysius/storage": "workspace:*",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
+    "@orpc/publisher": "^1.14.11",
     "@orpc/server": "catalog:",
-    "@orpc/zod": "catalog:",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "1.0.0-rc.4",
     "sharp": "^0.35.4",
-    "zod": "catalog:"
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@aloysius/config": "workspace:*",

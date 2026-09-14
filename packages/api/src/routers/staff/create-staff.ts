@@ -1,16 +1,19 @@
-import { staff } from "@aloysius/db/schema/staff";
-import { z } from "zod";
+import { staff, staffInsertSchema } from "@aloysius/db/schema/staff";
+import { pick } from "valibot";
 
 import { adminProcedure } from "../../index";
+import { staffPublisher } from "./staff-publisher";
 
 export const createStaff = adminProcedure
   .input(
-    z.object({
-      name: z.string().min(1),
-      email: z.string().optional(),
-      nic: z.string().optional(),
-      phone: z.string().optional(),
-    })
+    pick(staffInsertSchema, [
+      "name",
+      "email",
+      "nic",
+      "phone",
+      "gender",
+      "birthDate",
+    ])
   )
   .handler(async ({ input, context }) => {
     const id = crypto.randomUUID();
@@ -23,17 +26,28 @@ export const createStaff = adminProcedure
         email: input.email,
         nic: input.nic,
         phone: input.phone,
+        gender: input.gender,
+        birthDate: input.birthDate,
       })
       .returning()
       .get();
 
-    return {
+    const result = {
       id: record.id,
       name: record.name,
       email: record.email,
       nic: record.nic,
       phone: record.phone,
+      gender: record.gender,
+      birthDate: record.birthDate,
       createdAt: record.createdAt.toISOString(),
       updatedAt: record.updatedAt.toISOString(),
     };
+
+    await staffPublisher.publish("staff-changed", {
+      type: "created",
+      id: record.id,
+    });
+
+    return result;
   });

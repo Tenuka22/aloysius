@@ -1,12 +1,13 @@
-import { staff } from "@aloysius/db/schema/staff";
+import { staff, staffIdSchema } from "@aloysius/db/schema/staff";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { adminProcedure } from "../../index";
+import { staffPublisher } from "./staff-publisher";
 
 export const deleteStaff = adminProcedure
-  .input(z.object({ id: z.string() }))
+  .input(v.object({ id: staffIdSchema }))
   .handler(async ({ input, context }) => {
     const existing = await context.db
       .select()
@@ -19,6 +20,11 @@ export const deleteStaff = adminProcedure
     }
 
     await context.db.delete(staff).where(eq(staff.id, input.id)).run();
+
+    await staffPublisher.publish("staff-changed", {
+      type: "deleted",
+      id: input.id,
+    });
 
     return { success: true };
   });

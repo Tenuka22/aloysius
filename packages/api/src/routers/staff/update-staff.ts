@@ -1,18 +1,45 @@
-import { staff } from "@aloysius/db/schema/staff";
+import { staff, staffUpdateSchema } from "@aloysius/db/schema/staff";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import * as v from "valibot";
+import { pick } from "valibot";
 
 import { adminProcedure } from "../../index";
+import { staffPublisher } from "./staff-publisher";
+
+const EDITABLE_STAFF_FIELDS = [
+  "name",
+  "email",
+  "nic",
+  "phone",
+  "birthDate",
+  "gender",
+  "religion",
+  "motherTongue",
+  "bloodGroup",
+  "maritalStatus",
+  "spouseName",
+  "addressLine1",
+  "addressLine2",
+  "city",
+  "district",
+  "gramaNiladhariDivision",
+  "postalCode",
+  "emergencyContactName",
+  "emergencyContactPhone",
+  "appointmentType",
+  "appointmentDate",
+  "teacherServiceNo",
+  "employmentStatus",
+  "portraitFileId",
+  "nationalIdentityCardFileId",
+] as const;
 
 export const updateStaff = adminProcedure
   .input(
-    z.object({
-      id: z.string(),
-      name: z.string().min(1).optional(),
-      email: z.string().optional().nullable(),
-      nic: z.string().optional().nullable(),
-      phone: z.string().optional().nullable(),
+    v.object({
+      id: v.string(),
+      ...pick(staffUpdateSchema, [...EDITABLE_STAFF_FIELDS]).entries,
     })
   )
   .handler(async ({ input, context }) => {
@@ -35,7 +62,7 @@ export const updateStaff = adminProcedure
       .returning()
       .get();
 
-    return {
+    const result = {
       id: record.id,
       name: record.name,
       email: record.email,
@@ -44,4 +71,11 @@ export const updateStaff = adminProcedure
       createdAt: record.createdAt.toISOString(),
       updatedAt: record.updatedAt.toISOString(),
     };
+
+    await staffPublisher.publish("staff-changed", {
+      type: "updated",
+      id: record.id,
+    });
+
+    return result;
   });

@@ -21,6 +21,7 @@ import { setCurrentYear } from "./set-current-year";
 import { updateProfile } from "./update-profile";
 import { updateStaff } from "./update-staff";
 import { uploadQualification } from "./upload-qualification";
+import { watchStaff } from "./watch-staff";
 
 export const staffRouter = {
   // Staff CRUD
@@ -57,7 +58,10 @@ export const staffRouter = {
   // Self-service
   updateProfile,
 
-  // Qualifications
+  // Real-time
+  watchStaff,
+
+  // Qualifications,
   uploadQualification,
   listQualifications,
   approveQualification,
