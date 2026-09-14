@@ -18,7 +18,7 @@ export { ensureSiteAdmin } from "./admin";
 export interface AuthConfig {
   BETTER_AUTH_URL: string;
   BETTER_AUTH_SECRET: string;
-  ADMIN_EMAIL: string;
+  ADMIN_USERNAME: string;
   ADMIN_PASSWORD: string;
 }
 
@@ -37,7 +37,9 @@ const buildAuthOptions = (
   env: AuthConfig,
   database: Database
 ): BetterAuthOptions => {
-  const siteAdminEmail = env.ADMIN_EMAIL.toLowerCase();
+  // Synthetic internal email derived from the configured username.
+  // Never exposed — the admin signs in with username + password.
+  const siteAdminEmail = `${env.ADMIN_USERNAME.toLowerCase()}@aloysius.internal`;
 
   return {
     database: drizzleAdapter(database, {

@@ -10,27 +10,31 @@ import type { AuthConfig } from "./index";
 const ENV: AuthConfig = {
   BETTER_AUTH_URL: "http://localhost:3001",
   BETTER_AUTH_SECRET: "test-secret-test-secret-32-bytes!",
-  ADMIN_EMAIL: "admin@example.com",
+  ADMIN_USERNAME: "admin",
   ADMIN_PASSWORD: "admin123456",
 };
 
+// The synthetic internal email derived from ADMIN_USERNAME — never used for
+// sign-in, but what Better Auth stores in the email column.
+const ADMIN_INTERNAL_EMAIL = `${ENV.ADMIN_USERNAME}@aloysius.internal`;
+
 describe("createAuth role assignment", () => {
-  it("assigns the admin role to the configured ADMIN_EMAIL on sign-up", async () => {
+  it("assigns the admin role when signing up with the derived internal email", async () => {
     const db = await createTestDb();
     const auth = createAuth(ENV, db);
 
     await auth.api.signUpEmail({
       body: {
-        email: ENV.ADMIN_EMAIL,
+        email: ADMIN_INTERNAL_EMAIL,
         password: "whatever12345",
-        name: "Whoever",
+        name: "Site Admin",
       },
     });
 
     const row = await db
       .select()
       .from(user)
-      .where(eq(user.email, ENV.ADMIN_EMAIL))
+      .where(eq(user.email, ADMIN_INTERNAL_EMAIL))
       .get();
     expect(row?.role).toBe("admin");
   });
@@ -66,7 +70,7 @@ describe(ensureSiteAdmin, () => {
     const row = await db
       .select()
       .from(user)
-      .where(eq(user.email, ENV.ADMIN_EMAIL))
+      .where(eq(user.username, ENV.ADMIN_USERNAME))
       .get();
     expect(row?.role).toBe("admin");
 
@@ -89,7 +93,7 @@ describe(ensureSiteAdmin, () => {
     const row = await db
       .select()
       .from(user)
-      .where(eq(user.email, ENV.ADMIN_EMAIL))
+      .where(eq(user.username, ENV.ADMIN_USERNAME))
       .get();
     const acctBefore = await db
       .select()
@@ -134,7 +138,7 @@ describe(ensureSiteAdmin, () => {
     const rows = await db
       .select()
       .from(user)
-      .where(eq(user.email, ENV.ADMIN_EMAIL));
+      .where(eq(user.username, ENV.ADMIN_USERNAME));
     expect(rows).toHaveLength(1);
   });
 });
