@@ -15,6 +15,8 @@ export const user = sqliteTable("user", {
     .default(false)
     .notNull(),
   image: text("image"),
+  username: text("username").unique(),
+  displayUsername: text("display_username"),
   role: text("role").notNull().default("user"),
   banned: integer("banned", { mode: "boolean" }).default(false),
   banReason: text("ban_reason"),

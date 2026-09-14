@@ -51,7 +51,7 @@ const styles = stylex.create({
 
 const SignIn = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,8 +61,8 @@ const SignIn = () => {
     setError(null);
     setIsSubmitting(true);
 
-    const { error: signInError } = await authClient.signIn.email({
-      email,
+    const { error: signInError } = await authClient.signIn.username({
+      username,
       password,
     });
 
@@ -81,15 +81,15 @@ const SignIn = () => {
       <form {...stylex.props(styles.form)} onSubmit={handleSubmit}>
         <h1 {...stylex.props(styles.heading)}>Sign in</h1>
         <div {...stylex.props(styles.field)}>
-          <label htmlFor="email">Email</label>
+          <label htmlFor="username">Username</label>
           <input
             {...stylex.props(styles.input)}
-            autoComplete="email"
-            id="email"
-            onChange={(event) => setEmail(event.target.value)}
+            autoComplete="username"
+            id="username"
+            onChange={(event) => setUsername(event.target.value)}
             required
-            type="email"
-            value={email}
+            type="text"
+            value={username}
           />
         </div>
         <div {...stylex.props(styles.field)}>

@@ -6,7 +6,7 @@ import type {
   BetterAuthOptions,
 } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin as adminPlugin, multiSession } from "better-auth/plugins";
+import { admin as adminPlugin, multiSession, username } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 
 import { ac, admin as adminRole, user as userRole } from "./permissions";
@@ -89,6 +89,7 @@ const buildAuthOptions = (
     plugins: [
       adminPlugin({ ac, roles: { admin: adminRole, user: userRole } }),
       multiSession(),
+      username(),
       tanstackStartCookies(),
     ],
   };
@@ -103,6 +104,7 @@ interface ResolvedAuthOptions extends BetterAuthOptions {
   plugins: [
     ReturnType<typeof adminPlugin<AdminPluginOptions>>,
     ReturnType<typeof multiSession>,
+    ReturnType<typeof username>,
     ReturnType<typeof tanstackStartCookies>,
   ];
 }
