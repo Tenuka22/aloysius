@@ -4,6 +4,8 @@
  */
 // oxlint-disable react/no-danger
 import { SmoothScroll } from "@aloysius/ui/components/smooth-scroll";
+import { NotFoundPage } from "@aloysius/ui/components/status/not-found-page";
+import { ServerErrorPage } from "@aloysius/ui/components/status/server-error-page";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
@@ -49,6 +51,21 @@ const structuredData = JSON.stringify({
     addressCountry: "LK",
   },
 });
+
+/**
+ * Correlation id shown on the 500 screen. Server-thrown errors that already
+ * carry a `digest` (React's server-error hash) reuse it so the value matches
+ * the server log; anything else degrades to the error name, which is still
+ * more useful to support than nothing. The message itself is never shown - it
+ * can contain internals.
+ */
+const errorReference = (error: unknown): string | undefined => {
+  if (error instanceof Error) {
+    const { digest } = error as Error & { digest?: string };
+    return digest ?? error.name;
+  }
+  return undefined;
+};
 
 const RootDocument = () => (
   <html lang="en">
@@ -124,4 +141,19 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   }),
 
   component: RootDocument,
+
+  /*
+   * Unmatched URLs. TanStack Start responds 404 for this branch, so the page is
+   * a real not-found rather than a soft 404 that would keep dead URLs indexed.
+   */
+  notFoundComponent: () => <NotFoundPage />,
+
+  /*
+   * Uncaught render/loader failures. The boundary must not read router context
+   * or query data - whatever failed may be exactly that - so the correlation id
+   * comes from the error object alone and everything else is static.
+   */
+  errorComponent: ({ error }) => (
+    <ServerErrorPage reference={errorReference(error)} />
+  ),
 });
