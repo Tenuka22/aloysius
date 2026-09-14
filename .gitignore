@@ -59,3 +59,7 @@ coverage
 .cache
 tmp
 temp
+
+# Emitted JS/test output alongside TSX sources in packages/ui
+packages/ui/src/**/*.js
+packages/ui/src/**/*.stylex.js
