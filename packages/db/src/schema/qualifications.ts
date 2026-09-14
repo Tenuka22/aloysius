@@ -6,9 +6,28 @@ import {
   text,
   unique,
 } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-orm/valibot";
+import * as v from "valibot";
 
-import { files } from "./files";
-import { staff } from "./staff";
+import { QUALIFICATION_LEVELS } from "../constants/teachers";
+import type { QualificationLevel } from "../constants/teachers";
+import { brand } from "./brand";
+import type { Brand } from "./brand";
+import { fileIdSchema, files } from "./files";
+import { staff, staffIdSchema } from "./staff";
+
+const qualificationLevelSchema = v.picklist(
+  Object.keys(QUALIFICATION_LEVELS) as [
+    QualificationLevel,
+    ...QualificationLevel[],
+  ]
+);
+
+export type TeacherQualificationId = Brand<string, "TeacherQualificationId">;
+export const teacherQualificationIdSchema = v.pipe(
+  v.string(),
+  brand<string, "TeacherQualificationId">()
+);
 
 /**
  * Teacher qualification records.
@@ -62,6 +81,29 @@ export const teacherQualification = sqliteTable(
       table.institution
     ),
   ]
+);
+
+export { qualificationLevelSchema };
+
+const teacherQualificationColumnRefinements = {
+  id: () => teacherQualificationIdSchema,
+  staffId: () => staffIdSchema,
+  qualification: () => qualificationLevelSchema,
+  yearObtained: () =>
+    v.optional(
+      v.pipe(v.number(), v.integer(), v.minValue(1900), v.maxValue(2100))
+    ),
+  documentFileId: () => v.optional(v.nullable(fileIdSchema)),
+  reviewedBy: () => v.optional(v.nullable(staffIdSchema)),
+};
+
+export const teacherQualificationSelectSchema = createSelectSchema(
+  teacherQualification,
+  teacherQualificationColumnRefinements
+);
+export const teacherQualificationInsertSchema = createInsertSchema(
+  teacherQualification,
+  teacherQualificationColumnRefinements
 );
 
 /**

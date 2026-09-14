@@ -1,9 +1,12 @@
-import { qualificationInputSchema } from "@aloysius/db/constants/schemas";
-import { teacherQualification } from "@aloysius/db/schema/qualifications";
-import { staff } from "@aloysius/db/schema/staff";
+import {
+  teacherQualification,
+  teacherQualificationInsertSchema,
+} from "@aloysius/db/schema/qualifications";
+import { staff, staffIdSchema } from "@aloysius/db/schema/staff";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { pick } from "valibot";
+import * as v from "valibot";
 
 import { protectedProcedure } from "../../index";
 
@@ -14,8 +17,16 @@ import { protectedProcedure } from "../../index";
  */
 export const uploadQualification = protectedProcedure
   .input(
-    qualificationInputSchema.extend({
-      staffId: z.string().optional(),
+    v.object({
+      ...pick(teacherQualificationInsertSchema, [
+        "qualification",
+        "yearObtained",
+        "institution",
+        "subjectSpecialization",
+        "specializationCategory",
+        "documentFileId",
+      ]).entries,
+      staffId: v.optional(staffIdSchema),
     })
   )
   .handler(async ({ input, context }) => {

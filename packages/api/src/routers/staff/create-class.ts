@@ -1,17 +1,11 @@
-import { gradeLevelSchema, mediumSchema } from "@aloysius/db/constants/schemas";
-import { class_ } from "@aloysius/db/schema/academics";
-import { z } from "zod";
+import { class_, classInsertSchema } from "@aloysius/db/schema/academics";
+import { pick } from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const createClass = adminProcedure
   .input(
-    z.object({
-      academicYearId: z.string(),
-      gradeLevel: gradeLevelSchema,
-      name: z.string().min(1),
-      medium: mediumSchema.default("sinhala"),
-    })
+    pick(classInsertSchema, ["academicYearId", "gradeLevel", "name", "medium"])
   )
   .handler(async ({ input, context }) => {
     const id = crypto.randomUUID();

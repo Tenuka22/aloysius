@@ -1,6 +1,7 @@
 import { appRouter } from "@aloysius/api/routers/index";
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
+import { ClientRetryPlugin } from "@orpc/client/plugins";
 import { createRouterClient } from "@orpc/server";
 import type { RouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
@@ -38,6 +39,7 @@ const getORPCClient = createIsomorphicFn()
   .client((): RouterClient<typeof appRouter> => {
     const link = new RPCLink({
       url: `${window.location.origin}/api/rpc`,
+      plugins: [new ClientRetryPlugin({ default: { retry: 2 } })],
       fetch(url, options) {
         return fetch(url, {
           ...options,

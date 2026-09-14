@@ -1,12 +1,12 @@
-import { files } from "@aloysius/db/schema/files";
+import { fileIdSchema, files } from "@aloysius/db/schema/files";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const deleteFile = adminProcedure
-  .input(z.object({ id: z.string() }))
+  .input(v.object({ id: fileIdSchema }))
   .handler(async ({ input, context }) => {
     const row = await context.db
       .select()

@@ -1,14 +1,18 @@
-import { staffPosition } from "@aloysius/db/schema/staff";
+import {
+  academicYearIdSchema,
+  staffIdSchema,
+  staffPosition,
+} from "@aloysius/db/schema/staff";
 import { eq, and } from "drizzle-orm";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const listStaffPositions = adminProcedure
   .input(
-    z.object({
-      academicYearId: z.string(),
-      staffId: z.string().optional(),
+    v.object({
+      academicYearId: academicYearIdSchema,
+      staffId: v.optional(staffIdSchema),
     })
   )
   .handler(async ({ input, context }) => {

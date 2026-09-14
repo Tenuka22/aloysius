@@ -142,6 +142,8 @@ describe("appRouter.staff.createStaff", () => {
       email: "jane@example.com",
       nic: "987654321V",
       phone: "0779876543",
+      gender: undefined,
+      birthDate: undefined,
     });
 
     expect(result.name).toBe("Jane Silva");

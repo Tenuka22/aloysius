@@ -1,10 +1,13 @@
-import { academicYear } from "@aloysius/db/schema/staff";
-import { z } from "zod";
+import {
+  academicYear,
+  academicYearInsertSchema,
+} from "@aloysius/db/schema/staff";
+import { pick } from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const createAcademicYear = adminProcedure
-  .input(z.object({ year: z.number().int().min(2000).max(2100) }))
+  .input(pick(academicYearInsertSchema, ["year"]))
   .handler(async ({ input, context }) => {
     const id = crypto.randomUUID();
 

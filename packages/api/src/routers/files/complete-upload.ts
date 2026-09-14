@@ -1,17 +1,10 @@
-import { files } from "@aloysius/db/schema/files";
-import { z } from "zod";
+import { files, filesInsertSchema } from "@aloysius/db/schema/files";
+import { pick } from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const completeUpload = adminProcedure
-  .input(
-    z.object({
-      key: z.string().min(1),
-      name: z.string().min(1),
-      type: z.string().min(1),
-      size: z.number().positive(),
-    })
-  )
+  .input(pick(filesInsertSchema, ["key", "name", "type", "size"]))
   .handler(async ({ input, context }) => {
     const id = input.key.split("/").pop()?.split(".")[0] ?? crypto.randomUUID();
 

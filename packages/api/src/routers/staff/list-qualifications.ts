@@ -1,9 +1,11 @@
 import { teacherQualification } from "@aloysius/db/schema/qualifications";
-import { staff } from "@aloysius/db/schema/staff";
+import { staff, staffIdSchema } from "@aloysius/db/schema/staff";
 import { and, desc, eq } from "drizzle-orm";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { protectedProcedure } from "../../index";
+
+const documentStatusSchema = v.picklist(["pending", "approved", "rejected"]);
 
 /**
  * List qualifications.
@@ -12,9 +14,9 @@ import { protectedProcedure } from "../../index";
  */
 export const listQualifications = protectedProcedure
   .input(
-    z.object({
-      staffId: z.string().optional(),
-      status: z.enum(["pending", "approved", "rejected"]).optional(),
+    v.object({
+      staffId: v.optional(staffIdSchema),
+      status: v.optional(documentStatusSchema),
     })
   )
   .handler(async ({ input, context }) => {

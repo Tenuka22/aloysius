@@ -1,12 +1,15 @@
-import { staffPosition } from "@aloysius/db/schema/staff";
+import {
+  staffPosition,
+  staffPositionIdSchema,
+} from "@aloysius/db/schema/staff";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const removePosition = adminProcedure
-  .input(z.object({ id: z.string() }))
+  .input(v.object({ id: staffPositionIdSchema }))
   .handler(async ({ input, context }) => {
     const existing = await context.db
       .select()

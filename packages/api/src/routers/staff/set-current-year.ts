@@ -1,12 +1,12 @@
-import { academicYear } from "@aloysius/db/schema/staff";
+import { academicYear, academicYearIdSchema } from "@aloysius/db/schema/staff";
 import { ORPCError } from "@orpc/server";
 import { eq, sql } from "drizzle-orm";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const setCurrentYear = adminProcedure
-  .input(z.object({ id: z.string() }))
+  .input(v.object({ id: academicYearIdSchema }))
   .handler(async ({ input, context }) => {
     const existing = await context.db
       .select()

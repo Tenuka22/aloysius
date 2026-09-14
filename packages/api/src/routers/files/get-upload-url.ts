@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { adminProcedure } from "../../index";
 
@@ -8,10 +8,10 @@ const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024;
 
 export const getUploadUrl = adminProcedure
   .input(
-    z.object({
-      name: z.string().min(1),
-      type: z.string().min(1),
-      size: z.number().positive().max(MAX_FILE_SIZE),
+    v.object({
+      name: v.pipe(v.string(), v.minLength(1)),
+      type: v.pipe(v.string(), v.minLength(1)),
+      size: v.pipe(v.number(), v.minValue(1), v.maxValue(MAX_FILE_SIZE)),
     })
   )
   .handler(async ({ input, context }) => {

@@ -20,18 +20,18 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate:deploy": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
     "@libsql/client": "catalog:",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "1.0.0-rc.4",
     "libsql": "catalog:",
-    "ws": "^8.21.3",
-    "zod": "catalog:"
+    "valibot": "catalog:",
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "@aloysius/config": "workspace:*",
-    "drizzle-kit": "^0.31.10",
+    "drizzle-kit": "1.0.0-rc.4",
     "typescript": "catalog:",
     "varlock": "catalog:",
     "vitest": "catalog:"

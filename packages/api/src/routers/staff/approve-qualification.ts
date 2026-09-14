@@ -1,7 +1,10 @@
-import { teacherQualification } from "@aloysius/db/schema/qualifications";
+import {
+  teacherQualification,
+  teacherQualificationIdSchema,
+} from "@aloysius/db/schema/qualifications";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { adminProcedure } from "../../index";
 
@@ -11,10 +14,10 @@ import { adminProcedure } from "../../index";
  */
 export const approveQualification = adminProcedure
   .input(
-    z.object({
-      id: z.string(),
-      status: z.enum(["approved", "rejected"]),
-      reviewNote: z.string().optional(),
+    v.object({
+      id: teacherQualificationIdSchema,
+      status: v.picklist(["approved", "rejected"]),
+      reviewNote: v.optional(v.string()),
     })
   )
   .handler(async ({ input, context }) => {

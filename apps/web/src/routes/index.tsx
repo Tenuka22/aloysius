@@ -1,14 +1,6 @@
-import { AdminExampleCard } from "@aloysius/ui/components/admin/example-card";
-import { HelloWorld } from "@aloysius/ui/components/hello-world";
+import { Navbar } from "@aloysius/ui/components/navbar";
 import { createFileRoute } from "@tanstack/react-router";
 
-const Home = () => (
-  <>
-    <HelloWorld />
-    <AdminExampleCard />
-  </>
-);
-
 export const Route = createFileRoute("/")({
-  component: Home,
+  component: Navbar,
 });

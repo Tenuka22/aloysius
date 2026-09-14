@@ -7,7 +7,7 @@
       "packages/*"
     ],
     "catalog": {
-      "zod": "^4.5.4",
+      "valibot": "^1.5.0",
       "typescript": "^6.0.3",
       "varlock": "1.18.0",
       "@stylexjs/stylex": "^0.19.0",
@@ -19,7 +19,7 @@
       "@orpc/server": "^1.15.0",
       "@orpc/client": "^1.15.0",
       "@orpc/openapi": "^1.15.0",
-      "@orpc/zod": "^1.15.0",
+      "@orpc/valibot": "^1.15.0",
       "better-auth": "1.7.3",
       "@types/react": "^19.2.18",
       "@types/react-dom": "^19.2.7",
@@ -34,7 +34,7 @@
   "scripts": {
     "dev": "bun run dev:infra && bun run dev:db && nx run-many -t dev",
     "dev:infra": "docker compose -f docker-compose.dev.yml up -d",
-    "dev:db": "bun run db:push",
+    "dev:db": "bun run db:migrate",
     "build": "nx run-many -t build",
     "check-types": "nx run-many -t check-types",
     "test": "nx run-many -t test",
@@ -55,9 +55,7 @@
     "fix": "ultracite fix",
     "prepare": "husky"
   },
-  "dependencies": {
-    "zod": "catalog:"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@aloysius/config": "workspace:*",
     "@types/node": "^26.4.1",

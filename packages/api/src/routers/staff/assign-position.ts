@@ -1,16 +1,19 @@
-import { staffPosition } from "@aloysius/db/schema/staff";
-import { z } from "zod";
+import {
+  staffPosition,
+  staffPositionInsertSchema,
+} from "@aloysius/db/schema/staff";
+import { pick } from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const assignPosition = adminProcedure
   .input(
-    z.object({
-      staffId: z.string(),
-      academicYearId: z.string(),
-      position: z.string(),
-      sectionalScope: z.string().optional(),
-    })
+    pick(staffPositionInsertSchema, [
+      "staffId",
+      "academicYearId",
+      "position",
+      "sectionalScope",
+    ])
   )
   .handler(async ({ input, context }) => {
     const id = crypto.randomUUID();

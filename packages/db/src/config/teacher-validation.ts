@@ -3,14 +3,16 @@
  * This module provides validation rules and utility functions for teacher data.
  */
 
-import {
-  strongPasswordSchema,
-  updateStaffSchema,
-  nicSchema,
-  phoneSchema,
-} from "../constants/schemas";
+import * as v from "valibot";
+
 import { QUALIFICATION_LEVELS } from "../constants/teachers";
 import type { QualificationLevel } from "../constants/teachers";
+import {
+  nicSchema as nicFormatSchema,
+  slPhoneSchema as phoneFormatSchema,
+  strongPasswordSchema as strongPasswordFormatSchema,
+} from "../schema/primitives";
+import { staffUpdateSchema } from "../schema/staff";
 
 /** Camel-case hump, used to space out an appointment type for display. */
 const SPACED_WORD_BOUNDARY = /(?<upper>[A-Z])/gu;
@@ -22,9 +24,9 @@ const SPACED_WORD_BOUNDARY = /(?<upper>[A-Z])/gu;
  * Uses better-auth's password config as base, adds complexity requirements.
  */
 export const validatePasswordStrength = (password: string): string | null => {
-  const result = strongPasswordSchema.safeParse(password);
+  const result = v.safeParse(strongPasswordFormatSchema, password);
   if (!result.success) {
-    return result.error.issues[0]?.message ?? "Invalid password";
+    return result.issues[0]?.message ?? "Invalid password";
   }
   return null;
 };
@@ -48,9 +50,9 @@ export const validateNIC = (nic: string | undefined): string | null => {
   if (!nic) {
     return null;
   }
-  const result = nicSchema.safeParse(nic);
+  const result = v.safeParse(nicFormatSchema, nic);
   if (!result.success) {
-    return result.error.issues[0]?.message ?? "Invalid NIC format";
+    return result.issues[0]?.message ?? "Invalid NIC format";
   }
   return null;
 };
@@ -66,9 +68,9 @@ export const validatePhone = (phone: string | undefined): string | null => {
   if (!phone) {
     return null;
   }
-  const result = phoneSchema.safeParse(phone);
+  const result = v.safeParse(phoneFormatSchema, phone);
   if (!result.success) {
-    return result.error.issues[0]?.message ?? "Invalid phone number";
+    return result.issues[0]?.message ?? "Invalid phone number";
   }
   return null;
 };
@@ -127,13 +129,13 @@ export const getQualificationLabel = (
  * Returns array of validation errors (empty if valid).
  */
 export const validateStaffUpdate = (data: unknown): string[] => {
-  const result = updateStaffSchema.safeParse(data);
+  const result = v.safeParse(staffUpdateSchema, data);
   if (result.success) {
     return [];
   }
 
-  return result.error.issues.map((issue) => {
-    const path = issue.path.join(".");
+  return result.issues.map((issue) => {
+    const path = (issue.path ?? []).map((item) => String(item.key)).join(".");
     return `${path}: ${issue.message}`;
   });
 };

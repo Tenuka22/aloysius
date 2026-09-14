@@ -1,7 +1,7 @@
-import { staff } from "@aloysius/db/schema/staff";
+import { staff, staffUpdateSchema } from "@aloysius/db/schema/staff";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { pick } from "valibot";
 
 import { protectedProcedure } from "../../index";
 
@@ -11,12 +11,7 @@ import { protectedProcedure } from "../../index";
  * Admin fields (name, email, nic) are NOT editable here.
  */
 export const updateProfile = protectedProcedure
-  .input(
-    z.object({
-      phone: z.string().optional().nullable(),
-      portraitFileId: z.string().optional().nullable(),
-    })
-  )
+  .input(pick(staffUpdateSchema, ["phone", "portraitFileId"]))
   .handler(async ({ input, context }) => {
     // Find the staff record linked to this user by email
     const staffRecord = await context.db

@@ -1,12 +1,12 @@
-import { staff } from "@aloysius/db/schema/staff";
+import { staff, staffIdSchema } from "@aloysius/db/schema/staff";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const getStaff = adminProcedure
-  .input(z.object({ id: z.string() }))
+  .input(v.object({ id: staffIdSchema }))
   .handler(async ({ input, context }) => {
     const row = await context.db
       .select()

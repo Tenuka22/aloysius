@@ -17,12 +17,14 @@
     "@aloysius/db": "workspace:*",
     "@aloysius/storage": "workspace:*",
     "@aloysius/ui": "workspace:*",
+    "@astryxdesign/core": "^0.6.0",
+    "@astryxdesign/theme-neutral": "^0.6.0",
     "@libsql/client": "catalog:",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/tanstack-query": "^1.15.0",
-    "@orpc/zod": "catalog:",
+    "@orpc/valibot": "catalog:",
     "@stylexjs/stylex": "catalog:",
     "@tanstack/react-query": "^5.102.8",
     "@tanstack/react-router": "^1.170.32",
@@ -39,8 +41,7 @@
     "sharp": "^0.35.4",
     "sonner": "catalog:",
     "varlock": "catalog:",
-    "ws": "^8.21.3",
-    "zod": "catalog:"
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "@aloysius/config": "workspace:*",

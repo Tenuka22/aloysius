@@ -6,7 +6,22 @@ import {
   text,
   unique,
 } from "drizzle-orm/sqlite-core";
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "drizzle-orm/valibot";
+import * as v from "valibot";
 
+import { MOTHER_TONGUE_OPTIONS, RELIGION_OPTIONS } from "../constants/subjects";
+import {
+  APPOINTMENT_TYPES,
+  BLOOD_GROUPS,
+  EMPLOYMENT_STATUSES,
+  GENDERS,
+  MARITAL_STATUSES,
+  SRI_LANKA_DISTRICTS,
+} from "../constants/teachers";
 import type {
   AppointmentType,
   EmploymentStatus,
@@ -15,7 +30,36 @@ import type {
   BloodGroup,
   SriLankaDistrict,
 } from "../constants/teachers";
-import { files } from "./files";
+import { brand } from "./brand";
+import type { Brand } from "./brand";
+import { fileIdSchema, files } from "./files";
+import {
+  emailSchema,
+  isoDateSchema as isoDatePrimitive,
+  nicSchema as nicPrimitive,
+  optionalNullable,
+  postalCodeSchema,
+  slPhoneSchema,
+} from "./primitives";
+
+export type StaffId = Brand<string, "StaffId">;
+export const staffIdSchema = v.pipe(v.string(), brand<string, "StaffId">());
+
+export type AcademicYearId = Brand<string, "AcademicYearId">;
+export const academicYearIdSchema = v.pipe(
+  v.string(),
+  brand<string, "AcademicYearId">()
+);
+
+export type StaffPositionId = Brand<string, "StaffPositionId">;
+export const staffPositionIdSchema = v.pipe(
+  v.string(),
+  brand<string, "StaffPositionId">()
+);
+
+const phoneSchema = optionalNullable(slPhoneSchema);
+const nicSchema = optionalNullable(nicPrimitive);
+const isoDateSchema = optionalNullable(isoDatePrimitive);
 
 /** Permanent staff record (not year-dependent). */
 export const staff = sqliteTable(
@@ -124,4 +168,77 @@ export const staffPosition = sqliteTable(
       table.sectionalScope
     ),
   ]
+);
+
+const staffColumnRefinements = {
+  id: () => staffIdSchema,
+  email: () => optionalNullable(emailSchema),
+  nic: () => nicSchema,
+  phone: () => phoneSchema,
+  birthDate: () => isoDateSchema,
+  gender: () => v.optional(v.picklist(GENDERS)),
+  religion: () => v.optional(v.picklist(RELIGION_OPTIONS)),
+  motherTongue: () => v.optional(v.picklist(MOTHER_TONGUE_OPTIONS)),
+  bloodGroup: () => v.optional(v.picklist(BLOOD_GROUPS)),
+  maritalStatus: () => v.optional(v.picklist(MARITAL_STATUSES)),
+  district: () => v.optional(v.picklist(SRI_LANKA_DISTRICTS)),
+  postalCode: () => optionalNullable(postalCodeSchema),
+  emergencyContactPhone: () => phoneSchema,
+  appointmentType: () =>
+    v.optional(
+      v.picklist(
+        Object.keys(APPOINTMENT_TYPES) as [
+          AppointmentType,
+          ...AppointmentType[],
+        ]
+      )
+    ),
+  appointmentDate: () => isoDateSchema,
+  employmentStatus: () =>
+    v.optional(
+      v.picklist(
+        Object.keys(EMPLOYMENT_STATUSES) as [
+          EmploymentStatus,
+          ...EmploymentStatus[],
+        ]
+      )
+    ),
+  portraitFileId: () => optionalNullable(fileIdSchema),
+  nationalIdentityCardFileId: () => optionalNullable(fileIdSchema),
+};
+
+export const staffSelectSchema = createSelectSchema(
+  staff,
+  staffColumnRefinements
+);
+export const staffInsertSchema = createInsertSchema(
+  staff,
+  staffColumnRefinements
+);
+export const staffUpdateSchema = createUpdateSchema(
+  staff,
+  staffColumnRefinements
+);
+
+export const academicYearSelectSchema = createSelectSchema(academicYear, {
+  id: () => academicYearIdSchema,
+});
+export const academicYearInsertSchema = createInsertSchema(academicYear, {
+  year: () =>
+    v.pipe(v.number(), v.integer(), v.minValue(2000), v.maxValue(2100)),
+});
+
+const staffPositionColumnRefinements = {
+  id: () => staffPositionIdSchema,
+  staffId: () => staffIdSchema,
+  academicYearId: () => academicYearIdSchema,
+};
+
+export const staffPositionSelectSchema = createSelectSchema(
+  staffPosition,
+  staffPositionColumnRefinements
+);
+export const staffPositionInsertSchema = createInsertSchema(
+  staffPosition,
+  staffPositionColumnRefinements
 );

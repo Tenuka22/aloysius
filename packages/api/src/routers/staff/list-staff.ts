@@ -16,6 +16,8 @@ export const listStaff = adminProcedure.handler(async ({ context }) => {
     email: row.email,
     nic: row.nic,
     phone: row.phone,
+    gender: row.gender,
+    birthDate: row.birthDate,
     portraitFileId: row.portraitFileId,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),

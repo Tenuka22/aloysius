@@ -1,21 +1,20 @@
 import {
-  gradeLevelSchema,
-  subjectKeySchema,
-} from "@aloysius/db/constants/schemas";
-import { subjectAssignment } from "@aloysius/db/schema/academics";
-import { z } from "zod";
+  subjectAssignment,
+  subjectAssignmentInsertSchema,
+} from "@aloysius/db/schema/academics";
+import { pick } from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const assignSubject = adminProcedure
   .input(
-    z.object({
-      staffId: z.string(),
-      academicYearId: z.string(),
-      subjectKey: subjectKeySchema,
-      gradeLevel: gradeLevelSchema,
-      classId: z.string().optional(),
-    })
+    pick(subjectAssignmentInsertSchema, [
+      "staffId",
+      "academicYearId",
+      "subjectKey",
+      "gradeLevel",
+      "classId",
+    ])
   )
   .handler(async ({ input, context }) => {
     const id = crypto.randomUUID();

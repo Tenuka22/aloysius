@@ -1,6 +1,10 @@
 import type { Database } from "@aloysius/db";
 import * as schema from "@aloysius/db/schema/auth";
 import { betterAuth } from "better-auth";
+import type {
+  Auth as BetterAuthInstance,
+  BetterAuthOptions,
+} from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin as adminPlugin, multiSession } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
@@ -29,10 +33,13 @@ export interface AuthConfig {
  */
 export const AUTH_COOKIE_PREFIX = "aloysius";
 
-export const createAuth = (env: AuthConfig, database: Database) => {
+const buildAuthOptions = (
+  env: AuthConfig,
+  database: Database
+): BetterAuthOptions => {
   const siteAdminEmail = env.ADMIN_EMAIL.toLowerCase();
 
-  return betterAuth({
+  return {
     database: drizzleAdapter(database, {
       provider: "sqlite",
       schema,
@@ -84,7 +91,28 @@ export const createAuth = (env: AuthConfig, database: Database) => {
       multiSession(),
       tanstackStartCookies(),
     ],
-  });
+  };
 };
 
-export type Auth = ReturnType<typeof createAuth>;
+interface AdminPluginOptions {
+  ac: typeof ac;
+  roles: { admin: typeof adminRole; user: typeof userRole };
+}
+
+interface ResolvedAuthOptions extends BetterAuthOptions {
+  plugins: [
+    ReturnType<typeof adminPlugin<AdminPluginOptions>>,
+    ReturnType<typeof multiSession>,
+    ReturnType<typeof tanstackStartCookies>,
+  ];
+}
+
+export const createAuth = (
+  env: AuthConfig,
+  database: Database
+): BetterAuthInstance<ResolvedAuthOptions> =>
+  betterAuth(
+    buildAuthOptions(env, database)
+  ) as unknown as BetterAuthInstance<ResolvedAuthOptions>;
+
+export type Auth = BetterAuthInstance<ResolvedAuthOptions>;

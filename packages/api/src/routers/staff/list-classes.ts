@@ -1,15 +1,15 @@
-import { gradeLevelSchema } from "@aloysius/db/constants/schemas";
-import { class_ } from "@aloysius/db/schema/academics";
+import { class_, gradeLevelSchema } from "@aloysius/db/schema/academics";
+import { academicYearIdSchema } from "@aloysius/db/schema/staff";
 import { eq, and } from "drizzle-orm";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const listClasses = adminProcedure
   .input(
-    z.object({
-      academicYearId: z.string(),
-      gradeLevel: gradeLevelSchema.optional(),
+    v.object({
+      academicYearId: academicYearIdSchema,
+      gradeLevel: v.optional(gradeLevelSchema),
     })
   )
   .handler(async ({ input, context }) => {

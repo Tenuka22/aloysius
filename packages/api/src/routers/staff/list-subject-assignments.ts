@@ -1,20 +1,21 @@
 import {
   gradeLevelSchema,
+  subjectAssignment,
   subjectKeySchema,
-} from "@aloysius/db/constants/schemas";
-import { subjectAssignment } from "@aloysius/db/schema/academics";
+} from "@aloysius/db/schema/academics";
+import { academicYearIdSchema, staffIdSchema } from "@aloysius/db/schema/staff";
 import { eq, and } from "drizzle-orm";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const listSubjectAssignments = adminProcedure
   .input(
-    z.object({
-      academicYearId: z.string(),
-      staffId: z.string().optional(),
-      gradeLevel: gradeLevelSchema.optional(),
-      subjectKey: subjectKeySchema.optional(),
+    v.object({
+      academicYearId: academicYearIdSchema,
+      staffId: v.optional(staffIdSchema),
+      gradeLevel: v.optional(gradeLevelSchema),
+      subjectKey: v.optional(subjectKeySchema),
     })
   )
   .handler(async ({ input, context }) => {

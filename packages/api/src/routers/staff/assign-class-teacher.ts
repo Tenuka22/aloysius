@@ -1,16 +1,21 @@
-import { class_ } from "@aloysius/db/schema/academics";
+import {
+  class_,
+  classIdSchema,
+  classInsertSchema,
+} from "@aloysius/db/schema/academics";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { pick } from "valibot";
+import * as v from "valibot";
 
 import { adminProcedure } from "../../index";
 
 export const assignClassTeacher = adminProcedure
   .input(
-    z.object({
-      classId: z.string(),
-      homeroomTeacherId: z.string().optional().nullable(),
-      subHomeroomTeacherId: z.string().optional().nullable(),
+    v.object({
+      classId: classIdSchema,
+      ...pick(classInsertSchema, ["homeroomTeacherId", "subHomeroomTeacherId"])
+        .entries,
     })
   )
   .handler(async ({ input, context }) => {
