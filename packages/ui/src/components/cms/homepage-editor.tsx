@@ -4,13 +4,11 @@ import { useState } from "react";
 
 import { HOMEPAGE_BLOCKS, REVISIONS, formatCmsDate } from "../../content/cms";
 import type { BlockField } from "../../content/cms";
-import { COLLEGE_NAME, MOTTO } from "../../content/home";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
 import { VisuallyHidden } from "../primitives/layout";
 import {
   CmsButton,
-  CmsLink,
   Field,
   FieldGrid,
   Panel,
@@ -234,109 +232,12 @@ const styles = stylex.create({
     textAlign: "center",
     textTransform: "uppercase",
   },
-  imageActions: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: space["2xs"],
-    marginBlockStart: space["2xs"],
-  },
   editorFoot: {
     display: "flex",
     flexWrap: "wrap",
     justifyContent: "flex-end",
     gap: space["2xs"],
     marginBlockStart: space.md,
-  },
-
-  /* ------------------------------------------------------------- preview */
-  previewToggle: {
-    display: "flex",
-    gap: space["3xs"],
-  },
-  previewTab: {
-    minHeight: "2.75rem",
-    paddingInline: space["2xs"],
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.borderAccent,
-    backgroundColor: "transparent",
-    color: color.accentOnInverse,
-    fontFamily: font.body,
-    fontSize: font.size2xs,
-    fontWeight: font.weightExtrabold,
-    letterSpacing: font.trackingWide,
-    textTransform: "uppercase",
-    cursor: "pointer",
-  },
-  previewTabActive: {
-    backgroundColor: color.accent,
-    borderColor: color.accent,
-    color: color.onAccent,
-  },
-  previewStage: {
-    display: "flex",
-    justifyContent: "center",
-    padding: space.sm,
-    backgroundColor: "rgba(0, 0, 0, 0.25)",
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.borderAccent,
-  },
-  previewFrame: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    minHeight: "15rem",
-    padding: space.md,
-    backgroundImage:
-      "linear-gradient(180deg, rgba(1, 52, 5, 0.55), rgba(1, 52, 5, 0.94))",
-    textAlign: "center",
-  },
-  previewPhone: {
-    // A phone preview is a *width* constraint, nothing more - the same
-    // components render inside it, so what the editor sees is what ships.
-    maxWidth: "23rem",
-  },
-  previewMotto: {
-    margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingUltra,
-    textTransform: "uppercase",
-    color: color.accentOnInverse,
-  },
-  previewTitle: {
-    margin: 0,
-    marginBlockStart: space["2xs"],
-    fontFamily: font.display,
-    fontSize: font.size2xl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingTight,
-    color: color.onInverse,
-    textWrap: "balance",
-  },
-  previewRule: {
-    width: "2.5rem",
-    height: "2px",
-    marginBlock: space.sm,
-    backgroundColor: color.accent,
-    border: 0,
-  },
-  previewTagline: {
-    margin: 0,
-    fontFamily: font.display,
-    fontStyle: "italic",
-    fontSize: font.sizeLg,
-    color: color.onInverse,
-    textWrap: "balance",
-  },
-  previewNote: {
-    margin: 0,
-    marginBlockStart: space["2xs"],
-    fontSize: font.sizeXs,
-    color: color.onInverseSubtle,
   },
 
   /* ----------------------------------------------------------- revisions */
@@ -398,21 +299,12 @@ export const HomepageEditor = () => {
   );
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const [draft, setDraft] = useState<Draft>({});
-  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
 
   const selected =
     HOMEPAGE_BLOCKS.find((block) => block.id === selectedId) ??
     HOMEPAGE_BLOCKS[0];
 
   const valueOf = (field: BlockField) => draft[field.id] ?? field.value ?? "";
-
-  // The preview reads the same draft the fields write to, so it reflects
-  // unsaved edits - which is the whole point of having it on screen.
-  const heroBlock = HOMEPAGE_BLOCKS.find((b) => b.id === "hero");
-  const heroField = (id: string) => {
-    const field = heroBlock?.fields.find((f) => f.id === id);
-    return field ? (draft[field.id] ?? field.value ?? "") : "";
-  };
 
   return (
     <div {...stylex.props(styles.layout)}>
@@ -519,18 +411,6 @@ export const HomepageEditor = () => {
                       No image selected yet.
                       {field.hint ? ` ${field.hint}` : ""}
                     </p>
-                    <div {...stylex.props(styles.imageActions)}>
-                      <CmsButton tone="quiet">
-                        <span aria-hidden="true">Upload</span>
-                        <VisuallyHidden>{`Upload ${field.label}`}</VisuallyHidden>
-                      </CmsButton>
-                      <CmsButton tone="quiet">
-                        <span aria-hidden="true">Media library</span>
-                        <VisuallyHidden>
-                          {`Choose ${field.label} from the media library`}
-                        </VisuallyHidden>
-                      </CmsButton>
-                    </div>
                   </div>
                 </div>
               ) : (
@@ -555,60 +435,6 @@ export const HomepageEditor = () => {
             </CmsButton>
             <CmsButton tone="dark">Apply to section</CmsButton>
           </div>
-        </Panel>
-
-        <Panel tone="inverse">
-          <PanelHead
-            action={
-              <div {...stylex.props(styles.previewToggle)}>
-                <button
-                  aria-pressed={device === "desktop"}
-                  onClick={() => setDevice("desktop")}
-                  type="button"
-                  {...stylex.props(
-                    styles.previewTab,
-                    device === "desktop" && styles.previewTabActive
-                  )}
-                >
-                  Desktop
-                </button>
-                <button
-                  aria-pressed={device === "mobile"}
-                  onClick={() => setDevice("mobile")}
-                  type="button"
-                  {...stylex.props(
-                    styles.previewTab,
-                    device === "mobile" && styles.previewTabActive
-                  )}
-                >
-                  Mobile
-                </button>
-              </div>
-            }
-            inverse
-            title="Live preview"
-          />
-          <div {...stylex.props(styles.previewStage)}>
-            <div
-              {...stylex.props(
-                styles.previewFrame,
-                device === "mobile" && styles.previewPhone
-              )}
-            >
-              <p {...stylex.props(styles.previewMotto)}>
-                {heroField("hero-motto") || MOTTO}
-              </p>
-              <p {...stylex.props(styles.previewTitle)}>{COLLEGE_NAME}</p>
-              <hr {...stylex.props(styles.previewRule)} />
-              <p {...stylex.props(styles.previewTagline)}>
-                {heroField("hero-tagline") ||
-                  "Tradition. Excellence. Leadership."}
-              </p>
-            </div>
-          </div>
-          <p {...stylex.props(styles.previewNote)}>
-            Reflects unsaved edits. Publish to make them live.
-          </p>
         </Panel>
 
         <Panel>
@@ -636,33 +462,6 @@ export const HomepageEditor = () => {
             </div>
           ))}
         </Panel>
-
-        <Panel>
-          <PanelHead
-            note="How the homepage appears in search results and shared links."
-            title="SEO & metadata"
-          />
-          <FieldGrid>
-            <Field
-              label="Page title"
-              value="St. Aloysius' College, Galle — Official Website"
-              wide
-            />
-            <Field
-              hint="150–160 characters reads best in a search result."
-              kind="textarea"
-              label="Meta description"
-              wide
-            />
-            <Field
-              kind="readonly"
-              label="URL slug"
-              value="/"
-              hint="The homepage slug is fixed."
-            />
-            <Field label="Social share image" hint="1200 × 630 recommended." />
-          </FieldGrid>
-        </Panel>
       </div>
     </div>
   );
@@ -670,9 +469,6 @@ export const HomepageEditor = () => {
 
 export const HomepageEditorActions = () => (
   <div {...stylex.props(styles.headerActions)}>
-    <CmsLink href="/" tone="quiet">
-      Preview site
-    </CmsLink>
     <CmsButton tone="quiet">Save draft</CmsButton>
     <CmsButton tone="primary">Publish changes</CmsButton>
   </div>
