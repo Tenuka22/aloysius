@@ -1,15 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import {
-  Crown,
-  FileText,
-  Globe,
-  GripVertical,
-  Images,
-  LayoutGrid,
-  Megaphone,
-  Quote,
-  Rss,
-} from "lucide-react";
+import { Eye, EyeOff, GripVertical } from "lucide-react";
 import { useState } from "react";
 
 import { HOMEPAGE_BLOCKS, REVISIONS, formatCmsDate } from "../../content/cms";
@@ -101,12 +91,6 @@ const styles = stylex.create({
     borderBlockEndStyle: "solid",
     borderBlockEndColor: color.border,
   },
-  blockIcon: {
-    flexShrink: 0,
-    width: "1rem",
-    height: "1rem",
-    color: color.onSurfaceSubtle,
-  },
   blockPick: {
     display: "flex",
     flex: 1,
@@ -175,18 +159,20 @@ const styles = stylex.create({
   },
   blockToggle: {
     flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     minWidth: "2.25rem",
     minHeight: "2.25rem",
     paddingInline: space["3xs"],
     borderWidth: 0,
     backgroundColor: "transparent",
     color: color.onSurfaceMuted,
-    fontFamily: font.body,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
-    textTransform: "uppercase",
     cursor: "pointer",
+  },
+  toggleIcon: {
+    width: "1rem",
+    height: "1rem",
   },
   addWrap: {
     padding: space["2xs"],
@@ -413,18 +399,6 @@ const REVISION_TONE = {
   Edited: styles.revisionEdited,
 } as const;
 
-const BLOCK_ICON: Record<string, typeof GripVertical> = {
-  Banner: Megaphone,
-  Hero: Crown,
-  "Text + media": FileText,
-  Quote,
-  "Card grid": LayoutGrid,
-  Mosaic: LayoutGrid,
-  Feed: Rss,
-  "Media grid": Images,
-  Global: Globe,
-};
-
 /** Fields the editor has typed into, keyed by field id. */
 type Draft = Record<string, string>;
 
@@ -469,6 +443,7 @@ export const HomepageEditor = () => {
                 <button
                   aria-current={isActive ? "true" : undefined}
                   onClick={() => setSelectedId(block.id)}
+                  title={block.summary}
                   type="button"
                   {...stylex.props(
                     styles.blockPick,
@@ -488,15 +463,6 @@ export const HomepageEditor = () => {
                   <span aria-hidden="true" {...stylex.props(styles.blockNum)}>
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  {(() => {
-                    const Icon = BLOCK_ICON[block.type] ?? GripVertical;
-                    return (
-                      <Icon
-                        aria-hidden="true"
-                        {...stylex.props(styles.blockIcon)}
-                      />
-                    );
-                  })()}
                   <span {...stylex.props(styles.blockText)}>
                     <span {...stylex.props(styles.blockName)}>
                       {block.name}
@@ -514,10 +480,21 @@ export const HomepageEditor = () => {
                       [block.id]: !prev[block.id],
                     }))
                   }
+                  title={isHidden ? `Show ${block.name}` : `Hide ${block.name}`}
                   type="button"
                   {...stylex.props(styles.blockToggle)}
                 >
-                  <span aria-hidden="true">{isHidden ? "Show" : "Hide"}</span>
+                  {isHidden ? (
+                    <EyeOff
+                      aria-hidden="true"
+                      {...stylex.props(styles.toggleIcon)}
+                    />
+                  ) : (
+                    <Eye
+                      aria-hidden="true"
+                      {...stylex.props(styles.toggleIcon)}
+                    />
+                  )}
                   <VisuallyHidden>
                     {`${isHidden ? "Show" : "Hide"} ${block.name} section`}
                   </VisuallyHidden>
