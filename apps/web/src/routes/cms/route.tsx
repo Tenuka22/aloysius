@@ -1,13 +1,25 @@
 import {
   createFileRoute,
   Outlet,
+  redirect,
   useRouterState,
 } from "@tanstack/react-router";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 
 import { AdminShell } from "@/components/admin/admin-shell";
+import { authClient } from "@/lib/auth-client";
 
 const CmsLayout = () => {
+  const session = authClient.useSession();
+  const role = session.data?.user?.role;
+  const isAllowed = role === "admin" || role === "cms";
+
+  useEffect(() => {
+    if (!session.isPending && session.data && !isAllowed) {
+      throw redirect({ to: "/" });
+    }
+  }, [isAllowed, session.data, session.isPending]);
+
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
@@ -27,12 +39,16 @@ const CmsLayout = () => {
     },
   ];
 
+  if (session.isPending || !session.data || !isAllowed) {
+    return <div>Checking permissions…</div>;
+  }
+
   return (
     <AdminShell
       title="Content Manager"
       navItems={navItems}
-      userName="A. Perera"
-      userRole="Editor — Media Unit"
+      userName={session.data.user.username ?? "User"}
+      userRole={session.data.user.role ?? "user"}
     >
       <Suspense fallback={<div>Loading…</div>}>
         <Outlet />

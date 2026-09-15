@@ -1,9 +1,16 @@
 import * as stylex from "@stylexjs/stylex";
-import { Eye, EyeOff, GripVertical } from "lucide-react";
-import { useState } from "react";
+import { Eye, EyeOff, GripVertical, History, List } from "lucide-react";
+import {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 
 import { HOMEPAGE_BLOCKS } from "../../content/cms";
 import type { BlockField } from "../../content/cms";
+import { aspectRatios } from "../../tokens/aspect-ratios";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
 import { VisuallyHidden } from "../primitives/layout";
@@ -15,14 +22,73 @@ import {
   PanelHead,
   StatusBadge,
 } from "./cms-primitives";
+import { HistoryPopover } from "./history-popover";
+import type { HistoryResponse } from "./history-popover";
+import { MediaField } from "./media-field";
+
+type Baseline = Record<string, string>;
+type DirtyMap = Record<string, boolean>;
+
+const buildBaseline = (
+  blocks: HomepageEditorProps["initialBlocks"]
+): Baseline => {
+  const baseline: Baseline = {};
+  for (const block of blocks ?? []) {
+    for (const field of block.fields ?? []) {
+      baseline[field.id] = field.value ?? "";
+    }
+  }
+  for (const block of HOMEPAGE_BLOCKS) {
+    for (const field of block.fields) {
+      if (!(field.id in baseline)) {
+        baseline[field.id] = field.value ?? "";
+      }
+    }
+  }
+  return baseline;
+};
+
+const buildDirtyMap = (draft: Draft, baseline: Baseline): DirtyMap => {
+  const dirty: DirtyMap = {};
+  for (const block of HOMEPAGE_BLOCKS) {
+    for (const field of block.fields) {
+      dirty[field.id] =
+        Object.hasOwn(draft, field.id) &&
+        draft[field.id] !== baseline[field.id];
+    }
+  }
+  return dirty;
+};
+
+const getAspectRatio = (fieldId: string) => {
+  switch (fieldId) {
+    case "hero-bg": {
+      return aspectRatios.hero;
+    }
+    case "heritage-image-1": {
+      return aspectRatios.heritagePhoto;
+    }
+    case "principal-portrait": {
+      return aspectRatios.principalPortrait;
+    }
+    case "alumni-image": {
+      return aspectRatios.alumniPhoto;
+    }
+    case "life-sports":
+    case "life-music": {
+      return aspectRatios.mosaicTile;
+    }
+    default: {
+      return aspectRatios.newsCard;
+    }
+  }
+};
 
 const styles = stylex.create({
   layout: {
     display: "grid",
     gap: space.md,
     alignItems: "start",
-    // The block list only earns a permanent column once the editor beside it
-    // can still show two fields per row. Below that it stacks above the editor.
     gridTemplateColumns: {
       default: "minmax(0, 1fr)",
       [bp.xxl]: "minmax(0, 19rem) minmax(0, 1fr)",
@@ -69,8 +135,6 @@ const styles = stylex.create({
     listStyle: "none",
     margin: 0,
     padding: 0,
-    // On phones the 11-item list would push the editor two screens down, so it
-    // scrolls in place; from 80rem it sits in its own column and runs full.
     maxHeight: {
       default: "22rem",
       [bp.xxl]: "none",
@@ -91,7 +155,6 @@ const styles = stylex.create({
   },
   blockPick: {
     display: "flex",
-    flex: 1,
     alignItems: "center",
     gap: space.xs,
     minWidth: 0,
@@ -121,6 +184,13 @@ const styles = stylex.create({
   blockHidden: {
     opacity: 0.5,
   },
+  dirtyDot: {
+    flexShrink: 0,
+    width: "0.5rem",
+    height: "0.5rem",
+    borderRadius: "50%",
+    backgroundColor: color.accent,
+  },
   grip: {
     flexShrink: 0,
     width: "0.75rem",
@@ -147,16 +217,33 @@ const styles = stylex.create({
   },
   blockToggle: {
     flexShrink: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: "2.25rem",
-    minHeight: "2.25rem",
-    paddingInline: space["3xs"],
+    display: "grid",
+    placeItems: "center",
+    width: "2.75rem",
+    height: "2.75rem",
+    padding: 0,
     borderWidth: 0,
-    backgroundColor: "transparent",
-    color: color.onSurfaceMuted,
+    borderRadius: "0.375rem",
+    backgroundColor: {
+      default: "transparent",
+      ":hover": "rgba(1, 52, 5, 0.08)",
+    },
+    color: {
+      default: color.onSurfaceMuted,
+      ":hover": color.onSurface,
+    },
     cursor: "pointer",
+    transitionProperty: "background-color, color, transform",
+    transitionDuration: motionToken.fast,
+    transitionTimingFunction: motionToken.ease,
+    transform: {
+      default: "scale(1)",
+      ":active": "scale(0.9)",
+    },
+  },
+  blockToggleHidden: {
+    color: color.onSurfaceSubtle,
+    opacity: 0.5,
   },
   toggleIcon: {
     width: "1rem",
@@ -201,239 +288,642 @@ const styles = stylex.create({
     color: color.onSurfaceMuted,
     textWrap: "pretty",
   },
-  imageField: {
-    display: "grid",
-    gap: space.sm,
-    gridTemplateColumns: {
-      default: "minmax(0, 1fr)",
-      [bp.lg]: "13rem minmax(0, 1fr)",
-    },
-    alignItems: "center",
-    padding: space.sm,
-    backgroundColor: color.surfaceSunken,
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.border,
-  },
-  imageSlot: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    aspectRatio: "3 / 2",
-    padding: space["2xs"],
-    backgroundImage: `repeating-linear-gradient(135deg, ${color.placeholder} 0 10px, transparent 10px 20px)`,
-    borderWidth: space.px,
-    borderStyle: "dashed",
-    borderColor: color.borderStrong,
-    color: color.placeholderInk,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
-    textAlign: "center",
-    textTransform: "uppercase",
-  },
-  editorFoot: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
-    gap: space["2xs"],
-    marginBlockStart: space.md,
-  },
 
   headerActions: {
     display: "flex",
     flexWrap: "wrap",
     gap: space["2xs"],
+    alignItems: "center",
+  },
+  sectionsMenuWrap: {
+    position: "relative",
+  },
+  sectionsMenuButton: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: space["3xs"],
+    minHeight: "2.75rem",
+    paddingBlock: space["2xs"],
+    paddingInline: space.md,
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: color.borderStrong,
+    backgroundColor: {
+      default: "transparent",
+      ":hover": "rgba(1, 52, 5, 0.06)",
+    },
+    color: color.onSurface,
+    fontFamily: font.body,
+    fontSize: font.sizeXs,
+    fontWeight: font.weightExtrabold,
+    letterSpacing: font.trackingWide,
+    textTransform: "uppercase",
+    cursor: "pointer",
+    touchAction: "manipulation",
+  },
+  sectionsMenuIcon: {
+    width: "1rem",
+    height: "1rem",
+  },
+  sectionsDropdown: {
+    position: "absolute",
+    insetBlockStart: "100%",
+    insetInlineEnd: 0,
+    zIndex: 100,
+    minWidth: "14rem",
+    maxHeight: "20rem",
+    overflowY: "auto",
+    backgroundColor: color.surface,
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: color.border,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
+  },
+  sectionsDropdownItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: space["2xs"],
+    width: "100%",
+    minHeight: "2.25rem",
+    borderWidth: 0,
+    borderBottomWidth: space.px,
+    borderStyle: "solid",
+    borderColor: color.border,
+    backgroundColor: {
+      default: "transparent",
+      ":hover": "rgba(1, 52, 5, 0.05)",
+    },
+  },
+  sectionsDropdownItemHidden: {
+    opacity: 0.5,
+  },
+  sectionsDropdownItemButton: {
+    display: "flex",
+    flex: 1,
+    alignItems: "center",
+    gap: space.xs,
+    minWidth: 0,
+    minHeight: "2.25rem",
+    paddingBlock: space.xs,
+    paddingInline: space.sm,
+    borderWidth: 0,
+    backgroundColor: "transparent",
+    color: "inherit",
+    fontFamily: font.body,
+    fontSize: font.sizeSm,
+    fontWeight: font.weightSemibold,
+    textAlign: "start",
+    cursor: "pointer",
+  },
+  sectionsDropdownNum: {
+    flexShrink: 0,
+    width: "1.1rem",
+    fontFamily: font.mono,
+    fontSize: font.size2xs,
+    color: color.onSurfaceSubtle,
+  },
+  sectionsDropdownName: {
+    flex: 1,
+    minWidth: 0,
+    overflowWrap: "break-word",
+  },
+  sectionsDropdownDirtyDot: {
+    flexShrink: 0,
+    width: "0.5rem",
+    height: "0.5rem",
+    borderRadius: "50%",
+    backgroundColor: color.accent,
+  },
+  sectionsDropdownEye: {
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "1.5rem",
+    height: "1.5rem",
+    color: color.onSurfaceMuted,
+  },
+  sectionsDropdownEyeIcon: {
+    width: "0.875rem",
+    height: "0.875rem",
+  },
+  historyWrap: {
+    position: "relative",
+  },
+  historyButton: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: space["3xs"],
+    width: "2.75rem",
+    height: "2.75rem",
+    padding: 0,
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: color.borderStrong,
+    borderRadius: "0.375rem",
+    backgroundColor: {
+      default: "transparent",
+      ":hover": "rgba(1, 52, 5, 0.06)",
+    },
+    color: color.onSurface,
+    cursor: "pointer",
+    touchAction: "manipulation",
+  },
+  historyIcon: {
+    width: "1rem",
+    height: "1rem",
   },
 });
 
 /** Fields the editor has typed into, keyed by field id. */
 type Draft = Record<string, string>;
+interface DraftState {
+  draft: Draft;
+  dirty: DirtyMap;
+}
+const EMPTY_DIRTY: DirtyMap = {};
 
-export const HomepageEditor = ({
-  initialBlocks,
-}: {
+export interface Block {
+  id: string;
+  hidden: boolean;
+  fields: { id: string; value: string }[];
+}
+
+/** Handle exposed via ref so the route can read the current blocks. */
+export interface HomepageEditorHandle {
+  getBlocks: () => Block[];
+  getDirty: () => DirtyMap;
+  getHidden: () => Record<string, boolean>;
+  toggleHidden: (blockId: string) => void;
+  selectBlock: (blockId: string) => void;
+  commitBlocks: (blocks: Block[]) => void;
+}
+
+export interface HomepageEditorProps {
   initialBlocks?: {
     id: string;
     hidden?: boolean;
     fields?: { id: string; value?: string }[];
   }[];
-}) => {
-  const [selectedId, setSelectedId] = useState(
-    HOMEPAGE_BLOCKS[1]?.id ?? "hero"
-  );
-  const [hidden, setHidden] = useState<Record<string, boolean>>(() => {
-    if (!initialBlocks) {
-      return {};
-    }
-    const h: Record<string, boolean> = {};
-    for (const b of initialBlocks) {
-      if (b.hidden) {
-        h[b.id] = true;
+  onDirtyChange?: (dirty: DirtyMap) => void;
+  onUpload?: (file: File) => Promise<string>;
+  /** Field IDs that just received a real-time update (flash highlight). */
+  highlightedFields?: Record<string, number>;
+}
+
+// eslint-disable-next-line react-doctor/no-giant-component
+export const HomepageEditor = forwardRef<
+  HomepageEditorHandle,
+  HomepageEditorProps
+>(
+  // eslint-disable-next-line prefer-arrow-callback
+  function HomepageEditor(
+    { initialBlocks, onDirtyChange, onUpload, highlightedFields },
+    ref
+  ) {
+    const [selectedId, setSelectedId] = useState(
+      HOMEPAGE_BLOCKS[1]?.id ?? "hero"
+    );
+    const [hidden, setHidden] = useState<Record<string, boolean>>(() => {
+      if (!initialBlocks) {
+        return {};
       }
-    }
-    return h;
-  });
-  const [draft, setDraft] = useState<Draft>(() => {
-    if (!initialBlocks) {
-      return {};
-    }
-    const d: Draft = {};
-    for (const block of initialBlocks) {
-      for (const field of block.fields ?? []) {
-        if (field.value) {
-          d[field.id] = field.value;
+      const h: Record<string, boolean> = {};
+      for (const b of initialBlocks) {
+        if (b.hidden) {
+          h[b.id] = true;
         }
       }
-    }
-    return d;
-  });
+      return h;
+    });
+    const [baseline, setBaseline] = useState<Baseline>(() =>
+      buildBaseline(initialBlocks)
+    );
+    const [draftState, setDraftState] = useState<DraftState>({
+      draft: {},
+      dirty: {},
+    });
+    const { draft, dirty } = draftState;
 
-  const selected =
-    HOMEPAGE_BLOCKS.find((block) => block.id === selectedId) ??
-    HOMEPAGE_BLOCKS[0];
+    const selected =
+      HOMEPAGE_BLOCKS.find((block) => block.id === selectedId) ??
+      HOMEPAGE_BLOCKS[0];
 
-  const valueOf = (field: BlockField) => draft[field.id] ?? field.value ?? "";
+    const valueOf = useCallback(
+      (field: BlockField) =>
+        draft[field.id] ?? baseline[field.id] ?? field.value ?? "",
+      [baseline, draft]
+    );
+
+    const getFieldDirty = useCallback(
+      (fieldId: string) => dirty[fieldId] ?? false,
+      [dirty]
+    );
+
+    const updateDraft = useCallback(
+      (updater: (previous: Draft) => Draft) => {
+        const nextDraft = updater(draftState.draft);
+        const nextDirty = buildDirtyMap(nextDraft, baseline);
+        setDraftState({ draft: nextDraft, dirty: nextDirty });
+        onDirtyChange?.(nextDirty);
+      },
+      [baseline, draftState.draft, onDirtyChange]
+    );
+
+    const updateField = useCallback(
+      (fieldId: string, nextValue: string) => {
+        updateDraft((previous) => {
+          const next = { ...previous };
+          if (nextValue === baseline[fieldId]) {
+            Reflect.deleteProperty(next, fieldId);
+          } else {
+            next[fieldId] = nextValue;
+          }
+          return next;
+        });
+      },
+      [baseline, updateDraft]
+    );
+
+    const commitBlocks = useCallback(
+      (blocks: Block[]) => {
+        const nextBaseline = { ...baseline };
+        const nextDraft = { ...draftState.draft };
+        for (const block of blocks) {
+          for (const field of block.fields) {
+            nextBaseline[field.id] = field.value;
+            Reflect.deleteProperty(nextDraft, field.id);
+          }
+          setHidden((previous) => ({
+            ...previous,
+            [block.id]: block.hidden,
+          }));
+        }
+        const nextDirty = buildDirtyMap(nextDraft, nextBaseline);
+        setBaseline(nextBaseline);
+        setDraftState({ draft: nextDraft, dirty: nextDirty });
+        onDirtyChange?.(nextDirty);
+      },
+      [baseline, draftState.draft, onDirtyChange]
+    );
+
+    const buildBlocks = useCallback(
+      (): Block[] =>
+        HOMEPAGE_BLOCKS.map((block) => ({
+          id: block.id,
+          hidden: hidden[block.id] ?? false,
+          fields: block.fields.map((f) => ({
+            id: f.id,
+            value: valueOf(f),
+          })),
+        })),
+      [hidden, valueOf]
+    );
+
+    const isSectionDirty = useCallback(
+      (sectionId: string): boolean => {
+        const section = HOMEPAGE_BLOCKS.find((b) => b.id === sectionId);
+        if (!section) {
+          return false;
+        }
+        return section.fields.some((f) => getFieldDirty(f.id));
+      },
+      [getFieldDirty]
+    );
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        getBlocks: buildBlocks,
+        getDirty: () => dirty,
+        getHidden: () => hidden,
+        toggleHidden: (blockId: string) =>
+          setHidden((prev) => ({ ...prev, [blockId]: !prev[blockId] })),
+        selectBlock: (blockId: string) => setSelectedId(blockId),
+        commitBlocks,
+      }),
+      [buildBlocks, commitBlocks, dirty, hidden]
+    );
+
+    return (
+      <div {...stylex.props(styles.layout)}>
+        <nav aria-label="Page sections" {...stylex.props(styles.blockPanel)}>
+          <div {...stylex.props(styles.blockHead)}>
+            <p {...stylex.props(styles.blockHeadTitle)}>Page sections</p>
+            <p {...stylex.props(styles.blockHeadNote)}>
+              Select a section to edit it.
+            </p>
+          </div>
+
+          <ul {...stylex.props(styles.blockList)}>
+            {HOMEPAGE_BLOCKS.map((block, index) => {
+              const isHidden = hidden[block.id] ?? false;
+              const isActive = block.id === selectedId;
+              const hasUnsavedChanges = isSectionDirty(block.id);
+              return (
+                <li key={block.id} {...stylex.props(styles.blockItem)}>
+                  <button
+                    aria-current={isActive ? "true" : undefined}
+                    onClick={() => setSelectedId(block.id)}
+                    title={
+                      hasUnsavedChanges
+                        ? `${block.name} — unsaved changes`
+                        : block.type
+                    }
+                    type="button"
+                    {...stylex.props(
+                      styles.blockPick,
+                      isActive && styles.blockPickActive,
+                      isHidden && styles.blockHidden
+                    )}
+                  >
+                    <GripVertical
+                      aria-hidden="true"
+                      {...stylex.props(styles.grip)}
+                    />
+                    <span aria-hidden="true" {...stylex.props(styles.blockNum)}>
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span {...stylex.props(styles.blockText)}>
+                      <span {...stylex.props(styles.blockName)}>
+                        {block.name}
+                      </span>
+                    </span>
+                    {hasUnsavedChanges ? (
+                      <span
+                        aria-hidden="true"
+                        title="Unsaved changes"
+                        {...stylex.props(styles.dirtyDot)}
+                      />
+                    ) : null}
+                    <VisuallyHidden>
+                      {hasUnsavedChanges ? "Unsaved changes" : ""}
+                    </VisuallyHidden>
+                  </button>
+                  <button
+                    aria-label={
+                      isHidden ? `Show ${block.name}` : `Hide ${block.name}`
+                    }
+                    onClick={() => {
+                      setHidden((prev) => ({
+                        ...prev,
+                        [block.id]: !prev[block.id],
+                      }));
+                    }}
+                    title={
+                      isHidden ? `Show ${block.name}` : `Hide ${block.name}`
+                    }
+                    type="button"
+                    {...stylex.props(
+                      styles.blockToggle,
+                      isHidden && styles.blockToggleHidden
+                    )}
+                  >
+                    {isHidden ? (
+                      <EyeOff
+                        aria-hidden="true"
+                        {...stylex.props(styles.toggleIcon)}
+                      />
+                    ) : (
+                      <Eye
+                        aria-hidden="true"
+                        {...stylex.props(styles.toggleIcon)}
+                      />
+                    )}
+                    <VisuallyHidden>
+                      {isHidden
+                        ? `${block.name} is hidden`
+                        : `${block.name} is visible`}
+                    </VisuallyHidden>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div {...stylex.props(styles.addWrap)}>
+            <button type="button" {...stylex.props(styles.addButton)}>
+              + Add section
+            </button>
+          </div>
+        </nav>
+
+        <div {...stylex.props(styles.main)}>
+          <Panel>
+            <PanelHead
+              eyebrow="Editing section"
+              title={selected?.name ?? "Section"}
+            />
+            <div {...stylex.props(styles.editorMeta)}>
+              {selected ? <StatusBadge status={selected.status} /> : null}
+              <p {...stylex.props(styles.editorSummary)}>{selected?.summary}</p>
+            </div>
+
+            <FieldGrid>
+              {selected?.fields.map((field) =>
+                field.kind === "image" ? (
+                  <MediaField
+                    aspectRatio={getAspectRatio(field.id)}
+                    field={field}
+                    key={field.id}
+                    onChange={(next) => updateField(field.id, next)}
+                    onUpload={onUpload}
+                    value={valueOf(field)}
+                    variant={field.id === "hero-bg" ? "hero" : "image"}
+                    wide={field.wide}
+                  />
+                ) : (
+                  <Field
+                    dirty={getFieldDirty(field.id)}
+                    hint={field.hint}
+                    key={field.id}
+                    kind={field.kind}
+                    label={field.label}
+                    onChange={(next) => updateField(field.id, next)}
+                    onReset={() =>
+                      updateField(
+                        field.id,
+                        baseline[field.id] ?? field.value ?? ""
+                      )
+                    }
+                    value={valueOf(field)}
+                    wide={field.wide}
+                    highlighted={
+                      highlightedFields && field.id in highlightedFields
+                    }
+                  />
+                )
+              )}
+            </FieldGrid>
+          </Panel>
+        </div>
+      </div>
+    );
+  }
+);
+
+HomepageEditor.displayName = "HomepageEditor";
+
+/** Dropdown showing all sections with visibility toggles. */
+export const SectionsDropdown = ({
+  blocks,
+  dirty = EMPTY_DIRTY,
+  hidden,
+  onToggle,
+  onSelect,
+}: {
+  blocks: readonly { id: string; name: string }[];
+  dirty?: DirtyMap;
+  hidden: Record<string, boolean>;
+  onToggle: (blockId: string) => void;
+  onSelect: (blockId: string) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const handleClose = useCallback(() => setOpen(false), []);
+
+  // Close on outside click
+  const handleBlur = useCallback(
+    (e: React.FocusEvent) => {
+      if (!wrapRef.current?.contains(e.relatedTarget)) {
+        handleClose();
+      }
+    },
+    [handleClose]
+  );
 
   return (
-    <div {...stylex.props(styles.layout)}>
-      <nav aria-label="Page sections" {...stylex.props(styles.blockPanel)}>
-        <div {...stylex.props(styles.blockHead)}>
-          <p {...stylex.props(styles.blockHeadTitle)}>Page sections</p>
-          <p {...stylex.props(styles.blockHeadNote)}>
-            Select a section to edit it.
-          </p>
-        </div>
-
-        <ul {...stylex.props(styles.blockList)}>
-          {HOMEPAGE_BLOCKS.map((block, index) => {
+    <div
+      ref={wrapRef}
+      {...stylex.props(styles.sectionsMenuWrap)}
+      onBlur={handleBlur}
+    >
+      <button
+        aria-expanded={open}
+        aria-haspopup="true"
+        onClick={() => setOpen((o) => !o)}
+        type="button"
+        {...stylex.props(styles.sectionsMenuButton)}
+      >
+        <List aria-hidden="true" {...stylex.props(styles.sectionsMenuIcon)} />
+        Sections
+      </button>
+      {open ? (
+        <div role="menu" {...stylex.props(styles.sectionsDropdown)}>
+          {blocks.map((block, index) => {
             const isHidden = hidden[block.id] ?? false;
-            const isActive = block.id === selectedId;
             return (
-              <li key={block.id} {...stylex.props(styles.blockItem)}>
+              <div
+                key={block.id}
+                role="menuitem"
+                {...stylex.props(
+                  styles.sectionsDropdownItem,
+                  isHidden && styles.sectionsDropdownItemHidden
+                )}
+              >
                 <button
-                  aria-current={isActive ? "true" : undefined}
-                  onClick={() => setSelectedId(block.id)}
-                  title={block.type}
+                  onClick={() => {
+                    onSelect(block.id);
+                    handleClose();
+                  }}
                   type="button"
-                  {...stylex.props(
-                    styles.blockPick,
-                    isActive && styles.blockPickActive,
-                    isHidden && styles.blockHidden
-                  )}
+                  {...stylex.props(styles.sectionsDropdownItemButton)}
                 >
-                  {/*
-                    Decorative only. Drag-to-reorder needs a keyboard equivalent
-                    to be usable at all, so it is deliberately not wired to a
-                    mouse-only handler that keyboard users could not reach.
-                  */}
-                  <GripVertical
+                  <span
                     aria-hidden="true"
-                    {...stylex.props(styles.grip)}
-                  />
-                  <span aria-hidden="true" {...stylex.props(styles.blockNum)}>
+                    {...stylex.props(styles.sectionsDropdownNum)}
+                  >
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <span {...stylex.props(styles.blockText)}>
-                    <span {...stylex.props(styles.blockName)}>
-                      {block.name}
-                    </span>
+                  <span {...stylex.props(styles.sectionsDropdownName)}>
+                    {block.name}
                   </span>
+                  {dirty[block.id] ? (
+                    <span
+                      aria-hidden="true"
+                      title="Unsaved changes"
+                      {...stylex.props(styles.sectionsDropdownDirtyDot)}
+                    />
+                  ) : null}
                 </button>
                 <button
                   aria-pressed={isHidden}
-                  onClick={() =>
-                    setHidden((prev) => ({
-                      ...prev,
-                      [block.id]: !prev[block.id],
-                    }))
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggle(block.id);
+                  }}
                   title={isHidden ? `Show ${block.name}` : `Hide ${block.name}`}
                   type="button"
-                  {...stylex.props(styles.blockToggle)}
+                  {...stylex.props(styles.sectionsDropdownEye)}
                 >
                   {isHidden ? (
                     <EyeOff
                       aria-hidden="true"
-                      {...stylex.props(styles.toggleIcon)}
+                      {...stylex.props(styles.sectionsDropdownEyeIcon)}
                     />
                   ) : (
                     <Eye
                       aria-hidden="true"
-                      {...stylex.props(styles.toggleIcon)}
+                      {...stylex.props(styles.sectionsDropdownEyeIcon)}
                     />
                   )}
-                  <VisuallyHidden>
-                    {`${isHidden ? "Show" : "Hide"} ${block.name} section`}
-                  </VisuallyHidden>
                 </button>
-              </li>
+              </div>
             );
           })}
-        </ul>
-
-        <div {...stylex.props(styles.addWrap)}>
-          <button type="button" {...stylex.props(styles.addButton)}>
-            + Add section
-          </button>
         </div>
-      </nav>
-
-      <div {...stylex.props(styles.main)}>
-        <Panel>
-          <PanelHead
-            eyebrow="Editing section"
-            title={selected?.name ?? "Section"}
-          />
-          <div {...stylex.props(styles.editorMeta)}>
-            {selected ? <StatusBadge status={selected.status} /> : null}
-            <p {...stylex.props(styles.editorSummary)}>{selected?.summary}</p>
-          </div>
-
-          <FieldGrid>
-            {selected?.fields.map((field) =>
-              field.kind === "image" ? (
-                <div key={field.id} {...stylex.props(styles.imageField)}>
-                  <div {...stylex.props(styles.imageSlot)}>{field.label}</div>
-                  <div>
-                    <p {...stylex.props(styles.editorSummary)}>
-                      No image selected yet.
-                      {field.hint ? ` ${field.hint}` : ""}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <Field
-                  dirty={field.id in draft}
-                  hint={field.hint}
-                  key={field.id}
-                  kind={field.kind}
-                  label={field.label}
-                  onChange={(next) =>
-                    setDraft((prev) => ({ ...prev, [field.id]: next }))
-                  }
-                  value={valueOf(field)}
-                  wide={field.wide}
-                />
-              )
-            )}
-          </FieldGrid>
-
-          <div {...stylex.props(styles.editorFoot)}>
-            <CmsButton onClick={() => setDraft({})} tone="quiet">
-              Discard changes
-            </CmsButton>
-            <CmsButton tone="dark">Apply to section</CmsButton>
-          </div>
-        </Panel>
-      </div>
+      ) : null}
     </div>
   );
 };
 
-export const HomepageEditorActions = () => (
-  <div {...stylex.props(styles.headerActions)}>
-    <CmsButton tone="quiet">Save draft</CmsButton>
-    <CmsButton tone="primary">Publish changes</CmsButton>
-  </div>
-);
+export const HomepageEditorActions = ({
+  onSaveDraft,
+  onPublish,
+  onPreview,
+  sectionsSlot,
+  fetchHistory,
+}: {
+  onSaveDraft?: () => void | Promise<void>;
+  onPublish?: () => void | Promise<void>;
+  onPreview?: () => void | Promise<void>;
+  sectionsSlot?: React.ReactNode;
+  fetchHistory?: (cursor: number) => Promise<HistoryResponse>;
+}) => {
+  const [historyOpen, setHistoryOpen] = useState(false);
+  return (
+    <div {...stylex.props(styles.headerActions)}>
+      {sectionsSlot}
+      <div {...stylex.props(styles.historyWrap)}>
+        <button
+          aria-expanded={historyOpen}
+          aria-label="Version history"
+          onClick={() => setHistoryOpen((o) => !o)}
+          title="Version history"
+          type="button"
+          {...stylex.props(styles.historyButton)}
+        >
+          <History aria-hidden="true" {...stylex.props(styles.historyIcon)} />
+        </button>
+        {historyOpen && fetchHistory ? (
+          <HistoryPopover
+            fetchHistory={fetchHistory}
+            onClose={() => setHistoryOpen(false)}
+          />
+        ) : null}
+      </div>
+      <CmsButton onClick={onSaveDraft} tone="quiet">
+        Save draft
+      </CmsButton>
+      <CmsButton onClick={onPublish} tone="primary">
+        Publish changes
+      </CmsButton>
+      <CmsButton onClick={onPreview} tone="dark">
+        Preview
+      </CmsButton>
+    </div>
+  );
+};

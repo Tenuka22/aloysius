@@ -108,11 +108,15 @@ export const Heritage = ({
   foundedYear = FOUNDED_YEAR,
   images,
   historyHref = "/about",
+  eyebrow = "Our heritage",
+  heading = "A Legacy of Excellence",
 }: {
   intro?: string;
   foundedYear?: number;
   images?: readonly [ImageSource?, ImageSource?];
   historyHref?: string;
+  eyebrow?: string;
+  heading?: string;
 }) => {
   const years = new Date().getFullYear() - foundedYear;
 
@@ -124,13 +128,13 @@ export const Heritage = ({
 
           <Reveal direction="up">
             <div {...stylex.props(styles.body)}>
-              <Eyebrow>Our heritage</Eyebrow>
+              <Eyebrow>{eyebrow}</Eyebrow>
               <Heading
                 id="heritage-title"
                 level={2}
                 style={styles.headingSpacing}
               >
-                A Legacy of Excellence
+                {heading}
               </Heading>
               <Lead>{intro}</Lead>
 

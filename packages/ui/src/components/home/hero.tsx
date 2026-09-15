@@ -6,11 +6,11 @@ import {
   COLLEGE_NAME,
   MOTTO,
 } from "../../content/home";
+import type { HeroBackground } from "../../content/home";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
 import { ButtonLink } from "../primitives/button";
 import { Media } from "../primitives/media";
-import type { ImageSource } from "../primitives/media";
 
 const styles = stylex.create({
   hero: {
@@ -140,49 +140,93 @@ export const Hero = ({
   crestSrc = "/logo.png",
   exploreHref = "/about",
   admissionsHref = ADMISSIONS_URL,
+  motto = MOTTO,
+  place = COLLEGE_LOCATION,
+  title = COLLEGE_NAME,
+  cta1 = "Explore the College",
+  cta2 = "Admissions",
 }: {
   tagline?: string;
-  background?: ImageSource;
+  background?: HeroBackground;
   crestSrc?: string;
   exploreHref?: string;
   admissionsHref?: string;
-}) => (
-  <section aria-labelledby="hero-title" {...stylex.props(styles.hero)}>
-    <Media
-      fill
-      placeholder=""
-      priority
-      source={background}
-      style={styles.background}
-    />
-    <div {...stylex.props(styles.scrim)} />
-    <img
-      alt=""
-      aria-hidden="true"
-      src={crestSrc}
-      {...stylex.props(styles.watermark)}
-    />
+  motto?: string;
+  place?: string;
+  title?: string;
+  cta1?: string;
+  cta2?: string;
+}) => {
+  const renderBackground = () => {
+    if (background?.kind === "video") {
+      return (
+        <video
+          aria-hidden="true"
+          autoPlay
+          loop
+          muted
+          playsInline
+          src={background.value}
+          {...stylex.props(styles.background)}
+        />
+      );
+    }
+    if (background?.kind === "color") {
+      return (
+        <div
+          aria-hidden="true"
+          style={{ backgroundColor: background.value }}
+          {...stylex.props(styles.background)}
+        />
+      );
+    }
+    return (
+      <Media
+        fill
+        placeholder=""
+        priority
+        source={
+          background?.kind === "image"
+            ? { alt: "", src: background.value }
+            : undefined
+        }
+        style={styles.background}
+      />
+    );
+  };
 
-    <div {...stylex.props(styles.content)}>
-      <p {...stylex.props(styles.motto)}>{MOTTO}</p>
-      <h1 id="hero-title" {...stylex.props(styles.title)}>
-        {COLLEGE_NAME}
-      </h1>
-      <p {...stylex.props(styles.place)}>{COLLEGE_LOCATION}</p>
-      <hr {...stylex.props(styles.rule)} />
-      <p {...stylex.props(styles.tagline)}>{tagline}</p>
-      <div {...stylex.props(styles.actions)}>
-        <ButtonLink href={exploreHref} style={styles.action} variant="solid">
-          Explore the College
-        </ButtonLink>
-        <ButtonLink
-          href={admissionsHref}
-          style={styles.action}
-          variant="outlineInverse"
-        >
-          Admissions
-        </ButtonLink>
+  return (
+    <section aria-labelledby="hero-title" {...stylex.props(styles.hero)}>
+      {renderBackground()}
+      <div {...stylex.props(styles.scrim)} />
+      <img
+        alt=""
+        aria-hidden="true"
+        src={crestSrc}
+        {...stylex.props(styles.watermark)}
+      />
+
+      <div {...stylex.props(styles.content)}>
+        <p {...stylex.props(styles.motto)}>{motto}</p>
+        <h1 id="hero-title" {...stylex.props(styles.title)}>
+          {title}
+        </h1>
+        <p {...stylex.props(styles.place)}>{place}</p>
+        <hr {...stylex.props(styles.rule)} />
+        <p {...stylex.props(styles.tagline)}>{tagline}</p>
+        <div {...stylex.props(styles.actions)}>
+          <ButtonLink href={exploreHref} style={styles.action} variant="solid">
+            {cta1}
+          </ButtonLink>
+          <ButtonLink
+            href={admissionsHref}
+            style={styles.action}
+            variant="outlineInverse"
+          >
+            {cta2}
+          </ButtonLink>
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};

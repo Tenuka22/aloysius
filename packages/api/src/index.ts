@@ -34,3 +34,20 @@ const requireAdmin = o.middleware(({ context, next }) => {
 });
 
 export const adminProcedure = publicProcedure.use(requireAdmin);
+
+const requireCmsRole = o.middleware(({ context, next }) => {
+  if (!context.session?.user) {
+    throw new ORPCError("UNAUTHORIZED");
+  }
+  const { role } = context.session.user;
+  if (role !== "admin" && role !== "cms") {
+    throw new ORPCError("FORBIDDEN");
+  }
+  return next({
+    context: {
+      session: context.session,
+    },
+  });
+});
+
+export const cmsProcedure = publicProcedure.use(requireCmsRole);

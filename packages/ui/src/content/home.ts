@@ -10,6 +10,11 @@ import type { ImageSource } from "../components/primitives/media";
  * them degrade instead of inventing data.
  */
 
+export interface HeroBackground {
+  kind: "image" | "video" | "color";
+  value: string;
+}
+
 export interface Notice {
   id: string;
   text: string;

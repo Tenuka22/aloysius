@@ -86,7 +86,26 @@ export type BlockType =
   | "Media grid"
   | "Global";
 
-export type FieldKind = "text" | "textarea" | "image" | "readonly";
+export type FieldKind = "text" | "textarea" | "image" | "readonly" | "select";
+
+export interface LinkOption {
+  label: string;
+  value: string;
+}
+
+export const APP_ROUTE_OPTIONS: readonly LinkOption[] = [
+  { label: "Home", value: "/" },
+  { label: "About", value: "/about" },
+  { label: "Academics", value: "/academics" },
+  { label: "Admissions", value: "/admissions" },
+  { label: "Alumni", value: "/alumni" },
+  { label: "News & Events", value: "/news" },
+  { label: "Notices", value: "/notices" },
+  { label: "Media", value: "/media" },
+  { label: "Students", value: "/students" },
+  { label: "Contact", value: "/contact" },
+  { label: "CMS", value: "/cms" },
+];
 
 export interface BlockField {
   id: string;
@@ -97,6 +116,8 @@ export interface BlockField {
   hint?: string;
   /** Spans the full width of the two-column field grid. */
   wide?: boolean;
+  /** Available choices for select fields. */
+  options?: readonly LinkOption[];
 }
 
 export interface PageBlock {
@@ -132,8 +153,9 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
       {
         id: "notice-href",
         label: "Link target",
-        kind: "text",
+        kind: "select",
         value: "/notices",
+        options: APP_ROUTE_OPTIONS,
       },
       {
         id: "notice-priority",

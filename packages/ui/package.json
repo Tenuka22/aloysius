@@ -21,7 +21,8 @@
     "lucide-react": "^0.563.0",
     "motion": "^13.2.0",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "react-image-crop": "^11.1.2"
   },
   "devDependencies": {
     "@aloysius/config": "workspace:*",
@@ -31,6 +32,7 @@
     "@testing-library/react": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "@types/react-image-crop": "^9.0.2",
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "catalog:",
     "typescript": "catalog:",

@@ -1,7 +1,6 @@
 import { HomePage } from "@aloysius/ui/components/home/home-page";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Suspense } from "react";
 
 import { orpc } from "@/utils/orpc";
 
@@ -39,23 +38,28 @@ const featuredNews = {
   href: "/news",
 };
 
-const HomeContent = () => {
-  const homepageQuery = orpc.cms.getHomepage.queryOptions();
-  const { data: homepage } = useSuspenseQuery(homepageQuery);
+const PreviewPage = () => {
+  const { versionId } = Route.useParams();
+  const versionQuery = orpc.cms.getHomepageVersion.queryOptions({
+    input: { versionId },
+  });
+  const { data: version } = useSuspenseQuery(versionQuery);
 
   return (
     <HomePage
-      blocks={homepage?.blocks ?? undefined}
+      blocks={version?.blocks ?? undefined}
       featuredNews={featuredNews}
       news={news}
     />
   );
 };
 
-export const Route = createFileRoute("/")({
-  component: () => (
-    <Suspense fallback={<div>Loading…</div>}>
-      <HomeContent />
-    </Suspense>
-  ),
+export const Route = createFileRoute("/preview/$versionId")({
+  head: () => ({
+    meta: [
+      { title: "Preview — St. Aloysius' College" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
+  component: PreviewPage,
 });

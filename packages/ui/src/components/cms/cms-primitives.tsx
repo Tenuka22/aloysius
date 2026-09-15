@@ -7,6 +7,11 @@ import { STATUS_LABEL } from "../../content/cms";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
 
+const highlightPulse = stylex.keyframes({
+  "0%": { backgroundColor: "rgba(255, 178, 3, 0.25)" },
+  "100%": { backgroundColor: "transparent" },
+});
+
 /**
  * Shared building blocks for the admin screens.
  *
@@ -141,6 +146,43 @@ const styles = stylex.create({
     gap: space["3xs"],
     minWidth: 0,
   },
+  fieldRow: {
+    display: "flex",
+    gap: space["2xs"],
+    alignItems: "stretch",
+  },
+  fieldRowControl: {
+    flex: "1 1 0",
+    minWidth: 0,
+  },
+  clearButton: {
+    flexShrink: 0,
+    width: MIN_TARGET,
+    minHeight: MIN_TARGET,
+    display: "grid",
+    placeItems: "center",
+    padding: 0,
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: {
+      default: color.borderStrong,
+      ":hover": color.danger,
+    },
+    backgroundColor: {
+      default: color.surfaceSunken,
+      ":hover": color.danger,
+    },
+    color: {
+      default: color.onSurfaceMuted,
+      ":hover": color.surface,
+    },
+    fontFamily: font.body,
+    fontSize: font.sizeSm,
+    fontWeight: font.weightBold,
+    cursor: "pointer",
+    transitionProperty: "background-color, color, border-color",
+    transitionDuration: motionToken.fast,
+  },
   label: {
     fontSize: font.size2xs,
     fontWeight: font.weightBold,
@@ -193,13 +235,6 @@ const styles = stylex.create({
     borderColor: color.border,
     color: color.onSurfaceMuted,
     fontSize: font.sizeSm,
-  },
-  readonlyTag: {
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
-    textTransform: "uppercase",
-    color: color.onSurfaceSubtle,
   },
   hint: {
     margin: 0,
@@ -361,6 +396,18 @@ const styles = stylex.create({
       [bp.sm]: "auto",
     },
   },
+  buttonDisabled: {
+    cursor: "not-allowed",
+    opacity: 0.45,
+  },
+  highlightFlash: {
+    animationName: {
+      default: highlightPulse,
+      [bp.reducedMotion]: "none",
+    },
+    animationDuration: "1.5s",
+    animationTimingFunction: "ease-out",
+  },
 });
 
 const STATUS_STYLE: Record<EntryStatus, stylex.StyleXStyles> = {
@@ -449,6 +496,112 @@ export const FieldGrid = ({ children }: { children: ReactNode }) => (
   <div {...stylex.props(styles.fieldGrid)}>{children}</div>
 );
 
+const CUSTOM_OPTION_VALUE = "__custom_link__";
+
+const renderSelectControl = (
+  id: string,
+  hintId: string,
+  value: string | undefined,
+  dirty: boolean,
+  onChange: ((next: string) => void) | undefined,
+  hint: string | undefined,
+  options: { label: string; value: string }[] | undefined
+) => {
+  const knownValue = options?.some((option) => option.value === value);
+  const selectedValue = knownValue ? value : CUSTOM_OPTION_VALUE;
+  const customValue = knownValue ? "" : (value ?? "");
+  return (
+    <>
+      <select
+        aria-describedby={hint ? hintId : undefined}
+        id={id}
+        onChange={(event) => onChange?.(event.target.value)}
+        value={selectedValue}
+        {...stylex.props(styles.control, dirty && styles.controlDirty)}
+      >
+        {options?.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+        <option value={CUSTOM_OPTION_VALUE}>Custom link...</option>
+      </select>
+      {selectedValue === CUSTOM_OPTION_VALUE ? (
+        <input
+          aria-label="Custom link"
+          aria-describedby={hint ? hintId : undefined}
+          id={`${id}-custom`}
+          onChange={(event) => onChange?.(event.target.value)}
+          placeholder="Enter a URL or path"
+          type="text"
+          value={customValue}
+          {...stylex.props(styles.control, dirty && styles.controlDirty)}
+        />
+      ) : null}
+    </>
+  );
+};
+
+const renderControl = (
+  kind: string,
+  id: string,
+  hintId: string,
+  value: string | undefined,
+  dirty: boolean,
+  onChange: ((next: string) => void) | undefined,
+  hint: string | undefined,
+  options: { label: string; value: string }[] | undefined
+) => {
+  if (kind === "select") {
+    return renderSelectControl(
+      id,
+      hintId,
+      value,
+      dirty,
+      onChange,
+      hint,
+      options
+    );
+  }
+
+  if (kind === "readonly") {
+    return (
+      <div id={id} {...stylex.props(styles.readonly)}>
+        <span>{value || "—"}</span>
+      </div>
+    );
+  }
+
+  if (kind === "textarea") {
+    return (
+      <textarea
+        aria-describedby={hint ? hintId : undefined}
+        id={id}
+        onChange={(event) => onChange?.(event.target.value)}
+        rows={3}
+        value={value ?? ""}
+        {...stylex.props(
+          styles.control,
+          styles.textarea,
+          dirty && styles.controlDirty
+        )}
+      />
+    );
+  }
+
+  const inputType = kind === "email" ? "email" : "text";
+  return (
+    <input
+      aria-describedby={hint ? hintId : undefined}
+      id={id}
+      onChange={(event) => onChange?.(event.target.value)}
+      type={inputType}
+      value={value ?? ""}
+      {...stylex.props(styles.control, dirty && styles.controlDirty)}
+    />
+  );
+};
+
 /**
  * A labelled control.
  *
@@ -463,57 +616,64 @@ export const Field = ({
   hint,
   wide = false,
   dirty = false,
+  highlighted = false,
   onChange,
+  onReset,
+  options,
 }: {
   label: string;
-  kind?: "text" | "textarea" | "readonly";
+  kind?: "text" | "textarea" | "readonly" | "select" | "email";
   value?: string;
   hint?: string;
   wide?: boolean;
   dirty?: boolean;
+  highlighted?: boolean;
   onChange?: (next: string) => void;
+  onReset?: () => void;
+  options?: { label: string; value: string }[];
 }) => {
   const id = useId();
   const hintId = `${id}-hint`;
+  const showClear = dirty && onReset;
 
   return (
-    <div {...stylex.props(styles.field, wide && styles.fieldWide)}>
+    <div
+      {...stylex.props(
+        styles.field,
+        wide && styles.fieldWide,
+        highlighted && styles.highlightFlash
+      )}
+    >
       <label htmlFor={id} {...stylex.props(styles.label)}>
         {label}
       </label>
 
-      {kind === "readonly" ? (
-        <div id={id} {...stylex.props(styles.readonly)}>
-          <span>{value || "—"}</span>
-          <span {...stylex.props(styles.readonlyTag)}>Read only</span>
+      {showClear ? (
+        <div {...stylex.props(styles.fieldRow)}>
+          <div {...stylex.props(styles.fieldRowControl)}>
+            {renderControl(
+              kind,
+              id,
+              hintId,
+              value,
+              dirty,
+              onChange,
+              hint,
+              options
+            )}
+          </div>
+          <button
+            aria-label={`Reset ${label}`}
+            onClick={onReset}
+            type="button"
+            {...stylex.props(styles.clearButton)}
+          >
+            ×
+          </button>
         </div>
-      ) : null}
-
-      {kind === "text" ? (
-        <input
-          aria-describedby={hint ? hintId : undefined}
-          id={id}
-          onChange={(event) => onChange?.(event.target.value)}
-          type="text"
-          value={value ?? ""}
-          {...stylex.props(styles.control, dirty && styles.controlDirty)}
-        />
-      ) : null}
-
-      {kind === "textarea" ? (
-        <textarea
-          aria-describedby={hint ? hintId : undefined}
-          id={id}
-          onChange={(event) => onChange?.(event.target.value)}
-          rows={3}
-          value={value ?? ""}
-          {...stylex.props(
-            styles.control,
-            styles.textarea,
-            dirty && styles.controlDirty
-          )}
-        />
-      ) : null}
+      ) : (
+        renderControl(kind, id, hintId, value, dirty, onChange, hint, options)
+      )}
 
       {hint ? (
         <p id={hintId} {...stylex.props(styles.hint)}>
@@ -593,6 +753,7 @@ export const CmsButton = ({
   children,
   tone = "quiet",
   block = false,
+  disabled = false,
   onClick,
   type = "button",
   style,
@@ -600,17 +761,20 @@ export const CmsButton = ({
   children: ReactNode;
   tone?: ButtonTone;
   block?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
   type?: "button" | "submit";
   style?: stylex.StyleXStyles;
 }) => (
   <button
+    disabled={disabled}
     onClick={onClick}
     type={type === "submit" ? "submit" : "button"}
     {...stylex.props(
       styles.button,
       BUTTON_TONE[tone],
       block && styles.buttonBlock,
+      disabled && styles.buttonDisabled,
       style
     )}
   >

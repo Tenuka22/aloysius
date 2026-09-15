@@ -19,6 +19,8 @@ export const statement = {
   assignment: ["create", "read", "update", "delete"],
   /** Qualifications: upload (create), view (read), approve/reject (approve). */
   qualification: ["create", "read", "approve"],
+  /** CMS content: edit and publish pages. */
+  cms: ["edit", "publish"],
 } as const;
 
 export type AppAccessControl = AccessControl<typeof statement>;
@@ -26,7 +28,7 @@ export type AppAccessControl = AccessControl<typeof statement>;
 export const ac: AppAccessControl = createAccessControl(statement);
 
 /**
- * Admin – full control over every resource, including file management.
+ * Admin – full control over every resource, including file management and CMS.
  * Spreads the default admin statements so all built-in user/session
  * permissions are preserved.
  */
@@ -36,6 +38,15 @@ export const admin = ac.newRole({
   staff: ["create", "read", "update", "delete"],
   assignment: ["create", "read", "update", "delete"],
   qualification: ["create", "read", "approve"],
+  cms: ["edit", "publish"],
+});
+
+/**
+ * CMS editor – can edit and publish homepage content. Cannot manage staff,
+ * qualifications, or other admin-only resources.
+ */
+export const cms = ac.newRole({
+  cms: ["edit", "publish"],
 });
 
 /**
