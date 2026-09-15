@@ -6,8 +6,8 @@ import { and, eq, or } from "drizzle-orm";
 import type { AuthConfig } from "./index";
 
 /**
- * Bootstraps (or re-secures) the site admin's credential login using direct
- * database operations — bypassing Better Auth's HTTP API layer entirely.
+ * Bootstraps (or re-secures) a credential login using direct database
+ * operations — bypassing Better Auth's HTTP API layer entirely.
  *
  * Reasons for the direct-DB approach:
  * - `auth.api.signUpEmail` / `auth.api.createUser` both construct a web
@@ -17,22 +17,27 @@ import type { AuthConfig } from "./index";
  * - Bootstrap is a privileged, server-only operation. It should never go
  *   through the public HTTP pipeline.
  *
- * The admin signs in with username + password. A synthetic internal email
+ * The account signs in with username + password. A synthetic internal email
  * (`<username>@aloysius.internal`) satisfies Better Auth's required email
  * field and is never shown to the user.
  */
-export const ensureSiteAdmin = async (database: Database, env: AuthConfig) => {
-  const adminUsername = env.ADMIN_USERNAME;
-  const internalEmail = `${adminUsername.toLowerCase()}@aloysius.internal`;
-  const password = env.ADMIN_PASSWORD;
-
+const ensureCredentialUser = async (
+  database: Database,
+  {
+    username: accountUsername,
+    password,
+    name,
+    role,
+  }: { username: string; password: string; name: string; role: string }
+) => {
+  const internalEmail = `${accountUsername.toLowerCase()}@aloysius.internal`;
   const [hash, existing] = await Promise.all([
     hashPassword(password),
     database
       .select()
       .from(user)
       .where(
-        or(eq(user.username, adminUsername), eq(user.email, internalEmail))
+        or(eq(user.username, accountUsername), eq(user.email, internalEmail))
       )
       .get(),
   ]);
@@ -43,11 +48,11 @@ export const ensureSiteAdmin = async (database: Database, env: AuthConfig) => {
       .insert(user)
       .values({
         id: userId,
-        name: "Site Admin",
+        name,
         email: internalEmail,
         emailVerified: true,
-        username: adminUsername,
-        role: "admin",
+        username: accountUsername,
+        role,
       })
       .run();
 
@@ -62,9 +67,17 @@ export const ensureSiteAdmin = async (database: Database, env: AuthConfig) => {
       })
       .run();
 
-    console.log(`[auth] Created site admin: username=${adminUsername}`);
+    console.log(`[auth] Created ${role} user: username=${accountUsername}`);
     return;
   }
+
+  // Reassert the role every run, so it can't drift if someone edits the row
+  // by hand, and rotate the credential password to match the configured env.
+  await database
+    .update(user)
+    .set({ role })
+    .where(eq(user.id, existing.id))
+    .run();
 
   const existingAccount = await database
     .select()
@@ -92,6 +105,27 @@ export const ensureSiteAdmin = async (database: Database, env: AuthConfig) => {
         .run());
 
   console.log(
-    `[auth] Rotated password for site admin: username=${adminUsername}`
+    `[auth] Rotated password for ${role} user: username=${accountUsername}`
   );
 };
+
+export const ensureSiteAdmin = (database: Database, env: AuthConfig) =>
+  ensureCredentialUser(database, {
+    username: env.ADMIN_USERNAME,
+    password: env.ADMIN_PASSWORD,
+    name: "Site Admin",
+    role: "admin",
+  });
+
+/**
+ * Bootstraps (or re-secures) the CMS editor account. This role can only edit
+ * and publish homepage content (see `cms` in `permissions.ts`) — it has no
+ * access to staff, qualifications, or other admin-only resources.
+ */
+export const ensureCmsUser = (database: Database, env: AuthConfig) =>
+  ensureCredentialUser(database, {
+    username: env.CMS_USERNAME,
+    password: env.CMS_PASSWORD,
+    name: "CMS Editor",
+    role: "cms",
+  });

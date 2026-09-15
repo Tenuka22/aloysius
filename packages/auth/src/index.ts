@@ -22,13 +22,15 @@ import {
 
 export { ac, admin, cms, user } from "./permissions";
 export type { AppAccessControl } from "./permissions";
-export { ensureSiteAdmin } from "./admin";
+export { ensureCmsUser, ensureSiteAdmin } from "./admin";
 
 export interface AuthConfig {
   BETTER_AUTH_URL: string;
   BETTER_AUTH_SECRET: string;
   ADMIN_USERNAME: string;
   ADMIN_PASSWORD: string;
+  CMS_USERNAME: string;
+  CMS_PASSWORD: string;
 }
 
 /**
