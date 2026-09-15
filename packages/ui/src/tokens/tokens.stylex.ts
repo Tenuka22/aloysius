@@ -7,6 +7,10 @@ import * as stylex from "@stylexjs/stylex";
 export const palette = stylex.defineConsts({
   greenDeep: "#013405",
   greenDark: "#062b0a",
+  /** Same hue/saturation as `greenDeep`, stepped lighter - a mid shade. */
+  greenMid: "#025008",
+  /** Same hue/saturation as `greenDeep`, stepped lighter still. */
+  greenBright: "#026e0b",
   black: "#000000",
   cream: "#fff8e7",
   creamRaised: "#fffdf6",

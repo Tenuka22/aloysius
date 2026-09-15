@@ -2,9 +2,7 @@
   "version": "7",
   "dialect": "sqlite",
   "id": "968e0a9f-c4e1-412e-ae6b-9dc25114010e",
-  "prevIds": [
-    "9e2dedb2-9b66-4158-a5cc-4d12ca4ef1ee"
-  ],
+  "prevIds": ["9e2dedb2-9b66-4158-a5cc-4d12ca4ef1ee"],
   "ddl": [
     {
       "name": "class",
@@ -1359,13 +1357,9 @@
       "table": "staff_position"
     },
     {
-      "columns": [
-        "academic_year_id"
-      ],
+      "columns": ["academic_year_id"],
       "tableTo": "academic_year",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1374,13 +1368,9 @@
       "table": "class"
     },
     {
-      "columns": [
-        "homeroom_teacher_id"
-      ],
+      "columns": ["homeroom_teacher_id"],
       "tableTo": "staff",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -1389,13 +1379,9 @@
       "table": "class"
     },
     {
-      "columns": [
-        "sub_homeroom_teacher_id"
-      ],
+      "columns": ["sub_homeroom_teacher_id"],
       "tableTo": "staff",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -1404,13 +1390,9 @@
       "table": "class"
     },
     {
-      "columns": [
-        "staff_id"
-      ],
+      "columns": ["staff_id"],
       "tableTo": "staff",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1419,13 +1401,9 @@
       "table": "subject_assignment"
     },
     {
-      "columns": [
-        "academic_year_id"
-      ],
+      "columns": ["academic_year_id"],
       "tableTo": "academic_year",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1434,13 +1412,9 @@
       "table": "subject_assignment"
     },
     {
-      "columns": [
-        "class_id"
-      ],
+      "columns": ["class_id"],
       "tableTo": "class",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1449,13 +1423,9 @@
       "table": "subject_assignment"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1464,13 +1434,9 @@
       "table": "account"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1479,13 +1445,9 @@
       "table": "session"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1494,13 +1456,9 @@
       "table": "files"
     },
     {
-      "columns": [
-        "staff_id"
-      ],
+      "columns": ["staff_id"],
       "tableTo": "staff",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1509,13 +1467,9 @@
       "table": "employment_verification"
     },
     {
-      "columns": [
-        "file_id"
-      ],
+      "columns": ["file_id"],
       "tableTo": "files",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -1524,13 +1478,9 @@
       "table": "employment_verification"
     },
     {
-      "columns": [
-        "reviewed_by"
-      ],
+      "columns": ["reviewed_by"],
       "tableTo": "staff",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -1539,13 +1489,9 @@
       "table": "employment_verification"
     },
     {
-      "columns": [
-        "staff_id"
-      ],
+      "columns": ["staff_id"],
       "tableTo": "staff",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1554,13 +1500,9 @@
       "table": "password_rotation_history"
     },
     {
-      "columns": [
-        "changed_by"
-      ],
+      "columns": ["changed_by"],
       "tableTo": "staff",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -1569,13 +1511,9 @@
       "table": "password_rotation_history"
     },
     {
-      "columns": [
-        "staff_id"
-      ],
+      "columns": ["staff_id"],
       "tableTo": "staff",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1584,13 +1522,9 @@
       "table": "teacher_qualification"
     },
     {
-      "columns": [
-        "document_file_id"
-      ],
+      "columns": ["document_file_id"],
       "tableTo": "files",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -1599,13 +1533,9 @@
       "table": "teacher_qualification"
     },
     {
-      "columns": [
-        "reviewed_by"
-      ],
+      "columns": ["reviewed_by"],
       "tableTo": "staff",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -1614,13 +1544,9 @@
       "table": "teacher_qualification"
     },
     {
-      "columns": [
-        "portrait_file_id"
-      ],
+      "columns": ["portrait_file_id"],
       "tableTo": "files",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -1629,13 +1555,9 @@
       "table": "staff"
     },
     {
-      "columns": [
-        "national_identity_card_file_id"
-      ],
+      "columns": ["national_identity_card_file_id"],
       "tableTo": "files",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -1644,13 +1566,9 @@
       "table": "staff"
     },
     {
-      "columns": [
-        "staff_id"
-      ],
+      "columns": ["staff_id"],
       "tableTo": "staff",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1659,13 +1577,9 @@
       "table": "staff_position"
     },
     {
-      "columns": [
-        "academic_year_id"
-      ],
+      "columns": ["academic_year_id"],
       "tableTo": "academic_year",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1674,117 +1588,91 @@
       "table": "staff_position"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "class_pk",
       "table": "class",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "subject_assignment_pk",
       "table": "subject_assignment",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "account_pk",
       "table": "account",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "session_pk",
       "table": "session",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_pk",
       "table": "user",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "verification_pk",
       "table": "verification",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "files_pk",
       "table": "files",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "employment_verification_pk",
       "table": "employment_verification",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "password_rotation_history_pk",
       "table": "password_rotation_history",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "teacher_qualification_pk",
       "table": "teacher_qualification",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "academic_year_pk",
       "table": "academic_year",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "staff_pk",
       "table": "staff",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "staff_position_pk",
       "table": "staff_position",
@@ -2099,23 +1987,14 @@
       "table": "staff_position"
     },
     {
-      "columns": [
-        "academic_year_id",
-        "grade_level",
-        "name"
-      ],
+      "columns": ["academic_year_id", "grade_level", "name"],
       "nameExplicit": true,
       "name": "class_unique",
       "entityType": "uniques",
       "table": "class"
     },
     {
-      "columns": [
-        "staff_id",
-        "qualification",
-        "year_obtained",
-        "institution"
-      ],
+      "columns": ["staff_id", "qualification", "year_obtained", "institution"],
       "nameExplicit": true,
       "name": "teacher_qualification_unique",
       "entityType": "uniques",
@@ -2134,36 +2013,28 @@
       "table": "staff_position"
     },
     {
-      "columns": [
-        "token"
-      ],
+      "columns": ["token"],
       "nameExplicit": false,
       "name": "session_token_unique",
       "entityType": "uniques",
       "table": "session"
     },
     {
-      "columns": [
-        "email"
-      ],
+      "columns": ["email"],
       "nameExplicit": false,
       "name": "user_email_unique",
       "entityType": "uniques",
       "table": "user"
     },
     {
-      "columns": [
-        "username"
-      ],
+      "columns": ["username"],
       "nameExplicit": false,
       "name": "user_username_unique",
       "entityType": "uniques",
       "table": "user"
     },
     {
-      "columns": [
-        "year"
-      ],
+      "columns": ["year"],
       "nameExplicit": false,
       "name": "academic_year_year_unique",
       "entityType": "uniques",

@@ -24,14 +24,15 @@ const IMAGE_PREFIX = "image:";
 const VIDEO_PREFIX = "video:";
 const COLOR_PREFIX = "color:";
 
+// The hero always renders a fixed dark scrim plus cream text over this fill,
+// so only shades of the brand green stay legible and on-brand -
+// anything lighter (cream, gold) turns into a muddy off-brand tint under the
+// scrim, and anything else (black, crimson) reads as an unrelated colour.
 const COLOR_CHOICES = [
+  palette.greenBright,
+  palette.greenMid,
   palette.greenDeep,
   palette.greenDark,
-  palette.black,
-  palette.cream,
-  palette.gold,
-  palette.crimson,
-  palette.crimsonBright,
 ] as const;
 
 const getHeroMode = (value?: string): MediaMode => {

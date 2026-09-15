@@ -1,9 +1,9 @@
 import { files, filesInsertSchema } from "@aloysius/db/schema/files";
 import { pick } from "valibot";
 
-import { adminProcedure } from "../../index";
+import { protectedProcedure } from "../../index";
 
-export const completeUpload = adminProcedure
+export const completeUpload = protectedProcedure
   .input(pick(filesInsertSchema, ["key", "name", "type", "size"]))
   .handler(async ({ input, context }) => {
     const id = input.key.split("/").pop()?.split(".")[0] ?? crypto.randomUUID();

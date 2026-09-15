@@ -1,5 +1,8 @@
 import * as stylex from "@stylexjs/stylex";
+import { useEffect, useRef } from "react";
 
+import type { CmsBlock } from "../../content/cms-to-home";
+import { blocksToProps } from "../../content/cms-to-home";
 import { DEFAULT_NOTICE } from "../../content/home";
 import type { Achievement, NewsItem, Notice } from "../../content/home";
 import { SkipLink } from "../primitives/layout";
@@ -25,12 +28,6 @@ const NO_ACHIEVEMENTS: readonly Achievement[] = [];
 const styles = stylex.create({
   main: {
     display: "block",
-    /*
-     * `tabIndex={-1}` below makes <main> programmatically focusable so the skip
-     * link actually moves focus. That also makes it match `:focus-visible` in
-     * some browsers, which would draw the global 3px ring around the entire
-     * page - so the ring is suppressed for this one element.
-     */
     outline: {
       default: null,
       ":focus": "none",
@@ -46,43 +43,101 @@ export interface HomePageProps {
   contact?: FooterContact;
   principalName?: string;
   tagline?: string;
+  blocks?: CmsBlock[];
 }
 
-/**
- * Homepage composition. Every section takes its content as props with defaults,
- * so the CMS can be wired in later without touching layout code.
+/*
+ * Page composition root with ~10 independent, optional sections toggled by
+ * CMS visibility flags; each branch is trivial and self-contained, not
+ * deeply coupled control flow.
  */
+// oxlint-disable-next-line eslint/complexity
 export const HomePage = ({
-  notice = DEFAULT_NOTICE,
+  notice,
   featuredNews,
   news = NO_NEWS,
   achievements = NO_ACHIEVEMENTS,
   contact,
   principalName,
   tagline,
-}: HomePageProps) => (
-  <>
-    <SkipLink targetId={MAIN_ID} />
-    <NoticeBar notice={notice} />
-    <SiteHeader activeHref="/" />
+  blocks,
+}: HomePageProps) => {
+  const cms = blocks ? blocksToProps(blocks) : undefined;
+  const h = cms?.hidden;
 
-    {/*
-      `tabIndex={-1}` is what makes the skip link work. Without it Safari and
-      Firefox scroll to the target but leave focus on the link, so the next Tab
-      lands back in the header and the user is looped into the nav again.
-    */}
-    <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
-      <Hero tagline={tagline} />
-      <Heritage />
-      <PrincipalMessage name={principalName} />
-      <Academics />
-      <StudentLife />
-      <News featured={featuredNews} items={news} />
-      <Achievements achievements={achievements} />
-      <Alumni />
-      <Gallery />
-    </main>
+  const resolvedNotice = notice ?? cms?.notice ?? DEFAULT_NOTICE;
+  const resolvedTagline = tagline ?? cms?.heroTagline;
+  const resolvedPrincipalName = principalName ?? cms?.principalName;
 
-    <SiteFooter contact={contact} />
-  </>
-);
+  const headerRef = useRef<HTMLDivElement>(null);
+
+  // The hero's min-height is `92svh - header height` so it fits just under
+  // the fold on load. The notice bar is optional and can wrap to two lines,
+  // so the combined stack height isn't a fixed constant - measure it instead
+  // of guessing, or the hero ends up taller than the remaining viewport and
+  // leaves dead space above the next section.
+  useEffect(() => {
+    const node = headerRef.current;
+    if (!node) {
+      return;
+    }
+    const root = document.documentElement;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) {
+        root.style.setProperty(
+          "--header-height",
+          `${entry.contentRect.height}px`
+        );
+      }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <>
+      <SkipLink targetId={MAIN_ID} />
+      <div ref={headerRef}>
+        {!h?.notice && <NoticeBar notice={resolvedNotice} />}
+        <SiteHeader activeHref="/" />
+      </div>
+      <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
+        {!h?.hero && (
+          <Hero
+            background={cms?.heroBackground}
+            tagline={resolvedTagline}
+            motto={cms?.heroMotto}
+            place={cms?.heroPlace}
+            cta1={cms?.heroCta1}
+            cta2={cms?.heroCta2}
+          />
+        )}
+        {!h?.heritage && (
+          <Heritage
+            intro={cms?.heritageIntro}
+            eyebrow={cms?.heritageEyebrow}
+            heading={cms?.heritageHeading}
+            foundedYear={
+              cms?.heritageFounded
+                ? Number(cms.heritageFounded) || undefined
+                : undefined
+            }
+          />
+        )}
+        {!h?.principal && (
+          <PrincipalMessage
+            name={resolvedPrincipalName}
+            quote={cms?.principalQuote}
+          />
+        )}
+        {!h?.academics && <Academics />}
+        {!h?.life && <StudentLife />}
+        {!h?.news && <News featured={featuredNews} items={news} />}
+        {!h?.achievements && <Achievements achievements={achievements} />}
+        {!h?.alumni && <Alumni />}
+        {!h?.gallery && <Gallery />}
+      </main>
+      <SiteFooter contact={contact} />
+    </>
+  );
+};

@@ -648,20 +648,20 @@ export const Field = ({
         {label}
       </label>
 
-      {showClear ? (
-        <div {...stylex.props(styles.fieldRow)}>
-          <div {...stylex.props(styles.fieldRowControl)}>
-            {renderControl(
-              kind,
-              id,
-              hintId,
-              value,
-              dirty,
-              onChange,
-              hint,
-              options
-            )}
-          </div>
+      <div {...stylex.props(styles.fieldRow)}>
+        <div {...stylex.props(styles.fieldRowControl)}>
+          {renderControl(
+            kind,
+            id,
+            hintId,
+            value,
+            dirty,
+            onChange,
+            hint,
+            options
+          )}
+        </div>
+        {showClear ? (
           <button
             aria-label={`Reset ${label}`}
             onClick={onReset}
@@ -670,10 +670,8 @@ export const Field = ({
           >
             ×
           </button>
-        </div>
-      ) : (
-        renderControl(kind, id, hintId, value, dirty, onChange, hint, options)
-      )}
+        ) : null}
+      </div>
 
       {hint ? (
         <p id={hintId} {...stylex.props(styles.hint)}>

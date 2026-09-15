@@ -29,12 +29,14 @@ const styles = stylex.create({
      * landscape-phone case drops the height requirement entirely.
      *
      * The sticky header sits above the hero and eats into the same viewport, so
-     * it is subtracted here. Without that, `92svh` plus a 4rem header is taller
-     * than the screen and the CTA row falls below the fold on exactly the small
-     * phones that need it most.
+     * it is subtracted here (measured live by `HomePage` into `--header-height`,
+     * since the notice bar is optional and can wrap to two lines). Header plus
+     * hero equal exactly `100svh` so the hero fills the screen with no sliver
+     * of the next section peeking through, and the CTA row never falls below
+     * the fold on small phones.
      */
     minBlockSize: {
-      default: "min(92svh - var(--header-height, 4rem), 46rem)",
+      default: "min(100svh - var(--header-height, 4rem), 46rem)",
       [bp.short]: "auto",
     },
   },

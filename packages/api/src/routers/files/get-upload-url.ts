@@ -1,12 +1,12 @@
 import * as v from "valibot";
 
-import { adminProcedure } from "../../index";
+import { protectedProcedure } from "../../index";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const PRESIGNED_URL_EXPIRY = 300;
 const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024;
 
-export const getUploadUrl = adminProcedure
+export const getUploadUrl = protectedProcedure
   .input(
     v.object({
       name: v.pipe(v.string(), v.minLength(1)),

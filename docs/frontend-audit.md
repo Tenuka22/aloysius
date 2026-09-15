@@ -66,7 +66,7 @@ So the audit below is mostly of the **mock**, which is what the production marku
 | 4.3 | `[CMS: …]` placeholders are inline in copy strings; they would ship to production as literal text. |
 | 4.4 | The sticky header has no scrolled state and no backdrop, so cream content slides under a hard green bar with no separation. |
 | 4.5 | No `<html lang>`-aware typography for Sinhala/Tamil, on a Sri Lankan trilingual school site. |
-| 4.6 | No dark mode. *Resolved as a product decision rather than a defect:* the site is **light-only**. The cream/deep-green palette is the brand, and inverting it produced a page that no longer read as St. Aloysius'. There is no dark theme and no theme switch. |
+| 4.6 | No dark mode. _Resolved as a product decision rather than a defect:_ the site is **light-only**. The cream/deep-green palette is the brand, and inverting it produced a page that no longer read as St. Aloysius'. There is no dark theme and no theme switch. |
 
 ## 5. SEO
 
@@ -114,9 +114,7 @@ Driven with Playwright against the production build:
 - **No interactive target below 24x24** (everything is on a 44px grid).
 - **Every `<img>` has an `alt`**.
 - **Keyboard**: the skip link is the first Tab stop; the drawer opens with focus moved inside, stays contained, and Escape closes it and restores focus.
-- **Light-only enforced**: under an emulated `prefers-color-scheme: dark` the body
-  still renders cream (`#fff8e7`), and the built CSS contains zero
-  `prefers-color-scheme` rules.
+- **Light-only enforced**: under an emulated `prefers-color-scheme: dark` the body still renders cream (`#fff8e7`), and the built CSS contains zero `prefers-color-scheme` rules.
 - Section-by-section visual checks at 390px, 768px and 1440px.
 
 ## 10. Known gaps / out of scope

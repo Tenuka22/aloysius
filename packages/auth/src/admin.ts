@@ -21,10 +21,7 @@ import type { AuthConfig } from "./index";
  * (`<username>@aloysius.internal`) satisfies Better Auth's required email
  * field and is never shown to the user.
  */
-export const ensureSiteAdmin = async (
-  database: Database,
-  env: AuthConfig
-) => {
+export const ensureSiteAdmin = async (database: Database, env: AuthConfig) => {
   const adminUsername = env.ADMIN_USERNAME;
   const internalEmail = `${adminUsername.toLowerCase()}@aloysius.internal`;
   const password = env.ADMIN_PASSWORD;
@@ -34,7 +31,9 @@ export const ensureSiteAdmin = async (
     database
       .select()
       .from(user)
-      .where(or(eq(user.username, adminUsername), eq(user.email, internalEmail)))
+      .where(
+        or(eq(user.username, adminUsername), eq(user.email, internalEmail))
+      )
       .get(),
   ]);
 
@@ -92,5 +91,7 @@ export const ensureSiteAdmin = async (
         })
         .run());
 
-  console.log(`[auth] Rotated password for site admin: username=${adminUsername}`);
+  console.log(
+    `[auth] Rotated password for site admin: username=${adminUsername}`
+  );
 };

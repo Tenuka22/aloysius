@@ -22,7 +22,7 @@ import {
   PanelHead,
   StatusBadge,
 } from "./cms-primitives";
-import { HistoryPopover } from "./history-popover";
+import { HistoryDialog, HistoryPopover } from "./history-popover";
 import type { HistoryResponse } from "./history-popover";
 import { MediaField } from "./media-field";
 
@@ -147,7 +147,8 @@ const styles = stylex.create({
   },
   blockItem: {
     display: "flex",
-    alignItems: "center",
+    alignItems: "stretch",
+    height: "2.75rem",
     gap: space["2xs"],
     borderBlockEndWidth: space.px,
     borderBlockEndStyle: "solid",
@@ -157,6 +158,7 @@ const styles = stylex.create({
     display: "flex",
     alignItems: "center",
     gap: space.xs,
+    flexGrow: 1,
     minWidth: 0,
     minHeight: "2.25rem",
     paddingBlock: space.xs,
@@ -223,7 +225,7 @@ const styles = stylex.create({
     height: "2.75rem",
     padding: 0,
     borderWidth: 0,
-    borderRadius: "0.375rem",
+    borderRadius: 0,
     backgroundColor: {
       default: "transparent",
       ":hover": "rgba(1, 52, 5, 0.08)",
@@ -894,6 +896,7 @@ export const HomepageEditorActions = ({
   fetchHistory?: (cursor: number) => Promise<HistoryResponse>;
 }) => {
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [fullHistoryOpen, setFullHistoryOpen] = useState(false);
   return (
     <div {...stylex.props(styles.headerActions)}>
       {sectionsSlot}
@@ -912,6 +915,17 @@ export const HomepageEditorActions = ({
           <HistoryPopover
             fetchHistory={fetchHistory}
             onClose={() => setHistoryOpen(false)}
+            onShowFull={() => {
+              setHistoryOpen(false);
+              setFullHistoryOpen(true);
+            }}
+          />
+        ) : null}
+        {fetchHistory ? (
+          <HistoryDialog
+            fetchHistory={fetchHistory}
+            onClose={() => setFullHistoryOpen(false)}
+            open={fullHistoryOpen}
           />
         ) : null}
       </div>

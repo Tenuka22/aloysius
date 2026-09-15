@@ -1,6 +1,12 @@
 import * as stylex from "@stylexjs/stylex";
-import { ChevronLeft, ChevronRight, Clock, Minus, Plus } from "lucide-react";
-import { useCallback, useSyncExternalStore, useState } from "react";
+import { ChevronLeft, ChevronRight, Clock, Minus, Plus, X } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useSyncExternalStore,
+  useState,
+} from "react";
 
 import { color, font, space } from "../../tokens/tokens.stylex";
 
@@ -115,6 +121,67 @@ export const subscribeHistoryCache = (
 
 // oxlint-disable-next-line react-doctor/only-export-components
 export const getHistorySnapshot = (cursor: number) => cache.get(String(cursor));
+
+/** Matches the server's `PAGE_SIZE` in `getHomepageHistory`. */
+const PAGE_SIZE = 10;
+
+const EMPTY_RESPONSE: HistoryResponse = {
+  items: [],
+  nextCursor: null,
+  total: 0,
+};
+
+/**
+ * Shared cursor/loading state for a history list. Both the compact popover
+ * and the full-history dialog read the same module-level cache, so paging
+ * one keeps the other in sync without a duplicate fetch.
+ */
+const useHistoryPager = (
+  fetchHistory: (cursor: number) => Promise<HistoryResponse>
+) => {
+  const [cursor, setCursor] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const snapshot = useSyncExternalStore(
+    useCallback((l) => subscribeHistoryCache(cursor, l), [cursor]),
+    useCallback(() => getHistorySnapshot(cursor), [cursor])
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      // oxlint-disable-next-line react/set-state-in-effect -- synchronizing
+      // with the external fetch/cache; `loading` can't be derived at render
+      // time since it tracks an in-flight network request.
+      setLoading(true);
+      try {
+        await fetchHistoryPage(cursor, fetchHistory);
+      } catch {
+        // errors surfaced by the empty-state fallback below
+      }
+      if (!cancelled) {
+        setLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [cursor, fetchHistory]);
+
+  const data = snapshot ?? EMPTY_RESPONSE;
+  const page = Math.floor(cursor / PAGE_SIZE) + 1;
+  const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
+
+  const goNext = useCallback(() => {
+    setCursor((c) => c + PAGE_SIZE);
+  }, []);
+  const goPrev = useCallback(() => {
+    setCursor((c) => Math.max(0, c - PAGE_SIZE));
+  }, []);
+
+  return { data, loading, page, totalPages, goNext, goPrev, cursor };
+};
 
 /* -------------------------------------------------------------------- */
 /*  Styles                                                               */
@@ -277,6 +344,11 @@ const styles = stylex.create({
     fontSize: font.size2xs,
     color: color.onSurfaceSubtle,
   },
+  pageGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: space.sm,
+  },
   pageNav: {
     display: "flex",
     gap: space["2xs"],
@@ -314,112 +386,170 @@ const styles = stylex.create({
     fontSize: font.sizeSm,
     color: color.onSurfaceMuted,
   },
+  showFullButton: {
+    padding: 0,
+    borderWidth: 0,
+    backgroundColor: "transparent",
+    fontSize: font.size2xs,
+    fontWeight: font.weightBold,
+    color: {
+      default: color.accentOnSurface,
+      ":hover": color.onSurface,
+    },
+    cursor: "pointer",
+  },
+  fullDialog: {
+    position: "fixed",
+    margin: 0,
+    insetBlockStart: "50%",
+    insetInlineStart: "50%",
+    transform: "translate(-50%, -50%)",
+    zIndex: 300,
+    width: "min(40rem, 95vw)",
+    maxHeight: "85dvh",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+    padding: 0,
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: color.border,
+    borderRadius: "0.25rem",
+    boxShadow: "0 24px 64px rgba(0,0,0,0.28)",
+    "::backdrop": {
+      backgroundColor: "rgba(1, 52, 5, 0.6)",
+    },
+  },
+  fullHead: {
+    display: "flex",
+    alignItems: "center",
+    gap: space.xs,
+    padding: space.sm,
+    borderBlockEndWidth: space.px,
+    borderBlockEndStyle: "solid",
+    borderBlockEndColor: color.border,
+  },
+  fullClose: {
+    flexShrink: 0,
+    display: "grid",
+    placeItems: "center",
+    width: "2.25rem",
+    height: "2.25rem",
+    padding: 0,
+    borderWidth: 0,
+    backgroundColor: {
+      default: "transparent",
+      ":hover": color.surfaceSunken,
+    },
+    color: color.onSurfaceMuted,
+    cursor: "pointer",
+  },
 });
 
 /* -------------------------------------------------------------------- */
 /*  Component                                                            */
 /* -------------------------------------------------------------------- */
 
+const renderHistoryList = (data: HistoryResponse, loading: boolean) => {
+  if (loading && data.items.length === 0) {
+    return <li {...stylex.props(styles.loading)}>Loading…</li>;
+  }
+  if (data.items.length === 0) {
+    return <li {...stylex.props(styles.empty)}>No publish history yet.</li>;
+  }
+  return data.items.map((item) => (
+    <li key={item.versionId} {...stylex.props(styles.item)}>
+      <div {...stylex.props(styles.itemHead)}>
+        <span {...stylex.props(styles.itemTimestamp)}>
+          {formatDate(item.timestamp)}
+        </span>
+        <span
+          {...stylex.props(
+            styles.itemBadge,
+            item.diffs.length > 0 ? styles.itemBadgeSome : styles.itemBadgeNone
+          )}
+        >
+          {item.diffs.length} change{item.diffs.length === 1 ? "" : "s"}
+        </span>
+      </div>
+      <p {...stylex.props(styles.itemBlocks)}>
+        {item.blockCount} block{item.blockCount === 1 ? "" : "s"}
+      </p>
+      {item.diffs.length > 0 ? (
+        <div {...stylex.props(styles.diffList)}>
+          {item.diffs.map((d) => (
+            <div
+              key={`${d.block}-${d.field}`}
+              {...stylex.props(styles.diffRow)}
+            >
+              <span {...stylex.props(styles.diffField)}>
+                {d.field.split("-").slice(-1)}
+              </span>
+              <Minus aria-hidden="true" {...stylex.props(styles.diffIcon)} />
+              <span {...stylex.props(styles.diffFrom)}>
+                {truncateValue(d.from)}
+              </span>
+              <Plus aria-hidden="true" {...stylex.props(styles.diffIcon)} />
+              <span {...stylex.props(styles.diffTo)}>
+                {truncateValue(d.to)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </li>
+  ));
+};
+
+const PaginationBar = ({
+  page,
+  totalPages,
+  onPrev,
+  onNext,
+}: {
+  page: number;
+  totalPages: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) => (
+  <div {...stylex.props(styles.pageGroup)}>
+    <span {...stylex.props(styles.pageLabel)}>
+      Page {page} of {totalPages}
+    </span>
+    <div {...stylex.props(styles.pageNav)}>
+      <button
+        aria-label="Previous page"
+        disabled={page <= 1}
+        onClick={onPrev}
+        type="button"
+        {...stylex.props(styles.pageButton)}
+      >
+        <ChevronLeft aria-hidden="true" {...stylex.props(styles.pageIcon)} />
+      </button>
+      <button
+        aria-label="Next page"
+        disabled={page >= totalPages}
+        onClick={onNext}
+        type="button"
+        {...stylex.props(styles.pageButton)}
+      >
+        <ChevronRight aria-hidden="true" {...stylex.props(styles.pageIcon)} />
+      </button>
+    </div>
+  </div>
+);
+
 export const HistoryPopover = ({
   fetchHistory,
   onClose: _onClose,
+  onShowFull,
 }: {
   fetchHistory: (cursor: number) => Promise<HistoryResponse>;
   onClose?: () => void;
+  onShowFull?: () => void;
 }) => {
-  const [cursor, setCursor] = useState(0);
-  const [items, setItems] = useState<HistoryItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  const snapshot = useSyncExternalStore(
-    useCallback((l) => subscribeHistoryCache(cursor, l), [cursor]),
-    useCallback(() => getHistorySnapshot(cursor), [cursor])
-  );
-
-  const loadPage = useCallback(
-    async (c: number) => {
-      setLoading(true);
-      try {
-        const result = await fetchHistoryPage(c, fetchHistory);
-        setItems(result.items);
-        setTotal(result.total);
-      } catch {
-        // errors surfaced via cache
-      }
-      setLoading(false);
-    },
-    [fetchHistory]
-  );
-
-  const data = snapshot ?? { items, nextCursor: null, total };
-  const page = Math.floor(cursor / 10) + 1;
-  const totalPages = Math.max(1, Math.ceil(data.total / 10));
-
-  const goNext = useCallback(() => {
-    const next = cursor + 10;
-    setCursor(next);
-    void loadPage(next);
-  }, [cursor, loadPage]);
-
-  const goPrev = useCallback(() => {
-    const next = Math.max(0, cursor - 10);
-    setCursor(next);
-    void loadPage(next);
-  }, [cursor, loadPage]);
-
-  const renderList = () => {
-    if (loading && data.items.length === 0) {
-      return <li {...stylex.props(styles.loading)}>Loading…</li>;
-    }
-    if (data.items.length === 0) {
-      return <li {...stylex.props(styles.empty)}>No publish history yet.</li>;
-    }
-    return data.items.map((item) => (
-      <li key={item.versionId} {...stylex.props(styles.item)}>
-        <div {...stylex.props(styles.itemHead)}>
-          <span {...stylex.props(styles.itemTimestamp)}>
-            {formatDate(item.timestamp)}
-          </span>
-          <span
-            {...stylex.props(
-              styles.itemBadge,
-              item.diffs.length > 0
-                ? styles.itemBadgeSome
-                : styles.itemBadgeNone
-            )}
-          >
-            {item.diffs.length} change{item.diffs.length === 1 ? "" : "s"}
-          </span>
-        </div>
-        <p {...stylex.props(styles.itemBlocks)}>
-          {item.blockCount} block{item.blockCount === 1 ? "" : "s"}
-        </p>
-        {item.diffs.length > 0 ? (
-          <div {...stylex.props(styles.diffList)}>
-            {item.diffs.map((d) => (
-              <div
-                key={`${d.block}-${d.field}`}
-                {...stylex.props(styles.diffRow)}
-              >
-                <span {...stylex.props(styles.diffField)}>
-                  {d.field.split("-").slice(-1)}
-                </span>
-                <Minus aria-hidden="true" {...stylex.props(styles.diffIcon)} />
-                <span {...stylex.props(styles.diffFrom)}>
-                  {truncateValue(d.from)}
-                </span>
-                <Plus aria-hidden="true" {...stylex.props(styles.diffIcon)} />
-                <span {...stylex.props(styles.diffTo)}>
-                  {truncateValue(d.to)}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </li>
-    ));
-  };
+  const { data, loading, page, totalPages, goNext, goPrev } =
+    useHistoryPager(fetchHistory);
 
   return (
     <dialog open {...stylex.props(styles.panel)}>
@@ -431,39 +561,97 @@ export const HistoryPopover = ({
         ) : null}
       </div>
 
-      <ul {...stylex.props(styles.list)}>{renderList()}</ul>
+      <ul {...stylex.props(styles.list)}>{renderHistoryList(data, loading)}</ul>
+
+      <div {...stylex.props(styles.footer)}>
+        {totalPages > 1 ? (
+          <PaginationBar
+            onNext={goNext}
+            onPrev={goPrev}
+            page={page}
+            totalPages={totalPages}
+          />
+        ) : null}
+        {onShowFull && data.total > 0 ? (
+          <button
+            onClick={onShowFull}
+            type="button"
+            {...stylex.props(styles.showFullButton)}
+          >
+            See full history &rarr;
+          </button>
+        ) : null}
+      </div>
+    </dialog>
+  );
+};
+
+/**
+ * Full-screen modal for browsing the complete publish history. Shares the
+ * module-level cache with `HistoryPopover`, so paging either one keeps both
+ * in sync and avoids a duplicate fetch for a page already seen.
+ */
+export const HistoryDialog = ({
+  fetchHistory,
+  onClose,
+  open,
+}: {
+  fetchHistory: (cursor: number) => Promise<HistoryResponse>;
+  onClose: () => void;
+  open: boolean;
+}) => {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const { data, loading, page, totalPages, goNext, goPrev } =
+    useHistoryPager(fetchHistory);
+
+  useEffect(() => {
+    const node = dialogRef.current;
+    if (!node) {
+      return;
+    }
+    if (open && !node.open) {
+      node.showModal();
+    } else if (!open && node.open) {
+      node.close();
+    }
+  }, [open]);
+
+  return (
+    <dialog
+      aria-label="Full publish history"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      ref={dialogRef}
+      {...stylex.props(styles.fullDialog)}
+    >
+      <div {...stylex.props(styles.fullHead)}>
+        <Clock aria-hidden="true" {...stylex.props(styles.headIcon)} />
+        <p {...stylex.props(styles.headText)}>Version history</p>
+        {data.total > 0 ? (
+          <span {...stylex.props(styles.headCount)}>{data.total}</span>
+        ) : null}
+        <button
+          aria-label="Close version history"
+          onClick={onClose}
+          type="button"
+          {...stylex.props(styles.fullClose)}
+        >
+          <X aria-hidden="true" {...stylex.props(styles.pageIcon)} />
+        </button>
+      </div>
+
+      <ul {...stylex.props(styles.list)}>{renderHistoryList(data, loading)}</ul>
 
       {totalPages > 1 ? (
         <div {...stylex.props(styles.footer)}>
-          <span {...stylex.props(styles.pageLabel)}>
-            Page {page} of {totalPages}
-          </span>
-          <div {...stylex.props(styles.pageNav)}>
-            <button
-              aria-label="Previous page"
-              disabled={page <= 1}
-              onClick={goPrev}
-              type="button"
-              {...stylex.props(styles.pageButton)}
-            >
-              <ChevronLeft
-                aria-hidden="true"
-                {...stylex.props(styles.pageIcon)}
-              />
-            </button>
-            <button
-              aria-label="Next page"
-              disabled={page >= totalPages}
-              onClick={goNext}
-              type="button"
-              {...stylex.props(styles.pageButton)}
-            >
-              <ChevronRight
-                aria-hidden="true"
-                {...stylex.props(styles.pageIcon)}
-              />
-            </button>
-          </div>
+          <PaginationBar
+            onNext={goNext}
+            onPrev={goPrev}
+            page={page}
+            totalPages={totalPages}
+          />
         </div>
       ) : null}
     </dialog>
