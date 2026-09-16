@@ -8,6 +8,13 @@ export interface CmsEvents {
       fields: { id: string; value: string }[];
     }[];
   };
+  "about-updated": {
+    blocks: {
+      id: string;
+      hidden: boolean;
+      fields: { id: string; value: string }[];
+    }[];
+  };
   [key: string]: object;
 }
 

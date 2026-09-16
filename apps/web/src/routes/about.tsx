@@ -1,5 +1,45 @@
+import { AboutPage } from "@aloysius/ui/components/about/about-page";
+import { FOUNDERS, TIMELINE, ANTHEM_IMAGE } from "@aloysius/ui/content/about";
+import { blocksToAboutImages } from "@aloysius/ui/content/cms-to-about";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { Suspense } from "react";
 
-import { comingSoonRoute } from "./-coming-soon";
+import { orpc } from "@/utils/orpc";
 
-export const Route = createFileRoute("/about")(comingSoonRoute("About", 62));
+const AboutContent = () => {
+  const aboutQuery = orpc.cms.getAbout.queryOptions();
+  const { data: about } = useSuspenseQuery(aboutQuery);
+
+  const images = about?.blocks
+    ? blocksToAboutImages(about.blocks, {
+        founder1: FOUNDERS[0].image ?? { src: "", alt: FOUNDERS[0].name },
+        founder2: FOUNDERS[1].image ?? { src: "", alt: FOUNDERS[1].name },
+        history1: TIMELINE[0].image ?? { src: "", alt: TIMELINE[0].title },
+        history2: TIMELINE[1].image ?? { src: "", alt: TIMELINE[1].title },
+        history3: TIMELINE[2].image ?? { src: "", alt: TIMELINE[2].title },
+        history4: TIMELINE[3].image ?? { src: "", alt: TIMELINE[3].title },
+        anthem: ANTHEM_IMAGE,
+      })
+    : undefined;
+
+  return <AboutPage images={images} />;
+};
+
+export const Route = createFileRoute("/about")({
+  head: () => ({
+    meta: [
+      { title: "About | St. Aloysius' College, Galle" },
+      {
+        name: "description",
+        content:
+          "The history, mission and people of St. Aloysius' College, Galle - founders, vision and mission, motto, principal's message and college anthem.",
+      },
+    ],
+  }),
+  component: () => (
+    <Suspense fallback={<div>Loading…</div>}>
+      <AboutContent />
+    </Suspense>
+  ),
+});

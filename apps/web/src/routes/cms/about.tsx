@@ -5,7 +5,7 @@ import {
   SectionsDropdown,
 } from "@aloysius/ui/components/cms/homepage-editor";
 import type { HomepageEditorHandle } from "@aloysius/ui/components/cms/homepage-editor";
-import { HOMEPAGE_BLOCKS } from "@aloysius/ui/content/cms";
+import { ABOUT_BLOCKS } from "@aloysius/ui/content/cms";
 import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import {
@@ -16,23 +16,12 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, useCallback, useRef, useState } from "react";
 
-import { useLiveHomepageBlocks } from "@/hooks/use-live-homepage-blocks";
 import { client, orpc } from "@/utils/orpc";
-
-const md = "@media (min-width: 40rem)";
 
 const styles = stylex.create({
   wrap: {
-    paddingBlockStart: space.md,
-    paddingBlockEnd: space.md,
-    paddingInlineStart: space.md,
-    paddingInlineEnd: space.md,
-    [md]: {
-      paddingBlockStart: space.lg,
-      paddingBlockEnd: space.lg,
-      paddingInlineStart: space.lg,
-      paddingInlineEnd: space.lg,
-    },
+    paddingBlock: space.md,
+    paddingInline: space.md,
   },
   screenHead: {
     display: "flex",
@@ -73,27 +62,26 @@ const styles = stylex.create({
   },
 });
 
-const HomepageContent = () => {
+const AboutContent = () => {
   const queryClient = useQueryClient();
-  const homepageQuery = orpc.cms.getHomepage.queryOptions();
-  const { data: homepage } = useSuspenseQuery(homepageQuery);
+  const aboutQuery = orpc.cms.getAbout.queryOptions();
+  const { data: about } = useSuspenseQuery(aboutQuery);
   const editorRef = useRef<HomepageEditorHandle>(null);
   const [dirty, setDirty] = useState<Record<string, boolean>>({});
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
-  const { highlightedFields } = useLiveHomepageBlocks();
 
   const updateMutation = useMutation(
-    orpc.cms.updateHomepage.mutationOptions({
+    orpc.cms.updateAbout.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries(homepageQuery);
+        queryClient.invalidateQueries(aboutQuery);
       },
     })
   );
 
   const publishMutation = useMutation(
-    orpc.cms.publishHomepage.mutationOptions({
+    orpc.cms.publishAbout.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries(homepageQuery);
+        queryClient.invalidateQueries(aboutQuery);
       },
     })
   );
@@ -144,24 +132,6 @@ const HomepageContent = () => {
     []
   );
 
-  const handlePreview = useCallback(() => {
-    const blocks = editorRef.current?.getBlocks();
-    if (!blocks) {
-      return;
-    }
-
-    updateMutation.mutate(
-      { blocks },
-      {
-        onSuccess: (data) => {
-          if (data?.draftIds?.[0]) {
-            window.open(`/preview/${data.draftIds[0]}`, "_blank");
-          }
-        },
-      }
-    );
-  }, [updateMutation]);
-
   const handleToggleHidden = useCallback((blockId: string) => {
     editorRef.current?.toggleHidden(blockId);
     setHidden((prev) => ({ ...prev, [blockId]: !prev[blockId] }));
@@ -173,7 +143,7 @@ const HomepageContent = () => {
 
   const handleFetchHistory = useCallback(
     async (cursor: number): Promise<HistoryResponse> => {
-      const result = await client.cms.getHomepageHistory({ cursor });
+      const result = await client.cms.getAboutHistory({ cursor });
       return result as HistoryResponse;
     },
     []
@@ -181,7 +151,7 @@ const HomepageContent = () => {
 
   const sectionsSlot = (
     <SectionsDropdown
-      blocks={HOMEPAGE_BLOCKS}
+      blocks={ABOUT_BLOCKS}
       dirty={dirty}
       hidden={hidden}
       onToggle={handleToggleHidden}
@@ -193,43 +163,42 @@ const HomepageContent = () => {
     <>
       <div {...stylex.props(styles.screenHead)}>
         <div {...stylex.props(styles.headingWrap)}>
-          <p {...stylex.props(styles.eyebrow)}>Pages / Homepage</p>
-          <h1 {...stylex.props(styles.heading)}>Homepage Editor</h1>
+          <p {...stylex.props(styles.eyebrow)}>Pages / About</p>
+          <h1 {...stylex.props(styles.heading)}>About Editor</h1>
           <p {...stylex.props(styles.note)}>
-            Edit the sections that make up the public homepage.
+            Replace the archival photos on the About page. Clearing a photo
+            restores the college&apos;s default.
           </p>
         </div>
         <HomepageEditorActions
-          onSaveDraft={handleSaveDraft}
-          onPublish={handlePublish}
-          onPreview={handlePreview}
-          sectionsSlot={sectionsSlot}
           fetchHistory={handleFetchHistory}
+          onPublish={handlePublish}
+          onSaveDraft={handleSaveDraft}
+          sectionsSlot={sectionsSlot}
         />
       </div>
       <HomepageEditor
-        blocks={HOMEPAGE_BLOCKS}
-        ref={editorRef}
-        initialBlocks={homepage?.blocks ?? undefined}
+        blocks={ABOUT_BLOCKS}
+        initialBlocks={about?.blocks ?? undefined}
         onDirtyChange={handleDirtyChange}
         onUpload={handleUpload}
-        highlightedFields={highlightedFields}
+        ref={editorRef}
       />
     </>
   );
 };
 
-export const Route = createFileRoute("/cms/homepage")({
+export const Route = createFileRoute("/cms/about")({
   head: () => ({
     meta: [
-      { title: "Homepage Editor — St. Aloysius' College" },
+      { title: "About Editor — St. Aloysius' College" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: () => (
     <div {...stylex.props(styles.wrap)}>
-      <Suspense fallback={<div>Loading homepage…</div>}>
-        <HomepageContent />
+      <Suspense fallback={<div>Loading…</div>}>
+        <AboutContent />
       </Suspense>
     </div>
   ),

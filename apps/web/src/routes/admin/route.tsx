@@ -1,20 +1,19 @@
 import {
   createFileRoute,
   Outlet,
+  redirect,
   useRouterState,
 } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 import { AdminShell } from "@/components/admin/admin-shell";
-import { authClient } from "@/lib/auth-client";
+import { client } from "@/utils/orpc";
 
 const AdminLayout = () => {
+  const { user } = Route.useLoaderData();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
-  const session = authClient.useSession();
-  const userName = session.data?.user?.username ?? "User";
-  const userRole = session.data?.user?.role ?? "user";
 
   const navItems = [
     {
@@ -33,10 +32,10 @@ const AdminLayout = () => {
 
   return (
     <AdminShell
-      title="Admin"
       navItems={navItems}
-      userName={userName}
-      userRole={userRole}
+      title="Admin"
+      userName={user.username ?? "User"}
+      userRole={user.role ?? "user"}
     >
       <Suspense fallback={<div>Loading…</div>}>
         <Outlet />
@@ -46,5 +45,18 @@ const AdminLayout = () => {
 };
 
 export const Route = createFileRoute("/admin")({
+  /**
+   * Gated on the server, same as `/cms`: `beforeLoad` runs before any child
+   * loader or render, so an unauthorized visitor is redirected before the
+   * admin shell ever mounts.
+   */
+  beforeLoad: async () => {
+    const session = await client.getSession();
+    if (!session || session.user.role !== "admin") {
+      throw redirect({ to: "/" });
+    }
+    return { user: session.user };
+  },
+  loader: ({ context }) => ({ user: context.user }),
   component: AdminLayout,
 });

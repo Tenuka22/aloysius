@@ -8,8 +8,7 @@ import {
   useState,
 } from "react";
 
-import { HOMEPAGE_BLOCKS } from "../../content/cms";
-import type { BlockField } from "../../content/cms";
+import type { BlockField, PageBlock } from "../../content/cms";
 import { aspectRatios } from "../../tokens/aspect-ratios";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
@@ -30,15 +29,16 @@ type Baseline = Record<string, string>;
 type DirtyMap = Record<string, boolean>;
 
 const buildBaseline = (
-  blocks: HomepageEditorProps["initialBlocks"]
+  initialBlocks: HomepageEditorProps["initialBlocks"],
+  pageBlocks: readonly PageBlock[]
 ): Baseline => {
   const baseline: Baseline = {};
-  for (const block of blocks ?? []) {
+  for (const block of initialBlocks ?? []) {
     for (const field of block.fields ?? []) {
       baseline[field.id] = field.value ?? "";
     }
   }
-  for (const block of HOMEPAGE_BLOCKS) {
+  for (const block of pageBlocks) {
     for (const field of block.fields) {
       if (!(field.id in baseline)) {
         baseline[field.id] = field.value ?? "";
@@ -48,9 +48,13 @@ const buildBaseline = (
   return baseline;
 };
 
-const buildDirtyMap = (draft: Draft, baseline: Baseline): DirtyMap => {
+const buildDirtyMap = (
+  draft: Draft,
+  baseline: Baseline,
+  pageBlocks: readonly PageBlock[]
+): DirtyMap => {
   const dirty: DirtyMap = {};
-  for (const block of HOMEPAGE_BLOCKS) {
+  for (const block of pageBlocks) {
     for (const field of block.fields) {
       dirty[field.id] =
         Object.hasOwn(draft, field.id) &&
@@ -464,6 +468,8 @@ export interface HomepageEditorHandle {
 }
 
 export interface HomepageEditorProps {
+  /** The page's block registry, e.g. `HOMEPAGE_BLOCKS` or `ABOUT_BLOCKS`. */
+  blocks: readonly PageBlock[];
   initialBlocks?: {
     id: string;
     hidden?: boolean;
@@ -482,11 +488,17 @@ export const HomepageEditor = forwardRef<
 >(
   // eslint-disable-next-line prefer-arrow-callback
   function HomepageEditor(
-    { initialBlocks, onDirtyChange, onUpload, highlightedFields },
+    {
+      blocks: pageBlocks,
+      initialBlocks,
+      onDirtyChange,
+      onUpload,
+      highlightedFields,
+    },
     ref
   ) {
     const [selectedId, setSelectedId] = useState(
-      HOMEPAGE_BLOCKS[1]?.id ?? "hero"
+      pageBlocks[1]?.id ?? pageBlocks[0]?.id ?? ""
     );
     const [hidden, setHidden] = useState<Record<string, boolean>>(() => {
       if (!initialBlocks) {
@@ -501,7 +513,7 @@ export const HomepageEditor = forwardRef<
       return h;
     });
     const [baseline, setBaseline] = useState<Baseline>(() =>
-      buildBaseline(initialBlocks)
+      buildBaseline(initialBlocks, pageBlocks)
     );
     const [draftState, setDraftState] = useState<DraftState>({
       draft: {},
@@ -510,8 +522,7 @@ export const HomepageEditor = forwardRef<
     const { draft, dirty } = draftState;
 
     const selected =
-      HOMEPAGE_BLOCKS.find((block) => block.id === selectedId) ??
-      HOMEPAGE_BLOCKS[0];
+      pageBlocks.find((block) => block.id === selectedId) ?? pageBlocks[0];
 
     const valueOf = useCallback(
       (field: BlockField) =>
@@ -527,11 +538,11 @@ export const HomepageEditor = forwardRef<
     const updateDraft = useCallback(
       (updater: (previous: Draft) => Draft) => {
         const nextDraft = updater(draftState.draft);
-        const nextDirty = buildDirtyMap(nextDraft, baseline);
+        const nextDirty = buildDirtyMap(nextDraft, baseline, pageBlocks);
         setDraftState({ draft: nextDraft, dirty: nextDirty });
         onDirtyChange?.(nextDirty);
       },
-      [baseline, draftState.draft, onDirtyChange]
+      [baseline, draftState.draft, onDirtyChange, pageBlocks]
     );
 
     const updateField = useCallback(
@@ -563,17 +574,17 @@ export const HomepageEditor = forwardRef<
             [block.id]: block.hidden,
           }));
         }
-        const nextDirty = buildDirtyMap(nextDraft, nextBaseline);
+        const nextDirty = buildDirtyMap(nextDraft, nextBaseline, pageBlocks);
         setBaseline(nextBaseline);
         setDraftState({ draft: nextDraft, dirty: nextDirty });
         onDirtyChange?.(nextDirty);
       },
-      [baseline, draftState.draft, onDirtyChange]
+      [baseline, draftState.draft, onDirtyChange, pageBlocks]
     );
 
     const buildBlocks = useCallback(
       (): Block[] =>
-        HOMEPAGE_BLOCKS.map((block) => ({
+        pageBlocks.map((block) => ({
           id: block.id,
           hidden: hidden[block.id] ?? false,
           fields: block.fields.map((f) => ({
@@ -581,18 +592,18 @@ export const HomepageEditor = forwardRef<
             value: valueOf(f),
           })),
         })),
-      [hidden, valueOf]
+      [hidden, pageBlocks, valueOf]
     );
 
     const isSectionDirty = useCallback(
       (sectionId: string): boolean => {
-        const section = HOMEPAGE_BLOCKS.find((b) => b.id === sectionId);
+        const section = pageBlocks.find((b) => b.id === sectionId);
         if (!section) {
           return false;
         }
         return section.fields.some((f) => getFieldDirty(f.id));
       },
-      [getFieldDirty]
+      [getFieldDirty, pageBlocks]
     );
 
     useImperativeHandle(
@@ -620,7 +631,7 @@ export const HomepageEditor = forwardRef<
           </div>
 
           <ul {...stylex.props(styles.blockList)}>
-            {HOMEPAGE_BLOCKS.map((block, index) => {
+            {pageBlocks.map((block, index) => {
               const isHidden = hidden[block.id] ?? false;
               const isActive = block.id === selectedId;
               const hasUnsavedChanges = isSectionDirty(block.id);

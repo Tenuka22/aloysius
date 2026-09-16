@@ -411,6 +411,84 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
   },
 ];
 
+/**
+ * The About page's editable blocks. Only the images the page cannot get from
+ * anywhere else are editable here - the copy is real, published prose (see
+ * `content/about.ts`), not draft text a non-technical editor should rewrite
+ * from this screen.
+ */
+export const ABOUT_BLOCKS: readonly PageBlock[] = [
+  {
+    id: "founders",
+    name: "Founders",
+    type: "Text + media",
+    status: "published",
+    summary: "Portraits for the two founder cards",
+    fields: [
+      {
+        id: "founder1-image",
+        label: "Bishop Joseph Van Reeth portrait",
+        kind: "image",
+        hint: "Portrait orientation. Clearing this restores the default archival photo.",
+      },
+      {
+        id: "founder2-image",
+        label: "St. Aloysius Gonzaga portrait",
+        kind: "image",
+        hint: "Portrait orientation. Clearing this restores the default archival photo.",
+      },
+    ],
+  },
+  {
+    id: "history",
+    name: "History Timeline",
+    type: "Media grid",
+    status: "published",
+    summary: "Archival photo for each of the four timeline entries",
+    fields: [
+      {
+        id: "history-1-image",
+        label: "1895 — Founding of the College",
+        kind: "image",
+        hint: "Clearing this restores the default archival photo.",
+      },
+      {
+        id: "history-2-image",
+        label: "1920s — Early Growth",
+        kind: "image",
+        hint: "Clearing this restores the default archival photo.",
+      },
+      {
+        id: "history-3-image",
+        label: "1971 — A Century of Excellence",
+        kind: "image",
+        hint: "Clearing this restores the default archival photo.",
+      },
+      {
+        id: "history-4-image",
+        label: "Today — The Modern College",
+        kind: "image",
+        hint: "Clearing this restores the default archival photo.",
+      },
+    ],
+  },
+  {
+    id: "anthem",
+    name: "College Anthem",
+    type: "Text + media",
+    status: "published",
+    summary: "Portrait of the anthem's writer and composer",
+    fields: [
+      {
+        id: "anthem-image",
+        label: "Anthem creators",
+        kind: "image",
+        hint: "Clearing this restores the default portrait collage.",
+      },
+    ],
+  },
+];
+
 /* --------------------------------------------------------------- dashboard */
 
 export interface Tile {
