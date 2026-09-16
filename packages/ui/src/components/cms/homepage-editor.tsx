@@ -908,6 +908,7 @@ export const HomepageEditorActions = ({
 }) => {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [fullHistoryOpen, setFullHistoryOpen] = useState(false);
+  const historyButtonRef = useRef<HTMLButtonElement>(null);
   return (
     <div {...stylex.props(styles.headerActions)}>
       {sectionsSlot}
@@ -916,6 +917,7 @@ export const HomepageEditorActions = ({
           aria-expanded={historyOpen}
           aria-label="Version history"
           onClick={() => setHistoryOpen((o) => !o)}
+          ref={historyButtonRef}
           title="Version history"
           type="button"
           {...stylex.props(styles.historyButton)}
@@ -924,6 +926,7 @@ export const HomepageEditorActions = ({
         </button>
         {historyOpen && fetchHistory ? (
           <HistoryPopover
+            anchorRef={historyButtonRef}
             fetchHistory={fetchHistory}
             onClose={() => setHistoryOpen(false)}
             onShowFull={() => {

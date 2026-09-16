@@ -7,6 +7,7 @@ import {
   useSyncExternalStore,
   useState,
 } from "react";
+import type { RefObject } from "react";
 
 import { color, font, space } from "../../tokens/tokens.stylex";
 
@@ -420,6 +421,12 @@ const styles = stylex.create({
       backgroundColor: "rgba(1, 52, 5, 0.6)",
     },
   },
+  fullDialogClosed: {
+    // StyleX's compiled class outranks the UA `dialog:not([open])` rule, so
+    // the modal would otherwise render (as a static flex box) the instant it
+    // mounts, before `showModal()` ever runs. Force it hidden until `open`.
+    display: "none",
+  },
   fullHead: {
     display: "flex",
     alignItems: "center",
@@ -541,23 +548,65 @@ const PaginationBar = ({
 
 export const HistoryPopover = ({
   fetchHistory,
-  onClose: _onClose,
+  onClose,
   onShowFull,
+  anchorRef,
 }: {
   fetchHistory: (cursor: number) => Promise<HistoryResponse>;
   onClose?: () => void;
   onShowFull?: () => void;
+  /** Element (e.g. the toggle button) excluded from outside-click detection. */
+  anchorRef?: RefObject<HTMLElement | null>;
 }) => {
   const { data, loading, page, totalPages, goNext, goPrev } =
     useHistoryPager(fetchHistory);
 
+  const panelRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (!onClose) {
+      return;
+    }
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        panelRef.current?.contains(target) ||
+        anchorRef?.current?.contains(target)
+      ) {
+        return;
+      }
+      onClose();
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose, anchorRef]);
+
   return (
-    <dialog open {...stylex.props(styles.panel)}>
+    <dialog open ref={panelRef} {...stylex.props(styles.panel)}>
       <div {...stylex.props(styles.head)}>
         <Clock aria-hidden="true" {...stylex.props(styles.headIcon)} />
         <p {...stylex.props(styles.headText)}>Version history</p>
         {data.total > 0 ? (
           <span {...stylex.props(styles.headCount)}>{data.total}</span>
+        ) : null}
+        {onClose ? (
+          <button
+            aria-label="Close version history"
+            onClick={onClose}
+            type="button"
+            {...stylex.props(styles.fullClose)}
+          >
+            <X aria-hidden="true" {...stylex.props(styles.pageIcon)} />
+          </button>
         ) : null}
       </div>
 
@@ -624,7 +673,7 @@ export const HistoryDialog = ({
         onClose();
       }}
       ref={dialogRef}
-      {...stylex.props(styles.fullDialog)}
+      {...stylex.props(styles.fullDialog, !open && styles.fullDialogClosed)}
     >
       <div {...stylex.props(styles.fullHead)}>
         <Clock aria-hidden="true" {...stylex.props(styles.headIcon)} />
