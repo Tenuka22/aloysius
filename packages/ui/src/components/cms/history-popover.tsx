@@ -143,9 +143,12 @@ const useHistoryPager = (
   const [cursor, setCursor] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  const getSnapshot = useCallback(() => getHistorySnapshot(cursor), [cursor]);
+
   const snapshot = useSyncExternalStore(
     useCallback((l) => subscribeHistoryCache(cursor, l), [cursor]),
-    useCallback(() => getHistorySnapshot(cursor), [cursor])
+    getSnapshot,
+    getSnapshot
   );
 
   useEffect(() => {

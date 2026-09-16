@@ -13,10 +13,16 @@ const styles = stylex.create({
   hero: {
     position: "relative",
     overflow: "hidden",
+    display: "grid",
+    placeItems: "center",
     backgroundColor: color.surfaceInverse,
     color: color.onInverse,
-    paddingBlock: space["2xl"],
+    paddingBlock: space["3xl"],
     paddingInline: space.gutter,
+    minBlockSize: {
+      default: "min(100svh - var(--header-height, 4rem), 46rem)",
+      [bp.short]: "auto",
+    },
   },
   watermark: {
     position: "absolute",
