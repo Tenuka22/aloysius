@@ -295,7 +295,7 @@ const styles = stylex.create({
     flexDirection: "column",
     gap: space["3xs"],
     marginBlockStart: space.xs,
-    padding: space.xs,
+    padding: space["2xs"],
     borderRadius: "0.25rem",
     backgroundColor: color.surfaceSunken,
   },
@@ -305,7 +305,7 @@ const styles = stylex.create({
     gap: space.xs,
     fontSize: font.size2xs,
     fontFamily: font.mono,
-    lineHeight: font.leadingRelaxed,
+    lineHeight: font.leadingSnug,
   },
   diffField: {
     flexShrink: 0,
@@ -492,14 +492,25 @@ const renderHistoryList = (data: HistoryResponse, loading: boolean) => {
               <span {...stylex.props(styles.diffField)}>
                 {d.field.split("-").slice(-1)}
               </span>
-              <Minus aria-hidden="true" {...stylex.props(styles.diffIcon)} />
-              <span {...stylex.props(styles.diffFrom)}>
-                {truncateValue(d.from)}
-              </span>
-              <Plus aria-hidden="true" {...stylex.props(styles.diffIcon)} />
-              <span {...stylex.props(styles.diffTo)}>
-                {truncateValue(d.to)}
-              </span>
+              {d.from ? (
+                <>
+                  <Minus
+                    aria-hidden="true"
+                    {...stylex.props(styles.diffIcon)}
+                  />
+                  <span {...stylex.props(styles.diffFrom)}>
+                    {truncateValue(d.from)}
+                  </span>
+                </>
+              ) : null}
+              {d.to ? (
+                <>
+                  <Plus aria-hidden="true" {...stylex.props(styles.diffIcon)} />
+                  <span {...stylex.props(styles.diffTo)}>
+                    {truncateValue(d.to)}
+                  </span>
+                </>
+              ) : null}
             </div>
           ))}
         </div>
