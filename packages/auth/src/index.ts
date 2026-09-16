@@ -17,10 +17,19 @@ import {
   ac,
   admin as adminRole,
   cms as cmsRole,
+  studentOfficer as studentOfficerRole,
+  teacherOfficer as teacherOfficerRole,
   user as userRole,
 } from "./permissions";
 
-export { ac, admin, cms, user } from "./permissions";
+export {
+  ac,
+  admin,
+  cms,
+  studentOfficer,
+  teacherOfficer,
+  user,
+} from "./permissions";
 export type { AppAccessControl } from "./permissions";
 export { ensureCmsUser, ensureSiteAdmin } from "./admin";
 
@@ -102,7 +111,13 @@ const buildAuthOptions = (
     plugins: [
       adminPlugin({
         ac,
-        roles: { admin: adminRole, cms: cmsRole, user: userRole },
+        roles: {
+          admin: adminRole,
+          cms: cmsRole,
+          user: userRole,
+          studentOfficer: studentOfficerRole,
+          teacherOfficer: teacherOfficerRole,
+        },
       }),
       multiSession(),
       username(),
@@ -117,6 +132,8 @@ interface AdminPluginOptions {
     admin: typeof adminRole;
     cms: typeof cmsRole;
     user: typeof userRole;
+    studentOfficer: typeof studentOfficerRole;
+    teacherOfficer: typeof teacherOfficerRole;
   };
 }
 

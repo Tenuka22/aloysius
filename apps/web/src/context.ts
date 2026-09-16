@@ -16,7 +16,7 @@ export const createContext = async ({
   return {
     db,
     storage,
-    auth: null,
+    auth,
     session,
   };
 };

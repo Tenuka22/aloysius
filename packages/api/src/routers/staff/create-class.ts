@@ -1,9 +1,9 @@
 import { class_, classInsertSchema } from "@aloysius/db/schema/academics";
 import { pick } from "valibot";
 
-import { adminProcedure } from "../../index";
+import { requireAssignmentPermission } from "../../index";
 
-export const createClass = adminProcedure
+export const createClass = requireAssignmentPermission("create")
   .input(
     pick(classInsertSchema, ["academicYearId", "gradeLevel", "name", "medium"])
   )

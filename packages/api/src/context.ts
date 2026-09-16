@@ -3,7 +3,7 @@ import type { Database } from "@aloysius/db";
 import type { Storage } from "@aloysius/storage";
 
 export interface Context {
-  auth: null;
+  auth: ReturnType<typeof createAuth> | null;
   session: Awaited<
     ReturnType<ReturnType<typeof createAuth>["api"]["getSession"]>
   >;

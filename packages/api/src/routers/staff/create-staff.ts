@@ -1,10 +1,10 @@
 import { staff, staffInsertSchema } from "@aloysius/db/schema/staff";
 import { pick } from "valibot";
 
-import { adminProcedure } from "../../index";
+import { requireStaffPermission } from "../../index";
 import { staffPublisher } from "./staff-publisher";
 
-export const createStaff = adminProcedure
+export const createStaff = requireStaffPermission("create")
   .input(
     pick(staffInsertSchema, [
       "name",

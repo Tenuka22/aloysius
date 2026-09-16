@@ -21,6 +21,12 @@ export const statement = {
   qualification: ["create", "read", "approve"],
   /** CMS content: edit and publish pages. */
   cms: ["edit", "publish"],
+  /** Student records: full CRUD. */
+  student: ["create", "read", "update", "delete"],
+  /** Marks: enter, view, update marks for assigned classes. */
+  mark: ["create", "read", "update"],
+  /** Exam types and grade scales: manage exam definitions. */
+  exam: ["create", "read", "update", "delete"],
 } as const;
 
 export type AppAccessControl = AccessControl<typeof statement>;
@@ -55,4 +61,27 @@ export const cms = ac.newRole({
  */
 export const user = ac.newRole({
   qualification: ["create", "read"],
+});
+
+/**
+ * Student officer – manages student records and class assignments.
+ * Can create/read/update/delete students and manage class assignments.
+ * Cannot enter marks (that's the homeroom teacher's job).
+ */
+export const studentOfficer = ac.newRole({
+  student: ["create", "read", "update", "delete"],
+  assignment: ["create", "read", "update"],
+  exam: ["read"],
+});
+
+/**
+ * Teacher officer (homeroom teacher) – enters marks for their assigned class.
+ * Can read students in their class and create/update marks.
+ * Can view exam types and grade scales.
+ */
+export const teacherOfficer = ac.newRole({
+  student: ["read"],
+  mark: ["create", "read", "update"],
+  exam: ["read"],
+  assignment: ["read"],
 });

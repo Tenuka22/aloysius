@@ -8,9 +8,9 @@ import { eq } from "drizzle-orm";
 import { pick } from "valibot";
 import * as v from "valibot";
 
-import { adminProcedure } from "../../index";
+import { requireAssignmentPermission } from "../../index";
 
-export const assignClassTeacher = adminProcedure
+export const assignClassTeacher = requireAssignmentPermission("update")
   .input(
     v.object({
       classId: classIdSchema,

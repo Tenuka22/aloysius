@@ -3,6 +3,7 @@ import type { RouterClient } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { cmsRouter } from "./cms";
 import { filesRouter } from "./files";
+import { markingRouter } from "./marking";
 import { staffRouter } from "./staff";
 
 export const appRouter = {
@@ -16,6 +17,7 @@ export const appRouter = {
   getSession: publicProcedure.handler(({ context }) => context.session),
   cms: cmsRouter,
   files: filesRouter,
+  marking: markingRouter,
   staff: staffRouter,
   privateData: protectedProcedure.handler(({ context }) => ({
     message: "This is private",
