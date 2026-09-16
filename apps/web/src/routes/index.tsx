@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
+import { authClient } from "@/lib/auth-client";
 import { orpc } from "@/utils/orpc";
 
 const news = [
@@ -42,12 +43,43 @@ const featuredNews = {
 const HomeContent = () => {
   const homepageQuery = orpc.cms.getHomepage.queryOptions();
   const { data: homepage } = useSuspenseQuery(homepageQuery);
+  const { data: session } = authClient.useSession();
+
+  const extraNavItems = (() => {
+    if (!session?.user) {
+      return [];
+    }
+    const items = [];
+    const { role } = session.user;
+    if (role === "admin" || role === "cms") {
+      items.push({ id: "cms", label: "CMS", href: "/cms" });
+    }
+    if (role === "admin" || role === "studentOfficer") {
+      items.push({
+        id: "students-admin",
+        label: "Manage Students",
+        href: "/student-officer",
+      });
+    }
+    if (role === "admin" || role === "teacherOfficer") {
+      items.push({
+        id: "teachers-admin",
+        label: "Staff",
+        href: "/teacher-officer",
+      });
+    }
+    if (role === "admin") {
+      items.push({ id: "admin", label: "Admin", href: "/admin" });
+    }
+    return items;
+  })();
 
   return (
     <HomePage
       blocks={homepage?.blocks ?? undefined}
       featuredNews={featuredNews}
       news={news}
+      extraNavItems={extraNavItems}
     />
   );
 };

@@ -3,6 +3,7 @@ import * as stylex from "@stylexjs/stylex";
 import type { LeadershipMember } from "../../content/about";
 import { FOUNDERS, TIMELINE } from "../../content/about";
 import type { AboutImages } from "../../content/cms-to-about";
+import type { NavItem } from "../../content/home";
 import { SkipLink } from "../primitives/layout";
 import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
@@ -34,6 +35,7 @@ export interface AboutPageProps {
   leadership?: readonly LeadershipMember[];
   /** Editable image overrides resolved from CMS blocks, already defaulted. */
   images?: AboutImages;
+  extraNavItems?: readonly NavItem[];
 }
 
 export const AboutPage = ({
@@ -41,6 +43,7 @@ export const AboutPage = ({
   principalName,
   leadership,
   images,
+  extraNavItems,
 }: AboutPageProps) => {
   const founders = images
     ? FOUNDERS.map((founder, index) => ({
@@ -63,7 +66,7 @@ export const AboutPage = ({
   return (
     <>
       <SkipLink targetId={MAIN_ID} />
-      <SiteHeader activeHref="/about" />
+      <SiteHeader activeHref="/about" extraNavItems={extraNavItems} />
       <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
         <AboutHero />
         <Founders founders={founders} />

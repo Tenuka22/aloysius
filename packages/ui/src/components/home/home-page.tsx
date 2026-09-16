@@ -4,7 +4,12 @@ import { useEffect, useRef } from "react";
 import type { CmsBlock } from "../../content/cms-to-home";
 import { blocksToProps } from "../../content/cms-to-home";
 import { DEFAULT_NOTICE } from "../../content/home";
-import type { Achievement, NewsItem, Notice } from "../../content/home";
+import type {
+  Achievement,
+  NavItem,
+  NewsItem,
+  Notice,
+} from "../../content/home";
 import { SkipLink } from "../primitives/layout";
 import { NoticeBar } from "../site/notice-bar";
 import { SiteFooter } from "../site/site-footer";
@@ -44,6 +49,7 @@ export interface HomePageProps {
   principalName?: string;
   tagline?: string;
   blocks?: CmsBlock[];
+  extraNavItems?: readonly NavItem[];
 }
 
 /*
@@ -61,6 +67,7 @@ export const HomePage = ({
   principalName,
   tagline,
   blocks,
+  extraNavItems,
 }: HomePageProps) => {
   const cms = blocks ? blocksToProps(blocks) : undefined;
   const h = cms?.hidden;
@@ -99,7 +106,7 @@ export const HomePage = ({
       <SkipLink targetId={MAIN_ID} />
       <div ref={headerRef}>
         {!h?.notice && <NoticeBar notice={resolvedNotice} />}
-        <SiteHeader activeHref="/" />
+        <SiteHeader activeHref="/" extraNavItems={extraNavItems} />
       </div>
       <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
         {!h?.hero && (

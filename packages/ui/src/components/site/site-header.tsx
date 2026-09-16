@@ -102,7 +102,7 @@ const styles = stylex.create({
   desktopNav: {
     display: {
       default: "none",
-      [bp.xxl]: "flex",
+      [bp.xxxl]: "flex",
     },
     alignItems: "center",
     minWidth: 0,
@@ -166,7 +166,7 @@ const styles = stylex.create({
   menuButton: {
     display: {
       default: "inline-flex",
-      [bp.xxl]: "none",
+      [bp.xxxl]: "none",
     },
     alignItems: "center",
     justifyContent: "center",
@@ -306,11 +306,13 @@ const styles = stylex.create({
 export const SiteHeader = ({
   activeHref = "/",
   items = NAV_ITEMS,
+  extraNavItems,
   admissionsHref = ADMISSIONS_URL,
   crestSrc = "/logo.png",
 }: {
   activeHref?: string;
   items?: readonly NavItem[];
+  extraNavItems?: readonly NavItem[];
   admissionsHref?: string;
   crestSrc?: string;
 }) => {
@@ -340,7 +342,7 @@ export const SiteHeader = ({
     if (!open) {
       return;
     }
-    const query = matchMedia("(min-width: 80rem)");
+    const query = matchMedia("(min-width: 96rem)");
     const onChange = () => {
       if (query.matches) {
         setOpen(false);
@@ -381,6 +383,8 @@ export const SiteHeader = ({
     }
   }, [open]);
 
+  const allItems = extraNavItems ? [...items, ...extraNavItems] : items;
+
   return (
     <>
       <header
@@ -404,7 +408,7 @@ export const SiteHeader = ({
           </a>
 
           <nav aria-label="Primary" {...stylex.props(styles.desktopNav)}>
-            {items.map((item) => {
+            {allItems.map((item) => {
               const isActive = item.href === activeHref;
               return (
                 <a
@@ -484,7 +488,7 @@ export const SiteHeader = ({
           </div>
 
           <nav aria-label="Mobile" {...stylex.props(styles.drawerNav)}>
-            {items.map((item) => {
+            {allItems.map((item) => {
               const isActive = item.href === activeHref;
               return (
                 <a

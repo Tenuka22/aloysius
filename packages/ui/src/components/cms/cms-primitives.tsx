@@ -1,6 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import type { ReactNode } from "react";
-import { useId } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import type { EntryStatus } from "../../content/cms";
 import { STATUS_LABEL } from "../../content/cms";
@@ -215,6 +215,88 @@ const styles = stylex.create({
   controlDirty: {
     backgroundColor: "rgba(255, 178, 3, 0.12)",
     borderColor: color.accent,
+  },
+  customSelect: {
+    position: "relative",
+    width: "100%",
+  },
+  customSelectButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    minHeight: MIN_TARGET,
+    paddingBlock: space["2xs"],
+    paddingInline: space.xs,
+    backgroundColor: color.surfaceSunken,
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: {
+      default: color.borderStrong,
+      ":hover": color.onSurfaceSubtle,
+    },
+    color: color.onSurface,
+    fontFamily: font.body,
+    fontSize: "1rem",
+    lineHeight: font.leadingNormal,
+    textAlign: "start",
+    cursor: "pointer",
+    transitionProperty: "border-color, background-color",
+    transitionDuration: motionToken.fast,
+  },
+  customSelectButtonOpen: {
+    borderColor: color.onSurfaceSubtle,
+  },
+  customSelectChevron: {
+    width: "1rem",
+    height: "1rem",
+    flexShrink: 0,
+    marginInlineStart: space.xs,
+    transitionProperty: "transform",
+    transitionDuration: motionToken.fast,
+  },
+  customSelectChevronOpen: {
+    transform: "rotate(180deg)",
+  },
+  customSelectMenu: {
+    position: "absolute",
+    insetBlockStart: "100%",
+    insetInlineStart: 0,
+    insetInlineEnd: 0,
+    zIndex: 1000,
+    marginTop: space.px,
+    maxHeight: "15rem",
+    overflowY: "auto",
+    backgroundColor: color.surfaceSunken,
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: color.borderStrong,
+    boxShadow: "0 8px 28px rgba(0, 0, 0, 0.18)",
+  },
+  customSelectOption: {
+    display: "block",
+    width: "100%",
+    paddingBlock: space["2xs"],
+    paddingInline: space.xs,
+    border: "none",
+    backgroundColor: {
+      default: "transparent",
+      ":hover": "rgba(1, 52, 5, 0.08)",
+    },
+    color: color.onSurface,
+    fontFamily: font.body,
+    fontSize: "1rem",
+    lineHeight: font.leadingNormal,
+    textAlign: "start",
+    cursor: "pointer",
+  },
+  customSelectOptionActive: {
+    backgroundColor: "rgba(1, 52, 5, 0.12)",
+  },
+  customSelectOptionSelected: {
+    backgroundColor: "rgba(255, 178, 3, 0.18)",
+    color: color.onSurface,
+    fontWeight: font.weightSemibold,
   },
   textarea: {
     minHeight: "6rem",
@@ -498,6 +580,208 @@ export const FieldGrid = ({ children }: { children: ReactNode }) => (
 
 const CUSTOM_OPTION_VALUE = "__custom_link__";
 
+const ChevronIcon = ({ open }: { open: boolean }) => (
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...stylex.props(
+      styles.customSelectChevron,
+      open && styles.customSelectChevronOpen
+    )}
+  >
+    <path d="M4 6l4 4 4-4" />
+  </svg>
+);
+
+const CustomSelect = ({
+  "aria-describedby": ariaDescribedBy,
+  dirty,
+  id,
+  onChange,
+  options,
+  selectedValue,
+}: {
+  "aria-describedby"?: string;
+  dirty: boolean;
+  id: string;
+  onChange: ((next: string) => void) | undefined;
+  options: { label: string; value: string }[] | undefined;
+  selectedValue: string | undefined;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const selectedLabel =
+    options?.find((o) => o.value === selectedValue)?.label ?? "Custom link...";
+
+  const close = useCallback(() => {
+    setOpen(false);
+    setActiveIndex(-1);
+    buttonRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        close();
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        close();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open, close]);
+
+  useEffect(() => {
+    if (open && activeIndex >= 0 && optionRefs.current[activeIndex]) {
+      optionRefs.current[activeIndex]?.scrollIntoView({ block: "nearest" });
+    }
+  }, [open, activeIndex]);
+
+  const allOptions = options ?? [];
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (!open) {
+      if (
+        event.key === "ArrowDown" ||
+        event.key === "ArrowUp" ||
+        event.key === "Enter" ||
+        event.key === " "
+      ) {
+        event.preventDefault();
+        setOpen(true);
+        setActiveIndex(0);
+      }
+      return;
+    }
+
+    switch (event.key) {
+      case "ArrowDown": {
+        event.preventDefault();
+        setActiveIndex((prev) => (prev < allOptions.length - 1 ? prev + 1 : 0));
+        break;
+      }
+      case "ArrowUp": {
+        event.preventDefault();
+        setActiveIndex((prev) => (prev > 0 ? prev - 1 : allOptions.length - 1));
+        break;
+      }
+      case "Enter":
+      case " ": {
+        event.preventDefault();
+        if (activeIndex >= 0 && activeIndex < allOptions.length) {
+          onChange?.(allOptions[activeIndex].value);
+          close();
+        }
+        break;
+      }
+      case "Home": {
+        event.preventDefault();
+        setActiveIndex(0);
+        break;
+      }
+      case "End": {
+        event.preventDefault();
+        setActiveIndex(allOptions.length - 1);
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  };
+
+  return (
+    <div {...stylex.props(styles.customSelect)}>
+      <button
+        aria-describedby={ariaDescribedBy}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        id={id}
+        onClick={() => {
+          setOpen((prev) => !prev);
+          if (!open) {
+            setActiveIndex(0);
+          }
+        }}
+        onKeyDown={handleKeyDown}
+        ref={buttonRef}
+        type="button"
+        {...stylex.props(
+          styles.customSelectButton,
+          styles.control,
+          dirty && styles.controlDirty,
+          open && styles.customSelectButtonOpen
+        )}
+      >
+        <span>{selectedLabel}</span>
+        <ChevronIcon open={open} />
+      </button>
+      {open ? (
+        /* oxlint-disable jsx-a11y/prefer-tag-over-role -- custom dropdown, not native select */
+        <div
+          aria-labelledby={id}
+          ref={menuRef}
+          role="listbox"
+          {...stylex.props(styles.customSelectMenu)}
+        >
+          {allOptions.map((option, index) => (
+            <button
+              aria-selected={option.value === selectedValue}
+              key={option.value}
+              onClick={() => {
+                onChange?.(option.value);
+                close();
+              }}
+              onMouseEnter={() => setActiveIndex(index)}
+              ref={(el) => {
+                optionRefs.current[index] = el;
+              }}
+              role="option"
+              type="button"
+              {...stylex.props(
+                styles.customSelectOption,
+                index === activeIndex && styles.customSelectOptionActive,
+                option.value === selectedValue &&
+                  styles.customSelectOptionSelected
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      ) : /* oxlint-enable jsx-a11y/prefer-tag-over-role */
+      null}
+    </div>
+  );
+};
+
 const renderSelectControl = (
   id: string,
   hintId: string,
@@ -509,36 +793,16 @@ const renderSelectControl = (
 ) => {
   const knownValue = options?.some((option) => option.value === value);
   const selectedValue = knownValue ? value : CUSTOM_OPTION_VALUE;
-  const customValue = knownValue ? "" : (value ?? "");
+
   return (
-    <>
-      <select
-        aria-describedby={hint ? hintId : undefined}
-        id={id}
-        onChange={(event) => onChange?.(event.target.value)}
-        value={selectedValue}
-        {...stylex.props(styles.control, dirty && styles.controlDirty)}
-      >
-        {options?.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-        <option value={CUSTOM_OPTION_VALUE}>Custom link...</option>
-      </select>
-      {selectedValue === CUSTOM_OPTION_VALUE ? (
-        <input
-          aria-label="Custom link"
-          aria-describedby={hint ? hintId : undefined}
-          id={`${id}-custom`}
-          onChange={(event) => onChange?.(event.target.value)}
-          placeholder="Enter a URL or path"
-          type="text"
-          value={customValue}
-          {...stylex.props(styles.control, dirty && styles.controlDirty)}
-        />
-      ) : null}
-    </>
+    <CustomSelect
+      aria-describedby={hint ? hintId : undefined}
+      dirty={dirty}
+      id={id}
+      onChange={onChange}
+      options={options}
+      selectedValue={selectedValue}
+    />
   );
 };
 
