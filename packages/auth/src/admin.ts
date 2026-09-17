@@ -129,3 +129,111 @@ export const ensureCmsUser = (database: Database, env: AuthConfig) =>
     name: "CMS Editor",
     role: "cms",
   });
+
+/**
+ * Creates a new teacher credential account from the admin panel.
+ * The admin enters: teacher name, username, password.
+ * A "teacher manager password" check should be performed at the API layer
+ * before calling this function.
+ */
+export const createTeacherCredential = async (
+  database: Database,
+  {
+    username,
+    password,
+    name,
+  }: { username: string; password: string; name: string }
+) => {
+  const internalEmail = `${username.toLowerCase()}@aloysius.internal`;
+  const [hash, existing] = await Promise.all([
+    hashPassword(password),
+    database
+      .select()
+      .from(user)
+      .where(or(eq(user.username, username), eq(user.email, internalEmail)))
+      .get(),
+  ]);
+
+  if (existing) {
+    throw new Error(`User with username "${username}" already exists`);
+  }
+
+  const userId = crypto.randomUUID();
+  await database
+    .insert(user)
+    .values({
+      id: userId,
+      name,
+      email: internalEmail,
+      emailVerified: true,
+      username,
+      role: "teacher",
+    })
+    .run();
+
+  await database
+    .insert(account)
+    .values({
+      id: crypto.randomUUID(),
+      accountId: userId,
+      providerId: "credential",
+      userId,
+      password: hash,
+    })
+    .run();
+
+  console.log(`[auth] Created teacher user: username=${username}`);
+  return { userId, username };
+};
+
+/**
+ * Rotates a teacher's password. Called from the admin panel.
+ */
+export const rotateTeacherPassword = async (
+  database: Database,
+  { username, newPassword }: { username: string; newPassword: string }
+) => {
+  const internalEmail = `${username.toLowerCase()}@aloysius.internal`;
+  const existing = await database
+    .select()
+    .from(user)
+    .where(or(eq(user.username, username), eq(user.email, internalEmail)))
+    .get();
+
+  if (!existing) {
+    throw new Error(`User with username "${username}" not found`);
+  }
+
+  const [hash, existingAccount] = await Promise.all([
+    hashPassword(newPassword),
+    database
+      .select()
+      .from(account)
+      .where(
+        and(
+          eq(account.userId, existing.id),
+          eq(account.providerId, "credential")
+        )
+      )
+      .get(),
+  ]);
+
+  await (existingAccount
+    ? database
+        .update(account)
+        .set({ password: hash })
+        .where(eq(account.id, existingAccount.id))
+        .run()
+    : database
+        .insert(account)
+        .values({
+          id: crypto.randomUUID(),
+          accountId: existing.id,
+          providerId: "credential",
+          userId: existing.id,
+          password: hash,
+        })
+        .run());
+
+  console.log(`[auth] Rotated password for teacher: username=${username}`);
+};

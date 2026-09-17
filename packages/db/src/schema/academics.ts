@@ -10,16 +10,8 @@ import { createInsertSchema, createSelectSchema } from "drizzle-orm/valibot";
 import * as v from "valibot";
 
 import { GRADE_LEVELS } from "../constants/grades";
-import {
-  AL_COMMON_SUBJECTS,
-  AL_STREAMS,
-  AL_SUBJECTS,
-  BASKET_SUBJECTS,
-  JUNIOR_SECONDARY_SUBJECTS,
-  MOTHER_TONGUE_OPTIONS,
-  OL_COMPULSORY_SUBJECTS,
-  PRIMARY_SUBJECTS,
-} from "../constants/subjects";
+import { MOTHER_TONGUE_OPTIONS } from "../constants/languages";
+import { ALL_KNOWN_SUBJECT_KEYS } from "../constants/structureVersions/index";
 import { brand } from "./brand";
 import type { Brand } from "./brand";
 import {
@@ -38,20 +30,14 @@ export const subjectAssignmentIdSchema = v.pipe(
   brand<string, "SubjectAssignmentId">()
 );
 
-const SUBJECT_KEYS = [
-  ...new Set([
-    ...PRIMARY_SUBJECTS,
-    ...JUNIOR_SECONDARY_SUBJECTS,
-    ...OL_COMPULSORY_SUBJECTS,
-    ...Object.values(BASKET_SUBJECTS).flat(),
-    ...AL_STREAMS,
-    ...Object.values(AL_SUBJECTS).flat(),
-    ...AL_COMMON_SUBJECTS,
-  ]),
-] as [string, ...string[]];
+export type GradeSubjectConfigId = Brand<string, "GradeSubjectConfigId">;
+export const gradeSubjectConfigIdSchema = v.pipe(
+  v.string(),
+  brand<string, "GradeSubjectConfigId">()
+);
 
 const gradeLevelSchema = v.picklist(GRADE_LEVELS);
-const subjectKeySchema = v.picklist(SUBJECT_KEYS);
+const subjectKeySchema = v.picklist(ALL_KNOWN_SUBJECT_KEYS);
 const mediumSchema = v.picklist([...MOTHER_TONGUE_OPTIONS, "english"]);
 
 /**
@@ -119,6 +105,51 @@ export const subjectAssignment = sqliteTable(
     index("subject_assignment_staff_idx").on(table.staffId),
     index("subject_assignment_year_idx").on(table.academicYearId),
     index("subject_assignment_subject_idx").on(table.subjectKey),
+    unique("subject_assignment_unique").on(
+      table.staffId,
+      table.academicYearId,
+      table.subjectKey,
+      table.classId
+    ),
+  ]
+);
+
+/**
+ * Defines which subjects are available per grade per academic year.
+ * Seeded by code with defaults but stored in DB so basket layout changes
+ * (e.g. 3→4 baskets) don't require a code deploy.
+ *
+ * For O/L grades (10-11), this stores the basket configuration:
+ * which subjects belong to which basket category, and how many
+ * students must pick from each basket.
+ */
+export const gradeSubjectConfig = sqliteTable(
+  "grade_subject_config",
+  {
+    id: text("id").primaryKey(),
+    academicYearId: text("academic_year_id")
+      .notNull()
+      .references(() => academicYear.id, { onDelete: "cascade" }),
+    gradeLevel: integer("grade_level").notNull(),
+    /** Basket category key — e.g. "languagesHumanities", "aestheticsArts" */
+    basketCategory: text("basket_category").notNull(),
+    /** Subject key matching the constants */
+    subjectKey: text("subject_key").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+  },
+  (table) => [
+    index("gsc_year_idx").on(table.academicYearId),
+    index("gsc_grade_idx").on(table.gradeLevel),
+    index("gsc_basket_idx").on(table.basketCategory),
+    unique("gsc_unique").on(
+      table.academicYearId,
+      table.gradeLevel,
+      table.basketCategory,
+      table.subjectKey
+    ),
   ]
 );
 
@@ -159,4 +190,33 @@ export const subjectAssignmentSelectSchema = createSelectSchema(
 export const subjectAssignmentInsertSchema = createInsertSchema(
   subjectAssignment,
   subjectAssignmentColumnRefinements
+);
+
+/**
+ * Basket category is deliberately a free-form, non-empty string rather than
+ * a closed picklist: `gradeSubjectConfig` rows now cover both O/L optional
+ * baskets ("languagesHumanities", ...), the `COMPULSORY_BASKET_CATEGORY`
+ * sentinel, and future elective slots (e.g. "op1") — every category is
+ * defined by whichever `StructureVersion` materialized the row, not by a
+ * single hardcoded global enum. See `constants/structureVersions`.
+ */
+const basketCategorySchema = v.pipe(v.string(), v.minLength(1));
+export { basketCategorySchema };
+
+const gradeSubjectConfigColumnRefinements = {
+  id: () => gradeSubjectConfigIdSchema,
+  academicYearId: () => academicYearIdSchema,
+  gradeLevel: () => gradeLevelSchema,
+  basketCategory: () => basketCategorySchema,
+  subjectKey: () => subjectKeySchema,
+  sortOrder: () => v.number(),
+};
+
+export const gradeSubjectConfigSelectSchema = createSelectSchema(
+  gradeSubjectConfig,
+  gradeSubjectConfigColumnRefinements
+);
+export const gradeSubjectConfigInsertSchema = createInsertSchema(
+  gradeSubjectConfig,
+  gradeSubjectConfigColumnRefinements
 );

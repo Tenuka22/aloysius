@@ -14,6 +14,7 @@ import { listPositions } from "./list-positions";
 import { listQualifications } from "./list-qualifications";
 import { listStaff } from "./list-staff";
 import { listStaffPositions } from "./list-staff-positions";
+import { listStructureVersions } from "./list-structure-versions";
 import { listSubjectAssignments } from "./list-subject-assignments";
 import { listSubjects } from "./list-subjects";
 import { removePosition } from "./remove-position";
@@ -54,6 +55,7 @@ export const staffRouter = {
   listSubjects,
   listGrades,
   listPositions,
+  listStructureVersions,
 
   // Self-service
   updateProfile,

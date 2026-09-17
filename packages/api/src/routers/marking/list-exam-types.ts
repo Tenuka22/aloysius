@@ -1,11 +1,13 @@
 import { examType } from "@aloysius/db/schema/marking";
-import { eq, asc } from "drizzle-orm";
+import { and, eq, asc } from "drizzle-orm";
 import * as v from "valibot";
 
 import { requireExamPermission } from "../../index";
 
 const listExamTypesSchema = v.object({
   academicYearId: v.string(),
+  /** Optional: only exam types for this grade (plus ungraded legacy rows). */
+  gradeLevel: v.optional(v.number()),
 });
 
 export const listExamTypes = requireExamPermission("read")
@@ -14,7 +16,14 @@ export const listExamTypes = requireExamPermission("read")
     const rows = await context.db
       .select()
       .from(examType)
-      .where(eq(examType.academicYearId, input.academicYearId))
+      .where(
+        input.gradeLevel === undefined
+          ? eq(examType.academicYearId, input.academicYearId)
+          : and(
+              eq(examType.academicYearId, input.academicYearId),
+              eq(examType.gradeLevel, input.gradeLevel)
+            )
+      )
       .orderBy(asc(examType.sortOrder))
       .all();
 
@@ -23,6 +32,7 @@ export const listExamTypes = requireExamPermission("read")
       academicYearId: row.academicYearId,
       name: row.name,
       category: row.category,
+      gradeLevel: row.gradeLevel,
       maxMark: row.maxMark,
       sortOrder: row.sortOrder,
       createdAt: row.createdAt.toISOString(),

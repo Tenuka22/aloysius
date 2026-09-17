@@ -42,12 +42,8 @@ export const adminProcedure = publicProcedure.use(requireRole("admin"));
 
 export const cmsProcedure = publicProcedure.use(requireRole("admin", "cms"));
 
-export const studentOfficerProcedure = publicProcedure.use(
-  requireRole("admin", "studentOfficer")
-);
-
-export const teacherOfficerProcedure = publicProcedure.use(
-  requireRole("admin", "teacherOfficer")
+export const teacherProcedure = publicProcedure.use(
+  requireRole("admin", "teacher")
 );
 
 // ─── Permission-based middleware ─────────────────────────────────────────────
@@ -90,12 +86,7 @@ const requirePermission = (
     try {
       const result = await context.auth.api.userHasPermission({
         body: {
-          role: role as
-            | "admin"
-            | "cms"
-            | "user"
-            | "studentOfficer"
-            | "teacherOfficer",
+          role: role as "admin" | "cms" | "user" | "teacher",
           permissions: { [resource]: [action] },
         },
       });

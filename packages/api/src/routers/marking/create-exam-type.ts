@@ -9,6 +9,7 @@ export const createExamType = requireExamPermission("create")
       "academicYearId",
       "name",
       "category",
+      "gradeLevel",
       "maxMark",
       "sortOrder",
     ])
@@ -23,6 +24,7 @@ export const createExamType = requireExamPermission("create")
         academicYearId: input.academicYearId,
         name: input.name,
         category: input.category,
+        gradeLevel: input.gradeLevel,
         maxMark: input.maxMark,
         sortOrder: input.sortOrder,
       })
@@ -34,6 +36,7 @@ export const createExamType = requireExamPermission("create")
       academicYearId: record.academicYearId,
       name: record.name,
       category: record.category,
+      gradeLevel: record.gradeLevel,
       maxMark: record.maxMark,
       sortOrder: record.sortOrder,
       createdAt: record.createdAt.toISOString(),

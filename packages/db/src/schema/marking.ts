@@ -5,7 +5,9 @@ import {
   sqliteTable,
   text,
   unique,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import {
   createInsertSchema,
   createSelectSchema,
@@ -56,6 +58,21 @@ export const gradeScaleIdSchema = v.pipe(
   brand<string, "GradeScaleId">()
 );
 
+export type StudentAdmissionId = Brand<string, "StudentAdmissionId">;
+export const studentAdmissionIdSchema = v.pipe(
+  v.string(),
+  brand<string, "StudentAdmissionId">()
+);
+
+export type StudentSubjectSelectionId = Brand<
+  string,
+  "StudentSubjectSelectionId"
+>;
+export const studentSubjectSelectionIdSchema = v.pipe(
+  v.string(),
+  brand<string, "StudentSubjectSelectionId">()
+);
+
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 export const EXAM_CATEGORIES = [
@@ -67,8 +84,12 @@ export const EXAM_CATEGORIES = [
 ] as const;
 export type ExamCategory = (typeof EXAM_CATEGORIES)[number];
 
+export const ADMISSION_TYPES = ["grade6", "grade12", "transfer"] as const;
+export type AdmissionType = (typeof ADMISSION_TYPES)[number];
+
 const gradeLevelSchema = v.picklist(GRADE_LEVELS);
 const examCategorySchema = v.picklist(EXAM_CATEGORIES);
+const admissionTypeSchema = v.picklist(ADMISSION_TYPES);
 
 // ─── Students ───────────────────────────────────────────────────────────────
 
@@ -90,6 +111,12 @@ export const student = sqliteTable(
     parentPhone: text("parent_phone"),
     /** Admission year — the academic year the student first enrolled */
     admissionYear: integer("admission_year"),
+    /** How the student was admitted: "grade6" | "grade12" | "transfer" */
+    admissionType: text("admission_type").$type<AdmissionType>(),
+    /** Birth certificate number — used for grade 6 admission, NOT unique globally */
+    birthCertificateNumber: text("birth_certificate_number"),
+    /** Grade at which student was first admitted */
+    admissionGrade: integer("admission_grade"),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
@@ -100,6 +127,7 @@ export const student = sqliteTable(
   (table) => [
     index("student_admission_number_idx").on(table.admissionNumber),
     index("student_name_idx").on(table.lastName, table.firstName),
+    index("student_admission_type_idx").on(table.admissionType),
   ]
 );
 
@@ -136,6 +164,92 @@ export const studentClassAssignment = sqliteTable(
   ]
 );
 
+// ─── Student Admission (per year) ──────────────────────────────────────────
+
+/**
+ * Tracks admission events per academic year.
+ * One record per student per year — created when a student is first
+ * assigned to a class in that year.
+ */
+export const studentAdmission = sqliteTable(
+  "student_admission",
+  {
+    id: text("id").primaryKey(),
+    studentId: text("student_id")
+      .notNull()
+      .references(() => student.id, { onDelete: "cascade" }),
+    academicYearId: text("academic_year_id")
+      .notNull()
+      .references(() => academicYear.id, { onDelete: "cascade" }),
+    /** "grade6" | "grade12" | "transfer" */
+    admissionType: text("admission_type").$type<AdmissionType>().notNull(),
+    /** Birth certificate number — required for grade6 admission */
+    birthCertificateNumber: text("birth_certificate_number"),
+    /** Previous school — null for grade 6 newcomers */
+    previousSchool: text("previous_school"),
+    /** JSON array of document references */
+    documents: text("documents"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+  },
+  (table) => [
+    index("sa_student_idx").on(table.studentId),
+    index("sa_year_idx").on(table.academicYearId),
+    index("sa_type_idx").on(table.admissionType),
+    /** One admission record per student per year */
+    unique("sa_student_year_unique").on(table.studentId, table.academicYearId),
+  ]
+);
+
+// ─── Student Subject Selection (per year, per basket) ──────────────────────
+
+/**
+ * A student's chosen optional/basket subject for a given academic year and
+ * basket category. Append-only: changing a selection never edits the row in
+ * place. Instead it stamps `supersededAt` on the previously active row and
+ * inserts a new row pointing back at it via `previousSelectionId`, so the
+ * full history is preserved.
+ *
+ * `subjectMark.subjectKey` is denormalized directly on each mark row, so
+ * marks entered under a superseded selection are never affected by a later
+ * change here.
+ */
+export const studentSubjectSelection = sqliteTable(
+  "student_subject_selection",
+  {
+    id: text("id").primaryKey(),
+    studentId: text("student_id")
+      .notNull()
+      .references(() => student.id, { onDelete: "cascade" }),
+    academicYearId: text("academic_year_id")
+      .notNull()
+      .references(() => academicYear.id, { onDelete: "cascade" }),
+    /** Basket category key — e.g. "languagesHumanities" */
+    basketCategory: text("basket_category").notNull(),
+    /** Subject key chosen for that basket */
+    subjectKey: text("subject_key").notNull(),
+    /** The prior selection this one supersedes, if any */
+    previousSelectionId: text("previous_selection_id").references(
+      (): AnySQLiteColumn => studentSubjectSelection.id,
+      { onDelete: "set null" }
+    ),
+    /** NULL means this is the currently active selection */
+    supersededAt: integer("superseded_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+  },
+  (table) => [
+    index("sss_student_idx").on(table.studentId),
+    index("sss_year_idx").on(table.academicYearId),
+    /** Exactly one active selection per student, per year, per basket */
+    uniqueIndex("sss_active_unique")
+      .on(table.studentId, table.academicYearId, table.basketCategory)
+      .where(sql`${table.supersededAt} is null`),
+  ]
+);
+
 // ─── Exam Types ─────────────────────────────────────────────────────────────
 
 /**
@@ -153,6 +267,15 @@ export const examType = sqliteTable(
     name: text("name").notNull(),
     /** Category grouping: firstTerm, secondTerm, thirdTerm, scholarship, levelTest */
     category: text("category").notNull(),
+    /**
+     * Grade this exam type applies to. The same exam category (e.g.
+     * "scholarship") commonly needs a different `maxMark` per grade (a
+     * grade 5 scholarship exam out of 100 vs. a grade 11 one out of 200),
+     * so each grade gets its own exam type row rather than sharing one.
+     * Nullable at the DB level only for migration safety on pre-existing
+     * rows; required at the API layer for every new exam type.
+     */
+    gradeLevel: integer("grade_level"),
     /** Maximum possible mark (e.g. 100) */
     maxMark: integer("max_mark").notNull().default(100),
     /** Sort order within the year */
@@ -164,7 +287,12 @@ export const examType = sqliteTable(
   (table) => [
     index("exam_type_year_idx").on(table.academicYearId),
     index("exam_type_category_idx").on(table.category),
-    unique("exam_type_year_name_unique").on(table.academicYearId, table.name),
+    index("exam_type_grade_idx").on(table.gradeLevel),
+    unique("exam_type_year_grade_name_unique").on(
+      table.academicYearId,
+      table.gradeLevel,
+      table.name
+    ),
   ]
 );
 
@@ -272,6 +400,9 @@ const studentColumnRefinements = {
   phone: () => v.optional(v.nullable(v.string())),
   parentPhone: () => v.optional(v.nullable(v.string())),
   admissionYear: () => v.optional(v.nullable(v.number())),
+  admissionType: () => v.optional(v.nullable(admissionTypeSchema)),
+  birthCertificateNumber: () => v.optional(v.nullable(v.string())),
+  admissionGrade: () => v.optional(v.nullable(v.number())),
 };
 
 export const studentSelectSchema = createSelectSchema(
@@ -304,12 +435,61 @@ export const studentClassAssignmentInsertSchema = createInsertSchema(
   scaColumnRefinements
 );
 
+// Student Admission
+const studentAdmissionColumnRefinements = {
+  id: () => studentAdmissionIdSchema,
+  studentId: () => studentIdSchema,
+  academicYearId: () => academicYearIdSchema,
+  admissionType: () => admissionTypeSchema,
+  birthCertificateNumber: () => v.optional(v.nullable(v.string())),
+  previousSchool: () => v.optional(v.nullable(v.string())),
+  documents: () => v.optional(v.nullable(v.string())),
+};
+
+export const studentAdmissionSelectSchema = createSelectSchema(
+  studentAdmission,
+  studentAdmissionColumnRefinements
+);
+export const studentAdmissionInsertSchema = createInsertSchema(
+  studentAdmission,
+  studentAdmissionColumnRefinements
+);
+
+// Student Subject Selection
+const studentSubjectSelectionColumnRefinements = {
+  id: () => studentSubjectSelectionIdSchema,
+  studentId: () => studentIdSchema,
+  academicYearId: () => academicYearIdSchema,
+  /**
+   * Free-form, non-empty string — selections only ever target genuinely
+   * optional categories (never `COMPULSORY_BASKET_CATEGORY`); which
+   * categories are actually offered for a grade/year is validated by the
+   * `subjectSelection.set` handler against that year's materialized
+   * `gradeSubjectConfig`, not by a closed enum here.
+   */
+  basketCategory: () => v.pipe(v.string(), v.minLength(1)),
+  subjectKey: () => v.pipe(v.string(), v.minLength(1)),
+  previousSelectionId: () =>
+    v.optional(v.nullable(studentSubjectSelectionIdSchema)),
+  supersededAt: () => v.optional(v.nullable(v.date())),
+};
+
+export const studentSubjectSelectionSelectSchema = createSelectSchema(
+  studentSubjectSelection,
+  studentSubjectSelectionColumnRefinements
+);
+export const studentSubjectSelectionInsertSchema = createInsertSchema(
+  studentSubjectSelection,
+  studentSubjectSelectionColumnRefinements
+);
+
 // Exam Type
 const examTypeColumnRefinements = {
   id: () => examTypeIdSchema,
   academicYearId: () => academicYearIdSchema,
   name: () => v.pipe(v.string(), v.minLength(1)),
   category: () => examCategorySchema,
+  gradeLevel: () => v.optional(v.nullable(gradeLevelSchema)),
   maxMark: () => v.pipe(v.number(), v.minValue(1)),
   sortOrder: () => v.number(),
 };
@@ -318,10 +498,10 @@ export const examTypeSelectSchema = createSelectSchema(
   examType,
   examTypeColumnRefinements
 );
-export const examTypeInsertSchema = createInsertSchema(
-  examType,
-  examTypeColumnRefinements
-);
+export const examTypeInsertSchema = createInsertSchema(examType, {
+  ...examTypeColumnRefinements,
+  gradeLevel: () => gradeLevelSchema,
+});
 
 // Grade Scale
 const gradeScaleColumnRefinements = {
@@ -368,4 +548,4 @@ export const subjectMarkUpdateSchema = createUpdateSchema(
 
 // ─── Re-export convenience types ────────────────────────────────────────────
 
-export { gradeLevelSchema, examCategorySchema };
+export { gradeLevelSchema, examCategorySchema, admissionTypeSchema };

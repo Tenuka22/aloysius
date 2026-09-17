@@ -17,21 +17,18 @@ import {
   ac,
   admin as adminRole,
   cms as cmsRole,
-  studentOfficer as studentOfficerRole,
-  teacherOfficer as teacherOfficerRole,
+  teacher as teacherRole,
   user as userRole,
 } from "./permissions";
 
-export {
-  ac,
-  admin,
-  cms,
-  studentOfficer,
-  teacherOfficer,
-  user,
-} from "./permissions";
+export { ac, admin, cms, teacher, user } from "./permissions";
 export type { AppAccessControl } from "./permissions";
-export { ensureCmsUser, ensureSiteAdmin } from "./admin";
+export {
+  createTeacherCredential,
+  ensureCmsUser,
+  ensureSiteAdmin,
+  rotateTeacherPassword,
+} from "./admin";
 
 export interface AuthConfig {
   BETTER_AUTH_URL: string;
@@ -115,8 +112,7 @@ const buildAuthOptions = (
           admin: adminRole,
           cms: cmsRole,
           user: userRole,
-          studentOfficer: studentOfficerRole,
-          teacherOfficer: teacherOfficerRole,
+          teacher: teacherRole,
         },
       }),
       multiSession(),
@@ -132,8 +128,7 @@ interface AdminPluginOptions {
     admin: typeof adminRole;
     cms: typeof cmsRole;
     user: typeof userRole;
-    studentOfficer: typeof studentOfficerRole;
-    teacherOfficer: typeof teacherOfficerRole;
+    teacher: typeof teacherRole;
   };
 }
 

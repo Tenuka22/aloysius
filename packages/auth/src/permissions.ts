@@ -64,22 +64,11 @@ export const user = ac.newRole({
 });
 
 /**
- * Student officer – manages student records and class assignments.
- * Can create/read/update/delete students and manage class assignments.
- * Cannot enter marks (that's the homeroom teacher's job).
+ * Teacher – manages marks for assigned classes. Can read students in their
+ * class and create/update marks. Can view exam types and grade scales.
+ * Unified role replacing the former studentOfficer + teacherOfficer split.
  */
-export const studentOfficer = ac.newRole({
-  student: ["create", "read", "update", "delete"],
-  assignment: ["create", "read", "update"],
-  exam: ["read"],
-});
-
-/**
- * Teacher officer (homeroom teacher) – enters marks for their assigned class.
- * Can read students in their class and create/update marks.
- * Can view exam types and grade scales.
- */
-export const teacherOfficer = ac.newRole({
+export const teacher = ac.newRole({
   student: ["read"],
   mark: ["create", "read", "update"],
   exam: ["read"],

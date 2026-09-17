@@ -4,6 +4,8 @@
 
 Aloysius manages academic staff (teachers, sectional heads, principals) with year-based assignments for positions, classes, and subject teaching. All curriculum data (grades, subjects, positions) is defined as TypeScript constants — only staff records, assignments, and year configurations are stored in the database.
 
+> Subject/curriculum data now lives entirely in versioned files under `constants/structureVersions/` — see [subjects.md](./subjects.md). This doc covers staff, academic years, classes, and subject _assignments_ (who teaches what); it does not re-explain the curriculum structure itself.
+
 ## Sri Lankan Education System
 
 The system models the Sri Lankan Ministry of Education structure:
@@ -28,32 +30,41 @@ Schools are classified by type:
 packages/db/src/
 ├── constants/
 │   ├── grades.ts          # Grade levels 1-13, education stages
-│   ├── subjects.ts        # All curriculum subjects (MOE-defined)
 │   ├── positions.ts       # Staff position types and sectional scopes
-│   ├── teachers.ts        # Gender/marital/blood group, appointment &
-│   │                      # employment types, qualification levels + order,
-│   │                      # Sri Lankan districts, document types
-│   └── schemas.ts         # Zod schemas derived from the above constants
+│   ├── teachers.ts        # Appointment/employment types, qualification
+│   │                      # levels + order, document types, subject
+│   │                      # specialization categories (teacher-specific only)
+│   ├── demographics.ts    # GENDERS, MARITAL_STATUSES, BLOOD_GROUPS — generic
+│   │                      # person attributes, not teacher-specific
+│   ├── geography.ts       # SRI_LANKA_DISTRICTS
+│   ├── religions.ts       # RELIGION_OPTIONS (personal/demographic field)
+│   ├── languages.ts       # MOTHER_TONGUE_OPTIONS (class medium, staff
+│   │                      # native language — operational, not curriculum)
+│   └── structureVersions/ # All subject/curriculum data — see subjects.md
 ├── config/
 │   ├── school.ts             # School-specific config (hardcoded)
 │   └── teacher-validation.ts # Validation helpers (NIC, phone, password
 │                              # strength, qualification labels, experience
-│                              # calculation) built on constants/schemas.ts
+│                              # calculation)
 └── schema/
-    ├── staff.ts           # staff, academicYear, staffPosition tables
-    ├── academics.ts       # class_, subjectAssignment tables
+    ├── staff.ts           # staff, academicYear (incl. structureVersionKey),
+    │                      # staffPosition tables
+    ├── academics.ts       # class_, subjectAssignment, gradeSubjectConfig
+    │                      # tables — see subjects.md for gradeSubjectConfig
     └── qualifications.ts  # teacherQualification, employmentVerification,
                             # passwordRotationHistory tables
 
 packages/api/src/routers/staff/
-├── index.ts               # Barrel composing 23 procedures
+├── index.ts               # Barrel composing procedures
 ├── list-staff.ts          # List all staff
 ├── get-staff.ts           # Get single staff member
 ├── create-staff.ts        # Create staff (admin)
 ├── update-staff.ts        # Update staff (admin)
 ├── delete-staff.ts        # Delete staff (admin)
 ├── list-academic-years.ts # List academic years
-├── create-academic-year.ts# Create academic year
+├── create-academic-year.ts# Create academic year, accepting/validating a
+│                          # structureVersionKey and materializing
+│                          # gradeSubjectConfig — see subjects.md
 ├── set-current-year.ts    # Set current year
 ├── list-staff-positions.ts# List position assignments
 ├── assign-position.ts     # Assign position to staff
@@ -63,9 +74,11 @@ packages/api/src/routers/staff/
 ├── assign-class-teacher.ts# Assign homeroom/sub-homeroom
 ├── list-subject-assignments.ts # List subject assignments
 ├── assign-subject.ts      # Assign subject to teacher
-├── list-subjects.ts       # List subjects (from constants)
+├── list-subjects.ts       # List subjects for a structure version,
+│                          # filtered by school config — see subjects.md
 ├── list-grades.ts         # List grades (from constants)
 ├── list-positions.ts      # List positions (from constants)
+├── list-structure-versions.ts # List registered structure versions
 ├── update-profile.ts      # Self-service: phone/portrait
 ├── upload-qualification.ts# Upload qualification doc
 ├── list-qualifications.ts # List qualifications
@@ -101,20 +114,7 @@ export const EDUCATION_STAGES = {
 
 ### Subjects
 
-`packages/db/src/constants/subjects.ts`
-
-Subjects are defined per education level:
-
-| Level | Subjects | Count |
-| --- | --- | --- |
-| Primary (1-5) | religion, motherTongue, english, mathematics, science, history, geography, healthPE, lifeCompetencies, practicalSkills, aestheticSubjects, secondLanguage | 12 |
-| Junior Secondary Essential (6-9) | Same as primary + ict, entrepreneurshipFinancialLiteracy | 14 |
-| Junior Secondary Transversal (6-9) | digitalCitizenship, mediaStudies, socialServices | 3 |
-| Junior Secondary Further Learning (6-9) | scienceForFurtherLearning, mathematicsForFurtherLearning, ictForFurtherLearning, historyForFurtherLearning, appreciationOfLiteratureForFurtherLearning | 5 |
-| O/L Compulsory (10-11) | religion, motherTongue, english, mathematics, science, history | 6 |
-| O/L Basket (10-11) | 3 categories: languagesHumanities (16), aestheticsArts (13), technicalVocational (13) | 42 |
-| A/L Streams | bioScience, physicalScience, commerce, arts, engineeringTechnology, bioSystemsTechnology | 6 streams |
-| A/L Common | generalEnglish, generalInformationTechnology | 2 |
+Subject/curriculum data (compulsory subjects per grade, O/L baskets, A/L streams) is no longer a flat constants file — it's defined per code-versioned "structure version" and materialized into the `gradeSubjectConfig` table per academic year. See **[subjects.md](./subjects.md)** for the full model.
 
 ### Positions
 
@@ -248,12 +248,15 @@ Indexes: `email`, `nic`, `appointmentType`, `employmentStatus`.
 
 ### Academic Year Table
 
-| Column      | Type                   | Notes                       |
-| ----------- | ---------------------- | --------------------------- |
-| `id`        | text PK                | UUID                        |
-| `year`      | integer UNIQUE         | e.g., 2027                  |
-| `isCurrent` | boolean                | One year flagged as current |
-| `createdAt` | integer (timestamp_ms) | Auto-set                    |
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | text PK | UUID |
+| `year` | integer UNIQUE | e.g., 2027 |
+| `startDate` | text (ISO date), nullable | e.g. "2027-01-01" |
+| `endDate` | text (ISO date), nullable | e.g. "2027-12-31" |
+| `structureVersionKey` | text, nullable at DB level | Which curriculum structure version this year's `gradeSubjectConfig` came from — **required** at the API layer for every new year. See [subjects.md](./subjects.md). |
+| `isCurrent` | boolean | One year flagged as current |
+| `createdAt` | integer (timestamp_ms) | Auto-set |
 
 ### Staff Position Table
 
@@ -303,7 +306,9 @@ Unique constraint: `(academicYearId, gradeLevel, name)`
 **Step 1: Create the academic year**
 
 ```
-staff.createAcademicYear({ year: 2027 })
+staff.createAcademicYear({ year: 2027, structureVersionKey: "v1" })
+// structureVersionKey is optional — omitted, it defaults to the most
+// recently created academic year's version
 ```
 
 **Step 2: Create classes for each grade**
@@ -343,6 +348,10 @@ Subject assignments connect a teacher to a subject, grade, and optionally a spec
 | `subjectKey` | text NOT NULL | Enum key (e.g., "mathematics") |
 | `gradeLevel` | integer NOT NULL | 1-13 |
 | `classId` | text FK → class_.id | Nullable: null = all classes of this grade |
+
+Unique constraint: `(staffId, academicYearId, subjectKey, classId)`.
+
+`subjectKey` isn't validated against a fixed enum here — it's validated at the schema layer against `ALL_KNOWN_SUBJECT_KEYS`, the union of every subject key across every registered structure version (see [subjects.md](./subjects.md)). Whether a subject actually makes sense for that `gradeLevel` in that `academicYearId` is tracked separately by `gradeSubjectConfig` (also documented in subjects.md) — `assignSubject` does not currently cross-check against it.
 
 **Examples:**
 
@@ -471,11 +480,12 @@ export const statement = {
 
 ### Academic Years (admin only)
 
-| Endpoint                   | Input      | Description      |
-| -------------------------- | ---------- | ---------------- |
-| `staff.listAcademicYears`  | none       | List all years   |
-| `staff.createAcademicYear` | `{ year }` | Create year      |
-| `staff.setCurrentYear`     | `{ id }`   | Set current year |
+| Endpoint | Input | Description |
+| --- | --- | --- |
+| `staff.listAcademicYears` | none | List all years (returns `structureVersionKey`, `startDate`, `endDate`) |
+| `staff.createAcademicYear` | `{ year, startDate?, endDate?, structureVersionKey? }` | Create year; materializes `gradeSubjectConfig` — see [subjects.md](./subjects.md) |
+| `staff.setCurrentYear` | `{ id }` | Set current year |
+| `staff.listStructureVersions` | none | List registered curriculum structure versions |
 
 ### Position Assignments (admin only)
 
@@ -502,11 +512,12 @@ export const statement = {
 
 ### Constants (admin only, read-only)
 
-| Endpoint              | Output                                 |
-| --------------------- | -------------------------------------- |
-| `staff.listSubjects`  | All subjects filtered by school config |
-| `staff.listGrades`    | All grades filtered by school config   |
-| `staff.listPositions` | Position types + sectional scopes      |
+| Endpoint | Input | Output |
+| --- | --- | --- |
+| `staff.listSubjects` | `{ structureVersionKey? }` | That structure version's subjects, filtered by school config — see [subjects.md](./subjects.md) |
+| `staff.listGrades` | none | All grades filtered by school config |
+| `staff.listPositions` | none | Position types + sectional scopes |
+| `staff.listStructureVersions` | none | Registered structure version keys + descriptions |
 
 ### Self-Service
 
@@ -526,7 +537,7 @@ export const statement = {
 
 When a new academic year starts:
 
-1. Create the new year: `staff.createAcademicYear({ year: 2028 })`
+1. Create the new year: `staff.createAcademicYear({ year: 2028 })` — reuses the prior year's structure version by default, or pass `structureVersionKey` explicitly to migrate to a new curriculum scheme (see [subjects.md](./subjects.md))
 2. Set it as current: `staff.setCurrentYear({ id: "newYearId" })`
 3. Create classes for the new year
 4. Re-assign positions (staff may change roles year-to-year)

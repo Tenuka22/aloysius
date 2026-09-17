@@ -3,38 +3,6 @@
  * All enums and constants are defined here for type safety and consistency.
  */
 
-// ─── Gender Options ───────────────────────────────────────────────────────────
-
-/**
- * Gender options - Male or Female only per requirement.
- */
-export const GENDERS = ["male", "female"] as const;
-export type Gender = (typeof GENDERS)[number];
-
-// ─── Marital Status ───────────────────────────────────────────────────────────
-
-export const MARITAL_STATUSES = [
-  "single",
-  "married",
-  "divorced",
-  "widowed",
-] as const;
-export type MaritalStatus = (typeof MARITAL_STATUSES)[number];
-
-// ─── Blood Groups ─────────────────────────────────────────────────────────────
-
-export const BLOOD_GROUPS = [
-  "A+",
-  "A-",
-  "B+",
-  "B-",
-  "AB+",
-  "AB-",
-  "O+",
-  "O-",
-] as const;
-export type BloodGroup = (typeof BLOOD_GROUPS)[number];
-
 // ─── Employment/Appointment Types ─────────────────────────────────────────────
 
 /**
@@ -254,42 +222,7 @@ export const getHighestQualification = (
   return highest;
 };
 
-// ─── Sri Lankan Districts ─────────────────────────────────────────────────────
-
-/**
- * All 25 Sri Lankan districts for address validation.
- */
-export const SRI_LANKA_DISTRICTS = [
-  "amlapura",
-  "anuradhapura",
-  "badulla",
-  "batticaloa",
-  "colombo",
-  "galle",
-  "garuwa",
-  "hambantota",
-  "jaffna",
-  "kalutara",
-  "kandy",
-  "kegalle",
-  "kilinochchi",
-  "mannar",
-  "matale",
-  "mathugama",
-  "monaragala",
-  "mullaitivu",
-  "negombo",
-  "puttalam",
-  "ratnapura",
-  "tirikovil",
-  "trincomalee",
-  "vavuniya",
-  "kurunegala",
-] as const;
-
-export type SriLankaDistrict = (typeof SRI_LANKA_DISTRICTS)[number];
-
-// ─── Document Types for Approval ──────────────────────────────────────────────
+// ─── Document Types for Approval ─────
 
 /**
  * Types of documents that require admin approval.

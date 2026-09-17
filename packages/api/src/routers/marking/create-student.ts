@@ -14,6 +14,9 @@ export const createStudent = requireStudentPermission("create")
       "phone",
       "parentPhone",
       "admissionYear",
+      "admissionType",
+      "birthCertificateNumber",
+      "admissionGrade",
     ])
   )
   .handler(async ({ input, context }) => {
@@ -31,6 +34,9 @@ export const createStudent = requireStudentPermission("create")
         phone: input.phone,
         parentPhone: input.parentPhone,
         admissionYear: input.admissionYear,
+        admissionType: input.admissionType,
+        birthCertificateNumber: input.birthCertificateNumber,
+        admissionGrade: input.admissionGrade,
       })
       .returning()
       .get();
@@ -45,6 +51,9 @@ export const createStudent = requireStudentPermission("create")
       phone: record.phone,
       parentPhone: record.parentPhone,
       admissionYear: record.admissionYear,
+      admissionType: record.admissionType,
+      birthCertificateNumber: record.birthCertificateNumber,
+      admissionGrade: record.admissionGrade,
       createdAt: record.createdAt.toISOString(),
       updatedAt: record.updatedAt.toISOString(),
     };

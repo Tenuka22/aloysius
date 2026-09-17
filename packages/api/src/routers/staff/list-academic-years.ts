@@ -13,6 +13,9 @@ export const listAcademicYears = adminProcedure.handler(async ({ context }) => {
   return rows.map((row) => ({
     id: row.id,
     year: row.year,
+    startDate: row.startDate,
+    endDate: row.endDate,
+    structureVersionKey: row.structureVersionKey,
     isCurrent: row.isCurrent,
     createdAt: row.createdAt.toISOString(),
   }));

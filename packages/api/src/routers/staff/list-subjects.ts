@@ -1,77 +1,54 @@
-import { SCHOOL } from "@aloysius/db/config/school";
+import { isStructureEntryOfferedBySchool } from "@aloysius/db/config/school";
 import {
-  PRIMARY_SUBJECTS,
-  JUNIOR_SECONDARY_SUBJECTS,
-  OL_COMPULSORY_SUBJECTS,
-  BASKET_SUBJECTS,
-  AL_SUBJECTS,
-  AL_COMMON_SUBJECTS,
-} from "@aloysius/db/constants/subjects";
+  COMPULSORY_BASKET_CATEGORY,
+  LATEST_STRUCTURE_VERSION_KEY,
+  getStructureVersion,
+} from "@aloysius/db/constants/structureVersions/index";
+import * as v from "valibot";
 
 import { adminProcedure } from "../../index";
 
-export const listSubjects = adminProcedure.handler(() => {
-  const maxGrade = SCHOOL.gradeRange.max;
-  const subjects: {
-    key: string;
-    name: string;
-    level: string;
-    category?: string;
-  }[] = [];
+const listSubjectsSchema = v.optional(
+  v.object({ structureVersionKey: v.optional(v.string()) })
+);
 
-  // Primary subjects
-  if (maxGrade >= 1) {
-    for (const key of PRIMARY_SUBJECTS) {
-      subjects.push({ key, name: key, level: "primary" });
-    }
-  }
+export interface OfferedSubject {
+  subjectKey: string;
+  gradeLevel: number;
+  basketCategory: string;
+  sortOrder: number;
+}
 
-  // Junior Secondary subjects
-  if (maxGrade >= 6) {
-    for (const key of JUNIOR_SECONDARY_SUBJECTS) {
-      subjects.push({ key, name: key, level: "juniorSecondary" });
-    }
-  }
+/**
+ * Lists every subject a structure version defines, filtered to what this
+ * school's `SCHOOL` config actually offers — i.e. exactly what creating an
+ * academic year with that version would materialize into
+ * `gradeSubjectConfig`. Read-only: this reflects the version + school
+ * config, not any specific academic year's already-materialized rows.
+ */
+export const listSubjects = adminProcedure
+  .input(listSubjectsSchema)
+  .handler(({ input }) => {
+    const version = getStructureVersion(
+      input?.structureVersionKey ?? LATEST_STRUCTURE_VERSION_KEY
+    );
 
-  // O/L compulsory subjects
-  if (maxGrade >= 10) {
-    for (const key of OL_COMPULSORY_SUBJECTS) {
-      subjects.push({ key, name: key, level: "olCompulsory" });
-    }
-
-    // O/L basket subjects (filtered by school config)
-    for (const category of SCHOOL.offeredOLBasketCategories) {
-      const catKey = category as keyof typeof BASKET_SUBJECTS;
-      for (const key of BASKET_SUBJECTS[catKey]) {
-        subjects.push({
-          key,
-          name: key,
-          level: "olBasket",
-          category: catKey,
+    const offered: OfferedSubject[] = [];
+    for (const entry of version.entries) {
+      if (
+        isStructureEntryOfferedBySchool(
+          entry.gradeLevel,
+          entry.basketCategory,
+          COMPULSORY_BASKET_CATEGORY
+        )
+      ) {
+        offered.push({
+          subjectKey: entry.subjectKey,
+          gradeLevel: entry.gradeLevel,
+          basketCategory: entry.basketCategory,
+          sortOrder: entry.sortOrder,
         });
       }
     }
-  }
-
-  // A/L subjects (filtered by school config)
-  if (maxGrade >= 12) {
-    for (const stream of SCHOOL.offeredALStreams) {
-      const streamKey = stream as keyof typeof AL_SUBJECTS;
-      for (const key of AL_SUBJECTS[streamKey]) {
-        subjects.push({
-          key,
-          name: key,
-          level: "alStream",
-          category: streamKey,
-        });
-      }
-    }
-
-    // A/L common subjects
-    for (const key of AL_COMMON_SUBJECTS) {
-      subjects.push({ key, name: key, level: "alCommon" });
-    }
-  }
-
-  return subjects;
-});
+    return offered;
+  });

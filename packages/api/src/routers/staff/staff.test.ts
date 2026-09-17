@@ -225,6 +225,9 @@ describe("appRouter.staff.createAcademicYear", () => {
         get: mockFn().mockResolvedValue({
           id: "ay1",
           year: 2027,
+          startDate: "2027-01-01",
+          endDate: "2027-12-31",
+          structureVersionKey: "v1",
           isCurrent: false,
           createdAt: new Date("2025-01-01"),
         }),
@@ -235,8 +238,16 @@ describe("appRouter.staff.createAcademicYear", () => {
       context: makeContext({ session: makeAdminSession(), db: mockDb }),
     });
 
-    const result = await client.staff.createAcademicYear({ year: 2027 });
+    const result = await client.staff.createAcademicYear({
+      year: 2027,
+      startDate: "2027-01-01",
+      endDate: "2027-12-31",
+      structureVersionKey: "v1",
+    });
     expect(result.year).toBe(2027);
+    expect(result.startDate).toBe("2027-01-01");
+    expect(result.endDate).toBe("2027-12-31");
+    expect(result.structureVersionKey).toBe("v1");
     expect(result.isCurrent).toBeFalsy();
   });
 });
@@ -250,7 +261,10 @@ describe("appRouter.staff.listSubjects", () => {
     const result = await client.staff.listSubjects();
     expect(result.length).toBeGreaterThan(0);
     expect(
-      result.some((s: { level: string }) => s.level === "primary")
+      result.some(
+        (s: { gradeLevel: number; subjectKey: string }) =>
+          s.gradeLevel === 1 && s.subjectKey === "mathematics"
+      )
     ).toBeTruthy();
   });
 });

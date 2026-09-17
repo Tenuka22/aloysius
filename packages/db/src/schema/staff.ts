@@ -13,23 +13,22 @@ import {
 } from "drizzle-orm/valibot";
 import * as v from "valibot";
 
-import { MOTHER_TONGUE_OPTIONS, RELIGION_OPTIONS } from "../constants/subjects";
 import {
-  APPOINTMENT_TYPES,
   BLOOD_GROUPS,
-  EMPLOYMENT_STATUSES,
   GENDERS,
   MARITAL_STATUSES,
-  SRI_LANKA_DISTRICTS,
-} from "../constants/teachers";
+} from "../constants/demographics";
 import type {
-  AppointmentType,
-  EmploymentStatus,
+  BloodGroup,
   Gender,
   MaritalStatus,
-  BloodGroup,
-  SriLankaDistrict,
-} from "../constants/teachers";
+} from "../constants/demographics";
+import { SRI_LANKA_DISTRICTS } from "../constants/geography";
+import type { SriLankaDistrict } from "../constants/geography";
+import { MOTHER_TONGUE_OPTIONS } from "../constants/languages";
+import { RELIGION_OPTIONS } from "../constants/religions";
+import { APPOINTMENT_TYPES, EMPLOYMENT_STATUSES } from "../constants/teachers";
+import type { AppointmentType, EmploymentStatus } from "../constants/teachers";
 import { brand } from "./brand";
 import type { Brand } from "./brand";
 import { fileIdSchema, files } from "./files";
@@ -125,10 +124,22 @@ export const staff = sqliteTable(
   ]
 );
 
-/** Academic year entity. */
+/** Academic year entity with explicit date range. */
 export const academicYear = sqliteTable("academic_year", {
   id: text("id").primaryKey(),
   year: integer("year").notNull().unique(),
+  /** ISO date string — start of academic year (e.g. "2027-01-01") */
+  startDate: text("start_date"),
+  /** ISO date string — end of academic year (e.g. "2027-12-31") */
+  endDate: text("end_date"),
+  /**
+   * Key of the `StructureVersion` (see `constants/structureVersions`) this
+   * academic year's `gradeSubjectConfig` rows were materialized from.
+   * Nullable at the DB level only to keep pre-existing rows migratable;
+   * required and validated against the code registry at the API layer for
+   * every new academic year.
+   */
+  structureVersionKey: text("structure_version_key"),
   isCurrent: integer("is_current", { mode: "boolean" })
     .default(false)
     .notNull(),
@@ -222,10 +233,16 @@ export const staffUpdateSchema = createUpdateSchema(
 
 export const academicYearSelectSchema = createSelectSchema(academicYear, {
   id: () => academicYearIdSchema,
+  startDate: () => v.optional(v.nullable(isoDatePrimitive)),
+  endDate: () => v.optional(v.nullable(isoDatePrimitive)),
+  structureVersionKey: () => v.optional(v.nullable(v.string())),
 });
 export const academicYearInsertSchema = createInsertSchema(academicYear, {
   year: () =>
     v.pipe(v.number(), v.integer(), v.minValue(2000), v.maxValue(2100)),
+  startDate: () => v.optional(isoDatePrimitive),
+  endDate: () => v.optional(isoDatePrimitive),
+  structureVersionKey: () => v.pipe(v.string(), v.minLength(1)),
 });
 
 const staffPositionColumnRefinements = {
