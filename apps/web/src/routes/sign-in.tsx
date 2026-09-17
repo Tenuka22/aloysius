@@ -1,122 +1,115 @@
-import * as stylex from "@stylexjs/stylex";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { SignInPage } from "@aloysius/ui/components/auth/sign-in-page";
+import type { SignInCredentials } from "@aloysius/ui/components/auth/sign-in-page";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { fetchSession } from "@/lib/session";
 
-const styles = stylex.create({
-  page: {
-    display: "flex",
-    minHeight: "80vh",
-    alignItems: "center",
-    justifyContent: "center",
-    fontFamily: "system-ui, sans-serif",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.75rem",
-    width: "100%",
-    maxWidth: "320px",
-  },
-  heading: {
-    margin: "0 0 0.5rem",
-    fontSize: "1.5rem",
-  },
-  field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.25rem",
-  },
-  input: {
-    padding: "0.5rem",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    fontSize: "1rem",
-  },
-  button: {
-    padding: "0.6rem",
-    border: "none",
-    borderRadius: "4px",
-    backgroundColor: "#0b4619",
-    color: "#fff",
-    fontSize: "1rem",
-    cursor: "pointer",
-  },
-  error: {
-    color: "#b3261e",
-    fontSize: "0.9rem",
-  },
-});
+/**
+ * One message for every credential failure. better-auth distinguishes "no such
+ * user" from "wrong password", and surfacing that difference turns the sign-in
+ * screen into a username-enumeration oracle.
+ */
+const GENERIC_FAILURE =
+  "Those credentials were not recognised. Check them and try again.";
+
+/** Where an admin lands when they sign in without a specific destination. */
+const DEFAULT_DESTINATION = "/cms";
+
+/**
+ * Only same-origin, absolute-path redirects are honoured. Without this an
+ * attacker can send `/sign-in?redirect=https://evil.example` and use the
+ * College's own sign-in screen as an open redirect. `//host` is rejected too -
+ * it is protocol-relative and leaves the origin.
+ */
+const safeDestination = (target: unknown): string => {
+  if (typeof target !== "string") {
+    return DEFAULT_DESTINATION;
+  }
+  if (!target.startsWith("/") || target.startsWith("//")) {
+    return DEFAULT_DESTINATION;
+  }
+  return target;
+};
 
 const SignIn = () => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  // Sanitised again at the point of navigation, for the same reason the
+  // `beforeLoad` guard does it: this is the other call that actually navigates.
+  const destination = safeDestination(Route.useSearch().redirect);
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async ({
+    username,
+    password,
+    rememberMe,
+  }: SignInCredentials) => {
     setError(null);
-    setIsSubmitting(true);
 
     const { error: signInError } = await authClient.signIn.username({
       username,
       password,
+      rememberMe,
     });
 
-    setIsSubmitting(false);
-
     if (signInError) {
-      setError(signInError.message ?? "Sign in failed");
+      setError(GENERIC_FAILURE);
       return;
     }
 
-    navigate({ to: "/admin" });
+    // `reloadDocument` so the CMS route's `beforeLoad` re-runs against the
+    // freshly set cookie instead of a router context captured before sign-in.
+    await navigate({ to: destination, reloadDocument: true });
   };
 
-  return (
-    <div {...stylex.props(styles.page)}>
-      <form {...stylex.props(styles.form)} onSubmit={handleSubmit}>
-        <h1 {...stylex.props(styles.heading)}>Sign in</h1>
-        <div {...stylex.props(styles.field)}>
-          <label htmlFor="username">Username</label>
-          <input
-            {...stylex.props(styles.input)}
-            autoComplete="username"
-            id="username"
-            onChange={(event) => setUsername(event.target.value)}
-            required
-            type="text"
-            value={username}
-          />
-        </div>
-        <div {...stylex.props(styles.field)}>
-          <label htmlFor="password">Password</label>
-          <input
-            {...stylex.props(styles.input)}
-            autoComplete="current-password"
-            id="password"
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            type="password"
-            value={password}
-          />
-        </div>
-        {error && <p {...stylex.props(styles.error)}>{error}</p>}
-        <button
-          {...stylex.props(styles.button)}
-          disabled={isSubmitting}
-          type="submit"
-        >
-          {isSubmitting ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
-    </div>
-  );
+  return <SignInPage error={error} onSubmit={handleSubmit} />;
 };
 
 export const Route = createFileRoute("/sign-in")({
+  /*
+   * The return type is annotated with `redirect` optional on purpose: inferred
+   * as required, every `navigate({ to: "/sign-in" })` in the app would be
+   * forced to pass a search object.
+   *
+   * The param is dropped when it is absent or already the default. Emitting it
+   * unconditionally made the router normalise `/sign-in` to
+   * `/sign-in?redirect=/cms` first, costing an extra redirect hop on every
+   * visit and leaving a redundant param in the address bar. Dropping an unsafe
+   * value here also strips it from the URL rather than echoing it back.
+   */
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
+    const target = safeDestination(search.redirect);
+    return target === DEFAULT_DESTINATION ? {} : { redirect: target };
+  },
+
+  /*
+   * An authenticated admin has no reason to see this screen; send them on to
+   * wherever they were heading. Non-admins are left here deliberately - the CMS
+   * would reject them, and bouncing them there would be a redirect loop.
+   */
+  beforeLoad: async ({ search }) => {
+    const session = await fetchSession();
+    if (session?.isSiteAdmin) {
+      // Re-sanitised here rather than trusting `validateSearch`: this is the
+      // call that actually performs the navigation, and a raw value reaching
+      // it is what turns the sign-in screen into an open redirect.
+      throw redirect({ to: safeDestination(search.redirect) });
+    }
+  },
+
+  head: () => ({
+    meta: [
+      { title: "Sign in | St. Aloysius' College, Galle" },
+      {
+        name: "description",
+        content:
+          "Sign in to the St. Aloysius' College staff and content management portal.",
+      },
+      // A sign-in screen must never rank; `follow` keeps the outbound links
+      // (home, contact) contributing normally.
+      { name: "robots", content: "noindex, follow" },
+    ],
+  }),
   component: SignIn,
 });
