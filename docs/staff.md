@@ -449,22 +449,7 @@ updateProfile({ phone: "0771234567", portraitFileId: "f1" });
 
 ## RBAC Permissions
 
-`packages/auth/src/permissions.ts`
-
-```ts
-export const statement = {
-  ...defaultStatements,
-  file: ["create", "list", "delete"],
-  staff: ["create", "read", "update", "delete"],
-  assignment: ["create", "read", "update", "delete"],
-  qualification: ["create", "read", "approve"],
-};
-```
-
-| Role    | Permissions                                          |
-| ------- | ---------------------------------------------------- |
-| `admin` | file, staff, assignment, qualification (all actions) |
-| `user`  | qualification (create, read only)                    |
+Staff CRUD, position, class, and subject-assignment endpoints below are all `adminProcedure`. Qualification endpoints and the teacher role's own permissions are documented in **[auth.md](./auth.md)** — this file doesn't duplicate that content.
 
 ## API Endpoints
 

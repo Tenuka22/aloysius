@@ -175,5 +175,6 @@ Say a student selects `ict` for their `technicalVocational` basket, a mark of 88
 
 ## Related
 
+- [auth.md](./auth.md) — how the require*Permission (student/mark/exam/assignment) procedures used throughout this router actually work, and how the teacher role's permissions are scoped.
 - [subjects.md](./subjects.md) — how the set of available subjects per grade is defined and versioned (`gradeSubjectConfig`), which `setSubjectSelection` validates against.
 - [staff.md](./staff.md) — teacher subject _assignments_ (who teaches what), a separate concept from a student's subject _selection_ documented here.
