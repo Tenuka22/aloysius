@@ -84,13 +84,13 @@ export const Route = createFileRoute("/sign-in")({
   },
 
   /*
-   * An authenticated admin has no reason to see this screen; send them on to
-   * wherever they were heading. Non-admins are left here deliberately - the CMS
-   * would reject them, and bouncing them there would be a redirect loop.
+   * Anyone the CMS would admit has no reason to see this screen; send them on
+   * to wherever they were heading. Everyone else is left here deliberately -
+   * the CMS would reject them, and bouncing them there is a redirect loop.
    */
   beforeLoad: async ({ search }) => {
     const session = await fetchSession();
-    if (session?.isSiteAdmin) {
+    if (session?.canAccessCms) {
       // Re-sanitised here rather than trusting `validateSearch`: this is the
       // call that actually performs the navigation, and a raw value reaching
       // it is what turns the sign-in screen into an open redirect.

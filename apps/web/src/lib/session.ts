@@ -11,7 +11,13 @@ import { auth } from "../services";
 export interface SessionSummary {
   name: string;
   role: string;
-  isSiteAdmin: boolean;
+  /**
+   * Mirrors the `/cms` guard in `routes/cms/route.tsx`, which admits
+   * `admin` *and* the scoped `cms` editor role. Checking only for `admin`
+   * here would strand a CMS editor on the sign-in screen after a successful
+   * sign-in, even though the CMS would let them in.
+   */
+  canAccessCms: boolean;
 }
 
 /**
@@ -42,7 +48,7 @@ export const fetchSession = createServerFn({ method: "GET" }).handler(
       // display field and may be unset on a seeded account.
       name: user.name || user.username || "Account",
       role,
-      isSiteAdmin: role === "admin",
+      canAccessCms: role === "admin" || role === "cms",
     };
   }
 );
