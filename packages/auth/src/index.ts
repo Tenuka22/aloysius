@@ -17,24 +17,16 @@ import {
   ac,
   admin as adminRole,
   cms as cmsRole,
-  teacher as teacherRole,
   user as userRole,
 } from "./permissions";
 
-export { ac, admin, cms, teacher, user } from "./permissions";
+export { ac, admin, cms, user } from "./permissions";
 export type { AppAccessControl } from "./permissions";
-export {
-  createTeacherCredential,
-  ensureCmsUser,
-  ensureSiteAdmin,
-  rotateTeacherPassword,
-} from "./admin";
+export { ensureCmsUser } from "./admin";
 
 export interface AuthConfig {
   BETTER_AUTH_URL: string;
   BETTER_AUTH_SECRET: string;
-  ADMIN_USERNAME: string;
-  ADMIN_PASSWORD: string;
   CMS_USERNAME: string;
   CMS_PASSWORD: string;
 }
@@ -42,85 +34,49 @@ export interface AuthConfig {
 /**
  * The app's cookies are named off this instead of better-auth's "better-auth"
  * default, so they don't collide with another app on the same top-level
- * domain. The client (apps/web/src/lib/auth-client.ts) doesn't need this
- * value itself - `createAuthClient` has no cookie-name option, since the
- * browser sends whatever `Set-Cookie` the server issued - but it must stay in
- * lockstep with whatever server plugins are enabled here, which is what the
- * client's `adminClient()`/`multiSessionClient()` pairing is for.
+ * domain.
  */
 export const AUTH_COOKIE_PREFIX = "aloysius";
 
 const buildAuthOptions = (
   env: AuthConfig,
   database: Database
-): BetterAuthOptions => {
-  // Synthetic internal email derived from the configured username.
-  // Never exposed — the admin signs in with username + password.
-  const siteAdminEmail = `${env.ADMIN_USERNAME.toLowerCase()}@aloysius.internal`;
-
-  return {
-    database: drizzleAdapter(database, {
-      provider: "sqlite",
-      schema,
+): BetterAuthOptions => ({
+  database: drizzleAdapter(database, {
+    provider: "sqlite",
+    schema,
+  }),
+  trustedOrigins: [env.BETTER_AUTH_URL],
+  advanced: {
+    cookiePrefix: AUTH_COOKIE_PREFIX,
+  },
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "user",
+        input: false,
+      },
+    },
+  },
+  emailAndPassword: { enabled: true },
+  secret: env.BETTER_AUTH_SECRET,
+  baseURL: env.BETTER_AUTH_URL,
+  plugins: [
+    adminPlugin({
+      ac,
+      roles: {
+        admin: adminRole,
+        cms: cmsRole,
+        user: userRole,
+      },
     }),
-    trustedOrigins: [env.BETTER_AUTH_URL],
-    advanced: {
-      cookiePrefix: AUTH_COOKIE_PREFIX,
-    },
-    user: {
-      additionalFields: {
-        role: {
-          type: "string",
-          required: false,
-          defaultValue: "user",
-          input: false,
-        },
-      },
-    },
-    // The site admin's role is reasserted on every create and update, so the
-    // account can't drift to "user" through an ordinary profile edit.
-    databaseHooks: {
-      user: {
-        create: {
-          before: (created) => {
-            const role =
-              created.email?.toLowerCase() === siteAdminEmail
-                ? "admin"
-                : "user";
-            // `before` is typed as returning a promise, and this hook has
-            // nothing to await, so the result is resolved eagerly.
-            return Promise.resolve({ data: { ...created, role } });
-          },
-        },
-        update: {
-          before: (updated) => {
-            if (updated.email?.toLowerCase() !== siteAdminEmail) {
-              return Promise.resolve({ data: updated });
-            }
-            return Promise.resolve({ data: { ...updated, role: "admin" } });
-          },
-        },
-      },
-    },
-    emailAndPassword: { enabled: true },
-    secret: env.BETTER_AUTH_SECRET,
-    baseURL: env.BETTER_AUTH_URL,
-    plugins: [
-      adminPlugin({
-        ac,
-        roles: {
-          admin: adminRole,
-          cms: cmsRole,
-          user: userRole,
-          teacher: teacherRole,
-        },
-      }),
-      multiSession(),
-      username(),
-      tanstackStartCookies(),
-    ],
-  };
-};
+    multiSession(),
+    username(),
+    tanstackStartCookies(),
+  ],
+});
 
 interface AdminPluginOptions {
   ac: typeof ac;
@@ -128,7 +84,6 @@ interface AdminPluginOptions {
     admin: typeof adminRole;
     cms: typeof cmsRole;
     user: typeof userRole;
-    teacher: typeof teacherRole;
   };
 }
 

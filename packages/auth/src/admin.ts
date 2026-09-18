@@ -1,7 +1,7 @@
 import type { Database } from "@aloysius/db";
 import { account, user } from "@aloysius/db/schema/auth";
 import { hashPassword } from "better-auth/crypto";
-import { and, eq, or } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 
 import type { AuthConfig } from "./index";
 
@@ -31,7 +31,7 @@ const ensureCredentialUser = async (
   }: { username: string; password: string; name: string; role: string }
 ) => {
   const internalEmail = `${accountUsername.toLowerCase()}@aloysius.internal`;
-  const [hash, existing] = await Promise.all([
+  const [hash, [existing]] = await Promise.all([
     hashPassword(password),
     database
       .select()
@@ -39,33 +39,27 @@ const ensureCredentialUser = async (
       .where(
         or(eq(user.username, accountUsername), eq(user.email, internalEmail))
       )
-      .get(),
+      .limit(1),
   ]);
 
   if (!existing) {
     const userId = crypto.randomUUID();
-    await database
-      .insert(user)
-      .values({
-        id: userId,
-        name,
-        email: internalEmail,
-        emailVerified: true,
-        username: accountUsername,
-        role,
-      })
-      .run();
+    await database.insert(user).values({
+      id: userId,
+      name,
+      email: internalEmail,
+      emailVerified: true,
+      username: accountUsername,
+      role,
+    });
 
-    await database
-      .insert(account)
-      .values({
-        id: crypto.randomUUID(),
-        accountId: userId,
-        providerId: "credential",
-        userId,
-        password: hash,
-      })
-      .run();
+    await database.insert(account).values({
+      id: crypto.randomUUID(),
+      accountId: userId,
+      providerId: "credential",
+      userId,
+      password: hash,
+    });
 
     console.log(`[auth] Created ${role} user: username=${accountUsername}`);
     return;
@@ -73,49 +67,34 @@ const ensureCredentialUser = async (
 
   // Reassert the role every run, so it can't drift if someone edits the row
   // by hand, and rotate the credential password to match the configured env.
-  await database
-    .update(user)
-    .set({ role })
-    .where(eq(user.id, existing.id))
-    .run();
+  await database.update(user).set({ role }).where(eq(user.id, existing.id));
 
-  const existingAccount = await database
+  const [existingAccount] = await database
     .select()
     .from(account)
-    .where(
-      and(eq(account.userId, existing.id), eq(account.providerId, "credential"))
-    )
-    .get();
+    .where(eq(account.userId, existing.id))
+    .limit(1);
 
-  await (existingAccount
-    ? database
-        .update(account)
-        .set({ password: hash })
-        .where(eq(account.id, existingAccount.id))
-        .run()
-    : database
-        .insert(account)
-        .values({
-          id: crypto.randomUUID(),
-          accountId: existing.id,
-          providerId: "credential",
-          userId: existing.id,
-          password: hash,
-        })
-        .run());
+  // oxlint-disable-next-line unicorn/prefer-ternary
+  if (existingAccount) {
+    await database
+      .update(account)
+      .set({ password: hash })
+      .where(eq(account.id, existingAccount.id));
+  } else {
+    await database.insert(account).values({
+      id: crypto.randomUUID(),
+      accountId: existing.id,
+      providerId: "credential",
+      userId: existing.id,
+      password: hash,
+    });
+  }
 
   console.log(
     `[auth] Rotated password for ${role} user: username=${accountUsername}`
   );
 };
-
-export const ensureSiteAdmin = (database: Database, env: AuthConfig) =>
-  ensureCredentialUser(database, {
-    username: env.ADMIN_USERNAME,
-    password: env.ADMIN_PASSWORD,
-    name: "Site Admin",
-    role: "admin",
-  });
 
 /**
  * Bootstraps (or re-secures) the CMS editor account. This role can only edit
@@ -129,111 +108,3 @@ export const ensureCmsUser = (database: Database, env: AuthConfig) =>
     name: "CMS Editor",
     role: "cms",
   });
-
-/**
- * Creates a new teacher credential account from the admin panel.
- * The admin enters: teacher name, username, password.
- * A "teacher manager password" check should be performed at the API layer
- * before calling this function.
- */
-export const createTeacherCredential = async (
-  database: Database,
-  {
-    username,
-    password,
-    name,
-  }: { username: string; password: string; name: string }
-) => {
-  const internalEmail = `${username.toLowerCase()}@aloysius.internal`;
-  const [hash, existing] = await Promise.all([
-    hashPassword(password),
-    database
-      .select()
-      .from(user)
-      .where(or(eq(user.username, username), eq(user.email, internalEmail)))
-      .get(),
-  ]);
-
-  if (existing) {
-    throw new Error(`User with username "${username}" already exists`);
-  }
-
-  const userId = crypto.randomUUID();
-  await database
-    .insert(user)
-    .values({
-      id: userId,
-      name,
-      email: internalEmail,
-      emailVerified: true,
-      username,
-      role: "teacher",
-    })
-    .run();
-
-  await database
-    .insert(account)
-    .values({
-      id: crypto.randomUUID(),
-      accountId: userId,
-      providerId: "credential",
-      userId,
-      password: hash,
-    })
-    .run();
-
-  console.log(`[auth] Created teacher user: username=${username}`);
-  return { userId, username };
-};
-
-/**
- * Rotates a teacher's password. Called from the admin panel.
- */
-export const rotateTeacherPassword = async (
-  database: Database,
-  { username, newPassword }: { username: string; newPassword: string }
-) => {
-  const internalEmail = `${username.toLowerCase()}@aloysius.internal`;
-  const existing = await database
-    .select()
-    .from(user)
-    .where(or(eq(user.username, username), eq(user.email, internalEmail)))
-    .get();
-
-  if (!existing) {
-    throw new Error(`User with username "${username}" not found`);
-  }
-
-  const [hash, existingAccount] = await Promise.all([
-    hashPassword(newPassword),
-    database
-      .select()
-      .from(account)
-      .where(
-        and(
-          eq(account.userId, existing.id),
-          eq(account.providerId, "credential")
-        )
-      )
-      .get(),
-  ]);
-
-  await (existingAccount
-    ? database
-        .update(account)
-        .set({ password: hash })
-        .where(eq(account.id, existingAccount.id))
-        .run()
-    : database
-        .insert(account)
-        .values({
-          id: crypto.randomUUID(),
-          accountId: existing.id,
-          providerId: "credential",
-          userId: existing.id,
-          password: hash,
-        })
-        .run());
-
-  console.log(`[auth] Rotated password for teacher: username=${username}`);
-};

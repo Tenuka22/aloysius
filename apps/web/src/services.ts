@@ -1,7 +1,6 @@
 import {
   createAuth as createConfiguredAuth,
   ensureCmsUser,
-  ensureSiteAdmin,
 } from "@aloysius/auth";
 import { createDb } from "@aloysius/db";
 import type { Database } from "@aloysius/db";
@@ -21,11 +20,10 @@ const storage = createStorage(env);
 export const getStorage = (): Storage => storage;
 
 /**
- * One-time server bootstrap: seeds the site admin and CMS editor accounts.
+ * One-time server bootstrap: seeds the CMS editor account.
  * Memoised so every route handler awaits the same promise and concurrent
- * first requests cannot seed twice; a transient failure (e.g. a locked
- * database on boot) resets the promise so the next request retries instead
- * of leaving the app unseeded.
+ * first requests cannot seed twice; a transient failure resets the promise
+ * so the next request retries instead of leaving the app unseeded.
  */
 let bootstrapPromise: Promise<void> | undefined;
 
@@ -33,7 +31,7 @@ export const ensureServerBootstrap = (): Promise<void> => {
   if (!bootstrapPromise) {
     bootstrapPromise = (async () => {
       try {
-        await Promise.all([ensureSiteAdmin(db, env), ensureCmsUser(db, env)]);
+        await ensureCmsUser(db, env);
       } catch (error) {
         bootstrapPromise = undefined;
         throw error;
