@@ -466,8 +466,6 @@ export const SidebarContent = ({
   userRole,
   crestSrc,
   docked,
-  onSignOut,
-  isSigningOut = false,
 }: {
   items: readonly NavItem[];
   current: ScreenId;
@@ -476,9 +474,6 @@ export const SidebarContent = ({
   userRole: string;
   crestSrc: string;
   docked: boolean;
-  /** Omitted in the standalone design preview, where there is no session. */
-  onSignOut?: () => void;
-  isSigningOut?: boolean;
 }) => (
   <div {...stylex.props(styles.sidebar, docked && styles.sidebarDocked)}>
     <a href="/cms" {...stylex.props(styles.brand)}>
@@ -541,21 +536,12 @@ export const SidebarContent = ({
         <a href="/" {...stylex.props(styles.accountButton)}>
           View site
         </a>
-        {/*
-          Rendered only when a sign-out handler exists. A visible "Sign out"
-          control that does nothing is worse than no control at all - the user
-          believes their session ended when it did not.
-        */}
-        {onSignOut ? (
-          <button
-            aria-busy={isSigningOut}
-            onClick={onSignOut}
-            type="button"
-            {...stylex.props(styles.accountButton, styles.accountButtonDanger)}
-          >
-            {isSigningOut ? "Signing out…" : "Sign out"}
-          </button>
-        ) : null}
+        <button
+          type="button"
+          {...stylex.props(styles.accountButton, styles.accountButtonDanger)}
+        >
+          Sign out
+        </button>
       </div>
     </div>
   </div>
