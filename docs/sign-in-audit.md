@@ -127,15 +127,17 @@ Driven against the dev server at six widths (320, 390, 768, 1024, 1440, 2560):
 
 ## 10. Connecting sign-in / sign-out to the CMS
 
-`/cms` shipped **completely ungated** - its own file comment admitted it, and anyone who knew the URL got the content manager. That is now wired:
+This section was written against the pre-`12ee508` CMS, when `/cms` was a single ungated route. **Most of it was superseded before it landed**, and what follows records both what shipped and what did not, because the difference is the useful part.
 
-| Piece | Where |
+| Piece | Status |
 | --- | --- |
-| Session read on the server | `apps/web/src/lib/session.ts` - a `createServerFn` returning a projection (`name`, `role`, `isSiteAdmin`), never the raw better-auth session, whose token and IP fields have no business reaching the client. |
-| `/cms` guard | `beforeLoad` in `apps/web/src/routes/cms.tsx`, mirroring `assertSiteAdmin`: no session -> redirect to `/sign-in` carrying the intended path; signed in but not admin -> throw, because bouncing them to `/sign-in` is a loop they can never escape. |
-| Sign-out | `SidebarContent` gained `onSignOut`/`isSigningOut`. The button existed before but **had no handler at all** - a visible control that silently did nothing. It now renders only when a handler is supplied. |
-| Post-sign-in destination | `/cms` by default, or the `redirect` param, sanitised. |
-| Already-signed-in admins | Bounced off `/sign-in` to their destination. |
+| Session read on the server | **Shipped.** `apps/web/src/lib/session.ts` - a `createServerFn` returning a projection (`name`, `role`, `canAccessCms`), never the raw better-auth session, whose token and IP fields have no business reaching the client. |
+| `/cms` guard | **Not shipped - superseded.** `routes/cms.tsx` no longer exists; the CMS is a routed shell and `routes/cms/route.tsx` already guards on `role === "admin" \|\| role === "cms"`. The version written here was admin-only and would have locked out the seeded `cms` editor. |
+| Sign-out | **Not shipped - superseded.** The dead button was fixed in `cms-chrome.tsx`, which nothing imports any more. The live sidebar is `packages/ui/src/components/shell.tsx`, whose `onSignOut` prop `AdminShell` already wires to `authClient.signOut()`. Reverted. |
+| Post-sign-in destination | **Shipped.** `/cms` by default, or the `redirect` param, sanitised. |
+| Already-signed-in users | **Shipped.** Anyone the CMS would admit - `admin` or `cms` - is bounced off `/sign-in` to their destination. |
+
+The lesson worth keeping: this work was built on a checkout 22 commits behind `origin/master`, and two of seven commits turned out to be redundant or actively wrong against the newer code. Rebase before designing a guard, not after.
 
 ### Defects found while wiring this
 
@@ -150,7 +152,11 @@ Driven against the dev server at six widths (320, 390, 768, 1024, 1440, 2560):
 
 Driven in a real browser, 8/8 assertions, three consecutive runs:
 
-signed-out `/cms` -> bounced with path preserved; sign-in form -> lands on `/cms`; CMS shows the real account (`Site Admin` / `Administrator`), not the `A. Perera` design placeholder; one visible sign-out control; sign-out -> back to `/sign-in`; `/cms` blocked again afterwards; back button does not resurrect the CMS. Zero console or page errors, zero horizontal overflow at 390 and 1440.
+Re-run against the current routed CMS after rebasing onto `origin/master`, for **both** seeded roles. 11/11:
+
+signed-out `/cms` is blocked; `admin` and `cms` each sign in and reach `/cms`; a signed-in user of either role is bounced off `/sign-in` to the CMS; sign-out from the live `AdminShell` control leaves the CMS; `/cms` is blocked again afterwards; zero console or page errors for either role.
+
+The role pair matters: the guard originally checked `admin` only, which stranded the `cms` editor on the sign-in screen after a _successful_ sign-in. That is what `canAccessCms` fixes.
 
 ## 11. Known gaps
 
