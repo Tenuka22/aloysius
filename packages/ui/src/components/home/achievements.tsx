@@ -11,6 +11,7 @@ import {
   Heading,
   Lead,
   Section,
+  VisuallyHidden,
 } from "../primitives/layout";
 import { Reveal } from "../primitives/reveal";
 
@@ -174,9 +175,24 @@ export const Achievements = ({
           })}
         </ul>
 
+        {/*
+          One stable live region that only ever holds a short count, rather than
+          `aria-live` on the grid itself. A live region on the grid announces
+          every card's full text on each filter change, and the empty-state
+          variant was a *newly inserted* live region, which browsers do not
+          announce at all. This node is always mounted, so the update is seen.
+        */}
+        <VisuallyHidden>
+          <output aria-live="polite">
+            {visible.length === 0
+              ? `No ${active.toLowerCase()} honours published`
+              : `Showing ${visible.length} ${active === ALL ? "" : `${active.toLowerCase()} `}${visible.length === 1 ? "honour" : "honours"}`}
+          </output>
+        </VisuallyHidden>
+
         <Reveal direction="up">
           {visible.length > 0 ? (
-            <ul aria-live="polite" {...stylex.props(styles.grid)}>
+            <ul {...stylex.props(styles.grid)}>
               {visible.map((item) => (
                 <li key={item.id} {...stylex.props(styles.card)}>
                   <p {...stylex.props(styles.cardCategory)}>{item.category}</p>
@@ -186,7 +202,7 @@ export const Achievements = ({
               ))}
             </ul>
           ) : (
-            <p aria-live="polite" {...stylex.props(styles.empty)}>
+            <p {...stylex.props(styles.empty)}>
               No {active.toLowerCase()} honours have been published yet.
             </p>
           )}
