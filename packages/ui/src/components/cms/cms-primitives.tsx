@@ -695,9 +695,12 @@ const CustomSelect = ({
       case "Enter":
       case " ": {
         event.preventDefault();
-        if (activeIndex >= 0 && activeIndex < allOptions.length) {
-          onChange?.(allOptions[activeIndex].value);
-          close();
+        {
+          const option = allOptions[activeIndex];
+          if (option) {
+            onChange?.(option.value);
+            close();
+          }
         }
         break;
       }
