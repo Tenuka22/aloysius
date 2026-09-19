@@ -1,5 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { KeyboardEvent } from "react";
 
 import {
   ANTHEM_CREDIT,
@@ -37,12 +38,17 @@ const styles = stylex.create({
   },
   tabs: {
     display: "flex",
+    flexWrap: "wrap",
     justifyContent: "center",
     gap: space["3xs"],
     marginBlockStart: space.xl,
     marginBlockEnd: space.lg,
   },
   tab: {
+    // 44px minimum so the language switch is comfortable on touch displays,
+    // kiosks and smart boards (WCAG 2.2 SC 2.5.8 clears at 24px; this is the
+    // comfort target).
+    minBlockSize: "2.75rem",
     paddingBlock: space.xs,
     paddingInline: space.md,
     fontSize: font.sizeSm,
@@ -81,11 +87,22 @@ const styles = stylex.create({
     borderBlockStartWidth: "2px",
     borderBlockStartColor: color.accent,
     backgroundColor: color.surfaceRaised,
-    padding: space.xl,
+    padding: {
+      default: space.md,
+      [bp.md]: space.xl,
+    },
     columnGap: space.xl,
+  },
+  /*
+   * Two columns only once the full text is on screen. While the verses are
+   * truncated, a second column asks the reader to go down, back up, and then
+   * down again into a block that is cut off mid-way - so the preview stays
+   * single-column and the layout widens on expand.
+   */
+  lyricsColumns: {
     columns: {
       default: "1",
-      [bp.md]: "2",
+      [bp.lg]: "2",
     },
   },
   empty: {
@@ -110,7 +127,9 @@ const styles = stylex.create({
     fontFamily: font.display,
     fontWeight: font.weightBold,
     fontSize: font.sizeSm,
-    color: color.accent,
+    // Gold text on the cream surface is ~1.9:1 - crimson is the accent colour
+    // that passes on this background.
+    color: color.accentOnSurface,
   },
   stanzaLine: {
     margin: 0,
@@ -133,6 +152,8 @@ const styles = stylex.create({
     justifyContent: "center",
     gap: space["2xs"],
     marginBlockStart: space.md,
+    minBlockSize: "2.75rem",
+    alignItems: "center",
     paddingBlock: space.sm,
     fontSize: font.sizeSm,
     fontWeight: font.weightSemibold,
@@ -160,6 +181,42 @@ export const Anthem = ({
 }) => {
   const [activeLanguage, setActiveLanguage] = useState<"en" | "si">("en");
   const [expanded, setExpanded] = useState(false);
+  const tablistRef = useRef<HTMLDivElement>(null);
+
+  const codes = Object.keys(languages) as ("en" | "si")[];
+
+  /**
+   * `role="tablist"` is a promise that arrow keys move between the tabs and
+   * that Home/End jump to the ends; without it the pattern is worse for
+   * keyboard users than plain buttons would have been (WCAG 2.2 SC 2.1.1 plus
+   * the APG tabs pattern). Focus follows selection, which is correct here
+   * because switching panels is instant and has no side effects.
+   */
+  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const index = codes.indexOf(activeLanguage);
+    let next = index;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      next = (index + 1) % codes.length;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      next = (index - 1 + codes.length) % codes.length;
+    } else if (event.key === "Home") {
+      next = 0;
+    } else if (event.key === "End") {
+      next = codes.length - 1;
+    } else {
+      return;
+    }
+    const code = codes[next];
+    if (!code) {
+      return;
+    }
+    event.preventDefault();
+    setActiveLanguage(code);
+    setExpanded(false);
+    tablistRef.current
+      ?.querySelector<HTMLButtonElement>(`#anthem-tab-${code}`)
+      ?.focus();
+  };
 
   const { stanzas } = languages[activeLanguage];
   const isLong = stanzas.length > PREVIEW_COUNT;
@@ -177,25 +234,35 @@ export const Anthem = ({
           <Lead style={styles.lead}>{description}</Lead>
 
           <Reveal direction="up">
-            <div role="tablist" {...stylex.props(styles.tabs)}>
-              {Object.entries(languages).map(([code, language]) => (
-                <button
-                  aria-selected={activeLanguage === code}
-                  key={code}
-                  onClick={() => {
-                    setActiveLanguage(code as "en" | "si");
-                    setExpanded(false);
-                  }}
-                  role="tab"
-                  type="button"
-                  {...stylex.props(
-                    styles.tab,
-                    activeLanguage === code && styles.tabActive
-                  )}
-                >
-                  {language.label}
-                </button>
-              ))}
+            <div
+              aria-label="Anthem language"
+              ref={tablistRef}
+              role="tablist"
+              {...stylex.props(styles.tabs)}
+            >
+              {codes.map((code) => {
+                const selected = activeLanguage === code;
+                return (
+                  <button
+                    aria-controls="anthem-lyrics"
+                    aria-selected={selected}
+                    id={`anthem-tab-${code}`}
+                    key={code}
+                    lang={code}
+                    onClick={() => {
+                      setActiveLanguage(code);
+                      setExpanded(false);
+                    }}
+                    onKeyDown={onTabKeyDown}
+                    role="tab"
+                    tabIndex={selected ? 0 : -1}
+                    type="button"
+                    {...stylex.props(styles.tab, selected && styles.tabActive)}
+                  >
+                    {languages[code].label}
+                  </button>
+                );
+              })}
             </div>
 
             <Media
@@ -206,8 +273,20 @@ export const Anthem = ({
             />
             <p {...stylex.props(styles.credit)}>{credit}</p>
 
-            <div {...stylex.props(styles.lyricsWrap)}>
-              <div {...stylex.props(styles.lyrics)}>
+            <div
+              aria-labelledby={`anthem-tab-${activeLanguage}`}
+              id="anthem-lyrics"
+              lang={activeLanguage}
+              role="tabpanel"
+              tabIndex={0}
+              {...stylex.props(styles.lyricsWrap)}
+            >
+              <div
+                {...stylex.props(
+                  styles.lyrics,
+                  (expanded || !isLong) && styles.lyricsColumns
+                )}
+              >
                 {stanzas.length === 0 ? (
                   <p {...stylex.props(styles.empty)}>
                     Lyrics for this language are coming soon.
@@ -236,6 +315,8 @@ export const Anthem = ({
 
             {isLong ? (
               <button
+                aria-controls="anthem-lyrics"
+                aria-expanded={expanded}
                 onClick={() => setExpanded((value) => !value)}
                 type="button"
                 {...stylex.props(styles.expandButton)}

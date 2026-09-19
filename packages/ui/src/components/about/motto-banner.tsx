@@ -8,7 +8,9 @@ import { Container } from "../primitives/layout";
 const styles = stylex.create({
   section: {
     position: "relative",
-    overflow: "hidden",
+    // `clip` not `hidden`: `hidden` makes the section a scroll container, which
+    // breaks `scroll-margin` for the #motto jump link and can trap touch pans.
+    overflowX: "clip",
     backgroundColor: palette.black,
     color: color.onInverse,
     paddingBlock: space["3xl"],
@@ -47,8 +49,14 @@ const styles = stylex.create({
     fontWeight: font.weightSemibold,
     letterSpacing: font.trackingWide,
     lineHeight: font.leadingTight,
-    fontSize: "clamp(3.5rem, 3rem + 4vw, 6.875rem)",
+    /*
+     * 34px at 320px, 110px at 1920px. The previous 3.5rem floor set 56px type
+     * for a 15-character word on a 280px column - it overflowed the viewport
+     * on every phone in the matrix and the section's clip hid the evidence.
+     */
+    fontSize: "clamp(2.125rem, 1.15rem + 4.9vw, 6.875rem)",
     textTransform: "uppercase",
+    overflowWrap: "break-word",
   },
   rule: {
     width: "3.5rem",

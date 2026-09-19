@@ -14,9 +14,18 @@ const styles = stylex.create({
   },
   row: {
     display: "grid",
-    gap: space.lg,
+    columnGap: {
+      default: space.md,
+      [bp.md]: space.lg,
+    },
+    rowGap: space.md,
+    /*
+     * `max-content` for the year instead of a 5rem track: "Today" set in
+     * Cormorant at the 2xl step is wider than 5rem, so the fixed track forced
+     * the label to wrap mid-word on 320-390px phones.
+     */
     gridTemplateColumns: {
-      default: "minmax(0, 5rem) 2px minmax(0, 1fr)",
+      default: "max-content 2px minmax(0, 1fr)",
       [bp.xl]: "minmax(0, 6rem) 2px minmax(0, 1fr) minmax(0, 18rem)",
     },
     alignItems: "start",
@@ -30,14 +39,25 @@ const styles = stylex.create({
   },
   year: {
     margin: 0,
+    gridRow: {
+      default: "1",
+      [bp.xl]: "auto",
+    },
     fontFamily: font.display,
     fontWeight: font.weightSemibold,
     fontSize: font.size2xl,
     lineHeight: font.leadingTight,
-    color: color.accent,
+    // Gold on cream is ~1.9:1. The year is content, so it takes the crimson
+    // accent (7.4:1) that the token file reserves for accent *text* on cream;
+    // gold stays on the rule beside it, where it is a fill.
+    color: color.accentOnSurface,
   },
   rule: {
     alignSelf: "stretch",
+    gridRow: {
+      default: "1 / -1",
+      [bp.xl]: "auto",
+    },
     minHeight: "3rem",
     backgroundColor: color.accent,
   },
@@ -54,10 +74,23 @@ const styles = stylex.create({
     lineHeight: font.leadingRelaxed,
     color: color.onSurfaceMuted,
   },
+  /*
+   * The archive photo is content, not decoration, so it is no longer hidden
+   * below 1024px - it drops under the entry copy instead, inside the same
+   * column so it stays aligned to the timeline rule.
+   */
   image: {
-    display: {
-      default: "none",
-      [bp.xl]: "block",
+    gridColumn: {
+      default: "3 / -1",
+      [bp.xl]: "4 / 5",
+    },
+    gridRow: {
+      default: "auto",
+      [bp.xl]: "1",
+    },
+    maxWidth: {
+      default: "28rem",
+      [bp.xl]: "none",
     },
   },
 });

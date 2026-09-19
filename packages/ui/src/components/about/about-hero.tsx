@@ -80,6 +80,11 @@ const styles = stylex.create({
   },
   jumpLinks: {
     display: "flex",
+    // Coarse-pointer rows need vertical breathing room once each chip is 44px.
+    rowGap: {
+      default: null,
+      [bp.touch]: space["2xs"],
+    },
     flexWrap: "wrap",
     gap: space.md,
     marginBlockStart: space.xl,
@@ -87,7 +92,17 @@ const styles = stylex.create({
     listStyle: "none",
   },
   jumpLink: {
-    display: "inline-block",
+    /*
+     * WCAG 2.2 SC 2.5.8 (Target Size, Minimum): the underlined label alone was
+     * a ~20px tall target. Flex centring inside a 24px box satisfies AA on any
+     * pointer; coarse pointers get the full 44px comfort target.
+     */
+    display: "inline-flex",
+    alignItems: "center",
+    minBlockSize: {
+      default: "1.5rem",
+      [bp.touch]: "2.75rem",
+    },
     fontSize: font.sizeSm,
     fontWeight: font.weightBold,
     letterSpacing: font.trackingWide,
@@ -137,21 +152,23 @@ export const AboutHero = ({
           {title}
         </h1>
         <p {...stylex.props(styles.intro)}>{intro}</p>
-        <ul {...stylex.props(styles.jumpLinks)}>
-          {jumpLinks.map((link, index) => (
-            <li key={link.href}>
-              <a
-                href={link.href}
-                {...stylex.props(
-                  styles.jumpLink,
-                  index === 0 && styles.jumpLinkFirst
-                )}
-              >
-                {link.label}
-              </a>
-            </li>
-          ))}
-        </ul>
+        <nav aria-label="On this page">
+          <ul {...stylex.props(styles.jumpLinks)}>
+            {jumpLinks.map((link, index) => (
+              <li key={link.href}>
+                <a
+                  href={link.href}
+                  {...stylex.props(
+                    styles.jumpLink,
+                    index === 0 && styles.jumpLinkFirst
+                  )}
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </Container>
   </section>
