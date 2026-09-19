@@ -7,6 +7,7 @@ import {
   color,
   font,
   motionToken,
+  palette,
   radius,
   space,
 } from "../../tokens/tokens.stylex";
@@ -18,6 +19,17 @@ import { Media } from "../primitives/media";
  * target for the kiosks and smart boards this site also runs on.
  */
 const MIN_TARGET = "2.75rem";
+
+/** Soft gold focus halo. Alpha gold, so it reads on cream without shouting. */
+const INPUT_HALO = "rgba(255, 178, 3, 0.32)";
+
+/**
+ * Gold tick for the remember-me checkbox, inlined as a data URI so the control
+ * needs no pseudo-element and no extra network request. `#` must stay
+ * percent-encoded or the URL terminates at the colour.
+ */
+const CHECK_MARK =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23ffb203' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8.5l3.5 3.5L13 5'/%3E%3C/svg%3E";
 
 const ambient = stylex.keyframes({
   "0%, 100%": { opacity: 0.18, transform: "scale(1)" },
@@ -272,11 +284,25 @@ const styles = stylex.create({
     flexDirection: "column",
     gap: space["3xs"],
   },
+  /**
+   * The gold rule before the label is the same device the brand panel uses
+   * under "The Aloysian Portal". Repeating it here is what ties the form to
+   * the masthead instead of leaving it looking like a generic auth widget.
+   */
   label: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: space["2xs"],
     fontSize: font.size2xs,
     fontWeight: font.weightBold,
     letterSpacing: font.trackingWider,
     color: color.onSurface,
+    "::before": {
+      content: "''",
+      inlineSize: "1.25rem",
+      blockSize: "2px",
+      backgroundColor: color.accent,
+    },
   },
   /**
    * `center`, not `baseline`: the "Forgot?" link carries a full 44px hit area,
@@ -297,7 +323,9 @@ const styles = stylex.create({
   },
   input: {
     inlineSize: "100%",
-    minHeight: MIN_TARGET,
+    // Taller than the 44px floor: generous field height is most of what
+    // separates a considered form from a default one.
+    minHeight: "3.25rem",
     paddingBlock: space.xs,
     paddingInline: space.sm,
     // 16px minimum: anything smaller triggers iOS Safari's auto-zoom on focus,
@@ -305,28 +333,56 @@ const styles = stylex.create({
     fontSize: `max(1rem, ${font.sizeMd})`,
     fontFamily: font.body,
     color: color.onSurface,
-    backgroundColor: color.surfaceRaised,
+    backgroundColor: {
+      default: color.surfaceRaised,
+      ":hover": palette.creamRaised,
+      ":focus": "#ffffff",
+    },
     borderWidth: space.px,
     borderStyle: "solid",
     // `borderStrong` is 3.4:1 on cream - a visible field boundary, unlike the
     // stub's #ccc.
     borderColor: {
       default: color.borderStrong,
-      ":focus-visible": color.onSurface,
+      ":hover": "rgba(1, 52, 5, 0.45)",
+      ":focus": color.onSurface,
     },
     borderRadius: radius.md,
-    outlineColor: color.focusRing,
-    outlineOffset: "2px",
+    /*
+     * Focus is carried by a soft gold halo rather than only a border colour
+     * change. `:focus` (not `:focus-visible`) on purpose - a pointer user
+     * clicking into a text field should get the same affordance as a keyboard
+     * user, and the outline below still fires for keyboard only.
+     */
+    boxShadow: {
+      default: "inset 0 1px 2px rgba(1, 52, 5, 0.06)",
+      ":focus": `inset 0 1px 2px rgba(1, 52, 5, 0), 0 0 0 4px ${INPUT_HALO}`,
+    },
+    /*
+     * Deep green, not the global crimson ring. Per spec a text input always
+     * matches `:focus-visible` when focused, whatever the input modality, so
+     * this ring is what every user sees on every focus - crimson fought both
+     * the gold halo and the green border the field already adopts. Green is
+     * ~13:1 on cream, so SC 2.4.11 is met by the ring alone; the halo is
+     * decoration on top of it.
+     */
+    outlineColor: color.onSurface,
+    outlineOffset: "1px",
     outlineStyle: {
       default: "none",
       ":focus-visible": "solid",
     },
-    outlineWidth: "3px",
-    transitionProperty: "border-color, background-color",
+    outlineWidth: "2px",
+    transitionProperty: "border-color, background-color, box-shadow",
     transitionDuration: motionToken.fast,
+    transitionTimingFunction: motionToken.ease,
   },
   inputInvalid: {
     borderColor: color.danger,
+    boxShadow: {
+      default: "inset 0 1px 2px rgba(165, 25, 25, 0.08)",
+      ":focus": "0 0 0 4px rgba(165, 25, 25, 0.18)",
+    },
   },
   /**
    * Reserves room for the reveal button using a logical inline-end pad that is
@@ -344,11 +400,22 @@ const styles = stylex.create({
     display: "inline-flex",
     alignItems: "center",
     minHeight: "2.25rem",
-    paddingInline: space["2xs"],
-    borderWidth: 0,
-    borderStyle: "none",
+    paddingInline: space.xs,
+    // A hairline pill, not bare text: the control reads as a control, and the
+    // boundary keeps it from colliding visually with the value beside it.
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: {
+      default: color.border,
+      ":hover": color.accentOnSurface,
+    },
     borderRadius: radius.sm,
-    backgroundColor: "transparent",
+    // Transparent, so the pill reads as an outline on the field rather than a
+    // grey chip sitting on top of it.
+    backgroundColor: {
+      default: "transparent",
+      ":hover": "rgba(165, 25, 25, 0.06)",
+    },
     fontFamily: font.body,
     fontSize: font.size2xs,
     fontWeight: font.weightExtrabold,
@@ -357,6 +424,8 @@ const styles = stylex.create({
       default: color.onSurfaceSubtle,
       ":hover": color.accentOnSurface,
     },
+    transitionProperty: "color, background-color, border-color",
+    transitionDuration: motionToken.fast,
     cursor: "pointer",
     touchAction: "manipulation",
     WebkitTapHighlightColor: "transparent",
@@ -403,13 +472,44 @@ const styles = stylex.create({
     cursor: "pointer",
     userSelect: "none",
   },
+  /**
+   * Custom-drawn, but still a real `<input type="checkbox">`: `appearance:
+   * none` restyles the native control rather than hiding it behind a fake one,
+   * so it keeps its role, its checked state, its label association and its
+   * place in the tab order for free.
+   */
   checkbox: {
-    inlineSize: "1.125rem",
-    blockSize: "1.125rem",
+    appearance: "none",
+    WebkitAppearance: "none",
+    display: "grid",
+    placeContent: "center",
+    inlineSize: "1.25rem",
+    blockSize: "1.25rem",
     flexShrink: 0,
     margin: 0,
-    accentColor: color.surfaceInverse,
+    borderWidth: "1.5px",
+    borderStyle: "solid",
+    borderColor: {
+      default: color.borderStrong,
+      ":checked": color.surfaceInverse,
+    },
+    borderRadius: radius.sm,
+    backgroundColor: {
+      default: color.surfaceRaised,
+      ":checked": color.surfaceInverse,
+    },
+    // Gold tick on the deep-green fill, drawn as a background so no
+    // pseudo-element is needed on a replaced element.
+    backgroundImage: {
+      default: "none",
+      ":checked": `url("${CHECK_MARK}")`,
+    },
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "center",
+    backgroundSize: "0.8rem 0.8rem",
     cursor: "pointer",
+    transitionProperty: "background-color, border-color",
+    transitionDuration: motionToken.fast,
     outlineColor: color.focusRing,
     outlineOffset: "2px",
     outlineStyle: {
@@ -425,25 +525,53 @@ const styles = stylex.create({
   },
 
   submit: {
-    minHeight: MIN_TARGET,
-    marginBlockStart: space["2xs"],
+    position: "relative",
+    overflow: "hidden",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: space["2xs"],
+    minHeight: "3.25rem",
+    marginBlockStart: space.xs,
     paddingBlock: space.xs,
     paddingInline: space.md,
     borderWidth: 0,
     borderStyle: "none",
     borderRadius: radius.md,
-    backgroundColor: {
-      default: color.surfaceInverse,
-      ":hover": color.surfaceInverseDeep,
+    // A shallow vertical gradient plus a hairline top highlight: the button
+    // reads as a solid object with a light source rather than a flat swatch.
+    backgroundImage: {
+      default: `linear-gradient(180deg, ${palette.greenDeep} 0%, ${palette.greenDark} 100%)`,
+      ":hover": `linear-gradient(180deg, ${palette.greenDark} 0%, ${palette.black} 100%)`,
+    },
+    backgroundColor: color.surfaceInverse,
+    boxShadow: {
+      default:
+        "inset 0 1px 0 rgba(255, 178, 3, 0.28), 0 2px 10px rgba(1, 52, 5, 0.22)",
+      ":hover":
+        "inset 0 1px 0 rgba(255, 178, 3, 0.5), 0 8px 22px rgba(1, 52, 5, 0.3)",
+      ":active": "inset 0 1px 3px rgba(0, 0, 0, 0.4)",
     },
     color: color.accentOnInverse,
     fontFamily: font.body,
     fontSize: font.sizeSm,
     fontWeight: font.weightExtrabold,
-    letterSpacing: font.trackingWide,
+    // Wider tracking than the rest of the UI - this is the one display-weight
+    // control on the page.
+    letterSpacing: font.trackingWider,
     cursor: "pointer",
     touchAction: "manipulation",
     WebkitTapHighlightColor: "transparent",
+    // Lift only where a real pointer exists; on touch a :hover transform
+    // sticks after the tap until the user taps elsewhere.
+    transform: {
+      default: "translateY(0)",
+      [bp.hover]: {
+        default: "translateY(0)",
+        ":hover": "translateY(-1px)",
+        ":active": "translateY(0)",
+      },
+    },
     outlineColor: color.focusRing,
     outlineOffset: "2px",
     outlineStyle: {
@@ -451,8 +579,14 @@ const styles = stylex.create({
       ":focus-visible": "solid",
     },
     outlineWidth: "3px",
-    transitionProperty: "background-color, opacity",
+    transitionProperty: "background-image, box-shadow, transform, opacity",
     transitionDuration: motionToken.base,
+    transitionTimingFunction: motionToken.ease,
+  },
+  submitArrow: {
+    transitionProperty: "transform",
+    transitionDuration: motionToken.base,
+    transitionTimingFunction: motionToken.ease,
   },
   /**
    * Busy state is styled but **not** `disabled`: disabling the control would
@@ -486,7 +620,9 @@ const styles = stylex.create({
     alignItems: "center",
     flexWrap: "wrap",
     gap: space["2xs"],
-    marginBlockStart: space.md,
+    // The form's own `gap` already contributes above this rule; adding a full
+    // `md` on top of it left the footer adrift from the button.
+    marginBlockStart: space["3xs"],
     paddingBlockStart: space.md,
     borderBlockStartWidth: space.px,
     borderBlockStartStyle: "solid",
@@ -764,6 +900,11 @@ export const SignInPage = ({
             {...stylex.props(styles.submit, isSubmitting && styles.submitBusy)}
           >
             {isSubmitting ? "SIGNING IN…" : "SIGN IN"}
+            {isSubmitting ? null : (
+              <span aria-hidden="true" {...stylex.props(styles.submitArrow)}>
+                &rarr;
+              </span>
+            )}
           </button>
 
           <div {...stylex.props(styles.footer)}>
