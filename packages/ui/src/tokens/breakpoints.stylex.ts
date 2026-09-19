@@ -52,4 +52,11 @@ export const bp = stylex.defineConsts({
   retina: "@media (min-resolution: 2dppx)",
   /** Short viewports - phone landscape, where tall heroes must collapse. */
   short: "@media (max-height: 34rem) and (orientation: landscape)",
+  /**
+   * Laptop-class viewport *height*, not width. 1366x768 and 1280x800 are the
+   * two commonest laptop resolutions and both leave well under 800px of
+   * viewport, so full-height screens like sign-in have to compress their
+   * rhythm here or they force the page to scroll.
+   */
+  shortViewport: "@media (max-height: 50rem)",
 });

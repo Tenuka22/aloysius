@@ -34,6 +34,20 @@ const MIN_TARGET = "2.75rem";
 /** Soft gold focus halo. Alpha gold, so it reads on cream without shouting. */
 const INPUT_HALO = "rgba(255, 178, 3, 0.32)";
 
+/*
+ * Vertical rhythm for the sign-in screen, expressed in `vh` so it compresses
+ * continuously with viewport height. This screen has a hard requirement the
+ * rest of the site does not: it must fit on one screen without scrolling, and
+ * a 1366x768 laptop leaves only ~660px of viewport once browser chrome is
+ * taken. Stepping at a single `max-height` breakpoint left a cliff either side
+ * of it; fluid values also mean no two media queries can fight over the same
+ * property, which is the StyleX ordering hazard in frontend-audit 6.4.
+ */
+const PANE_PAD = "clamp(0.75rem, 2.5vh, 2rem)";
+const BRAND_GAP = "clamp(1.5rem, 4vh, 3.5rem)";
+const CARD_PAD = "clamp(1rem, 3vh, 2rem)";
+const CARD_GAP = "clamp(0.5rem, 1.4vh, 0.75rem)";
+
 /**
  * Gold tick for the remember-me checkbox, inlined as a data URI so the control
  * needs no pseudo-element and no extra network request. `#` must stay
@@ -79,13 +93,16 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    gap: space.xl,
+    // Fluid in `vh` for the same reason as the card: this column shares the
+    // grid row height, so if its content outgrows the viewport it forces the
+    // whole page to scroll - including the form beside it.
+    gap: BRAND_GAP,
     overflow: "hidden",
     isolation: "isolate",
     backgroundColor: color.surfaceInverse,
     color: color.onInverse,
     paddingInline: space.gutter,
-    paddingBlock: space.xl,
+    paddingBlock: BRAND_GAP,
     // Safe-area insets: on a notched phone in landscape this panel is against
     // the physical edge.
     paddingInlineStart: `max(${space.gutter}, env(safe-area-inset-left))`,
@@ -185,11 +202,15 @@ const styles = stylex.create({
 
   pitch: {
     position: "relative",
-    // The pitch block is the one thing that may be dropped on a short landscape
-    // phone, where vertical room is the scarce resource.
+    /*
+     * Only in the two-column layout. Below `xl` the brand panel is stacked
+     * above the card, so anything shown here is pure height pushed onto the
+     * page - it was adding ~480px and forcing a scroll on any window narrower
+     * than 1024px. In the split layout it fills a column that exists anyway.
+     */
     display: {
       default: "none",
-      [bp.md]: "block",
+      [bp.xl]: "block",
     },
     maxInlineSize: "32ch",
   },
@@ -227,12 +248,22 @@ const styles = stylex.create({
 
   marks: {
     position: "relative",
+    /*
+     * Two-column layout only, same reasoning as `pitch`. Deliberately a single
+     * rule rather than also switching on `shortViewport`: a min-width and a
+     * max-height query both match a 1366x768 screen, and StyleX orders
+     * overlapping rules for one property by emission, not specificity
+     * (frontend-audit 6.4). The brand column is height-constrained and
+     * space-between, so these cost the page nothing anyway.
+     */
     display: {
       default: "none",
-      [bp.lg]: "flex",
+      [bp.xl]: "flex",
     },
     flexWrap: "wrap",
-    gap: space.xl,
+    // `xl` here was ~50px, which wrapped the three marks onto three rows in a
+    // 512px column and added ~100px of height to the whole page.
+    gap: space.md,
     listStyle: "none",
     margin: 0,
     padding: 0,
@@ -255,14 +286,22 @@ const styles = stylex.create({
 
   /* ----------------------------------------------------------------- form */
 
+  /**
+   * The pane's own padding was 80px top and bottom on a desktop - 160px of the
+   * viewport spent before the card is drawn. It is now sized so the whole
+   * screen fits a 768px-tall laptop without the page scrolling.
+   */
   formPane: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     paddingInline: space.gutter,
-    paddingBlock: space["2xl"],
+    // Fluid in `vh`, so the rhythm compresses continuously with viewport
+    // height instead of stepping at one breakpoint - and so two overlapping
+    // media queries can never both claim this property.
+    paddingBlock: PANE_PAD,
     paddingInlineEnd: `max(${space.gutter}, env(safe-area-inset-right))`,
-    paddingBlockEnd: `max(${space["2xl"]}, env(safe-area-inset-bottom))`,
+    paddingBlockEnd: `max(${PANE_PAD}, env(safe-area-inset-bottom))`,
   },
   /**
    * The form is a raised card, not bare text on the pane. On a phone it keeps
@@ -279,14 +318,11 @@ const styles = stylex.create({
     maxInlineSize: "27.5rem",
     display: "flex",
     flexDirection: "column",
-    gap: space.sm,
-    paddingBlock: {
-      default: space.lg,
-      [bp.sm]: space.xl,
-    },
+    gap: CARD_GAP,
+    paddingBlock: CARD_PAD,
     paddingInline: {
       default: space.md,
-      [bp.sm]: space.xl,
+      [bp.sm]: space.lg,
     },
     backgroundColor: color.surfaceRaised,
     borderWidth: space.px,
@@ -333,7 +369,12 @@ const styles = stylex.create({
   },
   title: {
     fontFamily: font.display,
-    fontSize: font.size3xl,
+    // Steps down on a laptop-height viewport: the display size is what makes
+    // the card overflow a 768px screen, and it is the cheapest thing to trade.
+    fontSize: {
+      default: font.size3xl,
+      [bp.shortViewport]: font.size2xl,
+    },
     fontWeight: font.weightSemibold,
     lineHeight: font.leadingTight,
     margin: `${space["2xs"]} 0 0`,
@@ -342,7 +383,10 @@ const styles = stylex.create({
     fontSize: font.sizeMd,
     lineHeight: font.leadingNormal,
     color: color.onSurfaceSubtle,
-    margin: `${space["2xs"]} 0 ${space.md}`,
+    margin: {
+      default: `${space["2xs"]} 0 ${space.xs}`,
+      [bp.shortViewport]: `${space["3xs"]} 0 ${space["2xs"]}`,
+    },
   },
 
   field: {
@@ -758,7 +802,9 @@ const styles = stylex.create({
     // The form's own `gap` already contributes above this rule; adding a full
     // `md` on top of it left the footer adrift from the button.
     marginBlockStart: space["3xs"],
-    paddingBlockStart: space.md,
+    // Last fixed vertical value in the card; fluid so a 600px-tall window
+    // clears too, which was the final 9px of overflow.
+    paddingBlockStart: "clamp(0.75rem, 2vh, 1.5rem)",
     borderBlockStartWidth: space.px,
     borderBlockStartStyle: "solid",
     borderBlockStartColor: color.border,
