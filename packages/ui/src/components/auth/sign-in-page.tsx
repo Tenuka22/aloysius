@@ -1,4 +1,15 @@
 import * as stylex from "@stylexjs/stylex";
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { useId, useState } from "react";
 import type { FormEvent } from "react";
 
@@ -34,6 +45,11 @@ const CHECK_MARK =
 const ambient = stylex.keyframes({
   "0%, 100%": { opacity: 0.18, transform: "scale(1)" },
   "50%": { opacity: 0.42, transform: "scale(1.08)" },
+});
+
+const spin = stylex.keyframes({
+  from: { transform: "rotate(0deg)" },
+  to: { transform: "rotate(360deg)" },
 });
 
 const styles = stylex.create({
@@ -248,7 +264,15 @@ const styles = stylex.create({
     paddingInlineEnd: `max(${space.gutter}, env(safe-area-inset-right))`,
     paddingBlockEnd: `max(${space["2xl"]}, env(safe-area-inset-bottom))`,
   },
-  form: {
+  /**
+   * The form is a raised card, not bare text on the pane. On a phone it keeps
+   * the border and radius but loses most of the padding, so the controls stay
+   * on the page gutter rather than being inset twice.
+   */
+  card: {
+    position: "relative",
+    isolation: "isolate",
+    overflow: "hidden",
     inlineSize: "100%",
     // Caps the measure so the form never stretches on a 4K panel, while the
     // pane around it keeps centring.
@@ -256,6 +280,48 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
     gap: space.sm,
+    paddingBlock: {
+      default: space.lg,
+      [bp.sm]: space.xl,
+    },
+    paddingInline: {
+      default: space.md,
+      [bp.sm]: space.xl,
+    },
+    backgroundColor: color.surfaceRaised,
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: color.border,
+    borderRadius: "0.75rem",
+    // Two shadows: a tight contact shadow plus a wide ambient one. A single
+    // blur reads flat; the pair is what makes the card sit above the pane.
+    boxShadow:
+      "0 1px 2px rgba(1, 52, 5, 0.06), 0 18px 48px -12px rgba(1, 52, 5, 0.22)",
+  },
+  /** Gold hairline along the card's top edge - the brand's signature rule. */
+  cardEdge: {
+    position: "absolute",
+    insetBlockStart: 0,
+    insetInline: 0,
+    blockSize: "3px",
+    backgroundImage: `linear-gradient(90deg, ${palette.gold} 0%, ${palette.goldLight} 45%, rgba(255,178,3,0) 100%)`,
+    pointerEvents: "none",
+  },
+  cardHead: {
+    display: "flex",
+    alignItems: "center",
+    gap: space["2xs"],
+  },
+  crestBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    inlineSize: "2rem",
+    blockSize: "2rem",
+    flexShrink: 0,
+    borderRadius: radius.md,
+    backgroundColor: color.surfaceInverse,
+    color: color.accentOnInverse,
   },
 
   eyebrow: {
@@ -321,6 +387,22 @@ const styles = stylex.create({
     position: "relative",
     display: "flex",
   },
+  /**
+   * Decorative only - the visible `<label>` names the field. `pointer-events:
+   * none` so clicking the icon still focuses the input underneath it.
+   */
+  fieldIcon: {
+    position: "absolute",
+    insetInlineStart: space.sm,
+    insetBlockStart: "50%",
+    transform: "translateY(-50%)",
+    color: color.onSurfaceSubtle,
+    pointerEvents: "none",
+    zIndex: 1,
+  },
+  inputWithIcon: {
+    paddingInlineStart: "2.875rem",
+  },
   input: {
     inlineSize: "100%",
     // Taller than the 44px floor: generous field height is most of what
@@ -376,6 +458,11 @@ const styles = stylex.create({
     transitionProperty: "border-color, background-color, box-shadow",
     transitionDuration: motionToken.fast,
     transitionTimingFunction: motionToken.ease,
+    // Placeholders are a hint, never the label - every field here has a real
+    // one - so they sit well below body contrast on purpose.
+    "::placeholder": {
+      color: "rgba(1, 52, 5, 0.38)",
+    },
   },
   inputInvalid: {
     borderColor: color.danger,
@@ -390,7 +477,10 @@ const styles = stylex.create({
    * cannot overlap the value (mock §5.10).
    */
   inputWithAction: {
-    paddingInlineEnd: "5.5rem",
+    // Clears the 2.75rem icon button plus its inset, with room to spare. Sized
+    // from the control rather than from the old "SHOW"/"HIDE" string, so a
+    // translation can no longer overlap the value (mock §5.10).
+    paddingInlineEnd: "3.75rem",
   },
   reveal: {
     position: "absolute",
@@ -399,17 +489,20 @@ const styles = stylex.create({
     transform: "translateY(-50%)",
     display: "inline-flex",
     alignItems: "center",
-    minHeight: "2.25rem",
-    paddingInline: space.xs,
-    // A hairline pill, not bare text: the control reads as a control, and the
-    // boundary keeps it from colliding visually with the value beside it.
+    justifyContent: "center",
+    // Square icon button, kept on the 44px grid: the 3.25rem field is tall
+    // enough to contain it with 4px to spare, so the icon-only control does
+    // not become the one sub-target on the page.
+    minHeight: MIN_TARGET,
+    inlineSize: MIN_TARGET,
+    paddingInline: 0,
     borderWidth: space.px,
     borderStyle: "solid",
     borderColor: {
-      default: color.border,
-      ":hover": color.accentOnSurface,
+      default: "transparent",
+      ":hover": color.border,
     },
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     // Transparent, so the pill reads as an outline on the field rather than a
     // grey chip sitting on top of it.
     backgroundColor: {
@@ -589,6 +682,48 @@ const styles = stylex.create({
     transitionTimingFunction: motionToken.ease,
   },
   /**
+   * Diagonal gold sheen that sweeps across on hover. Transform-only, so it
+   * composites on the GPU, and it is skipped entirely on coarse pointers and
+   * under reduced motion.
+   */
+  submitSheen: {
+    position: "absolute",
+    insetBlock: 0,
+    inlineSize: "40%",
+    insetInlineStart: 0,
+    backgroundImage:
+      "linear-gradient(100deg, transparent, rgba(255,178,3,0.18), transparent)",
+    pointerEvents: "none",
+    transform: {
+      default: "translateX(-150%)",
+      [bp.hover]: {
+        default: "translateX(-150%)",
+        ":hover": "translateX(350%)",
+      },
+      [bp.reducedMotion]: "translateX(-150%)",
+    },
+    transitionProperty: "transform",
+    transitionDuration: "900ms",
+    transitionTimingFunction: motionToken.ease,
+  },
+  /**
+   * The only element on the page that keeps moving under reduced motion would
+   * be this spinner, so it stops and the label alone carries the busy state.
+   */
+  spinner: {
+    animationName: {
+      default: spin,
+      [bp.reducedMotion]: "none",
+    },
+    animationDuration: "900ms",
+    animationTimingFunction: "linear",
+    animationIterationCount: "infinite",
+  },
+  errorIcon: {
+    flexShrink: 0,
+    marginBlockStart: "0.1rem",
+  },
+  /**
    * Busy state is styled but **not** `disabled`: disabling the control would
    * drop it out of the tab order mid-interaction and move the user's focus
    * somewhere unpredictable (audit §2.9). Re-submission is blocked in the
@@ -648,12 +783,16 @@ const styles = stylex.create({
     outlineWidth: "3px",
   },
   backLink: {
-    color: color.onSurfaceSubtle,
+    color: {
+      default: color.onSurfaceSubtle,
+      ":hover": color.onSurface,
+    },
     fontWeight: font.weightSemibold,
     textDecorationLine: "none",
     minHeight: MIN_TARGET,
     display: "inline-flex",
     alignItems: "center",
+    gap: space["3xs"],
     borderRadius: radius.sm,
     outlineColor: color.focusRing,
     outlineOffset: "2px",
@@ -800,8 +939,16 @@ export const SignInPage = ({
       </div>
 
       <div {...stylex.props(styles.formPane)}>
-        <form noValidate onSubmit={handleSubmit} {...stylex.props(styles.form)}>
-          <p {...stylex.props(styles.eyebrow)}>STAFF &amp; CMS ACCESS</p>
+        <form noValidate onSubmit={handleSubmit} {...stylex.props(styles.card)}>
+          <span aria-hidden="true" {...stylex.props(styles.cardEdge)} />
+
+          <div {...stylex.props(styles.cardHead)}>
+            <span aria-hidden="true" {...stylex.props(styles.crestBadge)}>
+              <ShieldCheck size={18} strokeWidth={2} />
+            </span>
+            <p {...stylex.props(styles.eyebrow)}>STAFF &amp; CMS ACCESS</p>
+          </div>
+
           <h1 {...stylex.props(styles.title)}>Welcome back</h1>
           <p {...stylex.props(styles.subtitle)}>
             Sign in with your College account to manage classes and website
@@ -815,7 +962,12 @@ export const SignInPage = ({
               role="alert"
               {...stylex.props(styles.error)}
             >
-              <span aria-hidden="true">&#9888;</span>
+              <AlertCircle
+                aria-hidden="true"
+                size={18}
+                strokeWidth={2}
+                {...stylex.props(styles.errorIcon)}
+              />
               {message}
             </p>
           ) : null}
@@ -824,24 +976,34 @@ export const SignInPage = ({
             <label htmlFor={usernameId} {...stylex.props(styles.label)}>
               USERNAME
             </label>
-            <input
-              aria-describedby={message ? errorId : undefined}
-              aria-invalid={message ? true : undefined}
-              autoCapitalize="none"
-              autoComplete="username"
-              autoCorrect="off"
-              id={usernameId}
-              name="username"
-              onChange={(event) => setUsername(event.target.value)}
-              required
-              spellCheck={false}
-              type="text"
-              value={username}
-              {...stylex.props(
-                styles.input,
-                Boolean(message) && styles.inputInvalid
-              )}
-            />
+            <span {...stylex.props(styles.inputWrap)}>
+              <UserRound
+                aria-hidden="true"
+                size={18}
+                strokeWidth={1.75}
+                {...stylex.props(styles.fieldIcon)}
+              />
+              <input
+                aria-describedby={message ? errorId : undefined}
+                aria-invalid={message ? true : undefined}
+                autoCapitalize="none"
+                autoComplete="username"
+                autoCorrect="off"
+                id={usernameId}
+                name="username"
+                onChange={(event) => setUsername(event.target.value)}
+                placeholder="your.username"
+                required
+                spellCheck={false}
+                type="text"
+                value={username}
+                {...stylex.props(
+                  styles.input,
+                  styles.inputWithIcon,
+                  Boolean(message) && styles.inputInvalid
+                )}
+              />
+            </span>
           </div>
 
           <div {...stylex.props(styles.field)}>
@@ -854,6 +1016,12 @@ export const SignInPage = ({
               </a>
             </span>
             <span {...stylex.props(styles.inputWrap)}>
+              <Lock
+                aria-hidden="true"
+                size={18}
+                strokeWidth={1.75}
+                {...stylex.props(styles.fieldIcon)}
+              />
               <input
                 aria-describedby={message ? errorId : undefined}
                 aria-invalid={message ? true : undefined}
@@ -861,23 +1029,35 @@ export const SignInPage = ({
                 id={passwordId}
                 name="password"
                 onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
                 required
                 type={showPassword ? "text" : "password"}
                 value={password}
                 {...stylex.props(
                   styles.input,
+                  styles.inputWithIcon,
                   styles.inputWithAction,
                   Boolean(message) && styles.inputInvalid
                 )}
               />
+              {/*
+                The icon alone is not an accessible name, so the label is
+                explicit and states the action rather than the current state -
+                `aria-pressed` carries the state.
+              */}
               <button
                 aria-controls={passwordId}
+                aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
                 onClick={() => setShowPassword((shown) => !shown)}
                 type="button"
                 {...stylex.props(styles.reveal)}
               >
-                {showPassword ? "HIDE" : "SHOW"}
+                {showPassword ? (
+                  <EyeOff size={18} strokeWidth={1.75} />
+                ) : (
+                  <Eye size={18} strokeWidth={1.75} />
+                )}
               </button>
             </span>
           </div>
@@ -899,11 +1079,27 @@ export const SignInPage = ({
             type="submit"
             {...stylex.props(styles.submit, isSubmitting && styles.submitBusy)}
           >
-            {isSubmitting ? "SIGNING IN…" : "SIGN IN"}
-            {isSubmitting ? null : (
-              <span aria-hidden="true" {...stylex.props(styles.submitArrow)}>
-                &rarr;
-              </span>
+            <span aria-hidden="true" {...stylex.props(styles.submitSheen)} />
+            {isSubmitting ? (
+              <>
+                <Loader2
+                  aria-hidden="true"
+                  size={18}
+                  strokeWidth={2.25}
+                  {...stylex.props(styles.spinner)}
+                />
+                SIGNING IN…
+              </>
+            ) : (
+              <>
+                SIGN IN
+                <ArrowRight
+                  aria-hidden="true"
+                  size={18}
+                  strokeWidth={2.25}
+                  {...stylex.props(styles.submitArrow)}
+                />
+              </>
             )}
           </button>
 
@@ -915,7 +1111,8 @@ export const SignInPage = ({
               </a>
             </span>
             <a href={homeHref} {...stylex.props(styles.backLink)}>
-              &larr; Back to website
+              <ArrowLeft aria-hidden="true" size={15} strokeWidth={2} />
+              Back to website
             </a>
           </div>
         </form>

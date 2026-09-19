@@ -63,16 +63,15 @@ describe(SignInPage, () => {
     const password = screen.getByLabelText("PASSWORD");
     expect(password).toHaveAttribute("type", "password");
 
-    const toggle = screen.getByRole("button", { name: "SHOW" });
+    const toggle = screen.getByRole("button", { name: "Show password" });
     expect(toggle).toHaveAttribute("aria-pressed", "false");
 
     fireEvent.click(toggle);
 
     expect(password).toHaveAttribute("type", "text");
-    expect(screen.getByRole("button", { name: "HIDE" })).toHaveAttribute(
-      "aria-pressed",
-      "true"
-    );
+    expect(
+      screen.getByRole("button", { name: "Hide password" })
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   /*
