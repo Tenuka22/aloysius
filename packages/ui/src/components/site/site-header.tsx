@@ -339,7 +339,10 @@ export const SiteHeader = ({
   // Close the drawer if the viewport grows past the desktop breakpoint while it
   // is open, otherwise the scroll lock persists with no visible drawer.
   useEffect(() => {
-    if (!open) {
+    // Feature-detected for the same reason as in `Reveal`: where `matchMedia`
+    // is missing this is a lost convenience, not a reason to throw out of the
+    // effect and tear the header down.
+    if (!open || typeof matchMedia !== "function") {
       return;
     }
     const query = matchMedia("(min-width: 96rem)");

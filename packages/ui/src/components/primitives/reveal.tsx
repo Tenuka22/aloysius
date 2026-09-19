@@ -90,7 +90,20 @@ export const Reveal = ({
     if (!node) {
       return;
     }
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    /*
+     * Both capabilities are feature-detected, and both bail out to the final
+     * visible state rather than to a hidden one - an environment that cannot
+     * animate must still show the content.
+     *
+     * `matchMedia` was previously called bare. It is absent in jsdom and in
+     * older embedded webviews (some kiosk and smart-TV browsers), where the
+     * throw escaped the layout effect and unmounted the whole tree - so the
+     * page rendered blank rather than merely un-animated.
+     */
+    if (
+      typeof matchMedia !== "function" ||
+      matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       return;
     }
     if (typeof IntersectionObserver === "undefined") {
