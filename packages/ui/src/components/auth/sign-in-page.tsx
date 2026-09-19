@@ -45,7 +45,6 @@ const INPUT_HALO = "rgba(255, 178, 3, 0.32)";
  */
 const PANE_PAD = "clamp(0.75rem, 2.5vh, 2rem)";
 const BRAND_GAP = "clamp(1.5rem, 4vh, 3.5rem)";
-const CARD_PAD = "clamp(1rem, 3vh, 2rem)";
 const CARD_GAP = "clamp(0.5rem, 1.4vh, 0.75rem)";
 
 /**
@@ -304,14 +303,12 @@ const styles = stylex.create({
     paddingBlockEnd: `max(${PANE_PAD}, env(safe-area-inset-bottom))`,
   },
   /**
-   * The form is a raised card, not bare text on the pane. On a phone it keeps
-   * the border and radius but loses most of the padding, so the controls stay
-   * on the page gutter rather than being inset twice.
+   * The form sits directly on the pane - no card surface, border, radius or
+   * shadow. The pane's own gutter is the only inset, so the measure below is
+   * the full content width rather than a card interior.
    */
   card: {
     position: "relative",
-    isolation: "isolate",
-    overflow: "hidden",
     inlineSize: "100%",
     // Caps the measure so the form never stretches on a 4K panel, while the
     // pane around it keeps centring.
@@ -319,29 +316,6 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
     gap: CARD_GAP,
-    paddingBlock: CARD_PAD,
-    paddingInline: {
-      default: space.md,
-      [bp.sm]: space.lg,
-    },
-    backgroundColor: color.surfaceRaised,
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.border,
-    borderRadius: "0.75rem",
-    // Two shadows: a tight contact shadow plus a wide ambient one. A single
-    // blur reads flat; the pair is what makes the card sit above the pane.
-    boxShadow:
-      "0 1px 2px rgba(1, 52, 5, 0.06), 0 18px 48px -12px rgba(1, 52, 5, 0.22)",
-  },
-  /** Gold hairline along the card's top edge - the brand's signature rule. */
-  cardEdge: {
-    position: "absolute",
-    insetBlockStart: 0,
-    insetInline: 0,
-    blockSize: "3px",
-    backgroundImage: `linear-gradient(90deg, ${palette.gold} 0%, ${palette.goldLight} 45%, rgba(255,178,3,0) 100%)`,
-    pointerEvents: "none",
   },
   cardHead: {
     display: "flex",
@@ -986,8 +960,6 @@ export const SignInPage = ({
 
       <div {...stylex.props(styles.formPane)}>
         <form noValidate onSubmit={handleSubmit} {...stylex.props(styles.card)}>
-          <span aria-hidden="true" {...stylex.props(styles.cardEdge)} />
-
           <div {...stylex.props(styles.cardHead)}>
             <span aria-hidden="true" {...stylex.props(styles.crestBadge)}>
               <ShieldCheck size={18} strokeWidth={2} />
