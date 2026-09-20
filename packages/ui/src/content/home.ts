@@ -13,6 +13,8 @@ import type { ImageSource } from "../components/primitives/media";
 export interface HeroBackground {
   kind: "image" | "video" | "color";
   value: string;
+  /** Width divided by height for image backgrounds. */
+  aspectRatio?: number;
 }
 
 export interface Notice {

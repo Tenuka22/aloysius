@@ -5,7 +5,7 @@ import { client } from "@/utils/orpc";
 interface Block {
   id: string;
   hidden: boolean;
-  fields: { id: string; value: string }[];
+  fields: { id: string; value: string; aspectRatio?: number }[];
 }
 
 interface LiveBlocksState {

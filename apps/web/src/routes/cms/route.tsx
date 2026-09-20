@@ -34,6 +34,42 @@ const CmsLayout = () => {
       href: "/cms/about",
       active: pathname.startsWith("/cms/about"),
     },
+    {
+      num: "04",
+      label: "News Editor",
+      href: "/cms/news",
+      active: pathname.startsWith("/cms/news"),
+    },
+    {
+      num: "05",
+      label: "Notices Editor",
+      href: "/cms/notices",
+      active: pathname.startsWith("/cms/notices"),
+    },
+    {
+      num: "06",
+      label: "Contact Editor",
+      href: "/cms/contact",
+      active: pathname.startsWith("/cms/contact"),
+    },
+    {
+      num: "07",
+      label: "Alumni Editor",
+      href: "/cms/alumni",
+      active: pathname.startsWith("/cms/alumni"),
+    },
+    {
+      num: "08",
+      label: "Media Editor",
+      href: "/cms/media",
+      active: pathname.startsWith("/cms/media"),
+    },
+    {
+      num: "09",
+      label: "Students Editor",
+      href: "/cms/students",
+      active: pathname.startsWith("/cms/students"),
+    },
   ];
 
   return (

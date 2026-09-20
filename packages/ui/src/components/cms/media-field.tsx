@@ -237,6 +237,7 @@ const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> =>
 // oxlint-disable react-doctor/no-giant-component eslint/complexity -- splitting would fragment tightly-coupled crop/upload/color logic
 export const MediaField = ({
   aspectRatio = aspectRatios.hero,
+  defaultImage,
   field,
   onChange,
   onUpload,
@@ -245,6 +246,8 @@ export const MediaField = ({
   wide,
 }: {
   aspectRatio?: number;
+  /** Fallback image URL shown when no value is set. */
+  defaultImage?: string;
   field: BlockField;
   onChange: (value: string) => void;
   onUpload?: (file: File) => Promise<string>;
@@ -415,6 +418,34 @@ export const MediaField = ({
 
   const openFilePicker = () => fileRef.current?.click();
 
+  const renderImagePreview = () => {
+    if (sourceValue) {
+      return (
+        <img
+          alt=""
+          loading="lazy"
+          src={sourceValue}
+          {...stylex.props(styles.previewImage)}
+        />
+      );
+    }
+    if (defaultImage) {
+      return (
+        <img
+          alt="Default"
+          loading="lazy"
+          src={defaultImage}
+          {...stylex.props(styles.previewImage)}
+        />
+      );
+    }
+    return (
+      <p {...stylex.props(styles.previewHint)}>
+        {isUploading ? "Uploading…" : "No image selected"}
+      </p>
+    );
+  };
+
   return (
     <div {...stylex.props(styles.root, wide && styles.rootWide)}>
       <span {...stylex.props(styles.label)}>{field.label}</span>
@@ -471,10 +502,7 @@ export const MediaField = ({
       ) : null}
 
       {currentMode === "video" ? (
-        <div
-          style={sourceValue ? undefined : { aspectRatio }}
-          {...stylex.props(styles.preview)}
-        >
+        <div style={{ aspectRatio }} {...stylex.props(styles.preview)}>
           {sourceValue ? (
             <video
               aria-hidden="true"
@@ -536,22 +564,8 @@ export const MediaField = ({
       ) : null}
 
       {currentMode === "image" && !isCropping ? (
-        <div
-          style={sourceValue ? undefined : { aspectRatio }}
-          {...stylex.props(styles.preview)}
-        >
-          {sourceValue ? (
-            <img
-              alt=""
-              loading="lazy"
-              src={sourceValue}
-              {...stylex.props(styles.previewImage)}
-            />
-          ) : (
-            <p {...stylex.props(styles.previewHint)}>
-              {isUploading ? "Uploading…" : "No image selected"}
-            </p>
-          )}
+        <div style={{ aspectRatio }} {...stylex.props(styles.preview)}>
+          {renderImagePreview()}
         </div>
       ) : null}
 

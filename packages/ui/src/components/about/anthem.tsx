@@ -171,12 +171,14 @@ export const Anthem = ({
   description = ANTHEM_DESC,
   credit = ANTHEM_CREDIT,
   image = ANTHEM_IMAGE,
+  sinhalaImage = ANTHEM_IMAGE,
   languages = ANTHEM_LANGUAGES,
 }: {
   title?: string;
   description?: string;
   credit?: string;
   image?: ImageSource;
+  sinhalaImage?: ImageSource;
   languages?: typeof ANTHEM_LANGUAGES;
 }) => {
   const [activeLanguage, setActiveLanguage] = useState<"en" | "si">("en");
@@ -268,7 +270,7 @@ export const Anthem = ({
             <Media
               placeholder="Anthem creators"
               ratio="3:2"
-              source={image}
+              source={activeLanguage === "si" ? sinhalaImage : image}
               style={styles.image}
             />
             <p {...stylex.props(styles.credit)}>{credit}</p>

@@ -5,8 +5,7 @@ import {
   SectionsDropdown,
 } from "@aloysius/ui/components/cms/homepage-editor";
 import type { HomepageEditorHandle } from "@aloysius/ui/components/cms/homepage-editor";
-import { ANTHEM_IMAGE, FOUNDERS, TIMELINE } from "@aloysius/ui/content/about";
-import { ABOUT_BLOCKS } from "@aloysius/ui/content/cms";
+import { ALUMNI_BLOCKS } from "@aloysius/ui/content/cms";
 import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import {
@@ -19,10 +18,20 @@ import { Suspense, useCallback, useRef, useState } from "react";
 
 import { client, orpc } from "@/utils/orpc";
 
+const md = "@media (min-width: 40rem)";
+
 const styles = stylex.create({
   wrap: {
-    paddingBlock: space.md,
-    paddingInline: space.md,
+    paddingBlockStart: space.md,
+    paddingBlockEnd: space.md,
+    paddingInlineStart: space.md,
+    paddingInlineEnd: space.md,
+    [md]: {
+      paddingBlockStart: space.lg,
+      paddingBlockEnd: space.lg,
+      paddingInlineStart: space.lg,
+      paddingInlineEnd: space.lg,
+    },
   },
   screenHead: {
     display: "flex",
@@ -63,38 +72,26 @@ const styles = stylex.create({
   },
 });
 
-/** Default archival photos shown when no CMS override is saved. */
-const DEFAULT_IMAGES: Record<string, string> = {
-  "founder1-image": FOUNDERS[0].image?.src ?? "",
-  "founder2-image": FOUNDERS[1].image?.src ?? "",
-  "history-1-image": TIMELINE[0].image?.src ?? "",
-  "history-2-image": TIMELINE[1].image?.src ?? "",
-  "history-3-image": TIMELINE[2].image?.src ?? "",
-  "history-4-image": TIMELINE[3].image?.src ?? "",
-  "anthem-image": ANTHEM_IMAGE.src,
-  "anthem-sinhala-image": ANTHEM_IMAGE.src,
-};
-
-const AboutContent = () => {
+const AlumniContent = () => {
   const queryClient = useQueryClient();
-  const aboutQuery = orpc.cms.getAbout.queryOptions();
-  const { data: about } = useSuspenseQuery(aboutQuery);
+  const alumniQuery = orpc.cms.getAlumni.queryOptions();
+  const { data: alumni } = useSuspenseQuery(alumniQuery);
   const editorRef = useRef<HomepageEditorHandle>(null);
   const [dirty, setDirty] = useState<Record<string, boolean>>({});
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
 
   const updateMutation = useMutation(
-    orpc.cms.updateAbout.mutationOptions({
+    orpc.cms.updateAlumni.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries(aboutQuery);
+        queryClient.invalidateQueries(alumniQuery);
       },
     })
   );
 
   const publishMutation = useMutation(
-    orpc.cms.publishAbout.mutationOptions({
+    orpc.cms.publishAlumni.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries(aboutQuery);
+        queryClient.invalidateQueries(alumniQuery);
       },
     })
   );
@@ -156,7 +153,7 @@ const AboutContent = () => {
 
   const handleFetchHistory = useCallback(
     async (cursor: number): Promise<HistoryResponse> => {
-      const result = await client.cms.getAboutHistory({ cursor });
+      const result = await client.cms.getAlumniHistory({ cursor });
       return result as HistoryResponse;
     },
     []
@@ -164,7 +161,7 @@ const AboutContent = () => {
 
   const sectionsSlot = (
     <SectionsDropdown
-      blocks={ABOUT_BLOCKS}
+      blocks={ALUMNI_BLOCKS}
       dirty={dirty}
       hidden={hidden}
       onToggle={handleToggleHidden}
@@ -176,43 +173,41 @@ const AboutContent = () => {
     <>
       <div {...stylex.props(styles.screenHead)}>
         <div {...stylex.props(styles.headingWrap)}>
-          <p {...stylex.props(styles.eyebrow)}>Pages / About</p>
-          <h1 {...stylex.props(styles.heading)}>About Editor</h1>
+          <p {...stylex.props(styles.eyebrow)}>Pages / Alumni</p>
+          <h1 {...stylex.props(styles.heading)}>Alumni Editor</h1>
           <p {...stylex.props(styles.note)}>
-            Replace the archival photos on the About page. Clearing a photo
-            restores the college&apos;s default.
+            Edit the Old Boys&apos; Association page content and links.
           </p>
         </div>
         <HomepageEditorActions
-          fetchHistory={handleFetchHistory}
-          onPublish={handlePublish}
           onSaveDraft={handleSaveDraft}
+          onPublish={handlePublish}
           sectionsSlot={sectionsSlot}
+          fetchHistory={handleFetchHistory}
         />
       </div>
       <HomepageEditor
-        blocks={ABOUT_BLOCKS}
-        defaultImages={DEFAULT_IMAGES}
-        initialBlocks={about?.blocks ?? undefined}
+        blocks={ALUMNI_BLOCKS}
+        ref={editorRef}
+        initialBlocks={alumni?.blocks ?? undefined}
         onDirtyChange={handleDirtyChange}
         onUpload={handleUpload}
-        ref={editorRef}
       />
     </>
   );
 };
 
-export const Route = createFileRoute("/cms/about")({
+export const Route = createFileRoute("/cms/alumni")({
   head: () => ({
     meta: [
-      { title: "About Editor — St. Aloysius' College" },
+      { title: "Alumni Editor — St. Aloysius' College" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: () => (
     <div {...stylex.props(styles.wrap)}>
       <Suspense fallback={<div>Loading…</div>}>
-        <AboutContent />
+        <AlumniContent />
       </Suspense>
     </div>
   ),

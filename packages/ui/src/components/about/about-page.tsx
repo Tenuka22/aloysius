@@ -2,7 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 
 import type { LeadershipMember } from "../../content/about";
 import { FOUNDERS, TIMELINE } from "../../content/about";
-import type { AboutImages } from "../../content/cms-to-about";
+import type { AboutImages, AboutTextContent } from "../../content/cms-to-about";
 import type { NavItem } from "../../content/home";
 import { SkipLink } from "../primitives/layout";
 import { SiteFooter } from "../site/site-footer";
@@ -35,6 +35,8 @@ export interface AboutPageProps {
   leadership?: readonly LeadershipMember[];
   /** Editable image overrides resolved from CMS blocks, already defaulted. */
   images?: AboutImages;
+  /** Editable text overrides resolved from CMS blocks. */
+  text?: AboutTextContent;
   extraNavItems?: readonly NavItem[];
 }
 
@@ -43,6 +45,7 @@ export const AboutPage = ({
   principalName,
   leadership,
   images,
+  text,
   extraNavItems,
 }: AboutPageProps) => {
   const founders = images
@@ -69,12 +72,19 @@ export const AboutPage = ({
       <SiteHeader activeHref="/about" extraNavItems={extraNavItems} />
       <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
         <AboutHero />
-        <Founders founders={founders} />
-        <HistoryTimeline entries={timeline} />
+        <Founders
+          eyebrow={text?.foundersEyebrow}
+          heading={text?.foundersHeading}
+          founders={founders}
+        />
+        <HistoryTimeline heading={text?.historyHeading} entries={timeline} />
         <VisionMission />
         <MottoBanner />
         <PrincipalNote name={principalName} />
-        <Anthem image={images?.anthemImage} />
+        <Anthem
+          image={images?.anthemImage}
+          sinhalaImage={images?.anthemSinhalaImage}
+        />
         <Administration members={leadership} />
       </main>
       <SiteFooter contact={contact} />

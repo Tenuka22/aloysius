@@ -9,7 +9,7 @@ import {
 } from "react";
 
 import type { BlockField, PageBlock } from "../../content/cms";
-import { aspectRatios } from "../../tokens/aspect-ratios";
+import { getImageAspectRatio } from "../../content/cms";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
 import { VisuallyHidden } from "../primitives/layout";
@@ -62,30 +62,6 @@ const buildDirtyMap = (
     }
   }
   return dirty;
-};
-
-const getAspectRatio = (fieldId: string) => {
-  switch (fieldId) {
-    case "hero-bg": {
-      return aspectRatios.hero;
-    }
-    case "heritage-image-1": {
-      return aspectRatios.heritagePhoto;
-    }
-    case "principal-portrait": {
-      return aspectRatios.principalPortrait;
-    }
-    case "alumni-image": {
-      return aspectRatios.alumniPhoto;
-    }
-    case "life-sports":
-    case "life-music": {
-      return aspectRatios.mosaicTile;
-    }
-    default: {
-      return aspectRatios.newsCard;
-    }
-  }
 };
 
 const styles = stylex.create({
@@ -454,7 +430,7 @@ const EMPTY_DIRTY: DirtyMap = {};
 export interface Block {
   id: string;
   hidden: boolean;
-  fields: { id: string; value: string }[];
+  fields: { id: string; value: string; aspectRatio?: number }[];
 }
 
 /** Handle exposed via ref so the route can read the current blocks. */
@@ -470,10 +446,15 @@ export interface HomepageEditorHandle {
 export interface HomepageEditorProps {
   /** The page's block registry, e.g. `HOMEPAGE_BLOCKS` or `ABOUT_BLOCKS`. */
   blocks: readonly PageBlock[];
+  /**
+   * Map of field IDs to default image URLs. Shown in the editor when no value
+   * has been saved to the database yet.
+   */
+  defaultImages?: Record<string, string>;
   initialBlocks?: {
     id: string;
     hidden?: boolean;
-    fields?: { id: string; value?: string }[];
+    fields?: { id: string; value?: string; aspectRatio?: number }[];
   }[];
   onDirtyChange?: (dirty: DirtyMap) => void;
   onUpload?: (file: File) => Promise<string>;
@@ -490,6 +471,7 @@ export const HomepageEditor = forwardRef<
   function HomepageEditor(
     {
       blocks: pageBlocks,
+      defaultImages,
       initialBlocks,
       onDirtyChange,
       onUpload,
@@ -590,6 +572,9 @@ export const HomepageEditor = forwardRef<
           fields: block.fields.map((f) => ({
             id: f.id,
             value: valueOf(f),
+            ...(f.kind === "image"
+              ? { aspectRatio: f.aspectRatio ?? getImageAspectRatio(f.id) }
+              : {}),
           })),
         })),
       [hidden, pageBlocks, valueOf]
@@ -738,7 +723,8 @@ export const HomepageEditor = forwardRef<
               {selected?.fields.map((field) =>
                 field.kind === "image" ? (
                   <MediaField
-                    aspectRatio={getAspectRatio(field.id)}
+                    aspectRatio={getImageAspectRatio(field.id)}
+                    defaultImage={defaultImages?.[field.id]}
                     field={field}
                     key={field.id}
                     onChange={(next) => updateField(field.id, next)}

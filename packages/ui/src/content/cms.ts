@@ -12,6 +12,8 @@
  * findings in the homepage audit and the same rule applies here.
  */
 
+import { aspectRatios } from "../tokens/aspect-ratios";
+
 export type ScreenId =
   | "dashboard"
   | "homepage"
@@ -118,6 +120,8 @@ export interface BlockField {
   wide?: boolean;
   /** Available choices for select fields. */
   options?: readonly LinkOption[];
+  /** Reserved width-to-height ratio for image fields. */
+  aspectRatio?: number;
 }
 
 export interface PageBlock {
@@ -135,6 +139,32 @@ export interface PageBlock {
  * built in `components/home`, so the editor never offers a control for
  * something the page cannot display.
  */
+export const getImageAspectRatio = (fieldId: string): number => {
+  const ratios: Partial<Record<string, number>> = {
+    "hero-bg": aspectRatios.hero,
+    "heritage-image-1": aspectRatios.heritagePhoto,
+    "principal-portrait": aspectRatios.principalPortrait,
+    "life-sports": aspectRatios.mosaicTile,
+    "life-music": aspectRatios.mosaicTile,
+    "alumni-image": aspectRatios.alumniPhoto,
+    "founder1-image": aspectRatios.principalPortrait,
+    "founder2-image": aspectRatios.principalPortrait,
+    "history-1-image": aspectRatios.heritagePhoto,
+    "history-2-image": aspectRatios.heritagePhoto,
+    "history-3-image": aspectRatios.heritagePhoto,
+    "history-4-image": aspectRatios.heritagePhoto,
+    "anthem-image": aspectRatios.alumniPhoto,
+    "anthem-sinhala-image": aspectRatios.alumniPhoto,
+    "news-hero-image": aspectRatios.hero,
+    "notices-hero-image": aspectRatios.hero,
+    "media-hero-image": aspectRatios.hero,
+    "students-hero-image": aspectRatios.hero,
+    "alumni-hero-image": aspectRatios.hero,
+  };
+
+  return ratios[fieldId] ?? aspectRatios.newsCard;
+};
+
 export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
   {
     id: "notice",
@@ -412,10 +442,9 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
 ];
 
 /**
- * The About page's editable blocks. Only the images the page cannot get from
- * anywhere else are editable here - the copy is real, published prose (see
- * `content/about.ts`), not draft text a non-technical editor should rewrite
- * from this screen.
+ * The About page's editable blocks. Images and key headings are editable;
+ * body copy is real, published prose (see `content/about.ts`), not draft
+ * text a non-technical editor should rewrite from this screen.
  */
 export const ABOUT_BLOCKS: readonly PageBlock[] = [
   {
@@ -423,8 +452,21 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
     name: "Founders",
     type: "Text + media",
     status: "published",
-    summary: "Portraits for the two founder cards",
+    summary: "Headings and portraits for the two founder cards",
     fields: [
+      {
+        id: "founders-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: "Our foundations",
+      },
+      {
+        id: "founders-heading",
+        label: "Heading",
+        kind: "text",
+        value: "Built on Faith & Tradition",
+        wide: true,
+      },
       {
         id: "founder1-image",
         label: "Bishop Joseph Van Reeth portrait",
@@ -444,8 +486,15 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
     name: "History Timeline",
     type: "Media grid",
     status: "published",
-    summary: "Archival photo for each of the four timeline entries",
+    summary: "Heading and archival photo for each of the four timeline entries",
     fields: [
+      {
+        id: "history-heading",
+        label: "Section heading",
+        kind: "text",
+        value: "More Than a Century in Galle",
+        wide: true,
+      },
       {
         id: "history-1-image",
         label: "1895 — Founding of the College",
@@ -477,13 +526,447 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
     name: "College Anthem",
     type: "Text + media",
     status: "published",
-    summary: "Portrait of the anthem's writer and composer",
+    summary: "Portraits of the anthem's writers and composers",
     fields: [
       {
         id: "anthem-image",
-        label: "Anthem creators",
+        label: "English anthem creators",
         kind: "image",
         hint: "Clearing this restores the default portrait collage.",
+      },
+      {
+        id: "anthem-sinhala-image",
+        label: "Sinhala anthem creators",
+        kind: "image",
+        hint: "Clearing this restores the default portrait collage.",
+      },
+    ],
+  },
+];
+
+/**
+ * News page blocks. The page header and feed configuration are editable;
+ * individual news posts will be managed from a dedicated list screen.
+ */
+export const NEWS_BLOCKS: readonly PageBlock[] = [
+  {
+    id: "news-header",
+    name: "Page Header",
+    type: "Hero",
+    status: "published",
+    summary: "Page title, tagline and hero image",
+    fields: [
+      {
+        id: "news-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: "Latest Updates",
+      },
+      {
+        id: "news-heading",
+        label: "Heading",
+        kind: "text",
+        value: "News & Events",
+      },
+      {
+        id: "news-tagline",
+        label: "Tagline",
+        kind: "textarea",
+        value:
+          "Stay informed with the latest news, events and achievements from St. Aloysius' College.",
+        wide: true,
+      },
+      {
+        id: "news-hero-image",
+        label: "Hero image",
+        kind: "image",
+        hint: "Landscape, at least 2400px wide.",
+        wide: true,
+      },
+    ],
+  },
+  {
+    id: "news-feed",
+    name: "News Feed",
+    type: "Feed",
+    status: "auto",
+    summary: "Featured post plus recent articles, selected automatically",
+    fields: [
+      {
+        id: "news-feed-heading",
+        label: "Section heading",
+        kind: "text",
+        value: "Recent Articles",
+      },
+      {
+        id: "news-feed-count",
+        label: "Items per page",
+        kind: "text",
+        value: "9",
+        hint: "Number of news items shown per page.",
+      },
+    ],
+  },
+];
+
+/**
+ * Notices page blocks. The page header is editable; individual notices
+ * will be managed from a dedicated list screen.
+ */
+export const NOTICES_BLOCKS: readonly PageBlock[] = [
+  {
+    id: "notices-header",
+    name: "Page Header",
+    type: "Hero",
+    status: "published",
+    summary: "Page title, tagline and hero image",
+    fields: [
+      {
+        id: "notices-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: "Important Updates",
+      },
+      {
+        id: "notices-heading",
+        label: "Heading",
+        kind: "text",
+        value: "Notices",
+      },
+      {
+        id: "notices-tagline",
+        label: "Tagline",
+        kind: "textarea",
+        value:
+          "Official notices, circulars and announcements from the college administration.",
+        wide: true,
+      },
+      {
+        id: "notices-hero-image",
+        label: "Hero image",
+        kind: "image",
+        hint: "Landscape, at least 2400px wide.",
+        wide: true,
+      },
+    ],
+  },
+  {
+    id: "notices-config",
+    name: "Notice Configuration",
+    type: "Card grid",
+    status: "published",
+    summary: "Display settings for the notice list",
+    fields: [
+      {
+        id: "notices-show-pinned",
+        label: "Pin urgent notices",
+        kind: "select",
+        value: "yes",
+        options: [
+          { label: "Yes", value: "yes" },
+          { label: "No", value: "no" },
+        ],
+        hint: "Urgent notices appear at the top of the list.",
+      },
+    ],
+  },
+];
+
+/**
+ * Contact page blocks. Contains the college's contact information,
+ * location and social media links.
+ */
+export const CONTACT_BLOCKS: readonly PageBlock[] = [
+  {
+    id: "contact-header",
+    name: "Page Header",
+    type: "Hero",
+    status: "published",
+    summary: "Page title and tagline",
+    fields: [
+      {
+        id: "contact-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: "Get in Touch",
+      },
+      {
+        id: "contact-heading",
+        label: "Heading",
+        kind: "text",
+        value: "Contact Us",
+      },
+      {
+        id: "contact-tagline",
+        label: "Tagline",
+        kind: "textarea",
+        value:
+          "We'd love to hear from you. Reach out to us for admissions, inquiries or general information.",
+        wide: true,
+      },
+    ],
+  },
+  {
+    id: "contact-info",
+    name: "Contact Information",
+    type: "Text + media",
+    status: "published",
+    summary: "Address, phone, email and social links",
+    fields: [
+      {
+        id: "contact-address",
+        label: "Address",
+        kind: "textarea",
+        value: "St. Aloysius' College, Fort, Galle, Sri Lanka",
+        wide: true,
+      },
+      {
+        id: "contact-telephone",
+        label: "Telephone",
+        kind: "text",
+        value: "+94 91 222 2571",
+      },
+      {
+        id: "contact-email",
+        label: "Email",
+        kind: "text",
+        value: "info@aloysiuscollege.lk",
+      },
+      {
+        id: "contact-facebook",
+        label: "Facebook URL",
+        kind: "text",
+        hint: "Full URL including https://",
+      },
+      {
+        id: "contact-instagram",
+        label: "Instagram URL",
+        kind: "text",
+        hint: "Full URL including https://",
+      },
+      {
+        id: "contact-youtube",
+        label: "YouTube URL",
+        kind: "text",
+        hint: "Full URL including https://",
+      },
+    ],
+  },
+  {
+    id: "contact-map",
+    name: "Map",
+    type: "Text + media",
+    status: "published",
+    summary: "Embedded map configuration",
+    fields: [
+      {
+        id: "contact-map-url",
+        label: "Google Maps embed URL",
+        kind: "text",
+        hint: "Use the Google Maps share/embed URL.",
+        wide: true,
+      },
+    ],
+  },
+];
+
+/**
+ * Alumni page blocks. The Old Boys' Association section and
+ * distinguished alumni content.
+ */
+export const ALUMNI_BLOCKS: readonly PageBlock[] = [
+  {
+    id: "alumni-header",
+    name: "Page Header",
+    type: "Hero",
+    status: "published",
+    summary: "Page title, tagline and hero image",
+    fields: [
+      {
+        id: "alumni-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: "Old Boys' Association",
+      },
+      {
+        id: "alumni-heading",
+        label: "Heading",
+        kind: "text",
+        value: "Alumni",
+      },
+      {
+        id: "alumni-tagline",
+        label: "Tagline",
+        kind: "textarea",
+        value:
+          "A global network of Aloysians united by shared memories and a commitment to giving back.",
+        wide: true,
+      },
+      {
+        id: "alumni-hero-image",
+        label: "Hero image",
+        kind: "image",
+        hint: "Landscape, at least 2400px wide.",
+        wide: true,
+      },
+    ],
+  },
+  {
+    id: "alumni-about",
+    name: "About the OBA",
+    type: "Text + media",
+    status: "published",
+    summary: "Body copy and image for the alumni section",
+    fields: [
+      {
+        id: "alumni-body",
+        label: "Body copy",
+        kind: "textarea",
+        value:
+          "The Old Boys' Association of St. Aloysius' College connects generations of Aloysians. Whether you left last year or decades ago, the OBA keeps you connected to your alma mater and fellow alumni worldwide.",
+        wide: true,
+      },
+      {
+        id: "alumni-image",
+        label: "Featured image",
+        kind: "image",
+        hint: "Landscape or square orientation.",
+      },
+    ],
+  },
+  {
+    id: "alumni-links",
+    name: "Quick Links",
+    type: "Card grid",
+    status: "published",
+    summary: "Links to OBA branches and events",
+    fields: [
+      {
+        id: "alumni-oba-href",
+        label: "OBA portal link",
+        kind: "text",
+        hint: "URL to the OBA member portal or registration.",
+      },
+      {
+        id: "alumni-events-href",
+        label: "Events link",
+        kind: "text",
+        hint: "URL to upcoming alumni events.",
+      },
+    ],
+  },
+];
+
+/**
+ * Media page blocks. Gallery and media library configuration.
+ */
+export const MEDIA_BLOCKS: readonly PageBlock[] = [
+  {
+    id: "media-header",
+    name: "Page Header",
+    type: "Hero",
+    status: "published",
+    summary: "Page title, tagline and hero image",
+    fields: [
+      {
+        id: "media-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: "Photo & Video",
+      },
+      {
+        id: "media-heading",
+        label: "Heading",
+        kind: "text",
+        value: "Media Gallery",
+      },
+      {
+        id: "media-tagline",
+        label: "Tagline",
+        kind: "textarea",
+        value:
+          "Browse photographs and videos capturing life at St. Aloysius' College.",
+        wide: true,
+      },
+      {
+        id: "media-hero-image",
+        label: "Hero image",
+        kind: "image",
+        hint: "Landscape, at least 2400px wide.",
+        wide: true,
+      },
+    ],
+  },
+  {
+    id: "media-gallery",
+    name: "Gallery Settings",
+    type: "Media grid",
+    status: "auto",
+    summary: "Media items drawn from the library",
+    fields: [
+      {
+        id: "media-gallery-count",
+        label: "Items per page",
+        kind: "text",
+        value: "12",
+        hint: "Number of media items shown per page.",
+      },
+    ],
+  },
+];
+
+/**
+ * Student Life page blocks. Student activities, clubs and campus life.
+ */
+export const STUDENTS_BLOCKS: readonly PageBlock[] = [
+  {
+    id: "students-header",
+    name: "Page Header",
+    type: "Hero",
+    status: "published",
+    summary: "Page title, tagline and hero image",
+    fields: [
+      {
+        id: "students-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: "Campus Life",
+      },
+      {
+        id: "students-heading",
+        label: "Heading",
+        kind: "text",
+        value: "Student Life",
+      },
+      {
+        id: "students-tagline",
+        label: "Tagline",
+        kind: "textarea",
+        value:
+          "Discover the vibrant community, clubs and activities that make St. Aloysius' College a place to grow.",
+        wide: true,
+      },
+      {
+        id: "students-hero-image",
+        label: "Hero image",
+        kind: "image",
+        hint: "Landscape, at least 2400px wide.",
+        wide: true,
+      },
+    ],
+  },
+  {
+    id: "students-activities",
+    name: "Activities",
+    type: "Mosaic",
+    status: "published",
+    summary: "Student clubs, sports and activities grid",
+    fields: [
+      {
+        id: "students-activities-heading",
+        label: "Section heading",
+        kind: "text",
+        value: "Clubs & Activities",
       },
     ],
   },

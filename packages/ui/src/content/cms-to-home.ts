@@ -1,4 +1,4 @@
-import type { HeroBackground, Notice } from "./home";
+import type { HeroBackground, ImageSource, Notice } from "./home";
 
 /**
  * A single block returned from the CMS API.
@@ -6,7 +6,7 @@ import type { HeroBackground, Notice } from "./home";
 export interface CmsBlock {
   id: string;
   hidden: boolean;
-  fields: { id: string; value: string }[];
+  fields: { id: string; value: string; aspectRatio?: number }[];
 }
 
 /**
@@ -20,6 +20,9 @@ const field = (
   blocks.find((b) => b.id === blockId)?.fields.find((f) => f.id === fieldId)
     ?.value;
 
+const isHidden = (blocks: CmsBlock[], blockId: string): boolean =>
+  blocks.find((block) => block.id === blockId)?.hidden ?? false;
+
 const fieldWithDefault = (
   blocks: CmsBlock[],
   blockId: string,
@@ -27,7 +30,51 @@ const fieldWithDefault = (
   fallback: string
 ): string => field(blocks, blockId, fieldId) ?? fallback;
 
-const parseHeroBackground = (value?: string): HeroBackground | undefined => {
+interface CmsImageField {
+  id: string;
+  value?: string;
+  aspectRatio?: number;
+}
+
+const imageField = (
+  blocks: CmsBlock[],
+  blockId: string,
+  fieldId: string
+): CmsImageField | undefined => {
+  const block = blocks.find((candidate) => candidate.id === blockId);
+  return block?.fields.find((candidate) => candidate.id === fieldId);
+};
+
+const optionalImageField = (
+  blocks: CmsBlock[],
+  blockId: string,
+  fieldId: string
+): CmsImageField | undefined =>
+  isHidden(blocks, blockId) ? undefined : imageField(blocks, blockId, fieldId);
+
+const imageSource = (
+  blocks: CmsBlock[],
+  blockId: string,
+  fieldId: string,
+  alt: string
+): ImageSource | undefined => {
+  const imgField = optionalImageField(blocks, blockId, fieldId);
+  const value = imgField?.value;
+  if (!value) {
+    return undefined;
+  }
+
+  return {
+    src: value.startsWith("image:") ? value.slice("image:".length) : value,
+    alt,
+    ...(imgField.aspectRatio ? { aspectRatio: imgField.aspectRatio } : {}),
+  };
+};
+
+const parseHeroBackground = (
+  value?: string,
+  aspectRatio?: number
+): HeroBackground | undefined => {
   if (!value) {
     return undefined;
   }
@@ -40,6 +87,7 @@ const parseHeroBackground = (value?: string): HeroBackground | undefined => {
   return {
     kind: "image",
     value: value.startsWith("image:") ? value.slice("image:".length) : value,
+    ...(aspectRatio ? { aspectRatio } : {}),
   };
 };
 
@@ -47,17 +95,14 @@ const parseHeroBackground = (value?: string): HeroBackground | undefined => {
  * Convert CMS blocks into props that the homepage section components accept.
  */
 export const blocksToProps = (blocks: CmsBlock[]) => {
-  const isHidden = (blockId: string) =>
-    blocks.find((b) => b.id === blockId)?.hidden ?? false;
-
   const optionalField = (
     blockId: string,
     fieldId: string
   ): string | undefined =>
-    isHidden(blockId) ? undefined : field(blocks, blockId, fieldId);
+    isHidden(blocks, blockId) ? undefined : field(blocks, blockId, fieldId);
 
   return {
-    notice: isHidden("notice")
+    notice: isHidden(blocks, "notice")
       ? undefined
       : ({
           id: "notice",
@@ -84,9 +129,12 @@ export const blocksToProps = (blocks: CmsBlock[]) => {
     heroPlace: optionalField("hero", "hero-place"),
     heroCta1: optionalField("hero", "hero-cta-1"),
     heroCta2: optionalField("hero", "hero-cta-2"),
-    heroBackground: isHidden("hero")
+    heroBackground: isHidden(blocks, "hero")
       ? undefined
-      : parseHeroBackground(field(blocks, "hero", "hero-bg")),
+      : parseHeroBackground(
+          field(blocks, "hero", "hero-bg"),
+          imageField(blocks, "hero", "hero-bg")?.aspectRatio
+        ),
 
     heritageIntro: optionalField("heritage", "heritage-body"),
     heritageEyebrow: optionalField("heritage", "heritage-eyebrow"),
@@ -104,19 +152,55 @@ export const blocksToProps = (blocks: CmsBlock[]) => {
     achHeading: optionalField("achievements", "ach-heading"),
     alumniHeading: optionalField("alumni", "alumni-heading"),
 
+    heritageImages: [
+      imageSource(
+        blocks,
+        "heritage",
+        "heritage-image-1",
+        "Archival photograph from the college's early years"
+      ),
+      undefined,
+    ] as const,
+    principalPortrait: imageSource(
+      blocks,
+      "principal",
+      "principal-portrait",
+      "Portrait of the Principal"
+    ),
+    studentLifePhotos: {
+      sports: imageSource(
+        blocks,
+        "life",
+        "life-sports",
+        "Students playing sports"
+      ),
+      music: imageSource(
+        blocks,
+        "life",
+        "life-music",
+        "Students participating in music and drama"
+      ),
+    },
+    alumniPhoto: imageSource(
+      blocks,
+      "alumni",
+      "alumni-image",
+      "Members of the Old Boys' Association"
+    ),
+
     // Track which sections are hidden so the preview can skip them
     hidden: {
-      notice: isHidden("notice"),
-      hero: isHidden("hero"),
-      heritage: isHidden("heritage"),
-      principal: isHidden("principal"),
-      academics: isHidden("academics"),
-      life: isHidden("life"),
-      news: isHidden("news"),
-      achievements: isHidden("achievements"),
-      alumni: isHidden("alumni"),
-      gallery: isHidden("gallery"),
-      footer: isHidden("footer"),
+      notice: isHidden(blocks, "notice"),
+      hero: isHidden(blocks, "hero"),
+      heritage: isHidden(blocks, "heritage"),
+      principal: isHidden(blocks, "principal"),
+      academics: isHidden(blocks, "academics"),
+      life: isHidden(blocks, "life"),
+      news: isHidden(blocks, "news"),
+      achievements: isHidden(blocks, "achievements"),
+      alumni: isHidden(blocks, "alumni"),
+      gallery: isHidden(blocks, "gallery"),
+      footer: isHidden(blocks, "footer"),
     },
   };
 };

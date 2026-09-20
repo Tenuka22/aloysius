@@ -100,6 +100,8 @@ export interface ImageSource {
   alt: string;
   width?: number;
   height?: number;
+  /** Width divided by height, used to reserve the image box. */
+  aspectRatio?: number;
 }
 
 /**
@@ -112,6 +114,41 @@ export interface ImageSource {
  *   branded placeholder occupies exactly the same box, so wiring real photos in
  *   later cannot shift the layout.
  */
+const resolveAspectRatio = (
+  source: ImageSource | undefined,
+  fill: boolean,
+  aspectRatio: number | undefined
+): number | undefined => {
+  if (fill) {
+    return undefined;
+  }
+  const intrinsicAspectRatio =
+    source?.width && source.height ? source.width / source.height : undefined;
+  const resolved = aspectRatio ?? source?.aspectRatio ?? intrinsicAspectRatio;
+  if (
+    typeof resolved === "number" &&
+    Number.isFinite(resolved) &&
+    resolved > 0
+  ) {
+    return resolved;
+  }
+  return undefined;
+};
+
+const getImageProps = (source: ImageSource, priority: boolean) => ({
+  decoding: priority ? "sync" : "async",
+  fetchPriority: priority ? "high" : "auto",
+  height: source.height,
+  loading: priority ? "eager" : "lazy",
+  sizes: source.sizes,
+  src: source.src,
+  srcSet: source.srcSet,
+  width: source.width,
+});
+
+const getPlaceholderProps = (placeholder: string) =>
+  placeholder ? styles.placeholder : styles.placeholderBare;
+
 export const Media = ({
   source,
   placeholder,
@@ -120,6 +157,7 @@ export const Media = ({
   zoom = false,
   priority = false,
   style,
+  aspectRatio,
 }: {
   source?: ImageSource;
   /** Empty string renders a plain tint with no caption. */
@@ -129,34 +167,33 @@ export const Media = ({
   zoom?: boolean;
   priority?: boolean;
   style?: stylex.StyleXStyles;
-}) => (
-  <div
-    {...stylex.props(styles.frame, fill ? styles.fill : RATIOS[ratio], style)}
-  >
-    {source ? (
-      <img
-        alt={source.alt}
-        decoding={priority ? "sync" : "async"}
-        fetchPriority={priority ? "high" : "auto"}
-        height={source.height}
-        loading={priority ? "eager" : "lazy"}
-        sizes={source.sizes}
-        src={source.src}
-        srcSet={source.srcSet}
-        width={source.width}
-        {...stylex.props(styles.image, zoom && styles.zoom)}
-      />
-    ) : (
-      <div
-        aria-hidden="true"
-        {...stylex.props(
-          placeholder ? styles.placeholder : styles.placeholderBare
-        )}
-      >
-        {placeholder ? (
-          <p {...stylex.props(styles.placeholderText)}>{placeholder}</p>
-        ) : null}
-      </div>
-    )}
-  </div>
-);
+  /** Overrides the preset ratio when an image carries its own dimensions. */
+  aspectRatio?: number;
+}) => {
+  const resolvedAspectRatio = resolveAspectRatio(source, fill, aspectRatio);
+  const hasAspectRatio = resolvedAspectRatio !== undefined;
+
+  return (
+    <div
+      style={hasAspectRatio ? { aspectRatio: resolvedAspectRatio } : undefined}
+      {...stylex.props(styles.frame, fill ? styles.fill : RATIOS[ratio], style)}
+    >
+      {source ? (
+        <img
+          alt={source.alt}
+          {...getImageProps(source, priority)}
+          {...stylex.props(styles.image, zoom && styles.zoom)}
+        />
+      ) : (
+        <div
+          aria-hidden="true"
+          {...stylex.props(getPlaceholderProps(placeholder))}
+        >
+          {placeholder ? (
+            <p {...stylex.props(styles.placeholderText)}>{placeholder}</p>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+};

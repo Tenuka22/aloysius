@@ -1,6 +1,16 @@
 import { AboutPage } from "@aloysius/ui/components/about/about-page";
-import { FOUNDERS, TIMELINE, ANTHEM_IMAGE } from "@aloysius/ui/content/about";
-import { blocksToAboutImages } from "@aloysius/ui/content/cms-to-about";
+import {
+  FOUNDERS,
+  FOUNDERS_EYEBROW,
+  FOUNDERS_HEADING,
+  HISTORY_HEADING,
+  TIMELINE,
+  ANTHEM_IMAGE,
+} from "@aloysius/ui/content/about";
+import {
+  blocksToAboutImages,
+  blocksToAboutText,
+} from "@aloysius/ui/content/cms-to-about";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -22,6 +32,15 @@ const AboutContent = () => {
         history3: TIMELINE[2].image ?? { src: "", alt: TIMELINE[2].title },
         history4: TIMELINE[3].image ?? { src: "", alt: TIMELINE[3].title },
         anthem: ANTHEM_IMAGE,
+        anthemSinhala: ANTHEM_IMAGE,
+      })
+    : undefined;
+
+  const text = about?.blocks
+    ? blocksToAboutText(about.blocks, {
+        foundersEyebrow: FOUNDERS_EYEBROW,
+        foundersHeading: FOUNDERS_HEADING,
+        historyHeading: HISTORY_HEADING,
       })
     : undefined;
 
@@ -34,14 +53,14 @@ const AboutContent = () => {
     if (role === "admin" || role === "cms") {
       items.push({ id: "cms", label: "CMS", href: "/cms" });
     }
-    if (role === "admin" || role === "teacher") {
+    if (role === "admin") {
       items.push({
         id: "students-admin",
         label: "Manage Students",
         href: "/student-officer",
       });
     }
-    if (role === "admin" || role === "teacher") {
+    if (role === "admin") {
       items.push({
         id: "teachers-admin",
         label: "Staff",
@@ -54,7 +73,9 @@ const AboutContent = () => {
     return items;
   })();
 
-  return <AboutPage images={images} extraNavItems={extraNavItems} />;
+  return (
+    <AboutPage images={images} text={text} extraNavItems={extraNavItems} />
+  );
 };
 
 export const Route = createFileRoute("/about")({

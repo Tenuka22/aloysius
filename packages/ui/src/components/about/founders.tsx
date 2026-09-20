@@ -46,15 +46,19 @@ const styles = stylex.create({
 });
 
 export const Founders = ({
+  eyebrow = FOUNDERS_EYEBROW,
+  heading = FOUNDERS_HEADING,
   founders = FOUNDERS,
 }: {
+  eyebrow?: string;
+  heading?: string;
   founders?: readonly Founder[];
 }) => (
   <Section labelledBy="founders-title" tone="raised">
     <Container>
-      <Eyebrow>{FOUNDERS_EYEBROW}</Eyebrow>
+      <Eyebrow>{eyebrow}</Eyebrow>
       <Heading id="founders-title" style={styles.headingSpacing}>
-        {FOUNDERS_HEADING}
+        {heading}
       </Heading>
       <div {...stylex.props(styles.grid)}>
         {founders.map((founder, index) => (

@@ -14,6 +14,7 @@ export interface CmsHomepageEvent {
 const blockFieldSchema = z.object({
   id: z.string(),
   value: z.string().optional(),
+  aspectRatio: z.number().positive().optional(),
 });
 
 const blockSchema = z.object({
@@ -25,13 +26,13 @@ const blockSchema = z.object({
 export interface SnapshotBlock {
   id: string;
   hidden: boolean;
-  fields: { id: string; value: string }[];
+  fields: { id: string; value: string; aspectRatio?: number }[];
 }
 
 const parseSnapshot = (raw: string): SnapshotBlock => {
   const parsed = JSON.parse(raw) as {
     hidden?: boolean;
-    fields?: { id: string; value?: string }[];
+    fields?: { id: string; value?: string; aspectRatio?: number }[];
   };
   return {
     id: "",
@@ -39,6 +40,7 @@ const parseSnapshot = (raw: string): SnapshotBlock => {
     fields: (parsed.fields ?? []).map((f) => ({
       id: f.id,
       value: f.value ?? "",
+      ...(f.aspectRatio ? { aspectRatio: f.aspectRatio } : {}),
     })),
   };
 };
@@ -99,7 +101,7 @@ const fetchDraftBlocks = async (db: Database, page: string) => {
 interface InputBlock {
   id: string;
   hidden?: boolean;
-  fields?: { id: string; value?: string }[];
+  fields?: { id: string; value?: string; aspectRatio?: number }[];
 }
 
 /**
@@ -232,7 +234,7 @@ const publishDraftBlocks = async (
   const publishedBlocks: SnapshotBlock[] = toPublish.map((draft) => {
     const snap = JSON.parse(draft.snapshot) as {
       hidden?: boolean;
-      fields?: { id: string; value?: string }[];
+      fields?: { id: string; value?: string; aspectRatio?: number }[];
     };
     return {
       id: draft.blockId,
@@ -240,6 +242,7 @@ const publishDraftBlocks = async (
       fields: (snap.fields ?? []).map((f) => ({
         id: f.id,
         value: f.value ?? "",
+        ...(f.aspectRatio ? { aspectRatio: f.aspectRatio } : {}),
       })),
     };
   });
@@ -415,6 +418,7 @@ export const cmsRouter = {
           fields: (b.fields ?? []).map((f) => ({
             id: f.id,
             value: f.value ?? "",
+            ...(f.aspectRatio ? { aspectRatio: f.aspectRatio } : {}),
           })),
         })),
       });
@@ -491,6 +495,7 @@ export const cmsRouter = {
           fields: (b.fields ?? []).map((f) => ({
             id: f.id,
             value: f.value ?? "",
+            ...(f.aspectRatio ? { aspectRatio: f.aspectRatio } : {}),
           })),
         })),
       });
@@ -523,6 +528,446 @@ export const cmsRouter = {
       userId
     );
     await cmsPublisher.publish("about-updated", { blocks: publishedBlocks });
+    return { success: true, publishedIds };
+  }),
+
+  /* ------------------------------------------------------------- news */
+
+  getNews: publicProcedure.handler(async ({ context }) => {
+    const blocks = await fetchPublishedBlocks(context.db, "news");
+    return blocks.length > 0 ? { blocks } : null;
+  }),
+
+  getNewsDraft: protectedProcedure.handler(async ({ context }) => {
+    const blocks = await fetchDraftBlocks(context.db, "news");
+    return blocks.length > 0 ? { blocks } : null;
+  }),
+
+  getNewsHistory: protectedProcedure
+    .input(z.object({ cursor: z.number().optional().default(0) }))
+    .handler(({ context, input }) =>
+      fetchHistory(context.db, "news", input.cursor)
+    ),
+
+  updateNews: cmsProcedure
+    .input(z.object({ blocks: z.array(blockSchema) }))
+    .handler(async ({ context, input }) => {
+      const userId = context.session?.user?.id;
+      if (!userId) {
+        return { success: false, draftIds: [] as string[] };
+      }
+      const draftIds = await saveDraftBlocks(
+        context.db,
+        "news",
+        userId,
+        input.blocks
+      );
+      await cmsPublisher.publish("news-updated", {
+        blocks: input.blocks.map((b) => ({
+          id: b.id,
+          hidden: b.hidden ?? false,
+          fields: (b.fields ?? []).map((f) => ({
+            id: f.id,
+            value: f.value ?? "",
+            ...(f.aspectRatio ? { aspectRatio: f.aspectRatio } : {}),
+          })),
+        })),
+      });
+      return { success: true, draftIds };
+    }),
+
+  watchNews: cmsProcedure.handler(async function* watchNews({
+    signal,
+    lastEventId,
+  }) {
+    const iterator = cmsPublisher.subscribe("news-updated", {
+      signal,
+      lastEventId,
+    });
+    for await (const payload of iterator) {
+      const meta = getEventMeta(payload);
+      yield withEventMeta(payload, { id: meta?.id ?? undefined });
+    }
+  }),
+
+  publishNews: cmsProcedure.handler(async ({ context }) => {
+    const userId = context.session?.user?.id;
+    if (!userId) {
+      return { success: false };
+    }
+    const { publishedIds, publishedBlocks } = await publishDraftBlocks(
+      context.db,
+      "news",
+      userId
+    );
+    await cmsPublisher.publish("news-updated", { blocks: publishedBlocks });
+    return { success: true, publishedIds };
+  }),
+
+  /* ------------------------------------------------------------- notices */
+
+  getNotices: publicProcedure.handler(async ({ context }) => {
+    const blocks = await fetchPublishedBlocks(context.db, "notices");
+    return blocks.length > 0 ? { blocks } : null;
+  }),
+
+  getNoticesDraft: protectedProcedure.handler(async ({ context }) => {
+    const blocks = await fetchDraftBlocks(context.db, "notices");
+    return blocks.length > 0 ? { blocks } : null;
+  }),
+
+  getNoticesHistory: protectedProcedure
+    .input(z.object({ cursor: z.number().optional().default(0) }))
+    .handler(({ context, input }) =>
+      fetchHistory(context.db, "notices", input.cursor)
+    ),
+
+  updateNotices: cmsProcedure
+    .input(z.object({ blocks: z.array(blockSchema) }))
+    .handler(async ({ context, input }) => {
+      const userId = context.session?.user?.id;
+      if (!userId) {
+        return { success: false, draftIds: [] as string[] };
+      }
+      const draftIds = await saveDraftBlocks(
+        context.db,
+        "notices",
+        userId,
+        input.blocks
+      );
+      await cmsPublisher.publish("notices-updated", {
+        blocks: input.blocks.map((b) => ({
+          id: b.id,
+          hidden: b.hidden ?? false,
+          fields: (b.fields ?? []).map((f) => ({
+            id: f.id,
+            value: f.value ?? "",
+            ...(f.aspectRatio ? { aspectRatio: f.aspectRatio } : {}),
+          })),
+        })),
+      });
+      return { success: true, draftIds };
+    }),
+
+  watchNotices: cmsProcedure.handler(async function* watchNotices({
+    signal,
+    lastEventId,
+  }) {
+    const iterator = cmsPublisher.subscribe("notices-updated", {
+      signal,
+      lastEventId,
+    });
+    for await (const payload of iterator) {
+      const meta = getEventMeta(payload);
+      yield withEventMeta(payload, { id: meta?.id ?? undefined });
+    }
+  }),
+
+  publishNotices: cmsProcedure.handler(async ({ context }) => {
+    const userId = context.session?.user?.id;
+    if (!userId) {
+      return { success: false };
+    }
+    const { publishedIds, publishedBlocks } = await publishDraftBlocks(
+      context.db,
+      "notices",
+      userId
+    );
+    await cmsPublisher.publish("notices-updated", { blocks: publishedBlocks });
+    return { success: true, publishedIds };
+  }),
+
+  /* ------------------------------------------------------------- contact */
+
+  getContact: publicProcedure.handler(async ({ context }) => {
+    const blocks = await fetchPublishedBlocks(context.db, "contact");
+    return blocks.length > 0 ? { blocks } : null;
+  }),
+
+  getContactDraft: protectedProcedure.handler(async ({ context }) => {
+    const blocks = await fetchDraftBlocks(context.db, "contact");
+    return blocks.length > 0 ? { blocks } : null;
+  }),
+
+  getContactHistory: protectedProcedure
+    .input(z.object({ cursor: z.number().optional().default(0) }))
+    .handler(({ context, input }) =>
+      fetchHistory(context.db, "contact", input.cursor)
+    ),
+
+  updateContact: cmsProcedure
+    .input(z.object({ blocks: z.array(blockSchema) }))
+    .handler(async ({ context, input }) => {
+      const userId = context.session?.user?.id;
+      if (!userId) {
+        return { success: false, draftIds: [] as string[] };
+      }
+      const draftIds = await saveDraftBlocks(
+        context.db,
+        "contact",
+        userId,
+        input.blocks
+      );
+      await cmsPublisher.publish("contact-updated", {
+        blocks: input.blocks.map((b) => ({
+          id: b.id,
+          hidden: b.hidden ?? false,
+          fields: (b.fields ?? []).map((f) => ({
+            id: f.id,
+            value: f.value ?? "",
+            ...(f.aspectRatio ? { aspectRatio: f.aspectRatio } : {}),
+          })),
+        })),
+      });
+      return { success: true, draftIds };
+    }),
+
+  watchContact: cmsProcedure.handler(async function* watchContact({
+    signal,
+    lastEventId,
+  }) {
+    const iterator = cmsPublisher.subscribe("contact-updated", {
+      signal,
+      lastEventId,
+    });
+    for await (const payload of iterator) {
+      const meta = getEventMeta(payload);
+      yield withEventMeta(payload, { id: meta?.id ?? undefined });
+    }
+  }),
+
+  publishContact: cmsProcedure.handler(async ({ context }) => {
+    const userId = context.session?.user?.id;
+    if (!userId) {
+      return { success: false };
+    }
+    const { publishedIds, publishedBlocks } = await publishDraftBlocks(
+      context.db,
+      "contact",
+      userId
+    );
+    await cmsPublisher.publish("contact-updated", { blocks: publishedBlocks });
+    return { success: true, publishedIds };
+  }),
+
+  /* ------------------------------------------------------------- alumni */
+
+  getAlumni: publicProcedure.handler(async ({ context }) => {
+    const blocks = await fetchPublishedBlocks(context.db, "alumni");
+    return blocks.length > 0 ? { blocks } : null;
+  }),
+
+  getAlumniDraft: protectedProcedure.handler(async ({ context }) => {
+    const blocks = await fetchDraftBlocks(context.db, "alumni");
+    return blocks.length > 0 ? { blocks } : null;
+  }),
+
+  getAlumniHistory: protectedProcedure
+    .input(z.object({ cursor: z.number().optional().default(0) }))
+    .handler(({ context, input }) =>
+      fetchHistory(context.db, "alumni", input.cursor)
+    ),
+
+  updateAlumni: cmsProcedure
+    .input(z.object({ blocks: z.array(blockSchema) }))
+    .handler(async ({ context, input }) => {
+      const userId = context.session?.user?.id;
+      if (!userId) {
+        return { success: false, draftIds: [] as string[] };
+      }
+      const draftIds = await saveDraftBlocks(
+        context.db,
+        "alumni",
+        userId,
+        input.blocks
+      );
+      await cmsPublisher.publish("alumni-updated", {
+        blocks: input.blocks.map((b) => ({
+          id: b.id,
+          hidden: b.hidden ?? false,
+          fields: (b.fields ?? []).map((f) => ({
+            id: f.id,
+            value: f.value ?? "",
+            ...(f.aspectRatio ? { aspectRatio: f.aspectRatio } : {}),
+          })),
+        })),
+      });
+      return { success: true, draftIds };
+    }),
+
+  watchAlumni: cmsProcedure.handler(async function* watchAlumni({
+    signal,
+    lastEventId,
+  }) {
+    const iterator = cmsPublisher.subscribe("alumni-updated", {
+      signal,
+      lastEventId,
+    });
+    for await (const payload of iterator) {
+      const meta = getEventMeta(payload);
+      yield withEventMeta(payload, { id: meta?.id ?? undefined });
+    }
+  }),
+
+  publishAlumni: cmsProcedure.handler(async ({ context }) => {
+    const userId = context.session?.user?.id;
+    if (!userId) {
+      return { success: false };
+    }
+    const { publishedIds, publishedBlocks } = await publishDraftBlocks(
+      context.db,
+      "alumni",
+      userId
+    );
+    await cmsPublisher.publish("alumni-updated", { blocks: publishedBlocks });
+    return { success: true, publishedIds };
+  }),
+
+  /* ------------------------------------------------------------- media */
+
+  getMedia: publicProcedure.handler(async ({ context }) => {
+    const blocks = await fetchPublishedBlocks(context.db, "media");
+    return blocks.length > 0 ? { blocks } : null;
+  }),
+
+  getMediaDraft: protectedProcedure.handler(async ({ context }) => {
+    const blocks = await fetchDraftBlocks(context.db, "media");
+    return blocks.length > 0 ? { blocks } : null;
+  }),
+
+  getMediaHistory: protectedProcedure
+    .input(z.object({ cursor: z.number().optional().default(0) }))
+    .handler(({ context, input }) =>
+      fetchHistory(context.db, "media", input.cursor)
+    ),
+
+  updateMedia: cmsProcedure
+    .input(z.object({ blocks: z.array(blockSchema) }))
+    .handler(async ({ context, input }) => {
+      const userId = context.session?.user?.id;
+      if (!userId) {
+        return { success: false, draftIds: [] as string[] };
+      }
+      const draftIds = await saveDraftBlocks(
+        context.db,
+        "media",
+        userId,
+        input.blocks
+      );
+      await cmsPublisher.publish("media-updated", {
+        blocks: input.blocks.map((b) => ({
+          id: b.id,
+          hidden: b.hidden ?? false,
+          fields: (b.fields ?? []).map((f) => ({
+            id: f.id,
+            value: f.value ?? "",
+            ...(f.aspectRatio ? { aspectRatio: f.aspectRatio } : {}),
+          })),
+        })),
+      });
+      return { success: true, draftIds };
+    }),
+
+  watchMedia: cmsProcedure.handler(async function* watchMedia({
+    signal,
+    lastEventId,
+  }) {
+    const iterator = cmsPublisher.subscribe("media-updated", {
+      signal,
+      lastEventId,
+    });
+    for await (const payload of iterator) {
+      const meta = getEventMeta(payload);
+      yield withEventMeta(payload, { id: meta?.id ?? undefined });
+    }
+  }),
+
+  publishMedia: cmsProcedure.handler(async ({ context }) => {
+    const userId = context.session?.user?.id;
+    if (!userId) {
+      return { success: false };
+    }
+    const { publishedIds, publishedBlocks } = await publishDraftBlocks(
+      context.db,
+      "media",
+      userId
+    );
+    await cmsPublisher.publish("media-updated", { blocks: publishedBlocks });
+    return { success: true, publishedIds };
+  }),
+
+  /* ------------------------------------------------------------- students */
+
+  getStudents: publicProcedure.handler(async ({ context }) => {
+    const blocks = await fetchPublishedBlocks(context.db, "students");
+    return blocks.length > 0 ? { blocks } : null;
+  }),
+
+  getStudentsDraft: protectedProcedure.handler(async ({ context }) => {
+    const blocks = await fetchDraftBlocks(context.db, "students");
+    return blocks.length > 0 ? { blocks } : null;
+  }),
+
+  getStudentsHistory: protectedProcedure
+    .input(z.object({ cursor: z.number().optional().default(0) }))
+    .handler(({ context, input }) =>
+      fetchHistory(context.db, "students", input.cursor)
+    ),
+
+  updateStudents: cmsProcedure
+    .input(z.object({ blocks: z.array(blockSchema) }))
+    .handler(async ({ context, input }) => {
+      const userId = context.session?.user?.id;
+      if (!userId) {
+        return { success: false, draftIds: [] as string[] };
+      }
+      const draftIds = await saveDraftBlocks(
+        context.db,
+        "students",
+        userId,
+        input.blocks
+      );
+      await cmsPublisher.publish("students-updated", {
+        blocks: input.blocks.map((b) => ({
+          id: b.id,
+          hidden: b.hidden ?? false,
+          fields: (b.fields ?? []).map((f) => ({
+            id: f.id,
+            value: f.value ?? "",
+            ...(f.aspectRatio ? { aspectRatio: f.aspectRatio } : {}),
+          })),
+        })),
+      });
+      return { success: true, draftIds };
+    }),
+
+  watchStudents: cmsProcedure.handler(async function* watchStudents({
+    signal,
+    lastEventId,
+  }) {
+    const iterator = cmsPublisher.subscribe("students-updated", {
+      signal,
+      lastEventId,
+    });
+    for await (const payload of iterator) {
+      const meta = getEventMeta(payload);
+      yield withEventMeta(payload, { id: meta?.id ?? undefined });
+    }
+  }),
+
+  publishStudents: cmsProcedure.handler(async ({ context }) => {
+    const userId = context.session?.user?.id;
+    if (!userId) {
+      return { success: false };
+    }
+    const { publishedIds, publishedBlocks } = await publishDraftBlocks(
+      context.db,
+      "students",
+      userId
+    );
+    await cmsPublisher.publish("students-updated", {
+      blocks: publishedBlocks,
+    });
     return { success: true, publishedIds };
   }),
 };

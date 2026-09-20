@@ -121,6 +121,7 @@ export const HomePage = ({
         )}
         {!h?.heritage && (
           <Heritage
+            images={cms?.heritageImages}
             intro={cms?.heritageIntro}
             eyebrow={cms?.heritageEyebrow}
             heading={cms?.heritageHeading}
@@ -133,15 +134,16 @@ export const HomePage = ({
         )}
         {!h?.principal && (
           <PrincipalMessage
+            portrait={cms?.principalPortrait}
             name={resolvedPrincipalName}
             quote={cms?.principalQuote}
           />
         )}
         {!h?.academics && <Academics />}
-        {!h?.life && <StudentLife />}
+        {!h?.life && <StudentLife photos={cms?.studentLifePhotos} />}
         {!h?.news && <News featured={featuredNews} items={news} />}
         {!h?.achievements && <Achievements achievements={achievements} />}
-        {!h?.alumni && <Alumni />}
+        {!h?.alumni && <Alumni photo={cms?.alumniPhoto} />}
         {!h?.gallery && <Gallery />}
       </main>
       <SiteFooter contact={contact} />

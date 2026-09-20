@@ -1,20 +1,22 @@
 import { MemoryPublisher } from "@orpc/publisher/memory";
 
+export interface CmsPageEvent {
+  blocks: {
+    id: string;
+    hidden: boolean;
+    fields: { id: string; value: string; aspectRatio?: number }[];
+  }[];
+}
+
 export interface CmsEvents {
-  "homepage-updated": {
-    blocks: {
-      id: string;
-      hidden: boolean;
-      fields: { id: string; value: string }[];
-    }[];
-  };
-  "about-updated": {
-    blocks: {
-      id: string;
-      hidden: boolean;
-      fields: { id: string; value: string }[];
-    }[];
-  };
+  "homepage-updated": CmsPageEvent;
+  "about-updated": CmsPageEvent;
+  "news-updated": CmsPageEvent;
+  "notices-updated": CmsPageEvent;
+  "contact-updated": CmsPageEvent;
+  "alumni-updated": CmsPageEvent;
+  "media-updated": CmsPageEvent;
+  "students-updated": CmsPageEvent;
   [key: string]: object;
 }
 

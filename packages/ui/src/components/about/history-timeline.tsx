@@ -96,15 +96,17 @@ const styles = stylex.create({
 });
 
 export const HistoryTimeline = ({
+  heading = HISTORY_HEADING,
   entries = TIMELINE,
 }: {
+  heading?: string;
   entries?: readonly TimelineEntry[];
 }) => (
   <Section id="history" labelledBy="history-title" tone="surface">
     <Container>
       <Eyebrow>History</Eyebrow>
       <Heading id="history-title" style={styles.headingSpacing}>
-        {HISTORY_HEADING}
+        {heading}
       </Heading>
       <div>
         {entries.map((entry, index) => (
