@@ -151,6 +151,23 @@ const NewsContent = () => {
     editorRef.current?.selectBlock(blockId);
   }, []);
 
+  const handlePreview = useCallback(() => {
+    const blocks = editorRef.current?.getBlocks();
+    if (!blocks) {
+      return;
+    }
+    updateMutation.mutate(
+      { blocks },
+      {
+        onSuccess: (data) => {
+          if (data?.draftIds?.[0]) {
+            window.open(`/preview/${data.draftIds[0]}`, "_blank");
+          }
+        },
+      }
+    );
+  }, [updateMutation]);
+
   const handleFetchHistory = useCallback(
     async (cursor: number): Promise<HistoryResponse> => {
       const result = await client.cms.getNewsHistory({ cursor });
@@ -182,6 +199,7 @@ const NewsContent = () => {
         <HomepageEditorActions
           onSaveDraft={handleSaveDraft}
           onPublish={handlePublish}
+          onPreview={handlePreview}
           sectionsSlot={sectionsSlot}
           fetchHistory={handleFetchHistory}
         />

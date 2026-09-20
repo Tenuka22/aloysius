@@ -154,6 +154,23 @@ const AboutContent = () => {
     editorRef.current?.selectBlock(blockId);
   }, []);
 
+  const handlePreview = useCallback(() => {
+    const blocks = editorRef.current?.getBlocks();
+    if (!blocks) {
+      return;
+    }
+    updateMutation.mutate(
+      { blocks },
+      {
+        onSuccess: (data) => {
+          if (data?.draftIds?.[0]) {
+            window.open(`/preview/${data.draftIds[0]}`, "_blank");
+          }
+        },
+      }
+    );
+  }, [updateMutation]);
+
   const handleFetchHistory = useCallback(
     async (cursor: number): Promise<HistoryResponse> => {
       const result = await client.cms.getAboutHistory({ cursor });
@@ -186,6 +203,7 @@ const AboutContent = () => {
         <HomepageEditorActions
           fetchHistory={handleFetchHistory}
           onPublish={handlePublish}
+          onPreview={handlePreview}
           onSaveDraft={handleSaveDraft}
           sectionsSlot={sectionsSlot}
         />
