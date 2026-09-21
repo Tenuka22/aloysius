@@ -76,6 +76,36 @@ const styles = stylex.create({
     fontWeight: font.weightMedium,
     color: color.onSurface,
   },
+  socialLinks: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: space.sm,
+  },
+  socialLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: space.xs,
+    padding: space.sm,
+    borderRadius: space.sm,
+    backgroundColor: color.surfaceRaised,
+    color: color.onSurface,
+    textDecoration: "none",
+    fontSize: font.sizeSm,
+    fontWeight: font.weightMedium,
+    transition: "background-color 0.2s",
+  },
+  mapContainer: {
+    gridColumn: "1 / -1",
+    aspectRatio: "16 / 9",
+    borderRadius: space.sm,
+    overflow: "hidden",
+    border: `1px solid ${color.border}`,
+  },
+  mapIframe: {
+    width: "100%",
+    height: "100%",
+    border: 0,
+  },
 });
 
 export interface ContactPageProps {
@@ -99,6 +129,10 @@ export const ContactPage = ({
   address,
   telephone,
   email,
+  facebookUrl,
+  instagramUrl,
+  youtubeUrl,
+  mapUrl,
   extraNavItems,
 }: ContactPageProps) => (
   <>
@@ -126,6 +160,55 @@ export const ContactPage = ({
           <div {...stylex.props(styles.infoBlock)}>
             <p {...stylex.props(styles.infoLabel)}>Email</p>
             <p {...stylex.props(styles.infoValue)}>{email}</p>
+          </div>
+        )}
+        {(facebookUrl || instagramUrl || youtubeUrl) && (
+          <div {...stylex.props(styles.infoBlock)}>
+            <p {...stylex.props(styles.infoLabel)}>Social Media</p>
+            <div {...stylex.props(styles.socialLinks)}>
+              {facebookUrl && (
+                <a
+                  href={facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...stylex.props(styles.socialLink)}
+                >
+                  Facebook
+                </a>
+              )}
+              {instagramUrl && (
+                <a
+                  href={instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...stylex.props(styles.socialLink)}
+                >
+                  Instagram
+                </a>
+              )}
+              {youtubeUrl && (
+                <a
+                  href={youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...stylex.props(styles.socialLink)}
+                >
+                  YouTube
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+        {mapUrl && (
+          <div {...stylex.props(styles.mapContainer)}>
+            <iframe
+              src={mapUrl}
+              title="College Location"
+              {...stylex.props(styles.mapIframe)}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              sandbox="allow-same-origin"
+            />
           </div>
         )}
       </section>

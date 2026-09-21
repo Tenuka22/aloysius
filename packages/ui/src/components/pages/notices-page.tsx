@@ -75,6 +75,8 @@ export const NoticesPage = ({
   eyebrow,
   heading = "Notices",
   tagline,
+  heroImage,
+  pinUrgent,
   extraNavItems,
 }: NoticesPageProps) => (
   <>
@@ -94,7 +96,10 @@ export const NoticesPage = ({
         )}
       </section>
       <section {...stylex.props(styles.content)}>
-        <p>Notices will be displayed here once published.</p>
+        <p>
+          Notices will be displayed here once published.
+          {pinUrgent ? " Urgent notices are pinned to the top." : ""}
+        </p>
       </section>
     </main>
     <SiteFooter />

@@ -69,6 +69,26 @@ const styles = stylex.create({
     lineHeight: font.leadingRelaxed,
     color: color.onSurface,
   },
+  quickLinks: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: space.sm,
+    marginBlockStart: space.lg,
+  },
+  quickLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: space.sm,
+    paddingLeft: space.md,
+    paddingRight: space.md,
+    borderRadius: space.sm,
+    backgroundColor: color.accentOnSurface,
+    color: color.surface,
+    textDecoration: "none",
+    fontSize: font.sizeSm,
+    fontWeight: font.weightMedium,
+    transition: "opacity 0.2s",
+  },
 });
 
 export interface AlumniPageProps {
@@ -87,7 +107,11 @@ export const AlumniPage = ({
   eyebrow,
   heading = "Alumni",
   tagline,
+  heroImage,
   body,
+  image,
+  obaHref,
+  eventsHref,
   extraNavItems,
 }: AlumniPageProps) => (
   <>
@@ -115,6 +139,30 @@ export const AlumniPage = ({
             source={image}
             style={styles.contentMedia}
           />
+        )}
+        {(obaHref || eventsHref) && (
+          <div {...stylex.props(styles.quickLinks)}>
+            {obaHref && (
+              <a
+                href={obaHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                {...stylex.props(styles.quickLink)}
+              >
+                OBA Portal
+              </a>
+            )}
+            {eventsHref && (
+              <a
+                href={eventsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                {...stylex.props(styles.quickLink)}
+              >
+                Events
+              </a>
+            )}
+          </div>
         )}
       </section>
     </main>

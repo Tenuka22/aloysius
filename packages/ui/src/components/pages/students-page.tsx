@@ -75,6 +75,8 @@ export const StudentsPage = ({
   eyebrow,
   heading = "Student Life",
   tagline,
+  heroImage,
+  activitiesHeading,
   extraNavItems,
 }: StudentsPageProps) => (
   <>
@@ -94,6 +96,9 @@ export const StudentsPage = ({
         )}
       </section>
       <section {...stylex.props(styles.content)}>
+        {activitiesHeading && (
+          <h2 {...stylex.props(styles.heading)}>{activitiesHeading}</h2>
+        )}
         <p>Student life content will be displayed here once published.</p>
       </section>
     </main>

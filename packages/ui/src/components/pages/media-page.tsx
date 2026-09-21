@@ -75,6 +75,8 @@ export const MediaPage = ({
   eyebrow,
   heading = "Media Gallery",
   tagline,
+  heroImage,
+  galleryCount,
   extraNavItems,
 }: MediaPageProps) => (
   <>
@@ -94,7 +96,10 @@ export const MediaPage = ({
         )}
       </section>
       <section {...stylex.props(styles.content)}>
-        <p>Media gallery will be displayed here once published.</p>
+        <p>
+          Media gallery will be displayed here once published.
+          {galleryCount ? ` Showing ${galleryCount} items per page.` : ""}
+        </p>
       </section>
     </main>
     <SiteFooter />

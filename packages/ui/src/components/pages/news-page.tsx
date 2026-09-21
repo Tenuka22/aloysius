@@ -76,6 +76,9 @@ export const NewsPage = ({
   eyebrow,
   heading = "News & Events",
   tagline,
+  heroImage,
+  feedHeading,
+  feedCount,
   extraNavItems,
 }: NewsPageProps) => (
   <>
@@ -95,7 +98,13 @@ export const NewsPage = ({
         )}
       </section>
       <section {...stylex.props(styles.content)}>
-        <p>News content will be displayed here once published.</p>
+        {feedHeading && (
+          <h2 {...stylex.props(styles.heading)}>{feedHeading}</h2>
+        )}
+        <p>
+          News content will be displayed here once published.
+          {feedCount ? ` Showing ${feedCount} items per page.` : ""}
+        </p>
       </section>
     </main>
     <SiteFooter />
