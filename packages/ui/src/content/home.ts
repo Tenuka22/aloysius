@@ -43,6 +43,7 @@ export type NewsCategory =
   | "Sports"
   | "Events"
   | "Announcements"
+  | "Achievements"
   | "College News";
 
 export interface NewsItem {
