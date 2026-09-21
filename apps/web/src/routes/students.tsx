@@ -25,16 +25,6 @@ const StudentsContent = () => {
     if (role === "admin" || role === "cms") {
       items.push({ id: "cms", label: "CMS", href: "/cms" });
     }
-    if (role === "admin" || role === "teacher") {
-      items.push({
-        id: "students-admin",
-        label: "Manage Students",
-        href: "/student-officer",
-      });
-    }
-    if (role === "admin" || role === "teacher") {
-      items.push({ id: "teachers-admin", label: "Staff", href: "/teacher" });
-    }
     if (role === "admin") {
       items.push({ id: "admin", label: "Admin", href: "/admin" });
     }
