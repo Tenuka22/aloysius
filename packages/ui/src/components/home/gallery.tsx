@@ -18,43 +18,41 @@ import { Reveal } from "../primitives/reveal";
 
 const styles = stylex.create({
   /*
-   * Two columns on a phone, four from 48rem. The tall-tile mosaic only applies
-   * where there are four columns; below that a uniform grid is the honest
-   * layout and never leaves a stranded half-height tile.
+   * Masonry via CSS multi-column, not grid.
+   *
+   * The alternatives all cost something this page has promised not to pay. A
+   * JS layout has to measure the column width before it can place anything, so
+   * the grid is built twice and the tiles shift; a fixed-row-unit grid needs
+   * the tile's height in pixels to work out its row span, which is the same
+   * measurement by another name; `grid-template-rows: masonry` is still not
+   * broadly supported. Multi-column needs no measurement at all, so the box for
+   * every tile is reserved by its own `aspect-ratio` before the first paint and
+   * CLS stays at 0.
+   *
+   * The trade is visual order: columns fill top to bottom, so the second tile
+   * sits below the first rather than beside it. Source order is untouched, so
+   * the accessibility tree and the tab order are still the authored order.
    */
   grid: {
-    display: "grid",
     listStyle: "none",
     margin: 0,
     padding: 0,
-    gap: space["2xs"],
-    gridTemplateColumns: {
-      default: "repeat(2, minmax(0, 1fr))",
-      [bp.lg]: "repeat(4, minmax(0, 1fr))",
+    columnGap: space["2xs"],
+    columnCount: {
+      default: 2,
+      [bp.md]: 3,
+      [bp.xl]: 4,
     },
   },
   tile: {
+    // Without this a tile can be split across a column break, which cuts a
+    // photograph in half.
+    breakInside: "avoid",
+    // `column-gap` only spaces the columns; this spaces the tiles within one.
+    marginBlockEnd: space["2xs"],
     minWidth: 0,
   },
-  tall: {
-    gridRow: {
-      default: "auto",
-      [bp.lg]: "span 2",
-    },
-  },
-  tallMedia: {
-    height: {
-      default: "auto",
-      [bp.lg]: "100%",
-    },
-    aspectRatio: {
-      default: "1 / 1",
-      [bp.lg]: "auto",
-    },
-  },
 });
-
-const TALL_TILES = new Set(["campus", "sports"]);
 
 export const Gallery = ({
   items = GALLERY_ITEMS,
@@ -76,31 +74,28 @@ export const Gallery = ({
 
       <Reveal direction="up">
         <ul {...stylex.props(styles.grid)}>
-          {items.map((item) => {
-            const isTall = TALL_TILES.has(item.id);
-            return (
-              <li
-                key={item.id}
-                {...stylex.props(styles.tile, isTall && styles.tall)}
-              >
-                <Media
-                  placeholder={item.label}
-                  ratio="1:1"
-                  source={item.image}
-                  style={isTall && styles.tallMedia}
-                  zoom
-                />
-                {/*
-                  Only when there is no real image. Once the CMS supplies one,
-                  its `alt` already names the tile and this would make a screen
-                  reader announce every tile's subject twice.
-                */}
-                {item.image ? null : (
-                  <VisuallyHidden>{item.label}</VisuallyHidden>
-                )}
-              </li>
-            );
-          })}
+          {items.map((item) => (
+            <li key={item.id} {...stylex.props(styles.tile)}>
+              {/*
+               * Each tile sets its own crop from `aspectRatios`, which is what
+               * gives the columns their differing heights.
+               */}
+              <Media
+                placeholder={item.label}
+                ratio={item.preferredRatio}
+                source={item.image}
+                zoom
+              />
+              {/*
+               * Only when there is no real image. Once the CMS supplies one,
+               * its `alt` already names the tile and this would make a screen
+               * reader announce every tile's subject twice.
+               */}
+              {item.image ? null : (
+                <VisuallyHidden>{item.label}</VisuallyHidden>
+              )}
+            </li>
+          ))}
         </ul>
       </Reveal>
     </Container>

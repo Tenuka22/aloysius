@@ -1,4 +1,5 @@
 import type { ImageSource } from "../components/primitives/media";
+import { aspectRatios } from "../tokens/aspect-ratios";
 
 /**
  * Every string and image on the homepage is a typed prop with a default, so the
@@ -67,6 +68,15 @@ export interface GalleryItem {
   id: string;
   label: string;
   image?: ImageSource;
+  /**
+   * The crop this tile is composed for, as a `width / height` number from
+   * `tokens/aspect-ratios.ts`.
+   *
+   * Set per tile rather than one ratio for the grid: the grid is masonry, so
+   * each tile keeps its own height and the columns pack. A single ratio would
+   * produce a uniform grid, which is the layout this replaced.
+   */
+  preferredRatio: number;
 }
 
 export interface NavItem {
@@ -152,13 +162,26 @@ export const STUDENT_LIFE = [
   { id: "prefects", label: "Prefects", placeholder: "" },
 ] as const;
 
+/**
+ * Six tiles, each composed for the crop it is most likely to be: the
+ * establishing shots wide, the subject shots squarer. The mix is what makes the
+ * masonry read as a gallery rather than a grid with gaps in it.
+ */
 export const GALLERY_ITEMS: readonly GalleryItem[] = [
-  { id: "campus", label: "Campus" },
-  { id: "events", label: "Events" },
-  { id: "sports", label: "Sports" },
-  { id: "heritage", label: "Heritage" },
-  { id: "students", label: "Students" },
-  { id: "academic", label: "Academic" },
+  { id: "campus", label: "Campus", preferredRatio: aspectRatios.hero },
+  { id: "events", label: "Events", preferredRatio: aspectRatios.galleryThumb },
+  { id: "sports", label: "Sports", preferredRatio: aspectRatios.mosaicTile },
+  {
+    id: "heritage",
+    label: "Heritage",
+    preferredRatio: aspectRatios.heritagePhoto,
+  },
+  {
+    id: "students",
+    label: "Students",
+    preferredRatio: aspectRatios.mosaicTile,
+  },
+  { id: "academic", label: "Academic", preferredRatio: aspectRatios.newsCard },
 ];
 
 export const MOTTO = "Certa Viriliter";
