@@ -12,6 +12,13 @@ export const aspectRatios = {
   /** Heritage archival photograph (landscape). */
   heritagePhoto: 4 / 3,
 
+  /**
+   * Heritage architectural detail - the offset, smaller image in the heritage
+   * pair. Shallower than `heritagePhoto` so the two read as a deliberate
+   * primary/secondary pairing rather than two mismatched crops.
+   */
+  heritageDetail: 3 / 2,
+
   /** Principal portrait (portrait orientation). */
   principalPortrait: 4 / 5,
 
@@ -41,6 +48,7 @@ export type AspectRatioKey = keyof typeof aspectRatios;
 export const aspectRatioLabels: Record<AspectRatioKey, string> = {
   hero: "16 : 9 — Hero / full-width banner",
   heritagePhoto: "4 : 3 — Heritage photograph",
+  heritageDetail: "3 : 2 — Heritage architectural detail",
   principalPortrait: "4 : 5 — Portrait",
   newsCard: "16 : 10 — News card",
   galleryThumb: "1 : 1 — Square thumbnail",
@@ -56,6 +64,7 @@ export const aspectRatioLabels: Record<AspectRatioKey, string> = {
 export const aspectRatioMinWidth: Record<AspectRatioKey, number> = {
   hero: 2400,
   heritagePhoto: 1200,
+  heritageDetail: 1200,
   principalPortrait: 800,
   newsCard: 800,
   galleryThumb: 600,

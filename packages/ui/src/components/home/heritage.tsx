@@ -1,6 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 
 import { FOUNDED_YEAR } from "../../content/home";
+import { aspectRatios } from "../../tokens/aspect-ratios";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
 import { ArrowLink } from "../primitives/button";
@@ -23,12 +24,23 @@ const styles = stylex.create({
      * Mobile first: one column. The gold rule is a left border on the text block
      * until 64rem, where it becomes the design's dedicated 2px column, and the
      * imagery moves from below the copy into a third column.
+     *
+     * The imagery track is `clamp()`ed rather than a fixed rem so the two
+     * photographs keep scaling with the viewport instead of stopping dead at
+     * 26rem on a 4K display - but it is deliberately bounded at both ends, since
+     * widening it past ~29rem makes the image stack taller than the text column
+     * and opens a hole under the copy.
      */
     gridTemplateColumns: {
       default: "minmax(0, 1fr)",
-      [bp.xl]: "2px minmax(0, 1fr) minmax(0, 26rem)",
+      [bp.xl]: "2px minmax(0, 1fr) minmax(0, clamp(25rem, 27vw, 29rem))",
     },
-    alignItems: "start",
+    /*
+     * Default `stretch` (not `start`) on purpose: every column is a flex/grid
+     * child that fills the row, so the text block and the image stack share one
+     * bottom baseline instead of leaving a ragged hole under the shorter one.
+     */
+    alignItems: "stretch",
   },
   rule: {
     display: {
@@ -40,6 +52,16 @@ const styles = stylex.create({
     backgroundImage: `linear-gradient(180deg, ${color.accent}, rgba(255, 178, 3, 0.08))`,
   },
   body: {
+    display: "flex",
+    flexDirection: "column",
+    /*
+     * Pins the "Explore our history" link to the foot of the column so it lands
+     * level with the bottom of the offset photograph. Without this the shorter
+     * text column stops mid-row and the space reads as a mistake rather than
+     * as breathing room next to the full-height gold rule.
+     */
+    justifyContent: "space-between",
+    height: "100%",
     minWidth: 0,
     // The rule the wide layout gets as its own column, phones get as a border.
     borderInlineStartWidth: {
@@ -89,17 +111,20 @@ const styles = stylex.create({
   gallery: {
     display: "flex",
     flexDirection: "column",
-    gap: space.sm,
+    /*
+     * Both photographs are the same width, so their left and right edges line up
+     * as one column. They still differ in height - 4 : 3 over 3 : 2, from
+     * `aspectRatios` - so the pair reads as a primary and a secondary shot
+     * rather than two identical boxes.
+     *
+     * `space-between` gives the same bottom baseline as the text column: at
+     * every width the pair ends level with the "Explore our history" link.
+     */
+    justifyContent: "space-between",
+    alignItems: "stretch",
+    gap: space.md,
+    height: "100%",
     minWidth: 0,
-  },
-  galleryOffset: {
-    // The deliberate 75%-width offset image from the design, but only once
-    // there is room for it to read as intentional rather than broken.
-    width: {
-      default: "100%",
-      [bp.md]: "75%",
-    },
-    alignSelf: "flex-end",
   },
 });
 
@@ -128,30 +153,34 @@ export const Heritage = ({
 
           <Reveal direction="up">
             <div {...stylex.props(styles.body)}>
-              <Eyebrow>{eyebrow}</Eyebrow>
-              <Heading
-                id="heritage-title"
-                level={2}
-                style={styles.headingSpacing}
-              >
-                {heading}
-              </Heading>
-              <Lead>{intro}</Lead>
+              <div>
+                <Eyebrow>{eyebrow}</Eyebrow>
+                <Heading
+                  id="heritage-title"
+                  level={2}
+                  style={styles.headingSpacing}
+                >
+                  {heading}
+                </Heading>
+                <Lead>{intro}</Lead>
 
-              <dl {...stylex.props(styles.stats)}>
-                <div {...stylex.props(styles.stat)}>
-                  <dt {...stylex.props(styles.statLabel)}>Founded in Galle</dt>
-                  <dd {...stylex.props(styles.statValue)}>
-                    Est. {foundedYear}
-                  </dd>
-                </div>
-                <div {...stylex.props(styles.stat)}>
-                  <dt {...stylex.props(styles.statLabel)}>
-                    Of Aloysian tradition
-                  </dt>
-                  <dd {...stylex.props(styles.statValue)}>{years} years</dd>
-                </div>
-              </dl>
+                <dl {...stylex.props(styles.stats)}>
+                  <div {...stylex.props(styles.stat)}>
+                    <dt {...stylex.props(styles.statLabel)}>
+                      Founded in Galle
+                    </dt>
+                    <dd {...stylex.props(styles.statValue)}>
+                      Est. {foundedYear}
+                    </dd>
+                  </div>
+                  <div {...stylex.props(styles.stat)}>
+                    <dt {...stylex.props(styles.statLabel)}>
+                      Of Aloysian tradition
+                    </dt>
+                    <dd {...stylex.props(styles.statValue)}>{years} years</dd>
+                  </div>
+                </dl>
+              </div>
 
               <ArrowLink href={historyHref}>Explore our history</ArrowLink>
             </div>
@@ -161,15 +190,14 @@ export const Heritage = ({
             <div {...stylex.props(styles.gallery)}>
               <Media
                 placeholder="Archival photograph - early college years"
-                ratio="4:3"
+                ratio={aspectRatios.heritagePhoto}
                 source={images?.[0]}
                 zoom
               />
               <Media
                 placeholder="Galle Fort architecture detail"
-                ratio="3:2"
+                ratio={aspectRatios.heritageDetail}
                 source={images?.[1]}
-                style={styles.galleryOffset}
                 zoom
               />
             </div>

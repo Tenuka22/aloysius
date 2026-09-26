@@ -1,4 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
+import type { ImgHTMLAttributes } from "react";
 
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
@@ -91,6 +92,14 @@ const RATIOS = {
 
 export type Ratio = keyof typeof RATIOS;
 
+/**
+ * Either a named preset above or a raw `width / height` number taken straight
+ * from `tokens/aspect-ratios.ts`. Numbers are preferred for new call sites:
+ * they keep the component and the token file from drifting apart, and a token
+ * that changes propagates on its own.
+ */
+export type RatioProp = Ratio | number;
+
 export interface ImageSource {
   src: string;
   /** Comma-separated `srcset` for high-DPI and art direction. */
@@ -135,7 +144,15 @@ const resolveAspectRatio = (
   return undefined;
 };
 
-const getImageProps = (source: ImageSource, priority: boolean) => ({
+/**
+ * Typed as `ImgHTMLAttributes` so the literal unions on `decoding`, `loading`
+ * and `fetchPriority` are checked at the call site rather than widening to
+ * `string` and failing when spread onto the `<img>`.
+ */
+const getImageProps = (
+  source: ImageSource,
+  priority: boolean
+): ImgHTMLAttributes<HTMLImageElement> => ({
   decoding: priority ? "sync" : "async",
   fetchPriority: priority ? "high" : "auto",
   height: source.height,
@@ -162,7 +179,12 @@ export const Media = ({
   source?: ImageSource;
   /** Empty string renders a plain tint with no caption. */
   placeholder: string;
-  ratio?: Ratio;
+  /**
+   * A `aspectRatios` token, or one of the named presets. Presets compile to a
+   * StyleX class; a token resolves to the same `aspect-ratio` inline value, so
+   * the reserved box is identical either way.
+   */
+  ratio?: RatioProp;
   fill?: boolean;
   zoom?: boolean;
   priority?: boolean;
@@ -170,13 +192,18 @@ export const Media = ({
   /** Overrides the preset ratio when an image carries its own dimensions. */
   aspectRatio?: number;
 }) => {
-  const resolvedAspectRatio = resolveAspectRatio(source, fill, aspectRatio);
+  const preset = typeof ratio === "string" ? RATIOS[ratio] : undefined;
+  const resolvedAspectRatio = resolveAspectRatio(
+    source,
+    fill,
+    aspectRatio ?? (typeof ratio === "number" ? ratio : undefined)
+  );
   const hasAspectRatio = resolvedAspectRatio !== undefined;
 
   return (
     <div
       style={hasAspectRatio ? { aspectRatio: resolvedAspectRatio } : undefined}
-      {...stylex.props(styles.frame, fill ? styles.fill : RATIOS[ratio], style)}
+      {...stylex.props(styles.frame, fill ? styles.fill : preset, style)}
     >
       {source ? (
         <img
