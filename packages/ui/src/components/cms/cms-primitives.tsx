@@ -870,6 +870,79 @@ const renderControl = (
 };
 
 /**
+ * The label / control / reset / hint frame every editor field shares.
+ *
+ * Split out of `Field` so a control that cannot be a plain `<input>` — the
+ * rich text editor, the media field — can drop its own control inside the same
+ * frame instead of reimplementing the label association, the reset button and
+ * the hint wiring. `htmlFor` is only correct when the control really is the
+ * element with that id, so the caller decides whether to pass one.
+ */
+export const FieldShell = ({
+  children,
+  hint,
+  hintId,
+  highlightFlash,
+  label,
+  labelFor,
+  onReset,
+  showClear,
+  wide = false,
+}: {
+  children: ReactNode;
+  label: string;
+  hint?: string;
+  /** Id given to the hint paragraph, for the control's `aria-describedby`. */
+  hintId?: string;
+  /**
+   * Id of the control the label points at. Omitted when the control cannot
+   * take one — the rich text editor is a `contenteditable` region, so it is
+   * labelled with `aria-labelledby` on the region itself instead.
+   */
+  labelFor?: string;
+  highlightFlash?: boolean;
+  showClear?: boolean;
+  onReset?: () => void;
+  wide?: boolean;
+}) => (
+  <div
+    {...stylex.props(
+      styles.field,
+      wide && styles.fieldWide,
+      highlightFlash && styles.highlightFlash
+    )}
+  >
+    {labelFor ? (
+      <label htmlFor={labelFor} {...stylex.props(styles.label)}>
+        {label}
+      </label>
+    ) : (
+      <span {...stylex.props(styles.label)}>{label}</span>
+    )}
+
+    <div {...stylex.props(styles.fieldRow)}>
+      <div {...stylex.props(styles.fieldRowControl)}>{children}</div>
+      {showClear && onReset ? (
+        <button
+          aria-label={`Reset ${label}`}
+          onClick={onReset}
+          type="button"
+          {...stylex.props(styles.clearButton)}
+        >
+          ×
+        </button>
+      ) : null}
+    </div>
+
+    {hint ? (
+      <p id={hintId} {...stylex.props(styles.hint)}>
+        {hint}
+      </p>
+    ) : null}
+  </div>
+);
+
+/**
  * A labelled control.
  *
  * The label is a real `<label htmlFor>` rather than a wrapping `<span>`, so
@@ -901,51 +974,22 @@ export const Field = ({
 }) => {
   const id = useId();
   const hintId = `${id}-hint`;
-  const showClear = dirty && onReset;
+  // `&&` over a function would yield the function, not a boolean.
+  const showClear = dirty && Boolean(onReset);
 
   return (
-    <div
-      {...stylex.props(
-        styles.field,
-        wide && styles.fieldWide,
-        highlighted && styles.highlightFlash
-      )}
+    <FieldShell
+      hint={hint}
+      hintId={hintId}
+      highlightFlash={highlighted}
+      label={label}
+      labelFor={id}
+      onReset={onReset}
+      showClear={showClear}
+      wide={wide}
     >
-      <label htmlFor={id} {...stylex.props(styles.label)}>
-        {label}
-      </label>
-
-      <div {...stylex.props(styles.fieldRow)}>
-        <div {...stylex.props(styles.fieldRowControl)}>
-          {renderControl(
-            kind,
-            id,
-            hintId,
-            value,
-            dirty,
-            onChange,
-            hint,
-            options
-          )}
-        </div>
-        {showClear ? (
-          <button
-            aria-label={`Reset ${label}`}
-            onClick={onReset}
-            type="button"
-            {...stylex.props(styles.clearButton)}
-          >
-            ×
-          </button>
-        ) : null}
-      </div>
-
-      {hint ? (
-        <p id={hintId} {...stylex.props(styles.hint)}>
-          {hint}
-        </p>
-      ) : null}
-    </div>
+      {renderControl(kind, id, hintId, value, dirty, onChange, hint, options)}
+    </FieldShell>
   );
 };
 

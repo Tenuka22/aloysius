@@ -105,7 +105,13 @@ export type BlockType =
   | "Media grid"
   | "Global";
 
-export type FieldKind = "text" | "textarea" | "image" | "readonly" | "select";
+export type FieldKind =
+  | "text"
+  | "textarea"
+  | "richtext"
+  | "image"
+  | "readonly"
+  | "select";
 
 export interface LinkOption {
   label: string;
@@ -486,12 +492,20 @@ export const PRINCIPAL_BLOCKS: readonly PageBlock[] = [
         hint: "Optional. Leave empty to set the message as a pull quote instead of under a heading.",
       },
       {
-        id: PRINCIPAL_FIELD.message,
-        label: "Message",
+        id: PRINCIPAL_FIELD.quote,
+        label: "Quote",
         kind: "textarea",
-        value: PRINCIPAL_DEFAULTS.message,
+        value: PRINCIPAL_DEFAULTS.quote,
         wide: true,
-        hint: "Two or three sentences reads best at the size this is set in.",
+        hint: "One or two sentences. This is what the homepage sets in large type — keep it short enough to read at a glance.",
+      },
+      {
+        id: PRINCIPAL_FIELD.body,
+        label: "Full message",
+        kind: "richtext",
+        value: PRINCIPAL_DEFAULTS.body,
+        wide: true,
+        hint: "The complete message. Rich text: headings, lists, quotes, links and a pull quote. This is what the About page shows.",
       },
       {
         id: PRINCIPAL_FIELD.name,

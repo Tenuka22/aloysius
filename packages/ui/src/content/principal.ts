@@ -25,7 +25,10 @@ export const PRINCIPAL_PAGE_KEY = "principal";
 export const PRINCIPAL_FIELD = {
   eyebrow: "principal-eyebrow",
   heading: "principal-heading",
-  message: "principal-message",
+  /** Short pull quote. Plain text; the homepage sets this in a blockquote. */
+  quote: "principal-quote",
+  /** Full message. Rich text HTML from the CMS editor; the About page sets this. */
+  body: "principal-body",
   name: "principal-name",
   role: "principal-role",
   portrait: "principal-portrait",
@@ -35,13 +38,20 @@ export const PRINCIPAL_FIELD = {
 
 export interface PrincipalContent {
   eyebrow: string;
-  /**
-   * Optional. When present the message is set as body copy under a heading
-   * (the About page's treatment); when absent it is set as a display-serif
-   * pull quote (the homepage's treatment).
-   */
+  /** Optional. The About page sets its message beneath this. */
   heading?: string;
-  message: string;
+  /**
+   * The one-line pull quote. Plain text, set in a display-serif blockquote on
+   * the homepage, so it is deliberately not the same field as `body` - a long
+   * message at that size is a wall, and an editor should be able to write both
+   * without one ruining the other.
+   */
+  quote: string;
+  /**
+   * The full message, as rich text HTML produced by the CMS editor. Rendered
+   * only after `sanitizeRichText`, never with the stored value directly.
+   */
+  body: string;
   /**
    * Optional on purpose. Rendering a placeholder name for a real person is
    * worse than naming the office alone.
@@ -59,8 +69,9 @@ export interface PrincipalContent {
 export const PRINCIPAL_DEFAULTS = {
   eyebrow: "From the principal",
   heading: "A Word from the Principal",
-  message:
+  quote:
     "Every Aloysian carries forward a tradition of faith, discipline and excellence - certa viriliter.",
+  body: "<p>Every Aloysian carries forward a tradition of faith, discipline and excellence — <em>certa viriliter</em>.</p><p>It is a tradition handed to us by the generations who came before, and one we are trusted to hand on. The Chapel, the classroom, the playing field and the society room each ask the same thing of us: to give our best, and to do it for others.</p>",
   name: undefined,
   role: "Principal, St. Aloysius' College",
   link: { href: "/about#principal", label: "Read the full message" },

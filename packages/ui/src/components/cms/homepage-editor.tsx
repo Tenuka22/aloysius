@@ -24,6 +24,7 @@ import {
 import { HistoryDialog, HistoryPopover } from "./history-popover";
 import type { HistoryResponse } from "./history-popover";
 import { MediaField } from "./media-field";
+import { RichTextField } from "./rich-text-field";
 
 type Baseline = Record<string, string>;
 type DirtyMap = Record<string, boolean>;
@@ -433,6 +434,83 @@ export interface Block {
   fields: { id: string; value: string; aspectRatio?: number }[];
 }
 
+/**
+ * Picks the control for a field's `kind` and renders it.
+ *
+ * Its own component rather than a chain of ternaries inline in the grid: a
+ * third kind would have meant a third nesting level, and the shared props
+ * (dirty flag, value, reset) were being repeated down the chain.
+ */
+const FieldSlot = ({
+  baseline,
+  defaultImages,
+  field,
+  getDirty,
+  highlightedFields,
+  onChange,
+  onUpload,
+  valueOf,
+}: {
+  baseline: Baseline;
+  defaultImages?: Record<string, string>;
+  field: BlockField;
+  getDirty: (fieldId: string) => boolean;
+  highlightedFields?: Record<string, number>;
+  onChange: (fieldId: string, next: string) => void;
+  onUpload?: (file: File) => Promise<string>;
+  valueOf: (field: BlockField) => string;
+}) => {
+  const dirty = getDirty(field.id);
+  const reset = () =>
+    onChange(field.id, baseline[field.id] ?? field.value ?? "");
+  const highlighted = Boolean(
+    highlightedFields && field.id in highlightedFields
+  );
+
+  if (field.kind === "image") {
+    return (
+      <MediaField
+        aspectRatio={getImageAspectRatio(field.id)}
+        defaultImage={defaultImages?.[field.id]}
+        field={field}
+        onChange={(next) => onChange(field.id, next)}
+        onUpload={onUpload}
+        value={valueOf(field)}
+        variant={field.id === "hero-bg" ? "hero" : "image"}
+        wide={field.wide}
+      />
+    );
+  }
+
+  if (field.kind === "richtext") {
+    return (
+      <RichTextField
+        dirty={dirty}
+        field={field}
+        highlighted={highlighted}
+        onChange={(next) => onChange(field.id, next)}
+        onReset={reset}
+        value={valueOf(field)}
+        wide={field.wide}
+      />
+    );
+  }
+
+  return (
+    <Field
+      dirty={dirty}
+      highlighted={highlighted}
+      hint={field.hint}
+      kind={field.kind}
+      label={field.label}
+      onChange={(next) => onChange(field.id, next)}
+      onReset={reset}
+      value={valueOf(field)}
+      wide={field.wide}
+    />
+  );
+};
+
 /** Handle exposed via ref so the route can read the current blocks. */
 export interface HomepageEditorHandle {
   getBlocks: () => Block[];
@@ -720,41 +798,19 @@ export const HomepageEditor = forwardRef<
             </div>
 
             <FieldGrid>
-              {selected?.fields.map((field) =>
-                field.kind === "image" ? (
-                  <MediaField
-                    aspectRatio={getImageAspectRatio(field.id)}
-                    defaultImage={defaultImages?.[field.id]}
-                    field={field}
-                    key={field.id}
-                    onChange={(next) => updateField(field.id, next)}
-                    onUpload={onUpload}
-                    value={valueOf(field)}
-                    variant={field.id === "hero-bg" ? "hero" : "image"}
-                    wide={field.wide}
-                  />
-                ) : (
-                  <Field
-                    dirty={getFieldDirty(field.id)}
-                    hint={field.hint}
-                    key={field.id}
-                    kind={field.kind}
-                    label={field.label}
-                    onChange={(next) => updateField(field.id, next)}
-                    onReset={() =>
-                      updateField(
-                        field.id,
-                        baseline[field.id] ?? field.value ?? ""
-                      )
-                    }
-                    value={valueOf(field)}
-                    wide={field.wide}
-                    highlighted={
-                      highlightedFields && field.id in highlightedFields
-                    }
-                  />
-                )
-              )}
+              {selected?.fields.map((field) => (
+                <FieldSlot
+                  baseline={baseline}
+                  defaultImages={defaultImages}
+                  field={field}
+                  getDirty={getFieldDirty}
+                  highlightedFields={highlightedFields}
+                  key={field.id}
+                  onChange={updateField}
+                  onUpload={onUpload}
+                  valueOf={valueOf}
+                />
+              ))}
             </FieldGrid>
           </Panel>
         </div>

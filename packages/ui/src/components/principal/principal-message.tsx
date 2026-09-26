@@ -2,6 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 import { useId } from "react";
 
 import type { PrincipalContent } from "../../content/principal";
+import { sanitizeRichText } from "../../lib/sanitize-rich-text";
 import { aspectRatios } from "../../tokens/aspect-ratios";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
@@ -74,15 +75,17 @@ const styles = stylex.create({
     lineHeight: font.leadingSnug,
     textWrap: "pretty",
   },
-  /** The body-copy treatment, used when the block has a heading. */
-  message: {
-    margin: 0,
-    marginBlockEnd: space.md,
+  /**
+   * Container for the sanitised full message.
+   *
+   * The styles for the elements *inside* it cannot be StyleX, because they
+   * arrive as an HTML string rather than as React elements. Those live in
+   * `rich-text.css`, scoped to `[data-rich-text]`, so the same rules style the
+   * editor and the published page from one place.
+   */
+  richText: {
     maxWidth: space.measure,
-    fontSize: font.sizeLg,
-    lineHeight: font.leadingRelaxed,
     color: color.onSurfaceMuted,
-    textWrap: "pretty",
   },
   attribution: {
     margin: 0,
@@ -127,7 +130,7 @@ export const PrincipalMessage = ({
   tone?: Tone;
 }) => {
   const titleId = useId();
-  const { eyebrow, heading, message, name, role, portrait, link } = content;
+  const { eyebrow, heading, quote, body, name, role, portrait, link } = content;
   const asArticle = variant === "article";
 
   return (
@@ -154,11 +157,25 @@ export const PrincipalMessage = ({
                   <Heading id={titleId} level={2} style={styles.headingSpacing}>
                     {heading}
                   </Heading>
-                  <p {...stylex.props(styles.message)}>{message}</p>
+                  {/*
+                   * The only `dangerouslySetInnerHTML` on the public site, and
+                   * the only place rich text is rendered. `body` comes from the
+                   * CMS, so it is sanitised here rather than trusted — see
+                   * `lib/sanitize-rich-text.ts`. Sanitising on every render is
+                   * deliberate: it is a pure string pass, and it means the page
+                   * cannot render unsanitised HTML if a value ever arrives by a
+                   * route that skipped the editor.
+                   */}
+                  <div
+                    data-rich-text=""
+                    {...stylex.props(styles.richText)}
+                    // oxlint-disable-next-line react/no-danger -- the value is sanitised immediately above by an allowlist pass
+                    dangerouslySetInnerHTML={{ __html: sanitizeRichText(body) }}
+                  />
                 </>
               ) : (
                 <blockquote {...stylex.props(styles.quote)} id={titleId}>
-                  &ldquo;{message}&rdquo;
+                  &ldquo;{quote}&rdquo;
                 </blockquote>
               )}
               {name ? (

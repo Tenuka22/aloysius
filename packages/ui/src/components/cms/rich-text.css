@@ -1,0 +1,104 @@
+/*
+ * Prose styles for the rich text field.
+ *
+ * These have to be a stylesheet rather than StyleX: Tiptap owns the
+ * `contenteditable` element and the elements inside it, so there is no React
+ * element to attach a stylex class to. Everything else in the CMS is StyleX;
+ * this file is scoped under `[data-rich-text]` so it cannot leak.
+ *
+ * Kept in step with `sanitize-rich-text.ts`: every tag styled here is on that
+ * module's allowlist, and every one that reaches the published page is styled
+ * again by the section that renders it.
+ */
+
+[data-rich-text] {
+  min-height: 9rem;
+  padding: 1rem;
+  font-family: var(--x-body, system-ui, sans-serif);
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--x-on-surface, #013405);
+}
+
+[data-rich-text] .ProseMirror {
+  outline: none;
+}
+
+/*
+ * No top margin on the first block or bottom margin on the last. The editor
+ * wants symmetric margins while you are writing; the published section is set
+ * against the heading above it and the attribution below, so the browser's
+ * defaults would leave it sitting at an arbitrary offset inside the column.
+ * StyleX cannot express a child selector, which is part of why these rules are
+ * here rather than in the component.
+ */
+[data-rich-text] > :first-child {
+  margin-block-start: 0;
+}
+
+[data-rich-text] > :last-child {
+  margin-block-end: 0;
+}
+
+[data-rich-text] .ProseMirror > * + * {
+  margin-block-start: 0.5rem;
+}
+
+[data-rich-text] h2,
+[data-rich-text] h3,
+[data-rich-text] h4 {
+  margin-block: 1rem 0.25rem;
+  font-family: var(--x-display, Georgia, serif);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+[data-rich-text] h2 {
+  font-size: 1.5rem;
+}
+
+[data-rich-text] h3 {
+  font-size: 1.25rem;
+}
+
+[data-rich-text] h4 {
+  font-size: 1.125rem;
+}
+
+[data-rich-text] ul,
+[data-rich-text] ol {
+  margin-block: 0.5rem;
+  padding-inline-start: 1.5rem;
+}
+
+[data-rich-text] blockquote {
+  margin-block: 0.5rem;
+  padding-inline-start: 1rem;
+  border-inline-start: 1px solid var(--x-border-strong, rgba(1, 52, 5, 0.32));
+  color: var(--x-on-surface-muted, rgba(1, 52, 5, 0.78));
+}
+
+[data-rich-text] a {
+  color: var(--x-accent-on-surface, #a51919);
+  text-decoration: underline;
+}
+
+[data-rich-text] hr {
+  margin-block: 1rem;
+  border: 0;
+  border-block-start: 1px solid var(--x-border, rgba(1, 52, 5, 0.14));
+}
+
+/* The custom pull-quote node's React node view. */
+[data-rich-text] [data-pull-quote] {
+  margin-block: 1rem;
+}
+
+[data-rich-text] .ProseMirror-selectednode {
+  outline: 2px solid var(--x-focus-ring, #a51919);
+  outline-offset: 2px;
+}
+
+[data-rich-text] .ProseMirror-gapcursor::after {
+  border-block-start-color: currentcolor;
+}

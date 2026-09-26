@@ -74,7 +74,8 @@ export const blocksToPrincipal = (
   defaults: {
     eyebrow: string;
     heading?: string;
-    message: string;
+    quote: string;
+    body: string;
     name?: string;
     role: string;
     link?: { href: string; label: string };
@@ -82,7 +83,8 @@ export const blocksToPrincipal = (
 ): PrincipalContent => ({
   eyebrow: valueOf(blocks, PRINCIPAL_FIELD.eyebrow) ?? defaults.eyebrow,
   heading: valueOf(blocks, PRINCIPAL_FIELD.heading) ?? defaults.heading,
-  message: valueOf(blocks, PRINCIPAL_FIELD.message) ?? defaults.message,
+  quote: valueOf(blocks, PRINCIPAL_FIELD.quote) ?? defaults.quote,
+  body: valueOf(blocks, PRINCIPAL_FIELD.body) ?? defaults.body,
   name: valueOf(blocks, PRINCIPAL_FIELD.name) ?? defaults.name,
   role: valueOf(blocks, PRINCIPAL_FIELD.role) ?? defaults.role,
   portrait: imageOf(blocks, PRINCIPAL_FIELD.portrait),
