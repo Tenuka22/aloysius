@@ -1,5 +1,5 @@
+import type { ImageSource } from "../components/primitives/media";
 import type { CmsBlock } from "./cms-to-home";
-import type { ImageSource } from "./home";
 
 const fieldValue = (
   blocks: CmsBlock[],

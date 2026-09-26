@@ -11,6 +11,7 @@ import {
   blocksToAboutImages,
   blocksToAboutText,
 } from "@aloysius/ui/content/cms-to-about";
+import { principalContent } from "@aloysius/ui/content/cms-to-principal";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -21,6 +22,13 @@ import { orpc } from "@/utils/orpc";
 const AboutContent = () => {
   const aboutQuery = orpc.cms.getAbout.queryOptions();
   const { data: about } = useSuspenseQuery(aboutQuery);
+  /*
+   * The Principal's Message is a global block with its own editor screen, so
+   * the About page reads the same content the homepage does rather than keeping
+   * its own copy.
+   */
+  const principalQuery = orpc.cms.getPrincipal.queryOptions();
+  const { data: principal } = useSuspenseQuery(principalQuery);
   const { data: session } = authClient.useSession();
 
   const images = about?.blocks
@@ -60,7 +68,12 @@ const AboutContent = () => {
   })();
 
   return (
-    <AboutPage images={images} text={text} extraNavItems={extraNavItems} />
+    <AboutPage
+      images={images}
+      text={text}
+      principal={principalContent(principal?.blocks)}
+      extraNavItems={extraNavItems}
+    />
   );
 };
 

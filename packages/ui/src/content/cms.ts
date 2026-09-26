@@ -13,10 +13,16 @@
  */
 
 import { aspectRatios } from "../tokens/aspect-ratios";
+import {
+  PRINCIPAL_BLOCK_ID,
+  PRINCIPAL_DEFAULTS,
+  PRINCIPAL_FIELD,
+} from "./principal";
 
 export type ScreenId =
   | "dashboard"
   | "homepage"
+  | "principal"
   | "news"
   | "gallery"
   | "admissions"
@@ -28,7 +34,12 @@ export type ScreenId =
   | "settings";
 
 /** Which layout a screen uses. Several nav items share the same list screen. */
-export type ScreenKind = "dashboard" | "homepage" | "list" | "profile";
+export type ScreenKind =
+  | "dashboard"
+  | "homepage"
+  | "global"
+  | "list"
+  | "profile";
 
 export interface NavItem {
   id: ScreenId;
@@ -42,21 +53,27 @@ export interface NavItem {
 export const NAV_ITEMS: readonly NavItem[] = [
   { id: "dashboard", num: "01", label: "Dashboard", kind: "dashboard" },
   { id: "homepage", num: "02", label: "Homepage Editor", kind: "homepage" },
-  { id: "news", num: "03", label: "News & Events", kind: "list", count: 24 },
+  {
+    id: "principal",
+    num: "03",
+    label: "Principal's Message",
+    kind: "global",
+  },
+  { id: "news", num: "04", label: "News & Events", kind: "list", count: 24 },
   {
     id: "gallery",
-    num: "04",
+    num: "05",
     label: "Gallery & Media",
     kind: "list",
     count: 112,
   },
-  { id: "admissions", num: "05", label: "Admissions", kind: "list" },
-  { id: "academics", num: "06", label: "Academics", kind: "list" },
-  { id: "alumni", num: "07", label: "Alumni", kind: "list" },
-  { id: "notices", num: "08", label: "Notices", kind: "list", count: 3 },
-  { id: "users", num: "09", label: "Users & Roles", kind: "list" },
-  { id: "profile", num: "10", label: "Profile", kind: "profile" },
-  { id: "settings", num: "11", label: "Settings", kind: "list" },
+  { id: "admissions", num: "06", label: "Admissions", kind: "list" },
+  { id: "academics", num: "07", label: "Academics", kind: "list" },
+  { id: "alumni", num: "08", label: "Alumni", kind: "list" },
+  { id: "notices", num: "09", label: "Notices", kind: "list", count: 3 },
+  { id: "users", num: "10", label: "Users & Roles", kind: "list" },
+  { id: "profile", num: "11", label: "Profile", kind: "profile" },
+  { id: "settings", num: "12", label: "Settings", kind: "list" },
 ];
 
 export type EntryStatus =
@@ -143,6 +160,7 @@ export const getImageAspectRatio = (fieldId: string): number => {
   const ratios: Partial<Record<string, number>> = {
     "hero-bg": aspectRatios.hero,
     "heritage-image-1": aspectRatios.heritagePhoto,
+    "heritage-image-2": aspectRatios.heritageDetail,
     "principal-portrait": aspectRatios.principalPortrait,
     "life-sports": aspectRatios.mosaicTile,
     "life-music": aspectRatios.mosaicTile,
@@ -286,24 +304,12 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
         hint: "The 'years of tradition' figure is calculated from this.",
       },
       { id: "heritage-image-1", label: "Archival photograph", kind: "image" },
-    ],
-  },
-  {
-    id: "principal",
-    name: "Principal's Message",
-    type: "Quote",
-    status: "published",
-    summary: "Pull quote, attribution and portrait",
-    fields: [
       {
-        id: "principal-quote",
-        label: "Quote",
-        kind: "textarea",
-        wide: true,
-        hint: "Two or three sentences reads best at the size this is set in.",
+        id: "heritage-image-2",
+        label: "Architectural detail",
+        kind: "image",
+        hint: "The smaller, offset image below the archival photograph.",
       },
-      { id: "principal-name", label: "Attributed to", kind: "text" },
-      { id: "principal-portrait", label: "Portrait", kind: "image" },
     ],
   },
   {
@@ -446,6 +452,83 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
  * body copy is real, published prose (see `content/about.ts`), not draft
  * text a non-technical editor should rewrite from this screen.
  */
+/**
+ * The site's one global block.
+ *
+ * The Principal's message and portrait are the same person on every page, so
+ * they are not part of any page's registry — they get their own editor screen
+ * at `/cms/principal` and every page reads the result. Keeping a copy of this
+ * block inside `HOMEPAGE_BLOCKS` (as it used to be) is what produced two
+ * editable versions of the same sentence and two duplicate components.
+ *
+ * `type: "Global"` marks it in the block list so an editor can see that
+ * changes here land on more than one page.
+ */
+export const PRINCIPAL_BLOCKS: readonly PageBlock[] = [
+  {
+    id: PRINCIPAL_BLOCK_ID,
+    name: "Principal's Message",
+    type: "Global",
+    status: "global",
+    summary: "Message, attribution and portrait — shown on every page",
+    fields: [
+      {
+        id: PRINCIPAL_FIELD.eyebrow,
+        label: "Eyebrow",
+        kind: "text",
+        value: PRINCIPAL_DEFAULTS.eyebrow,
+      },
+      {
+        id: PRINCIPAL_FIELD.heading,
+        label: "Heading",
+        kind: "text",
+        value: PRINCIPAL_DEFAULTS.heading,
+        hint: "Optional. Leave empty to set the message as a pull quote instead of under a heading.",
+      },
+      {
+        id: PRINCIPAL_FIELD.message,
+        label: "Message",
+        kind: "textarea",
+        value: PRINCIPAL_DEFAULTS.message,
+        wide: true,
+        hint: "Two or three sentences reads best at the size this is set in.",
+      },
+      {
+        id: PRINCIPAL_FIELD.name,
+        label: "Attributed to",
+        kind: "text",
+        hint: "Optional. Leave empty to name the office rather than a person.",
+      },
+      {
+        id: PRINCIPAL_FIELD.role,
+        label: "Role line",
+        kind: "text",
+        value: PRINCIPAL_DEFAULTS.role,
+      },
+      {
+        id: PRINCIPAL_FIELD.portrait,
+        label: "Portrait",
+        kind: "image",
+        hint: "Portrait orientation. Clearing this restores the placeholder.",
+      },
+      {
+        id: PRINCIPAL_FIELD.linkLabel,
+        label: "Link label",
+        kind: "text",
+        value: PRINCIPAL_DEFAULTS.link.label,
+        hint: "Optional. Leave both link fields empty to drop the link.",
+      },
+      {
+        id: PRINCIPAL_FIELD.linkHref,
+        label: "Link target",
+        kind: "select",
+        value: PRINCIPAL_DEFAULTS.link.href,
+        options: APP_ROUTE_OPTIONS,
+      },
+    ],
+  },
+];
+
 export const ABOUT_BLOCKS: readonly PageBlock[] = [
   {
     id: "founders",

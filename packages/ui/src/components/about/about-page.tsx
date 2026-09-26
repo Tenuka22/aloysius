@@ -4,7 +4,9 @@ import type { LeadershipMember } from "../../content/about";
 import { FOUNDERS, TIMELINE } from "../../content/about";
 import type { AboutImages, AboutTextContent } from "../../content/cms-to-about";
 import type { NavItem } from "../../content/home";
+import type { PrincipalContent } from "../../content/principal";
 import { SkipLink } from "../primitives/layout";
+import { PrincipalMessage } from "../principal/principal-message";
 import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
@@ -14,7 +16,6 @@ import { Anthem } from "./anthem";
 import { Founders } from "./founders";
 import { HistoryTimeline } from "./history-timeline";
 import { MottoBanner } from "./motto-banner";
-import { PrincipalNote } from "./principal-note";
 import { VisionMission } from "./vision-mission";
 
 const MAIN_ID = "main-content";
@@ -31,21 +32,25 @@ const styles = stylex.create({
 
 export interface AboutPageProps {
   contact?: FooterContact;
-  principalName?: string;
   leadership?: readonly LeadershipMember[];
   /** Editable image overrides resolved from CMS blocks, already defaulted. */
   images?: AboutImages;
   /** Editable text overrides resolved from CMS blocks. */
   text?: AboutTextContent;
+  /**
+   * The global Principal's Message block, resolved by the route from
+   * `orpc.cms.getPrincipal` — the same content the homepage renders.
+   */
+  principal?: PrincipalContent;
   extraNavItems?: readonly NavItem[];
 }
 
 export const AboutPage = ({
   contact,
-  principalName,
   leadership,
   images,
   text,
+  principal,
   extraNavItems,
 }: AboutPageProps) => {
   const founders = images
@@ -80,7 +85,13 @@ export const AboutPage = ({
         <HistoryTimeline heading={text?.historyHeading} entries={timeline} />
         <VisionMission />
         <MottoBanner />
-        <PrincipalNote name={principalName} />
+        {principal && !principal.hidden && (
+          <PrincipalMessage
+            content={principal}
+            id="principal"
+            variant="article"
+          />
+        )}
         <Anthem
           image={images?.anthemImage}
           sinhalaImage={images?.anthemSinhalaImage}

@@ -154,7 +154,7 @@ const styles = stylex.create({
   },
 });
 
-type Tone = "surface" | "raised" | "inverse" | "inverseGradient";
+export type Tone = "surface" | "raised" | "inverse" | "inverseGradient";
 
 const TONE_STYLES = {
   surface: styles.toneSurface,

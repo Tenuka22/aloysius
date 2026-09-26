@@ -100,9 +100,11 @@ export const VISION_STATEMENT =
 export const MISSION_STATEMENT =
   "To provide a holistic Catholic education grounded in Jesuit values, nurturing faith, discipline and service to others.";
 
-export const ABOUT_PRINCIPAL_HEADING = "A Word from the Principal";
-export const ABOUT_PRINCIPAL_MESSAGE =
-  "Every Aloysian carries forward a tradition of faith, discipline and excellence - certa viriliter.";
+/*
+ * The Principal's message used to be defined here as well as on the homepage.
+ * It now lives in `content/principal.ts` as the site's one global block, so
+ * there is a single copy - see `blocksToPrincipal`.
+ */
 
 export interface AnthemStanza {
   id: number;

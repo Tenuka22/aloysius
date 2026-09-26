@@ -1,4 +1,5 @@
-import type { HeroBackground, ImageSource, Notice } from "./home";
+import type { ImageSource } from "../components/primitives/media";
+import type { HeroBackground, Notice } from "./home";
 
 /**
  * A single block returned from the CMS API.
@@ -141,8 +142,11 @@ export const blocksToProps = (blocks: CmsBlock[]) => {
     heritageHeading: optionalField("heritage", "heritage-heading"),
     heritageFounded: optionalField("heritage", "heritage-founded"),
 
-    principalQuote: optionalField("principal", "principal-quote"),
-    principalName: optionalField("principal", "principal-name"),
+    /*
+     * The Principal's message and portrait are deliberately absent: they are a
+     * global block, resolved by `blocksToPrincipal` and passed in by the route
+     * rather than being duplicated into every page's props.
+     */
 
     academicsEyebrow: optionalField("academics", "academics-eyebrow"),
     academicsHeading: optionalField("academics", "academics-heading"),
@@ -159,14 +163,13 @@ export const blocksToProps = (blocks: CmsBlock[]) => {
         "heritage-image-1",
         "Archival photograph from the college's early years"
       ),
-      undefined,
+      imageSource(
+        blocks,
+        "heritage",
+        "heritage-image-2",
+        "Architectural detail of the Galle Fort"
+      ),
     ] as const,
-    principalPortrait: imageSource(
-      blocks,
-      "principal",
-      "principal-portrait",
-      "Portrait of the Principal"
-    ),
     studentLifePhotos: {
       sports: imageSource(
         blocks,
@@ -193,7 +196,6 @@ export const blocksToProps = (blocks: CmsBlock[]) => {
       notice: isHidden(blocks, "notice"),
       hero: isHidden(blocks, "hero"),
       heritage: isHidden(blocks, "heritage"),
-      principal: isHidden(blocks, "principal"),
       academics: isHidden(blocks, "academics"),
       life: isHidden(blocks, "life"),
       news: isHidden(blocks, "news"),

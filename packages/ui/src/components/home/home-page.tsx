@@ -10,7 +10,9 @@ import type {
   NewsItem,
   Notice,
 } from "../../content/home";
+import type { PrincipalContent } from "../../content/principal";
 import { SkipLink } from "../primitives/layout";
+import { PrincipalMessage } from "../principal/principal-message";
 import { NoticeBar } from "../site/notice-bar";
 import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
@@ -22,7 +24,6 @@ import { Gallery } from "./gallery";
 import { Heritage } from "./heritage";
 import { Hero } from "./hero";
 import { News } from "./news";
-import { PrincipalMessage } from "./principal-message";
 import { StudentLife } from "./student-life";
 
 const MAIN_ID = "main-content";
@@ -46,7 +47,12 @@ export interface HomePageProps {
   news?: readonly NewsItem[];
   achievements?: readonly Achievement[];
   contact?: FooterContact;
-  principalName?: string;
+  /**
+   * The global Principal's Message block, resolved by the route from
+   * `orpc.cms.getPrincipal`. Shared with every other page that shows the
+   * section, so it is not part of `blocks`.
+   */
+  principal?: PrincipalContent;
   tagline?: string;
   blocks?: CmsBlock[];
   extraNavItems?: readonly NavItem[];
@@ -64,7 +70,7 @@ export const HomePage = ({
   news = NO_NEWS,
   achievements = NO_ACHIEVEMENTS,
   contact,
-  principalName,
+  principal,
   tagline,
   blocks,
   extraNavItems,
@@ -74,7 +80,6 @@ export const HomePage = ({
 
   const resolvedNotice = notice ?? cms?.notice ?? DEFAULT_NOTICE;
   const resolvedTagline = tagline ?? cms?.heroTagline;
-  const resolvedPrincipalName = principalName ?? cms?.principalName;
 
   const headerRef = useRef<HTMLDivElement>(null);
 
@@ -132,12 +137,8 @@ export const HomePage = ({
             }
           />
         )}
-        {!h?.principal && (
-          <PrincipalMessage
-            portrait={cms?.principalPortrait}
-            name={resolvedPrincipalName}
-            quote={cms?.principalQuote}
-          />
+        {principal && !principal.hidden && (
+          <PrincipalMessage content={principal} />
         )}
         {!h?.academics && <Academics />}
         {!h?.life && <StudentLife photos={cms?.studentLifePhotos} />}

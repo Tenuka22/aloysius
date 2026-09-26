@@ -349,7 +349,114 @@ const fetchHistory = async (db: Database, page: string, cursor: number) => {
   };
 };
 
+/**
+ * Normalize the client's block input into the shape the snapshot JSON and the
+ * real-time event both use. Every page's `update` handler needs this, so it
+ * lives here once.
+ */
+const toSnapshotBlocks = (blocks: InputBlock[]): SnapshotBlock[] =>
+  blocks.map((b) => ({
+    id: b.id,
+    hidden: b.hidden ?? false,
+    fields: (b.fields ?? []).map((f) => ({
+      id: f.id,
+      value: f.value ?? "",
+      ...(f.aspectRatio ? { aspectRatio: f.aspectRatio } : {}),
+    })),
+  }));
+
+/**
+ * Build the six endpoints one editor screen needs, parameterized by the `page`
+ * key it stores its rows under and the real-time channel it publishes to.
+ *
+ * Every row-level operation above is already page-agnostic; this is the
+ * procedure layer that wraps them. The eight existing page screens predate it
+ * and still spell their six endpoints out one by one — this factory exists so
+ * a *new* screen does not add a ninth copy. Porting the existing eight onto it
+ * is a mechanical follow-up, deliberately kept out of a change that also
+ * introduces the global block.
+ */
+const editorEndpoints = (page: string) => {
+  const channel = `${page}-updated`;
+
+  return {
+    /** Latest published version for each block. */
+    get: publicProcedure.handler(async ({ context }) => {
+      const blocks = await fetchPublishedBlocks(context.db, page);
+      return blocks.length > 0 ? { blocks } : null;
+    }),
+
+    /** Latest draft for each block. */
+    getDraft: protectedProcedure.handler(async ({ context }) => {
+      const blocks = await fetchDraftBlocks(context.db, page);
+      return blocks.length > 0 ? { blocks } : null;
+    }),
+
+    /** Paginated publish history with field-level diffs. */
+    getHistory: protectedProcedure
+      .input(z.object({ cursor: z.number().optional().default(0) }))
+      .handler(({ context, input }) =>
+        fetchHistory(context.db, page, input.cursor)
+      ),
+
+    update: cmsProcedure
+      .input(z.object({ blocks: z.array(blockSchema) }))
+      .handler(async ({ context, input }) => {
+        const userId = context.session?.user?.id;
+        if (!userId) {
+          return { success: false, draftIds: [] as string[] };
+        }
+        const draftIds = await saveDraftBlocks(
+          context.db,
+          page,
+          userId,
+          input.blocks
+        );
+        await cmsPublisher.publish(channel, {
+          blocks: toSnapshotBlocks(input.blocks),
+        });
+        return { success: true, draftIds };
+      }),
+
+    /** Real-time SSE stream for this screen's snapshot changes. */
+    watch: cmsProcedure.handler(async function* watch({ signal, lastEventId }) {
+      const iterator = cmsPublisher.subscribe(channel, {
+        signal,
+        lastEventId,
+      });
+      for await (const payload of iterator) {
+        const meta = getEventMeta(payload);
+        yield withEventMeta(payload, { id: meta?.id ?? undefined });
+      }
+    }),
+
+    publish: cmsProcedure.handler(async ({ context }) => {
+      const userId = context.session?.user?.id;
+      if (!userId) {
+        return { success: false };
+      }
+      const { publishedIds, publishedBlocks } = await publishDraftBlocks(
+        context.db,
+        page,
+        userId
+      );
+      await cmsPublisher.publish(channel, { blocks: publishedBlocks });
+      return { success: true, publishedIds };
+    }),
+  };
+};
+
+/** The global Principal's Message editor. Not a page — see `PRINCIPAL_BLOCKS`. */
+const principal = editorEndpoints("principal");
+
 export const cmsRouter = {
+  getPrincipal: principal.get,
+  getPrincipalDraft: principal.getDraft,
+  getPrincipalHistory: principal.getHistory,
+  updatePrincipal: principal.update,
+  watchPrincipal: principal.watch,
+  publishPrincipal: principal.publish,
+
   /** Fetch the latest published version for each block on the homepage. */
   getHomepage: publicProcedure.handler(async ({ context }) => {
     const blocks = await fetchPublishedBlocks(context.db, "homepage");

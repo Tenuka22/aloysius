@@ -10,6 +10,12 @@ export interface CmsPageEvent {
 
 export interface CmsEvents {
   "homepage-updated": CmsPageEvent;
+  /**
+   * The global Principal's Message block. Named per-channel like every other
+   * page even though it is not a page, so an editor watching one screen is
+   * never woken by a draft saved on another.
+   */
+  "principal-updated": CmsPageEvent;
   "about-updated": CmsPageEvent;
   "news-updated": CmsPageEvent;
   "notices-updated": CmsPageEvent;
