@@ -6,6 +6,7 @@ import { blocksToProps } from "../../content/cms-to-home";
 import { DEFAULT_NOTICE } from "../../content/home";
 import type {
   Achievement,
+  GalleryItem,
   NavItem,
   NewsItem,
   Notice,
@@ -46,6 +47,7 @@ export interface HomePageProps {
   featuredNews?: NewsItem;
   news?: readonly NewsItem[];
   achievements?: readonly Achievement[];
+  galleryItems?: readonly GalleryItem[];
   contact?: FooterContact;
   /**
    * The global Principal's Message block, resolved by the route from
@@ -69,6 +71,7 @@ export const HomePage = ({
   featuredNews,
   news = NO_NEWS,
   achievements = NO_ACHIEVEMENTS,
+  galleryItems,
   contact,
   principal,
   tagline,
@@ -145,7 +148,7 @@ export const HomePage = ({
         {!h?.news && <News featured={featuredNews} items={news} />}
         {!h?.achievements && <Achievements achievements={achievements} />}
         {!h?.alumni && <Alumni photo={cms?.alumniPhoto} />}
-        {!h?.gallery && <Gallery />}
+        {!h?.gallery && <Gallery items={galleryItems} />}
       </main>
       <SiteFooter contact={contact} />
     </>

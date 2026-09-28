@@ -1,13 +1,19 @@
 import * as stylex from "@stylexjs/stylex";
 
-import type { NavItem } from "../../content/home";
+import type { Achievement, GalleryItem, NavItem } from "../../content/home";
+import type { Club } from "../../content/students";
 import { color, font, space } from "../../tokens/tokens.stylex";
+import { Achievements } from "../home/achievements";
+import { Gallery } from "../home/gallery";
 import { Media } from "../primitives/media";
 import type { ImageSource } from "../primitives/media";
 import { SiteFooter } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
+import { ClubsSocieties } from "../students/clubs-societies";
 
 const MAIN_ID = "main-content";
+const NO_ACHIEVEMENTS: readonly Achievement[] = [];
+const NO_EVENTS: readonly StudentEvent[] = [];
 
 const styles = stylex.create({
   main: {
@@ -69,6 +75,17 @@ export interface StudentsPageProps {
   heroImage?: ImageSource;
   activitiesHeading?: string;
   extraNavItems?: readonly NavItem[];
+  achievements?: readonly Achievement[];
+  galleryItems?: readonly GalleryItem[];
+  events?: readonly StudentEvent[];
+  clubs?: readonly Club[];
+}
+
+export interface StudentEvent {
+  id: string;
+  title: string;
+  startsAt: string;
+  location?: string | null;
 }
 
 export const StudentsPage = ({
@@ -78,6 +95,10 @@ export const StudentsPage = ({
   heroImage,
   activitiesHeading,
   extraNavItems,
+  achievements = NO_ACHIEVEMENTS,
+  galleryItems,
+  events = NO_EVENTS,
+  clubs,
 }: StudentsPageProps) => (
   <>
     <SiteHeader activeHref="/students" extraNavItems={extraNavItems} />
@@ -101,6 +122,30 @@ export const StudentsPage = ({
         )}
         <p>Student life content will be displayed here once published.</p>
       </section>
+      {events.length > 0 && (
+        <section
+          {...stylex.props(styles.content)}
+          aria-labelledby="student-events-title"
+        >
+          <h2 id="student-events-title" {...stylex.props(styles.heading)}>
+            Upcoming events
+          </h2>
+          <ul>
+            {events.map((event) => (
+              <li key={event.id}>
+                <strong>{event.title}</strong> —{" "}
+                {new Date(event.startsAt).toLocaleDateString()}
+                {event.location ? ` · ${event.location}` : ""}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {clubs && clubs.length > 0 && <ClubsSocieties clubs={clubs} />}
+      {achievements.length > 0 && <Achievements achievements={achievements} />}
+      {galleryItems && galleryItems.length > 0 && (
+        <Gallery items={galleryItems} />
+      )}
     </main>
     <SiteFooter />
   </>

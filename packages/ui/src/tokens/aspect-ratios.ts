@@ -42,6 +42,28 @@ export const aspectRatios = {
 export type AspectRatioKey = keyof typeof aspectRatios;
 
 /**
+ * The conventional `N:M` name for each ratio, for use in UI copy.
+ *
+ * Declared here, next to the number it describes, rather than derived from it.
+ * Recovering "3:2" from `1.5` by arithmetic works for exactly the fractions in
+ * `aspectRatios` and silently degrades to "1.500" for anything else — and a crop
+ * hint that says "1.500" is worse than no hint. Keeping the string beside the
+ * number is also what stops a hint from disagreeing with the ratio it is
+ * describing.
+ */
+export const aspectRatioNames: Record<AspectRatioKey, string> = {
+  hero: "16:9",
+  heritagePhoto: "4:3",
+  heritageDetail: "3:2",
+  principalPortrait: "4:5",
+  newsCard: "16:10",
+  galleryThumb: "1:1",
+  mosaicTile: "3:2",
+  achievementCard: "3:2",
+  alumniPhoto: "3:2",
+};
+
+/**
  * Human-readable labels for each ratio, used in the upload UI to tell the
  * editor what crop is expected.
  */

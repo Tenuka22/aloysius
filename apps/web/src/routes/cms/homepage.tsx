@@ -5,9 +5,11 @@ import {
   SectionsDropdown,
 } from "@aloysius/ui/components/cms/homepage-editor";
 import type { HomepageEditorHandle } from "@aloysius/ui/components/cms/homepage-editor";
+import {
+  ScreenHead,
+  ScreenWrap,
+} from "@aloysius/ui/components/cms/screen-head";
 import { HOMEPAGE_BLOCKS } from "@aloysius/ui/content/cms";
-import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
 import {
   useMutation,
   useQueryClient,
@@ -18,60 +20,6 @@ import { Suspense, useCallback, useRef, useState } from "react";
 
 import { useLiveHomepageBlocks } from "@/hooks/use-live-homepage-blocks";
 import { client, orpc } from "@/utils/orpc";
-
-const md = "@media (min-width: 40rem)";
-
-const styles = stylex.create({
-  wrap: {
-    paddingBlockStart: space.md,
-    paddingBlockEnd: space.md,
-    paddingInlineStart: space.md,
-    paddingInlineEnd: space.md,
-    [md]: {
-      paddingBlockStart: space.lg,
-      paddingBlockEnd: space.lg,
-      paddingInlineStart: space.lg,
-      paddingInlineEnd: space.lg,
-    },
-  },
-  screenHead: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: space.sm,
-    marginBlockEnd: space.md,
-  },
-  headingWrap: {
-    minWidth: 0,
-  },
-  eyebrow: {
-    margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWidest,
-    textTransform: "uppercase",
-    color: color.accentOnSurface,
-  },
-  heading: {
-    margin: 0,
-    marginBlockStart: space["3xs"],
-    fontFamily: font.display,
-    fontSize: font.size3xl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingTight,
-    textWrap: "balance",
-  },
-  note: {
-    margin: 0,
-    marginBlockStart: space["3xs"],
-    maxWidth: space.measure,
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingNormal,
-    color: color.onSurfaceMuted,
-    textWrap: "pretty",
-  },
-});
 
 const HomepageContent = () => {
   const queryClient = useQueryClient();
@@ -191,22 +139,20 @@ const HomepageContent = () => {
 
   return (
     <>
-      <div {...stylex.props(styles.screenHead)}>
-        <div {...stylex.props(styles.headingWrap)}>
-          <p {...stylex.props(styles.eyebrow)}>Pages / Homepage</p>
-          <h1 {...stylex.props(styles.heading)}>Homepage Editor</h1>
-          <p {...stylex.props(styles.note)}>
-            Edit the sections that make up the public homepage.
-          </p>
-        </div>
-        <HomepageEditorActions
-          onSaveDraft={handleSaveDraft}
-          onPublish={handlePublish}
-          onPreview={handlePreview}
-          sectionsSlot={sectionsSlot}
-          fetchHistory={handleFetchHistory}
-        />
-      </div>
+      <ScreenHead
+        actions={
+          <HomepageEditorActions
+            onSaveDraft={handleSaveDraft}
+            onPublish={handlePublish}
+            onPreview={handlePreview}
+            sectionsSlot={sectionsSlot}
+            fetchHistory={handleFetchHistory}
+          />
+        }
+        eyebrow="Pages / Homepage"
+        heading="Homepage Editor"
+        note="Edit the sections that make up the public homepage."
+      />
       <HomepageEditor
         blocks={HOMEPAGE_BLOCKS}
         ref={editorRef}
@@ -227,10 +173,10 @@ export const Route = createFileRoute("/cms/homepage")({
     ],
   }),
   component: () => (
-    <div {...stylex.props(styles.wrap)}>
+    <ScreenWrap>
       <Suspense fallback={<div>Loading homepage…</div>}>
         <HomepageContent />
       </Suspense>
-    </div>
+    </ScreenWrap>
   ),
 });

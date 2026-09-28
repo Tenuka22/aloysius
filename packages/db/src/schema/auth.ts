@@ -16,7 +16,15 @@ export const user = sqliteTable("user", {
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: text("role"),
+  /*
+   * The default has to live here as well as in the Better Auth config
+   * (`user.additionalFields.role.defaultValue` in `packages/auth`). Better Auth
+   * applies its default on the paths that go through it, but a direct insert
+   * does not, and a null role is indistinguishable from no role at all to
+   * `requireRole`, which reads `session.user.role ?? ""`. So the two have to
+   * agree, or a user created outside the auth API is locked out of everything.
+   */
+  role: text("role").default("user"),
   banned: integer("banned", { mode: "boolean" }).default(false),
   banReason: text("ban_reason"),
   banExpires: integer("ban_expires", { mode: "timestamp_ms" }),

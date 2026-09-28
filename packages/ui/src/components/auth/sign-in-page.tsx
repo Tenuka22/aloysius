@@ -357,10 +357,25 @@ const styles = stylex.create({
     fontSize: font.sizeMd,
     lineHeight: font.leadingNormal,
     color: color.onSurfaceSubtle,
-    margin: {
-      default: `${space["2xs"]} 0 ${space.xs}`,
-      [bp.shortViewport]: `${space["3xs"]} 0 ${space["2xs"]}`,
+    /*
+     * The old `margin` shorthand is written as three longhand properties on
+     * purpose. As a responsive object its values were template literals —
+     * `${space["2xs"]} 0 ${space.xs}` — and StyleX evaluates style values
+     * statically, so it could not read one: it emitted the whole declaration as
+     * a nested rule keyed on the unresolved variable
+     * (`var(--…) { .x….x… { margin: … } }`), which is not valid CSS and failed
+     * the production build with "Invalid empty selector". Longhand properties
+     * with plain token values are analysable and produce the same margins.
+     */
+    marginBlockStart: {
+      default: space["2xs"],
+      [bp.shortViewport]: space["3xs"],
     },
+    marginBlockEnd: {
+      default: space.xs,
+      [bp.shortViewport]: space["2xs"],
+    },
+    marginInline: 0,
   },
 
   field: {
@@ -1044,11 +1059,17 @@ export const SignInPage = ({
                 aria-describedby={message ? errorId : undefined}
                 aria-invalid={message ? true : undefined}
                 autoComplete="current-password"
+                // Issued credentials are lower case. Autocapitalise would
+                // rewrite the first letter on a phone and lock the
+                // administrator out of the password they were just handed.
+                autoCapitalize="none"
+                autoCorrect="off"
                 id={passwordId}
                 name="password"
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="••••••••"
                 required
+                spellCheck={false}
                 type={showPassword ? "text" : "password"}
                 value={password}
                 {...stylex.props(

@@ -1,6 +1,7 @@
-import type { RouterClient } from "@orpc/server";
-
-import { protectedProcedure, publicProcedure } from "../index";
+import { publicProcedure } from "../index";
+import { adminClubsRouter } from "./admin-clubs";
+import { adminUsersRouter } from "./admin-users";
+import { clubsRouter } from "./clubs";
 import { cmsRouter } from "./cms";
 import { filesRouter } from "./files";
 
@@ -15,10 +16,9 @@ export const appRouter = {
   getSession: publicProcedure.handler(({ context }) => context.session),
   cms: cmsRouter,
   files: filesRouter,
-  privateData: protectedProcedure.handler(({ context }) => ({
-    message: "This is private",
-    user: context.session?.user,
-  })),
+  adminUsers: adminUsersRouter,
+  adminClubs: adminClubsRouter,
+  clubs: clubsRouter,
 };
+
 export type AppRouter = typeof appRouter;
-export type AppRouterClient = RouterClient<typeof appRouter>;

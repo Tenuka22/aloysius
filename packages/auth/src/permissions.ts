@@ -15,9 +15,17 @@ export const statement = {
   file: ["create", "list", "delete"],
   /** CMS content: edit and publish pages. */
   cms: ["edit", "publish"],
+  /** Club-authored content. */
+  club: ["read", "submit"],
 } as const;
 
 export type AppAccessControl = AccessControl<typeof statement>;
+
+/**
+ * Every role the admin plugin is configured with. Typed as a union so a
+ * credential cannot be created with a role the plugin would reject at runtime.
+ */
+export type AppRole = "admin" | "cms" | "club-admin" | "user";
 
 export const ac: AppAccessControl = createAccessControl(statement);
 
@@ -32,6 +40,11 @@ export const admin = ac.newRole({
   cms: ["edit", "publish"],
 });
 
+/** The single hardcoded administrator role used by each club. */
+export const clubAdmin = ac.newRole({
+  club: ["read", "submit"],
+});
+
 /**
  * CMS editor – can edit and publish homepage content. Cannot manage files
  * or other admin-only resources.
@@ -43,4 +56,6 @@ export const cms = ac.newRole({
 /**
  * Regular user – no special permissions beyond built-in user/session.
  */
-export const user = ac.newRole({});
+export const user = ac.newRole({
+  club: ["read"],
+});

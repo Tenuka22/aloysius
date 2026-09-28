@@ -5,10 +5,12 @@ import {
   SectionsDropdown,
 } from "@aloysius/ui/components/cms/homepage-editor";
 import type { HomepageEditorHandle } from "@aloysius/ui/components/cms/homepage-editor";
+import {
+  ScreenHead,
+  ScreenWrap,
+} from "@aloysius/ui/components/cms/screen-head";
 import { ANTHEM_IMAGE, FOUNDERS, TIMELINE } from "@aloysius/ui/content/about";
 import { ABOUT_BLOCKS } from "@aloysius/ui/content/cms";
-import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
 import {
   useMutation,
   useQueryClient,
@@ -18,50 +20,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, useCallback, useRef, useState } from "react";
 
 import { client, orpc } from "@/utils/orpc";
-
-const styles = stylex.create({
-  wrap: {
-    paddingBlock: space.md,
-    paddingInline: space.md,
-  },
-  screenHead: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: space.sm,
-    marginBlockEnd: space.md,
-  },
-  headingWrap: {
-    minWidth: 0,
-  },
-  eyebrow: {
-    margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWidest,
-    textTransform: "uppercase",
-    color: color.accentOnSurface,
-  },
-  heading: {
-    margin: 0,
-    marginBlockStart: space["3xs"],
-    fontFamily: font.display,
-    fontSize: font.size3xl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingTight,
-    textWrap: "balance",
-  },
-  note: {
-    margin: 0,
-    marginBlockStart: space["3xs"],
-    maxWidth: space.measure,
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingNormal,
-    color: color.onSurfaceMuted,
-    textWrap: "pretty",
-  },
-});
 
 /** Default archival photos shown when no CMS override is saved. */
 const DEFAULT_IMAGES: Record<string, string> = {
@@ -191,23 +149,20 @@ const AboutContent = () => {
 
   return (
     <>
-      <div {...stylex.props(styles.screenHead)}>
-        <div {...stylex.props(styles.headingWrap)}>
-          <p {...stylex.props(styles.eyebrow)}>Pages / About</p>
-          <h1 {...stylex.props(styles.heading)}>About Editor</h1>
-          <p {...stylex.props(styles.note)}>
-            Replace the archival photos on the About page. Clearing a photo
-            restores the college&apos;s default.
-          </p>
-        </div>
-        <HomepageEditorActions
-          fetchHistory={handleFetchHistory}
-          onPublish={handlePublish}
-          onPreview={handlePreview}
-          onSaveDraft={handleSaveDraft}
-          sectionsSlot={sectionsSlot}
-        />
-      </div>
+      <ScreenHead
+        actions={
+          <HomepageEditorActions
+            fetchHistory={handleFetchHistory}
+            onPublish={handlePublish}
+            onPreview={handlePreview}
+            onSaveDraft={handleSaveDraft}
+            sectionsSlot={sectionsSlot}
+          />
+        }
+        eyebrow="Pages / About"
+        heading="About Editor"
+        note="Replace the archival photos on the About page. Clearing a photo restores the college's default."
+      />
       <HomepageEditor
         blocks={ABOUT_BLOCKS}
         defaultImages={DEFAULT_IMAGES}
@@ -228,10 +183,10 @@ export const Route = createFileRoute("/cms/about")({
     ],
   }),
   component: () => (
-    <div {...stylex.props(styles.wrap)}>
+    <ScreenWrap>
       <Suspense fallback={<div>Loading…</div>}>
         <AboutContent />
       </Suspense>
-    </div>
+    </ScreenWrap>
   ),
 });

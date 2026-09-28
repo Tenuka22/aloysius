@@ -77,6 +77,25 @@ export interface GalleryItem {
    * produce a uniform grid, which is the layout this replaced.
    */
   preferredRatio: number;
+  /**
+   * Where the tile goes, when the tile is a way to somewhere rather than just a
+   * picture. A club gallery whose photographs live on a Facebook album points
+   * here at the album, which is the only way a visitor ever finds out there is
+   * more.
+   *
+   * Always an absolute off-site address, and always opened in a new tab — the
+   * tile that uses this is a club's external album, and dropping a visitor back
+   * onto the homepage afterwards is worse than the extra tab.
+   *
+   * Omitted for a plain editorial tile, which is not a link to anything.
+   */
+  href?: string;
+  /**
+   * Small line under the image describing where the link goes, e.g. "Full
+   * album on Facebook". Shown only when there is an `href`, because without one
+   * it is a caption explaining nothing.
+   */
+  hrefLabel?: string;
 }
 
 export interface NavItem {
@@ -90,6 +109,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { id: "about", label: "About", href: "/about" },
   { id: "academics", label: "Academics", href: "/academics" },
   { id: "students", label: "Students", href: "/students" },
+  { id: "events", label: "Events", href: "/events" },
   { id: "news", label: "News", href: "/news" },
   { id: "alumni", label: "Alumni", href: "/alumni" },
   { id: "media", label: "Media", href: "/media" },
@@ -163,25 +183,62 @@ export const STUDENT_LIFE = [
 ] as const;
 
 /**
- * Six tiles, each composed for the crop it is most likely to be: the
+ * Twelve tiles, each composed for the crop it is most likely to be: the
  * establishing shots wide, the subject shots squarer. The mix is what makes the
  * masonry read as a gallery rather than a grid with gaps in it.
+ *
+ * The count is load-bearing, not arbitrary. The grid is a CSS multi-column at
+ * 2, 3 and 4 columns across its breakpoints, and a multi-column balances by
+ * splitting its items into contiguous groups - so an item count that is not a
+ * multiple of the column count forces the leftover into a short column. Six
+ * tiles across four columns is 2/1/2/1, which left the bottom-left of the
+ * section as a two-tile void no choice of aspect ratio could fill. Twelve is
+ * 3/3/3/3 at the widest, and 6/6, 4/4/4 and 3/3/3/3 at the narrower ones: every
+ * column carries the same number of tiles at every breakpoint, the balancer
+ * has enough freedom to even out the bottoms, and the section is no taller than
+ * it was - the new tiles fill the hole rather than extend the page.
+ *
+ * Order is authored for the 3/3/3/3 split it produces, so each column is a
+ * deliberate mix (an establishing shot, a tall subject, a supporting crop)
+ * rather than three similar crops stacked.
  */
 export const GALLERY_ITEMS: readonly GalleryItem[] = [
   { id: "campus", label: "Campus", preferredRatio: aspectRatios.hero },
   { id: "events", label: "Events", preferredRatio: aspectRatios.galleryThumb },
-  { id: "sports", label: "Sports", preferredRatio: aspectRatios.mosaicTile },
+  { id: "academic", label: "Academic", preferredRatio: aspectRatios.newsCard },
   {
     id: "heritage",
     label: "Heritage",
     preferredRatio: aspectRatios.heritagePhoto,
   },
+  { id: "sports", label: "Sports", preferredRatio: aspectRatios.mosaicTile },
   {
     id: "students",
     label: "Students",
     preferredRatio: aspectRatios.mosaicTile,
   },
-  { id: "academic", label: "Academic", preferredRatio: aspectRatios.newsCard },
+  {
+    id: "clubs",
+    label: "Clubs & Societies",
+    preferredRatio: aspectRatios.mosaicTile,
+  },
+  {
+    id: "music",
+    label: "Music & Drama",
+    preferredRatio: aspectRatios.mosaicTile,
+  },
+  {
+    id: "scouts",
+    label: "Scouts & Cadets",
+    preferredRatio: aspectRatios.heritageDetail,
+  },
+  { id: "alumni", label: "Alumni", preferredRatio: aspectRatios.alumniPhoto },
+  { id: "houses", label: "Houses", preferredRatio: aspectRatios.newsCard },
+  {
+    id: "achievements",
+    label: "Achievements",
+    preferredRatio: aspectRatios.achievementCard,
+  },
 ];
 
 export const MOTTO = "Certa Viriliter";

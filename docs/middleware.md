@@ -1,3 +1,7 @@
+> **STALE — describes code that does not exist.** The `site-admin.ts` module, and the `assertSiteAdmin` / `requireSiteAdminMiddleware` functions it documents, have never existed on this branch. The two middleware files that _did_ exist (`middleware/auth.ts`, `middleware/cms.ts`) had no importers and have been deleted, because route protection is done in the layout routes' `beforeLoad`.
+>
+> For how authorisation actually works, read the "Who is allowed to do what" section of [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+
 # Web Middleware Documentation
 
 ## Overview

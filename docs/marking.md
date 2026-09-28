@@ -1,3 +1,7 @@
+> **STALE — describes code that does not exist.** `schema/marking.ts` and all twenty `routers/marking/*` files were removed in commit `dd4c45f`. `subjectMark`, `studentSubjectSelection`, `gradeScale` and `examType` are gone. Teacher credentials moved to a separate project.
+>
+> Kept only for design provenance. For the current data model, read [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+
 # Marking System
 
 ## Overview

@@ -20,5 +20,3 @@ export const createContext = async ({
     session,
   };
 };
-
-export type Context = Awaited<ReturnType<typeof createContext>>;

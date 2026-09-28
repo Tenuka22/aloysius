@@ -1,3 +1,7 @@
+> **STALE — describes code that does not exist.** The student-records, staff, class-assignment, subject-allocation and qualification systems were all removed in commit `dd4c45f`. None of `schema/staff.ts`, `schema/academics.ts`, `schema/qualifications.ts`, `config/school.ts`, `constants/**` or the 24 `routers/staff/*` files exist.
+>
+> Kept only for design provenance. For the current data model, read [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+
 # Staff Management System
 
 ## Overview

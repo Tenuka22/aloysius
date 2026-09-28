@@ -1,6 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 
 import type { NavItem } from "../../content/home";
+import type { Club } from "../../content/students";
 import { SkipLink } from "../primitives/layout";
 import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
@@ -36,6 +37,7 @@ export interface StudentsPageProps {
   sportImages?: SportImages;
   /** Destination for the prefects call to action; omitted, no button renders. */
   prefectsHref?: string;
+  clubs?: readonly Club[];
 }
 
 export const StudentsPage = ({
@@ -43,6 +45,7 @@ export const StudentsPage = ({
   extraNavItems,
   sportImages,
   prefectsHref,
+  clubs,
 }: StudentsPageProps) => (
   <>
     <SkipLink targetId={MAIN_ID} />
@@ -50,7 +53,7 @@ export const StudentsPage = ({
     <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
       <StudentsHero />
       <SportsGrid images={sportImages} />
-      <ClubsSocieties />
+      <ClubsSocieties clubs={clubs} />
       <HouseSystem />
       <PrefectsCta href={prefectsHref} />
     </main>

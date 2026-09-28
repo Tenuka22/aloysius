@@ -7,14 +7,14 @@ services:
       dockerfile: apps/web/Dockerfile
     init: true
     ports:
-      - "${WEB_PORT:-3001}:${WEB_PORT:-3001}"
+      - "${WEB_PORT:-4000}:${WEB_PORT:-4000}"
     env_file:
       - path: apps/web/.env
         required: false
     environment:
-      PORT: ${WEB_PORT:-3001}
+      PORT: ${WEB_PORT:-4000}
       NODE_ENV: production
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:4000}
       TURSO_DATABASE_URL: ${TURSO_DATABASE_URL:-http://turso-db:8080}
       TURSO_AUTH_TOKEN: ${TURSO_AUTH_TOKEN:-}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio}
@@ -34,7 +34,7 @@ services:
           "CMD",
           "node",
           "-e",
-          "fetch('http://localhost:${WEB_PORT:-3001}/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+          "fetch('http://localhost:${WEB_PORT:-4000}/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
         ]
       interval: 10s
       timeout: 5s
@@ -84,16 +84,16 @@ services:
     image: aloysius-building:latest
     init: true
     ports:
-      - "${BUILDING_PORT:-4001}:${BUILDING_PORT:-4001}"
+      - "${BUILDING_PORT:-4002}:${BUILDING_PORT:-4002}"
     environment:
-      PORT: ${BUILDING_PORT:-4001}
+      PORT: ${BUILDING_PORT:-4002}
     healthcheck:
       test:
         [
           "CMD",
           "bun",
           "-e",
-          "fetch('http://localhost:${BUILDING_PORT:-4001}/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+          "fetch('http://localhost:${BUILDING_PORT:-4002}/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
         ]
       interval: 10s
       timeout: 5s

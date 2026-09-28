@@ -1,100 +1,63 @@
-import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
-import { createFileRoute } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useRouterState,
+} from "@tanstack/react-router";
 
-import { AdminShell } from "@/components/admin/admin-shell";
-import { authClient } from "@/lib/auth-client";
+import { WorkspaceShell } from "@/components/workspace-shell";
+import { client } from "@/utils/orpc";
 
-const md = "@media (min-width: 40rem)";
-
-const styles = stylex.create({
-  wrap: {
-    paddingBlockStart: space.md,
-    paddingBlockEnd: space.md,
-    paddingInlineStart: space.md,
-    paddingInlineEnd: space.md,
-    [md]: {
-      paddingBlockStart: space.lg,
-      paddingBlockEnd: space.lg,
-      paddingInlineStart: space.lg,
-      paddingInlineEnd: space.lg,
-    },
-  },
-  heading: {
-    margin: 0,
-    marginBlockEnd: space.md,
-    fontSize: font.size2xl,
-    fontWeight: font.weightBold,
-    lineHeight: font.leadingTight,
-    color: color.onSurface,
-  },
-  cardGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: space.lg,
-  },
-  card: {
-    padding: space.lg,
-    borderRadius: space.sm,
-    backgroundColor: color.surfaceRaised,
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.border,
-  },
-  cardTitle: {
-    margin: 0,
-    fontSize: font.sizeLg,
-    fontWeight: font.weightSemibold,
-    color: color.onSurface,
-  },
-  cardDesc: {
-    margin: 0,
-    marginBlockStart: space.xs,
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingNormal,
-    color: color.onSurfaceMuted,
-  },
-});
-
+/**
+ * Order is task order, not feature order: see the state of the estate, edit
+ * content, then act on an account. `Club accounts` and `Set up an account` are
+ * both about the same club administrator but from opposite ends - the first
+ * works with an account that exists, the second creates the one that does not.
+ */
 const ADMIN_NAV_ITEMS = [
-  { id: "dashboard", label: "Dashboard", href: "/admin" },
-  { id: "cms", label: "CMS", href: "/cms" },
-  { id: "users", label: "Users", href: "/admin/users" },
+  { num: "01", label: "Overview", href: "/admin" },
+  { num: "02", label: "Content", href: "/cms" },
+  { num: "03", label: "Club accounts", href: "/admin/clubs" },
+  { num: "04", label: "Set up an account", href: "/admin/users" },
 ] as const;
 
+const isCurrentSection = (pathname: string, href: string) =>
+  href === "/" ? pathname === href : pathname.startsWith(href);
+
 const AdminContent = () => {
-  const { data: session } = authClient.useSession();
+  const { user } = Route.useLoaderData();
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const navItems = ADMIN_NAV_ITEMS.map((item) => ({
+    ...item,
+    active: isCurrentSection(pathname, item.href),
+  }));
 
   return (
-    <AdminShell
+    <WorkspaceShell
+      brandName="Admin"
+      mainId="admin-main"
+      navItems={navItems}
       title="Admin Panel"
       eyebrow="Administration"
-      navItems={ADMIN_NAV_ITEMS}
-      userName={session?.user?.name ?? "Admin"}
-      userRole={session?.user?.role ?? "admin"}
+      userName={user.name ?? user.username ?? "Admin"}
+      userRole={user.role ?? "admin"}
     >
-      <div {...stylex.props(styles.wrap)}>
-        <h1 {...stylex.props(styles.heading)}>Admin Dashboard</h1>
-        <div {...stylex.props(styles.cardGrid)}>
-          <div {...stylex.props(styles.card)}>
-            <h2 {...stylex.props(styles.cardTitle)}>CMS</h2>
-            <p {...stylex.props(styles.cardDesc)}>
-              Manage website content through the CMS editor.
-            </p>
-          </div>
-          <div {...stylex.props(styles.card)}>
-            <h2 {...stylex.props(styles.cardTitle)}>Users</h2>
-            <p {...stylex.props(styles.cardDesc)}>
-              Manage user accounts and roles.
-            </p>
-          </div>
-        </div>
-      </div>
-    </AdminShell>
+      <Outlet />
+    </WorkspaceShell>
   );
 };
 
 export const Route = createFileRoute("/admin")({
+  beforeLoad: async () => {
+    const session = await client.getSession();
+    if (session?.user?.role !== "admin") {
+      throw redirect({ to: "/" });
+    }
+    return { user: session.user };
+  },
+  loader: ({ context }) => ({ user: context.user }),
   head: () => ({
     meta: [
       { title: "Admin — St. Aloysius' College" },

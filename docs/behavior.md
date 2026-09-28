@@ -1,3 +1,9 @@
+> **MOSTLY STALE.** Verified false: "every file procedure uses `adminProcedure`" (two of the four are `protectedProcedure`, so any signed-in user can upload); the `databaseHooks` role-enforcement block (does not exist); and `ensureServerBootstrap` calling `ensureSiteAdmin` and rotating to `ADMIN_PASSWORD` (it calls `ensureCmsUser`, and there is no `ADMIN_PASSWORD`). The plugin list is also incomplete — it omits the `username` plugin, which is load-bearing rather than incidental.
+>
+> Still correct: file deletion order, presigned uploads, no server-side image processing, file serving, and the storage key format.
+>
+> For the current model, read [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+
 # System Behavior Patterns
 
 Critical behavioral patterns in the Aloysius codebase that aren't obvious from reading individual files.

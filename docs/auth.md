@@ -1,3 +1,9 @@
+> **MOSTLY STALE — rewrite before trusting.** Verified false: the `ADMIN_USERNAME` / `ADMIN_PASSWORD` env vars (never existed), the `databaseHooks.user.create/update` block forcing the admin role (no longer exists), a `teacher` role and `teacherProcedure` (removed in `dd4c45f`), `ensureSiteAdmin` / `createTeacherCredential` / `rotateTeacherPassword` (do not exist), the `index.test.ts` it refers to (does not exist), and a middleware chain (deleted). It also lists permission resources `staff`, `qualification`, `assignment`, `student`, `mark` and `exam`, none of which exist — the real statement has three: `file`, `cms` and `club`.
+>
+> Still correct: `cookiePrefix`, the plugin wiring, `role.input: false`, and the procedure tiers.
+>
+> For the current model, read the "Accounts and roles" section of [`ARCHITECTURE.md`](./ARCHITECTURE.md), or the source: `packages/auth/src/`.
+
 # Authentication & RBAC System
 
 ## Overview

@@ -71,6 +71,13 @@ export interface Club {
   name: string;
   /** Omitted until the college publishes what the society does. */
   description?: string;
+  /**
+   * The club's own cover banner, set by its administrator and approved like any
+   * other piece of club content. Optional, because a club with no approved
+   * banner yet is the normal case rather than an error - the card falls back to
+   * the plain surface rather than reserving an empty box.
+   */
+  coverImageUrl?: string | null;
 }
 
 export const CLUBS: readonly Club[] = [

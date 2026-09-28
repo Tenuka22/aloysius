@@ -2,7 +2,8 @@ import { join } from "node:path";
 
 const dist = join(import.meta.dir, "dist");
 const indexHtml = Bun.file(join(dist, "index.html"));
-const port = Number(process.env.PORT ?? 4001);
+/* Matches the dev server in `vite.config.ts`, and is neither of the site's. */
+const port = Number(process.env.PORT ?? 4003);
 
 Bun.serve({
   port,

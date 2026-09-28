@@ -7,6 +7,7 @@ import {
   CLUBS_INTRO,
 } from "../../content/students";
 import type { Club } from "../../content/students";
+import { aspectRatios } from "../../tokens/aspect-ratios";
 import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
 import {
   Container,
@@ -60,6 +61,23 @@ const styles = stylex.create({
     transitionProperty: "background-color",
     transitionDuration: motionToken.base,
   },
+  /*
+   * A card carrying a banner puts its text below the image rather than over it.
+   * Overlaying would need a scrim, and a scrim over a photographer's chosen
+   * image decides for them which parts of their photograph stay visible - which
+   * is the one thing a cover banner should not do.
+   */
+  cardWithBanner: {
+    justifyContent: "flex-start",
+    padding: 0,
+    overflow: "hidden",
+  },
+  bannerText: {
+    display: "flex",
+    flexDirection: "column",
+    gap: space["3xs"],
+    padding: space.lg,
+  },
   name: {
     margin: 0,
     fontSize: font.sizeLg,
@@ -74,6 +92,21 @@ const styles = stylex.create({
     lineHeight: font.leadingRelaxed,
     color: color.onInverseSubtle,
     textWrap: "pretty",
+  },
+  /*
+   * The club's own cover banner, shown as a band across the top of its card.
+   *
+   * The card is a fixed-height row in a hairline grid, so the banner is a
+   * reserved landscape box rather than a background: `object-fit: cover` on a
+   * full-bleed background would crop a photographer's composition differently at
+   * every card width, and the whole point of a club choosing this image is that
+   * it represents the club. A club with no banner renders no box at all, which
+   * keeps the grid tidy rather than showing a placeholder per card.
+   */
+  banner: {
+    display: "block",
+    width: "100%",
+    objectFit: "cover",
   },
   // `Heading` and `Lead` both reset their margins, so the gap between them is
   // the caller's to supply.
@@ -100,17 +133,43 @@ export const ClubsSocieties = ({
         {clubs.map((club) => (
           <li key={club.id} {...stylex.props(styles.cell)}>
             <Reveal direction="up" style={styles.cell}>
-              <div {...stylex.props(styles.card)}>
-                <h3 {...stylex.props(styles.name)}>{club.name}</h3>
-                {/*
-                  No filler when the society has not published what it does:
-                  an empty slot is honest, `[CMS: description]` is not.
-                */}
-                {club.description ? (
-                  <p {...stylex.props(styles.description)}>
-                    {club.description}
-                  </p>
+              <div
+                {...stylex.props(
+                  styles.card,
+                  /*
+                   * `undefined`, never `null`: StyleX compiles a literal null
+                   * argument into a rule with an empty selector, which fails the
+                   * whole stylesheet at build time rather than at this call site.
+                   */
+                  club.coverImageUrl ? styles.cardWithBanner : undefined
+                )}
+              >
+                {club.coverImageUrl ? (
+                  // Decorative next to the club's name, which is right beside it,
+                  // so an empty alt is correct rather than a missed description.
+                  <img
+                    alt=""
+                    src={club.coverImageUrl}
+                    style={{ aspectRatio: aspectRatios.mosaicTile }}
+                    {...stylex.props(styles.banner)}
+                  />
                 ) : null}
+                <div
+                  {...stylex.props(
+                    club.coverImageUrl ? styles.bannerText : undefined
+                  )}
+                >
+                  <h3 {...stylex.props(styles.name)}>{club.name}</h3>
+                  {/*
+                    No filler when the society has not published what it does:
+                    an empty slot is honest, `[CMS: description]` is not.
+                    */}
+                  {club.description ? (
+                    <p {...stylex.props(styles.description)}>
+                      {club.description}
+                    </p>
+                  ) : null}
+                </div>
               </div>
             </Reveal>
           </li>

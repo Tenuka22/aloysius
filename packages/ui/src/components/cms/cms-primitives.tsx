@@ -1,5 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
-import type { ReactNode } from "react";
+import { AlertCircle, CheckCircle2, Info, XCircle } from "lucide-react";
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import type { EntryStatus } from "../../content/cms";
@@ -121,6 +122,182 @@ const styles = stylex.create({
   badgeGlobal: {
     backgroundColor: "rgba(1, 52, 5, 0.07)",
     color: color.onSurfaceSubtle,
+  },
+
+  /* ------------------------------------------------------------- pills */
+  /*
+   * A state chip for a *thing* (an account, a submission) rather than a CMS
+   * entry status. The leading dot is decorative: it is the fastest scan of a
+   * column of rows, because a column of words forces a read and a column of
+   * dots only forces a look.
+   */
+  pill: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: space["3xs"],
+    width: "fit-content",
+    whiteSpace: "nowrap",
+    paddingBlock: space["3xs"],
+    paddingInline: space["2xs"],
+    fontSize: font.size2xs,
+    fontWeight: font.weightExtrabold,
+    letterSpacing: font.trackingWide,
+    textTransform: "uppercase",
+  },
+  pillDot: {
+    flexShrink: 0,
+    width: "0.4rem",
+    height: "0.4rem",
+    borderRadius: "50%",
+    backgroundColor: "currentColor",
+  },
+  pillNeutral: {
+    backgroundColor: "rgba(1, 52, 5, 0.07)",
+    color: color.onSurfaceSubtle,
+  },
+  pillPositive: {
+    backgroundColor: "rgba(1, 52, 5, 0.12)",
+    color: color.onSurface,
+  },
+  pillWarning: {
+    backgroundColor: "rgba(255, 178, 3, 0.24)",
+    // Not gold-on-cream (1.9:1). A darkened gold clears 4.5:1 and still reads
+    // as the same status colour.
+    color: "#7a5400",
+  },
+  pillDanger: {
+    backgroundColor: "rgba(165, 25, 25, 0.12)",
+    color: color.danger,
+  },
+
+  /* ----------------------------------------------------------- notices */
+  /*
+   * The one place a screen speaks. A notice is a full-width, self-contained
+   * statement inside a panel - a result the operator has to acknowledge, or a
+   * problem they have to clear. Because it is a bordered surface and not a
+   * tinted `<p>`, it cannot be confused with the helper text under a field.
+   */
+  notice: {
+    display: "grid",
+    gridTemplateColumns: "auto minmax(0, 1fr)",
+    alignItems: "start",
+    gap: space["2xs"],
+    paddingBlock: space.xs,
+    paddingInline: space.xs,
+    borderWidth: space.px,
+    borderStyle: "solid",
+    fontSize: font.sizeSm,
+    lineHeight: font.leadingNormal,
+    textWrap: "pretty",
+  },
+  noticeIcon: {
+    flexShrink: 0,
+    width: "1.05rem",
+    height: "1.05rem",
+    // Nudged down so the icon's optical centre sits on the first line of text
+    // rather than floating above it.
+    marginBlockStart: "0.16rem",
+  },
+  noticeInfo: {
+    backgroundColor: "rgba(1, 52, 5, 0.05)",
+    borderColor: color.border,
+    color: color.onSurface,
+  },
+  noticeSuccess: {
+    backgroundColor: "rgba(1, 52, 5, 0.08)",
+    borderColor: color.borderStrong,
+    color: color.onSurface,
+  },
+  noticeWarning: {
+    backgroundColor: "rgba(255, 178, 3, 0.18)",
+    borderColor: "rgba(122, 84, 0, 0.35)",
+    color: "#7a5400",
+  },
+  noticeDanger: {
+    backgroundColor: "rgba(165, 25, 25, 0.08)",
+    borderColor: "rgba(165, 25, 25, 0.4)",
+    color: color.danger,
+  },
+
+  /* -------------------------------------------------------- empty state */
+  emptyState: {
+    display: "grid",
+    justifyItems: "start",
+    gap: space["3xs"],
+    paddingBlock: space.md,
+    // Never a full panel wide: an empty state is a sentence, and a sentence
+    // stretched across a 1500px panel is one very long line.
+    maxWidth: "38rem",
+  },
+  emptyTitle: {
+    margin: 0,
+    fontSize: font.sizeSm,
+    fontWeight: font.weightBold,
+    lineHeight: font.leadingSnug,
+    color: color.onSurface,
+  },
+  emptyNote: {
+    margin: 0,
+    fontSize: font.sizeSm,
+    lineHeight: font.leadingNormal,
+    color: color.onSurfaceMuted,
+  },
+
+  /* ------------------------------------------------------- record list */
+  recordList: {
+    display: "grid",
+    margin: 0,
+    padding: 0,
+    listStyle: "none",
+  },
+  recordRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: {
+      default: space["2xs"],
+      [bp.md]: space.sm,
+    },
+    minWidth: 0,
+    paddingBlock: space.sm,
+    borderBlockEndWidth: space.px,
+    borderBlockEndStyle: "solid",
+    borderBlockEndColor: color.border,
+  },
+  recordMain: {
+    // `16rem` basis: the record keeps its own text and its actions on one line
+    // until the record would be narrower than that, then the actions drop below.
+    flex: "1 1 16rem",
+    minWidth: 0,
+  },
+  recordActions: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: space["2xs"],
+    marginInlineStart: {
+      default: 0,
+      [bp.md]: "auto",
+    },
+  },
+  recordTitle: {
+    margin: 0,
+    minWidth: 0,
+    fontSize: font.sizeSm,
+    fontWeight: font.weightBold,
+    lineHeight: font.leadingSnug,
+    overflowWrap: "break-word",
+  },
+  recordMeta: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: space["3xs"],
+    margin: 0,
+    marginBlockStart: space["3xs"],
+    minWidth: 0,
+    fontSize: font.sizeXs,
+    lineHeight: font.leadingNormal,
+    color: color.onSurfaceMuted,
   },
 
   /* ------------------------------------------------------------- fields */
@@ -506,6 +683,147 @@ export const StatusBadge = ({ status }: { status: EntryStatus }) => (
   </span>
 );
 
+/* ------------------------------------------------------------------ pill */
+
+export type PillTone = "neutral" | "positive" | "warning" | "danger";
+
+const PILL_TONE: Record<PillTone, stylex.StyleXStyles> = {
+  neutral: styles.pillNeutral,
+  positive: styles.pillPositive,
+  warning: styles.pillWarning,
+  danger: styles.pillDanger,
+};
+
+/**
+ * A short state label for a record - "Provisioned", "Banned", "Pending".
+ *
+ * Deliberately capped at one or two words: a pill is a scan target, so anything
+ * that needs a sentence to explain belongs in the record's meta line instead.
+ */
+export const Pill = ({
+  children,
+  tone = "neutral",
+}: {
+  children: ReactNode;
+  tone?: PillTone;
+}) => (
+  <span {...stylex.props(styles.pill, PILL_TONE[tone])}>
+    <span aria-hidden="true" {...stylex.props(styles.pillDot)} />
+    {children}
+  </span>
+);
+
+/* ---------------------------------------------------------------- notice */
+
+export type NoticeTone = "info" | "success" | "warning" | "danger";
+
+const NOTICE_TONE: Record<NoticeTone, stylex.StyleXStyles> = {
+  info: styles.noticeInfo,
+  success: styles.noticeSuccess,
+  warning: styles.noticeWarning,
+  danger: styles.noticeDanger,
+};
+
+const NOTICE_ICON: Record<NoticeTone, typeof Info> = {
+  info: Info,
+  success: CheckCircle2,
+  warning: AlertCircle,
+  danger: XCircle,
+};
+
+/**
+ * A result the operator has to read: an action that succeeded, a gap that
+ * blocks the next step, a request that failed.
+ *
+ * An `<output>`, so it carries an implicit `role="status"` and announces
+ * itself when it appears - a mutation result is exactly the case a live region
+ * exists for, and the operator is often looking at the button, not the message.
+ * The icon is `aria-hidden` because the tone is already carried by the wording
+ * and by the border; announcing "warning" on top of "Photography Club has no
+ * administrator account yet" just makes a screen reader say it twice. Errors
+ * name the problem and the way out - a bare "Something went wrong" is not a
+ * notice.
+ */
+export const Notice = ({
+  children,
+  tone = "info",
+}: {
+  children: ReactNode;
+  tone?: NoticeTone;
+}) => {
+  const Icon = NOTICE_ICON[tone];
+
+  return (
+    <output {...stylex.props(styles.notice, NOTICE_TONE[tone])}>
+      <Icon aria-hidden="true" {...stylex.props(styles.noticeIcon)} />
+      <span>{children}</span>
+    </output>
+  );
+};
+
+/* ----------------------------------------------------------- empty state */
+
+export const EmptyState = ({
+  title,
+  note,
+}: {
+  title: string;
+  note?: string;
+}) => (
+  <div {...stylex.props(styles.emptyState)}>
+    <p {...stylex.props(styles.emptyTitle)}>{title}</p>
+    {note ? <p {...stylex.props(styles.emptyNote)}>{note}</p> : null}
+  </div>
+);
+
+/* ---------------------------------------------------------- record list */
+
+/**
+ * A ledger of records: accounts, activity, anything an operator scans by row.
+ *
+ * One DOM at every width. `RecordRow` wraps its actions below the record on a
+ * phone and pushes them to the far edge from a tablet up, so the same markup
+ * serves both without a second, mobile-only copy of the list.
+ */
+export const RecordList = ({
+  children,
+  label,
+}: {
+  children: ReactNode;
+  /** Accessible name for the list, e.g. "Club accounts". */
+  label: string;
+}) => (
+  <ul aria-label={label} {...stylex.props(styles.recordList)}>
+    {children}
+  </ul>
+);
+
+export const RecordRow = ({
+  actions,
+  meta,
+  name,
+}: {
+  /** The record's own name - a club, an account, an action. */
+  name: ReactNode;
+  /** The line under it: handle, role, actor, target. */
+  meta?: ReactNode;
+  /**
+   * The trailing slot. Buttons for the record, or read-only content that
+   * belongs at the far edge - a timestamp, an amount, a status pill.
+   */
+  actions?: ReactNode;
+}) => (
+  <li {...stylex.props(styles.recordRow)}>
+    <div {...stylex.props(styles.recordMain)}>
+      <p {...stylex.props(styles.recordTitle)}>{name}</p>
+      {meta ? <p {...stylex.props(styles.recordMeta)}>{meta}</p> : null}
+    </div>
+    {actions ? (
+      <div {...stylex.props(styles.recordActions)}>{actions}</div>
+    ) : null}
+  </li>
+);
+
 export const Panel = ({
   children,
   tone = "default",
@@ -539,7 +857,14 @@ export const PanelHead = ({
 }: {
   eyebrow?: string;
   title: string;
-  note?: string;
+  /**
+   * One or two sentences saying what this panel is for and what happens next.
+   *
+   * `ReactNode` rather than `string` because a note that has to carry a value -
+   * who sent it, when, what a link is for - should not have to be flattened
+   * into prose to be displayed. Rendered inside a `<p>`, so keep it inline.
+   */
+  note?: ReactNode;
   action?: ReactNode;
   inverse?: boolean;
   titleId?: string;
@@ -809,6 +1134,27 @@ const renderSelectControl = (
   );
 };
 
+const INPUT_TYPE: Record<
+  string,
+  "text" | "email" | "password" | "datetime-local"
+> = {
+  datetime: "datetime-local",
+  email: "email",
+  password: "password",
+};
+
+/**
+ * Autocorrect and autocapitalise are for prose. On a credential field they are
+ * a silent corruption: Android rewrites the first character to upper case and
+ * iOS offers to "fix" a word it does not recognise, so a password the operator
+ * retypes from paper stops matching.
+ */
+const CREDENTIAL_KEYBOARD = {
+  autoCapitalize: "none",
+  autoCorrect: "off",
+  spellCheck: false,
+} as const;
+
 const renderControl = (
   kind: string,
   id: string,
@@ -817,7 +1163,9 @@ const renderControl = (
   dirty: boolean,
   onChange: ((next: string) => void) | undefined,
   hint: string | undefined,
-  options: { label: string; value: string }[] | undefined
+  options: { label: string; value: string }[] | undefined,
+  autoComplete: string | undefined,
+  autoFocus: boolean
 ) => {
   if (kind === "select") {
     return renderSelectControl(
@@ -843,6 +1191,8 @@ const renderControl = (
     return (
       <textarea
         aria-describedby={hint ? hintId : undefined}
+        autoComplete={autoComplete}
+        autoFocus={autoFocus}
         id={id}
         onChange={(event) => onChange?.(event.target.value)}
         rows={3}
@@ -856,12 +1206,18 @@ const renderControl = (
     );
   }
 
-  const inputType = kind === "email" ? "email" : "text";
+  const inputType = INPUT_TYPE[kind] ?? "text";
   return (
     <input
       aria-describedby={hint ? hintId : undefined}
+      autoComplete={autoComplete}
+      autoFocus={autoFocus}
       id={id}
       onChange={(event) => onChange?.(event.target.value)}
+      // Issued credentials are lower case with hyphens. Without these, a phone
+      // keyboard silently rewrites the first letter to upper case and the
+      // operator cannot sign in with the password they were just given.
+      {...(inputType === "password" ? CREDENTIAL_KEYBOARD : null)}
       type={inputType}
       value={value ?? ""}
       {...stylex.props(styles.control, dirty && styles.controlDirty)}
@@ -957,17 +1313,38 @@ export const Field = ({
   wide = false,
   dirty = false,
   highlighted = false,
+  autoComplete,
+  autoFocus = false,
   onChange,
   onReset,
   options,
 }: {
   label: string;
-  kind?: "text" | "textarea" | "readonly" | "select" | "email";
+  kind?:
+    | "text"
+    | "textarea"
+    | "readonly"
+    | "select"
+    | "email"
+    | "password"
+    | "datetime";
   value?: string;
   hint?: string;
   wide?: boolean;
   dirty?: boolean;
   highlighted?: boolean;
+  /**
+   * Passed to the control verbatim. Browsers key off this to offer a generated
+   * password instead of the one the operator is typing over, and to keep a
+   * credential form out of the "fill your address" autofill queue.
+   */
+  autoComplete?: string;
+  /**
+   * For a field that appears *because* of an action - the one control the
+   * operator is expected to type into next. Only the one; autofocusing a whole
+   * form moves focus past whatever the operator was reading.
+   */
+  autoFocus?: boolean;
   onChange?: (next: string) => void;
   onReset?: () => void;
   options?: { label: string; value: string }[];
@@ -988,7 +1365,18 @@ export const Field = ({
       showClear={showClear}
       wide={wide}
     >
-      {renderControl(kind, id, hintId, value, dirty, onChange, hint, options)}
+      {renderControl(
+        kind,
+        id,
+        hintId,
+        value,
+        dirty,
+        onChange,
+        hint,
+        options,
+        autoComplete,
+        autoFocus
+      )}
     </FieldShell>
   );
 };
@@ -1058,6 +1446,8 @@ const BUTTON_TONE: Record<ButtonTone, stylex.StyleXStyles> = {
   danger: styles.buttonDanger,
 };
 
+export type { ButtonTone };
+
 export const CmsButton = ({
   children,
   tone = "quiet",
@@ -1091,21 +1481,34 @@ export const CmsButton = ({
   </button>
 );
 
+/**
+ * An anchor that looks like a `CmsButton`.
+ *
+ * Spread props pass through so a router `<Link>` can drive the navigation while
+ * the visual weight stays identical to the button beside it - an action the
+ * operator reads as "the next step" should not change shape because it happens
+ * to change the URL. `CmsLinkProps` is what the app passes, `onClick` included.
+ */
+export type CmsLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
+  href: string;
+  tone?: ButtonTone;
+  external?: boolean;
+};
+
 export const CmsLink = ({
   children,
   href,
   tone = "quiet",
   external = false,
-}: {
-  children: ReactNode;
-  href: string;
-  tone?: ButtonTone;
-  external?: boolean;
-}) => (
+  rel,
+  target,
+  ...rest
+}: CmsLinkProps) => (
   <a
     href={href}
-    rel={external ? "noopener noreferrer" : undefined}
-    target={external ? "_blank" : undefined}
+    rel={external ? "noopener noreferrer" : rel}
+    target={external ? "_blank" : target}
+    {...rest}
     {...stylex.props(styles.button, BUTTON_TONE[tone])}
   >
     {children}

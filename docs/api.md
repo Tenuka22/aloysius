@@ -1,3 +1,9 @@
+> **PARTLY STALE.** The routers section documents a 25-file `routers/staff/` directory that does not exist, and the `appRouter` table omits `cms`, `adminUsers`, `adminClubs`, `clubs` and `getSession`. The file-upload tier is wrong: `getUploadUrl` and `completeUpload` are `protectedProcedure`, not `adminProcedure`, and `completeUpload` has no size cap.
+>
+> Still correct: the file-size limit, presigned expiry, the `admin/{uuid}.{ext}` key format, the response shapes, delete ordering, and the `/api/files/{key}` route.
+>
+> For the current router map, read the "What the server can do" section of [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+
 # API Router Documentation
 
 ## Overview

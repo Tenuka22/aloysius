@@ -14,11 +14,19 @@ import { fetchSession } from "@/lib/session";
 const GENERIC_FAILURE =
   "Those credentials were not recognised. Check them and try again.";
 
-/** Where an admin lands when they sign in without a specific destination. */
-const DEFAULT_DESTINATION = "/cms";
-
 /**
- * Only same-origin, absolute-path redirects are honoured. Without this an
+ * Where each role lands after signing in.
+ *
+ * A single default is wrong for everyone but a CMS editor. `/cms` refuses a
+ * `club-admin` and `/admin` refuses everybody who is not a site admin, so a
+ * club administrator sent to the CMS default was bounced straight back to the
+ * public homepage with no way in — the one thing they had just proved they
+ * could do by signing in.
+ */
+const DEFAULT_DESTINATION = "/cms";
+const CLUB_DESTINATION = "/club";
+
+/** Only same-origin, absolute-path redirects are honoured. Without this an
  * attacker can send `/sign-in?redirect=https://evil.example` and use the
  * College's own sign-in screen as an open redirect. `//host` is rejected too -
  * it is protocol-relative and leaves the origin.
@@ -33,11 +41,15 @@ const safeDestination = (target: unknown): string => {
   return target;
 };
 
+/** The workspace this role actually has a shell for. */
+const workspaceFor = (role: string | null | undefined) =>
+  role === "club-admin" ? CLUB_DESTINATION : DEFAULT_DESTINATION;
+
 const SignIn = () => {
   const navigate = useNavigate();
   // Sanitised again at the point of navigation, for the same reason the
   // `beforeLoad` guard does it: this is the other call that actually navigates.
-  const destination = safeDestination(Route.useSearch().redirect);
+  const requested = safeDestination(Route.useSearch().redirect);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async ({
@@ -47,7 +59,7 @@ const SignIn = () => {
   }: SignInCredentials) => {
     setError(null);
 
-    const { error: signInError } = await authClient.signIn.username({
+    const { data, error: signInError } = await authClient.signIn.username({
       username,
       password,
       rememberMe,
@@ -58,7 +70,18 @@ const SignIn = () => {
       return;
     }
 
-    // `reloadDocument` so the CMS route's `beforeLoad` re-runs against the
+    /*
+     * An explicit `?redirect=` still wins — that is how a guarded route sends
+     * someone here in the first place. Only the *default* follows the role, and
+     * it is resolved from the session the sign-in just created rather than from
+     * the username that was typed.
+     */
+    const destination =
+      requested === DEFAULT_DESTINATION
+        ? workspaceFor(data?.user?.role)
+        : requested;
+
+    // `reloadDocument` so the destination's `beforeLoad` re-runs against the
     // freshly set cookie instead of a router context captured before sign-in.
     await navigate({ to: destination, reloadDocument: true });
   };

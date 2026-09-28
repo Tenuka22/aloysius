@@ -5,6 +5,10 @@ import {
   SectionsDropdown,
 } from "@aloysius/ui/components/cms/homepage-editor";
 import type { HomepageEditorHandle } from "@aloysius/ui/components/cms/homepage-editor";
+import {
+  ScreenHead,
+  ScreenWrap,
+} from "@aloysius/ui/components/cms/screen-head";
 import { PRINCIPAL_BLOCKS } from "@aloysius/ui/content/cms";
 import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
@@ -19,47 +23,6 @@ import { Suspense, useCallback, useRef, useState } from "react";
 import { client, orpc } from "@/utils/orpc";
 
 const styles = stylex.create({
-  wrap: {
-    paddingBlock: space.md,
-    paddingInline: space.md,
-  },
-  screenHead: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: space.sm,
-    marginBlockEnd: space.md,
-  },
-  headingWrap: {
-    minWidth: 0,
-  },
-  eyebrow: {
-    margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWidest,
-    textTransform: "uppercase",
-    color: color.accentOnSurface,
-  },
-  heading: {
-    margin: 0,
-    marginBlockStart: space["3xs"],
-    fontFamily: font.display,
-    fontSize: font.size3xl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingTight,
-    textWrap: "balance",
-  },
-  note: {
-    margin: 0,
-    marginBlockStart: space["3xs"],
-    maxWidth: space.measure,
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingNormal,
-    color: color.onSurfaceMuted,
-    textWrap: "pretty",
-  },
   callout: {
     display: "flex",
     gap: space["2xs"],
@@ -182,22 +145,19 @@ const PrincipalContent = () => {
 
   return (
     <>
-      <div {...stylex.props(styles.screenHead)}>
-        <div {...stylex.props(styles.headingWrap)}>
-          <p {...stylex.props(styles.eyebrow)}>Global / All pages</p>
-          <h1 {...stylex.props(styles.heading)}>Principal&rsquo;s Message</h1>
-          <p {...stylex.props(styles.note)}>
-            The message, attribution and portrait shown by every page that
-            carries the section.
-          </p>
-        </div>
-        <HomepageEditorActions
-          fetchHistory={handleFetchHistory}
-          onPublish={handlePublish}
-          onSaveDraft={handleSaveDraft}
-          sectionsSlot={sectionsSlot}
-        />
-      </div>
+      <ScreenHead
+        actions={
+          <HomepageEditorActions
+            fetchHistory={handleFetchHistory}
+            onPublish={handlePublish}
+            onSaveDraft={handleSaveDraft}
+            sectionsSlot={sectionsSlot}
+          />
+        }
+        eyebrow="Global / All pages"
+        heading="Principal’s Message"
+        note="The message, attribution and portrait shown by every page that carries the section."
+      />
       <p {...stylex.props(styles.callout)}>
         <span aria-hidden="true">&#9888;</span>
         <span>
@@ -225,10 +185,10 @@ export const Route = createFileRoute("/cms/principal")({
     ],
   }),
   component: () => (
-    <div {...stylex.props(styles.wrap)}>
+    <ScreenWrap>
       <Suspense fallback={<div>Loading…</div>}>
         <PrincipalContent />
       </Suspense>
-    </div>
+    </ScreenWrap>
   ),
 });

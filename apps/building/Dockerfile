@@ -57,10 +57,10 @@ COPY --from=builder /app/apps/building/package.json ./package.json
 # `bun` (uid 1000) is the non-root user already baked into this base image.
 USER bun
 
-ENV PORT=4001
-EXPOSE 4001
+ENV PORT=4002
+EXPOSE 4002
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=5 \
-  CMD bun -e "fetch('http://127.0.0.1:'+(process.env.PORT||4001)+'/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+  CMD bun -e "fetch('http://127.0.0.1:'+(process.env.PORT||4002)+'/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 CMD ["bun", "run", "start"]

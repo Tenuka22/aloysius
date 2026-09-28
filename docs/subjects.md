@@ -1,3 +1,7 @@
+> **STALE — describes code that does not exist.** `constants/structureVersions/**`, `gradeSubjectConfig` and `ALL_KNOWN_SUBJECT_KEYS` were removed in commit `dd4c45f`. There is no `constants/` directory in `packages/db/src` at all.
+>
+> Kept only for design provenance. For the current data model, read [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+
 # Subject & Curriculum Structure
 
 ## Overview

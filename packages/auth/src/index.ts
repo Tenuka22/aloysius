@@ -17,12 +17,20 @@ import {
   ac,
   admin as adminRole,
   cms as cmsRole,
+  clubAdmin as clubAdminRole,
   user as userRole,
 } from "./permissions";
+import { isValidUsername } from "./username";
 
-export { ac, admin, cms, user } from "./permissions";
-export type { AppAccessControl } from "./permissions";
-export { ensureCmsUser } from "./admin";
+export { ac, admin, clubAdmin, cms, user } from "./permissions";
+export type { AppAccessControl, AppRole } from "./permissions";
+export { isValidUsername, USERNAME_PATTERN } from "./username";
+export { PASSPHRASE_ENTROPY_BITS, generatePassphrase } from "./passphrase";
+export {
+  createClubCredential,
+  ensureCmsUser,
+  rotateClubCredentialPassword,
+} from "./admin";
 
 export interface AuthConfig {
   BETTER_AUTH_URL: string;
@@ -69,11 +77,20 @@ const buildAuthOptions = (
       roles: {
         admin: adminRole,
         cms: cmsRole,
+        "club-admin": clubAdminRole,
         user: userRole,
       },
     }),
     multiSession(),
-    username(),
+    username({
+      /*
+       * Club administrator usernames are generated from the club configuration
+       * and are hyphenated. The plugin's default rule rejects hyphens, and it
+       * enforces that rule at sign-in, so leaving it in place makes every one
+       * of them unloginable.
+       */
+      usernameValidator: isValidUsername,
+    }),
     tanstackStartCookies(),
   ],
 });
@@ -83,11 +100,12 @@ interface AdminPluginOptions {
   roles: {
     admin: typeof adminRole;
     cms: typeof cmsRole;
+    "club-admin": typeof clubAdminRole;
     user: typeof userRole;
   };
 }
 
-interface ResolvedAuthOptions extends BetterAuthOptions {
+export interface ResolvedAuthOptions extends BetterAuthOptions {
   plugins: [
     ReturnType<typeof adminPlugin<AdminPluginOptions>>,
     ReturnType<typeof multiSession>,

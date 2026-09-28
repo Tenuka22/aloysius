@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { Suspense } from "react";
 
-import { AdminShell } from "@/components/admin/admin-shell";
+import { WorkspaceShell } from "@/components/workspace-shell";
 import { client } from "@/utils/orpc";
 
 const CmsLayout = () => {
@@ -76,10 +76,19 @@ const CmsLayout = () => {
       href: "/cms/students",
       active: pathname.startsWith("/cms/students"),
     },
+    {
+      num: "11",
+      label: "Clubs",
+      href: "/cms/clubs",
+      active: pathname.startsWith("/cms/clubs"),
+    },
   ];
 
   return (
-    <AdminShell
+    <WorkspaceShell
+      brandName="Content"
+      brandSub="Manager"
+      mainId="cms-main"
       navItems={navItems}
       title="Content Manager"
       userName={user.username ?? "User"}
@@ -88,7 +97,7 @@ const CmsLayout = () => {
       <Suspense fallback={<div>Loading…</div>}>
         <Outlet />
       </Suspense>
-    </AdminShell>
+    </WorkspaceShell>
   );
 };
 

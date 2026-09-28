@@ -5,9 +5,11 @@ import {
   SectionsDropdown,
 } from "@aloysius/ui/components/cms/homepage-editor";
 import type { HomepageEditorHandle } from "@aloysius/ui/components/cms/homepage-editor";
+import {
+  ScreenHead,
+  ScreenWrap,
+} from "@aloysius/ui/components/cms/screen-head";
 import { CONTACT_BLOCKS } from "@aloysius/ui/content/cms";
-import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
 import {
   useMutation,
   useQueryClient,
@@ -17,60 +19,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, useCallback, useRef, useState } from "react";
 
 import { client, orpc } from "@/utils/orpc";
-
-const md = "@media (min-width: 40rem)";
-
-const styles = stylex.create({
-  wrap: {
-    paddingBlockStart: space.md,
-    paddingBlockEnd: space.md,
-    paddingInlineStart: space.md,
-    paddingInlineEnd: space.md,
-    [md]: {
-      paddingBlockStart: space.lg,
-      paddingBlockEnd: space.lg,
-      paddingInlineStart: space.lg,
-      paddingInlineEnd: space.lg,
-    },
-  },
-  screenHead: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: space.sm,
-    marginBlockEnd: space.md,
-  },
-  headingWrap: {
-    minWidth: 0,
-  },
-  eyebrow: {
-    margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWidest,
-    textTransform: "uppercase",
-    color: color.accentOnSurface,
-  },
-  heading: {
-    margin: 0,
-    marginBlockStart: space["3xs"],
-    fontFamily: font.display,
-    fontSize: font.size3xl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingTight,
-    textWrap: "balance",
-  },
-  note: {
-    margin: 0,
-    marginBlockStart: space["3xs"],
-    maxWidth: space.measure,
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingNormal,
-    color: color.onSurfaceMuted,
-    textWrap: "pretty",
-  },
-});
 
 const ContactContent = () => {
   const queryClient = useQueryClient();
@@ -188,22 +136,20 @@ const ContactContent = () => {
 
   return (
     <>
-      <div {...stylex.props(styles.screenHead)}>
-        <div {...stylex.props(styles.headingWrap)}>
-          <p {...stylex.props(styles.eyebrow)}>Pages / Contact</p>
-          <h1 {...stylex.props(styles.heading)}>Contact Editor</h1>
-          <p {...stylex.props(styles.note)}>
-            Edit the contact information, address and social media links.
-          </p>
-        </div>
-        <HomepageEditorActions
-          onSaveDraft={handleSaveDraft}
-          onPublish={handlePublish}
-          onPreview={handlePreview}
-          sectionsSlot={sectionsSlot}
-          fetchHistory={handleFetchHistory}
-        />
-      </div>
+      <ScreenHead
+        actions={
+          <HomepageEditorActions
+            onSaveDraft={handleSaveDraft}
+            onPublish={handlePublish}
+            onPreview={handlePreview}
+            sectionsSlot={sectionsSlot}
+            fetchHistory={handleFetchHistory}
+          />
+        }
+        eyebrow="Pages / Contact"
+        heading="Contact Editor"
+        note="Edit the contact information, address and social media links."
+      />
       <HomepageEditor
         blocks={CONTACT_BLOCKS}
         ref={editorRef}
@@ -223,10 +169,10 @@ export const Route = createFileRoute("/cms/contact")({
     ],
   }),
   component: () => (
-    <div {...stylex.props(styles.wrap)}>
+    <ScreenWrap>
       <Suspense fallback={<div>Loading…</div>}>
         <ContactContent />
       </Suspense>
-    </div>
+    </ScreenWrap>
   ),
 });

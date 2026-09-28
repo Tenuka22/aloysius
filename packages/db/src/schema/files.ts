@@ -17,7 +17,7 @@ export const files = sqliteTable(
     name: text("name").notNull(),
     size: integer("size").notNull(),
     type: text("type").notNull(),
-    /** Storage-layer key (LMDB in dev, MinIO object key in production). */
+    /** The object key in the store - always MinIO; there is no local-file backend. */
     key: text("key").notNull(),
     userId: text("user_id")
       .notNull()

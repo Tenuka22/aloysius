@@ -5,7 +5,13 @@
     "target": "ES2022",
     "jsx": "react-jsx",
     "module": "ESNext",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    /*
+     * ES2023 for `Array.prototype.toSorted` and friends. The lint rules require
+     * the non-mutating form, and the runtime is Node 22 and current browsers,
+     * both of which have had it for years. `target` stays at ES2022 because
+     * nothing here needs downlevelling that far.
+     */
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
 
     /* Bundler mode */

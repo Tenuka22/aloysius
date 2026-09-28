@@ -82,7 +82,7 @@ const requirePermission = (
     try {
       const result = await context.auth.api.userHasPermission({
         body: {
-          role: role as "admin" | "cms" | "user",
+          role: role as "admin" | "cms" | "club-admin" | "user",
           permissions: { [resource]: [action] },
         },
       });
@@ -107,26 +107,17 @@ const requirePermission = (
 
 // ─── Permission-checked procedures ──────────────────────────────────────────
 
-/** Student management: requires student:create or student:read etc. */
-export const requireStudentPermission = (action: PermissionAction) =>
-  publicProcedure.use(requirePermission("student", action));
+/*
+ * Five factories used to live here - student, mark, exam, staff and assignment -
+ * alongside this one. They were removed with the student-records system, and
+ * they were not restated in the permission statement, so any procedure built
+ * from them could only ever have returned FORBIDDEN. They are gone rather than
+ * left as a trap.
+ *
+ * `requireClubPermission` is the only survivor because `club` is a real
+ * resource in `packages/auth/src/permissions.ts`.
+ */
 
-/** Mark management: requires mark:create or mark:read etc. */
-export const requireMarkPermission = (action: PermissionAction) =>
-  publicProcedure.use(requirePermission("mark", action));
-
-/** Exam management: requires exam:create or exam:read etc. */
-export const requireExamPermission = (action: PermissionAction) =>
-  publicProcedure.use(requirePermission("exam", action));
-
-/** Staff management: requires staff:create or staff:read etc. */
-export const requireStaffPermission = (action: PermissionAction) =>
-  publicProcedure.use(requirePermission("staff", action));
-
-/** Assignment management: requires assignment:create etc. */
-export const requireAssignmentPermission = (action: PermissionAction) =>
-  publicProcedure.use(requirePermission("assignment", action));
-
-/** CMS management: requires cms:edit or cms:publish etc. */
-export const requireCmsPermission = (action: PermissionAction) =>
-  publicProcedure.use(requirePermission("cms", action));
+/** Club content management: the hardcoded club administrator can submit. */
+export const requireClubPermission = (action: PermissionAction) =>
+  publicProcedure.use(requirePermission("club", action));

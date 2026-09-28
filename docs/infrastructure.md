@@ -6,10 +6,14 @@
 
 | Service | Image | Port | Purpose |
 | --- | --- | --- | --- |
-| `web` | Built from `apps/web/Dockerfile` | `${WEB_PORT:-3001}` | Main web application (TanStack Start) |
+| `web` | Built from `apps/web/Dockerfile` | `${WEB_PORT:-4000}` | Main web application (TanStack Start) |
 | `turso-db` | `ghcr.io/tursodatabase/libsql-server:latest` | `${LIBSQL_PORT:-8080}` | SQLite-compatible database (libSQL) |
 | `minio` | `quay.io/minio/minio:latest` | `9000` (API), `9001` (console) | S3-compatible object storage |
-| `building` | Built from `apps/building/Dockerfile` | `${BUILDING_PORT:-4001}` | Secondary service (building-related) |
+| `building` | Built from `apps/building/Dockerfile` | `${BUILDING_PORT:-4002}` | The "coming soon" placeholder on the apex domain — see below |
+
+Containers bind even ports and dev servers odd ones, so a local dev server and a running stack never fight over a port: the site is 4001 in development and 4000 in the container; the placeholder is 4003 and 4002.
+
+`building` is a standalone static app with **no dependency on any other package in this repo**. It duplicates the crest and hardcodes the three brand colours so it can be built and deployed independently. It exists for a non-obvious reason: a separate admissions codebase shares saved-application cookies across `aloysiuscollege.lk` and `admissions.aloysiuscollege.lk` by rewriting them on every page view, and once the admissions portal no longer occupies the apex host, something has to keep doing that or a visitor's cookie stays scoped to the wrong host. The placeholder does exactly that and nothing else.
 
 ### Service dependencies
 
@@ -34,9 +38,10 @@ Storage is **MinIO-only** — there is no local/dev-only backend. `bun run dev` 
 
 ### Development (`NODE_ENV=development`)
 
-- **Database**: Local SQLite file at `../../data/local.db` (relative to `apps/web/`), resolved via `file:` URL
+- **Database**: the `TURSO_DATABASE_URL` from the env schema — in development that is a `libsql://` URL from `turso dev`; in the compose setup it is the `turso-db` service. There is no `data/local.db` or `.data/local.db` — those paths appeared in three different documents and none of them matched the code. Both directories have been deleted.
 - **Storage**: MinIO, same as production — point `MINIO_ENDPOINT`/`MINIO_PORT` at a local container (`docker compose up minio`) or a remote bucket
-- **Docker optional for the web app itself**: run it directly with `bun run dev`, but MinIO (and libSQL, if not using the local SQLite file) still need to be up
+- **Docker optional for the web app itself**: run it directly with `bun run dev`, but MinIO (and libSQL) still need to be up
+- **Ports**: the dev server is 4001 and the container is 4000; the placeholder is 4003 and 4002. `BETTER_AUTH_URL` must match whichever is bound, because `trustedOrigins` is derived from it.
 
 ### Production (`NODE_ENV=production`)
 
@@ -102,13 +107,20 @@ Keys are not passed through any normalization helper (there is no `normalizeStor
 
 ### Schema tables
 
-| Table          | File              | Purpose                                 |
-| -------------- | ----------------- | --------------------------------------- |
-| `user`         | `schema/auth.ts`  | Users with role, ban fields, timestamps |
-| `session`      | `schema/auth.ts`  | Sessions with expiry, IP, user agent    |
-| `account`      | `schema/auth.ts`  | OAuth/password accounts linked to users |
-| `verification` | `schema/auth.ts`  | Email verification tokens               |
-| `files`        | `schema/files.ts` | Uploaded file metadata                  |
+Twenty-four tables across twelve schema files. Grouped by what they are for:
+
+| Group | Tables | Files |
+| --- | --- | --- |
+| Identity | `user`, `session`, `account`, `verification` | `schema/auth.ts` |
+| Assets | `files` | `schema/files.ts` |
+| CMS | `content_version` | `schema/cms.ts` |
+| Audit | `admin_activity` | `schema/activity.ts` |
+| School-wide content | `announcement`, `person`, `event`, `achievement` | `schema/announcements.ts`, `schema/root-content.ts` |
+| Club registry and content | `club`, `club_event`, `club_announcement`, `club_achievement` | `schema/clubs.ts`, `schema/clubContent.ts` |
+| Galleries | `gallery`, `photo_gallery`, `art_gallery`, `digital_gallery`, `gallery_item`, `gallery_link` | `schema/gallery.ts` |
+| Review queues | `global_content_submission`, `club_content_submission` | `schema/approvals.ts` |
+
+Every id is a branded type (`Brand<string, "XId">`) rather than `string`, and every content table's public visibility is gated on a `publishedAt` timestamp or a `status` column. For what each table is for, see the "Data" section of [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
 ### Drizzle config
 
@@ -126,25 +138,29 @@ export default defineConfig({
 });
 ```
 
-## Environment Variables
+## Environment variables
 
-`apps/web/.env.schema` defines all variables with validation:
+`apps/web/.env.schema` defines all variables with validation, and Varlock code-generates a typed module from it at install time. Twelve variables:
 
 | Variable | Type | Default | Sensitivity | Purpose |
 | --- | --- | --- | --- | --- |
-| `NODE_ENV` | `enum(development, production, test)` | `development` | — | Controls storage backend, build behavior |
+| `NODE_ENV` | `enum(development, production, test)` | `development` | public | Build and runtime behaviour |
 | `BETTER_AUTH_SECRET` | `string(min 32)` | — | sensitive | Session signing key |
-| `BETTER_AUTH_URL` | `url` | — | public | Auth endpoint base URL |
-| `TURSO_DATABASE_URL` | `string(min 1)` | — | — | libSQL connection string (`file:` for local, `http:` for server) |
-| `TURSO_AUTH_TOKEN` | `string` | — | — | Auth token for remote libSQL (unused for local `file:` URLs) |
-| `ADMIN_EMAIL` | `email` | `admin@example.com` | public | Site admin email |
-| `ADMIN_PASSWORD` | `string(min 8)` | — | sensitive | Site admin password (rotated on boot) |
+| `BETTER_AUTH_URL` | `url` | — | public | Auth base URL. `trustedOrigins` is derived from it, so it must match the port the dev server actually binds |
+| `TURSO_DATABASE_URL` | `string(min 1)` | — | — | libSQL connection string |
+| `TURSO_AUTH_TOKEN` | `string` (optional) | — | sensitive | Auth token for remote libSQL |
+| `CMS_USERNAME` | `string(min 1)` | `cms` | public | The CMS editor account, seeded on boot |
+| `CMS_PASSWORD` | `string(min 8)` | — | sensitive | Re-rotated to this on every server start |
 | `MINIO_ENDPOINT` | `string(min 1)` | `localhost` | public | MinIO host |
 | `MINIO_PORT` | `number` | `9000` | public | MinIO API port |
-| `MINIO_ACCESS_KEY` | `string(min 1)` | `minioadmin` | — | MinIO credentials |
-| `MINIO_SECRET_KEY` | `string(min 1)` | `minioadmin` | — | MinIO credentials |
+| `MINIO_ACCESS_KEY` | `string(min 1)` | `minioadmin` | sensitive | MinIO credentials |
+| `MINIO_SECRET_KEY` | `string(min 1)` | `minioadmin` | sensitive | MinIO credentials |
 | `MINIO_BUCKET` | `string(min 1)` | `aloysius` | public | S3 bucket name |
 | `MINIO_USE_SSL` | `boolean` | `false` | public | Use HTTPS for MinIO |
+
+There is no `ADMIN_EMAIL` or `ADMIN_PASSWORD`. An earlier version of this table listed both; neither has existed for some time. There is one editor account and it is `cms`, not a site admin.
+
+## Environment variables
 
 ### Production overrides
 

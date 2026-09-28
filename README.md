@@ -1,117 +1,128 @@
-# aloysius
+# Aloysius
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Start, Self, ORPC, and more.
+The website for St. Aloysius' College, Galle. Public pages for prospective families, news and notices, a media gallery, and three signed-in areas: a CMS for editors, an admin area for technical staff, and a per-club workspace for the people who run the societies.
 
-## Features
+Built as a Bun-workspaces monorepo. Started from [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack) and diverged substantially since — the CMS, the club submission pipeline, the design token system and the second app were all added afterwards.
 
-- **TypeScript** - For type safety and improved developer experience
-- **TanStack Start** - SSR framework with TanStack Router
-- **StyleX** - Compile-time, type-safe styling for React
-- **Shared UI package** - StyleX-based primitives live in `packages/ui`
-- **oRPC** - End-to-end type-safe APIs with OpenAPI integration
-- **Drizzle** - TypeScript-first ORM
-- **SQLite/Turso** - Database engine
-- **Authentication** - Better-Auth
-- **Nx** - Smart monorepo task orchestration and caching
+> **New here? Read [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) first.** It covers the whole system and, more usefully, why it is shaped the way it is. [`docs/README.md`](./docs/README.md) indexes the rest, including which documents are stale.
 
-## Getting Started
+## The stack
 
-First, install the dependencies:
+|  |  |
+| --- | --- |
+| **Framework** | TanStack Start — SSR, file-based routes, server handlers |
+| **API** | oRPC, isomorphic — the same router object serves SSR and the browser |
+| **Validation** | Valibot, end to end, shared between request and response |
+| **Database** | libSQL (a SQLite fork) via Drizzle ORM, remote in production |
+| **Auth** | Better Auth — username and password, four roles, no OAuth |
+| **Styling** | StyleX. No Tailwind |
+| **Storage** | MinIO (S3-compatible) — uploads bypass the app server entirely |
+| **Config** | Varlock — a typed env module generated from a schema per package |
+| **Tasks** | Nx, inferring every target from the workspace `package.json` |
+| **Lint/format** | Ultracite (oxlint + oxfmt). No local rule overrides |
 
-```bash
-bun install
-```
-
-## Database Setup
-
-This project uses SQLite with Drizzle ORM.
-
-1. Start the local SQLite database (optional):
+## Getting started
 
 ```bash
-bun run db:local
+bun install          # also builds API types and generates the env modules
+bun run dev          # infra containers, migrations, then every app
 ```
 
-2. Update your `.env` file in the `apps/web` directory with the appropriate connection details if needed.
+Then open **http://localhost:4001**.
 
-3. Apply the schema to your database:
+Ports: the site is 4001 in development and 4000 in the container, so a local dev server and a running stack never fight over a port. The placeholder app is 4003 and 4002. `BETTER_AUTH_URL` must match whichever one is actually bound.
 
-```bash
-bun run db:push
-```
+Object storage is required even in development — `bun run dev:infra` starts it along with the database, but if you run the app directly you still need MinIO reachable at the `MINIO_*` settings.
 
-Then, run the development server:
+## Two apps
 
-```bash
-bun run dev
-```
+`apps/web` is the site. `apps/building` is a small static "coming soon" page that occupies the college's main domain. It has no dependency on any other package here, and it exists for a reason that is not obvious from its code: a separate admissions codebase shares saved-application cookies across `aloysiuscollege.lk` and `admissions.aloysiuscollege.lk`, and something has to keep refreshing them on the apex host. The architecture document explains this properly.
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the fullstack application.
+## The one thing to understand
 
-## UI Customization
+**Nobody writes to a content table directly.** CMS editors work on snapshots in `content_version`; club administrators work on JSON proposals in a review queue. Approval is the only path to a live table, and it applies the change and flips the status in one transaction. Every public query requires published state, so an unapproved draft has no row to find. The reasoning is in the architecture document, and the club pipeline in `docs/CLUB_SOCIETIES_POSTS.md`.
 
-React web apps in this stack share StyleX-based primitives through `packages/ui`.
+## Working on the design system
 
-- Update shared primitives in `packages/ui/src/components/*`
-- Define styles with `stylex.create` and apply them with `stylex.props`
+`packages/ui` has no runtime dependency on any other package, which is what lets it be reasoned about as a design system rather than a view layer.
 
-Import shared components like this:
+- Design tokens — colour, type, space, motion, z-index — in `packages/ui/src/tokens/`. Brand colours are compile-time constants; every semantic name is a CSS custom property.
+- Primitives in `packages/ui/src/components/primitives/`.
+- Page components in `packages/ui/src/components/`, imported by subpath:
 
 ```tsx
-import { HelloWorld } from "@aloysius/ui/components/hello-world";
+import { SiteHeader } from "@aloysius/ui/components/site/site-header";
+import { space } from "@aloysius/ui/tokens/tokens.stylex";
 ```
 
-## Environment Configuration
+Define styles with `stylex.create` and apply them with `stylex.props`. Do not use `className`.
 
-Each app owns its environment schema in `.env.schema`. Varlock generates `src/env.ts` during installation; run `bun run env:generate` after changing a schema. Commit schemas, and keep secrets in ignored env files or your deployment platform.
+## Environment
 
-Import the generated `ENV` accessor in application code. Shared database and auth packages receive configuration or initialized clients from the application. See [Varlock's monorepo guide](https://varlock.dev/guides/monorepos/).
+Each package owns a `.env.schema`; Varlock generates a typed module from it at install time. **Commit the schemas, keep secrets in ignored env files.** Re-run `bun run env:generate` after changing a schema.
 
-Bun's automatic env loading is disabled in `bunfig.toml`; the framework integration or server bootstrap loads Varlock. Node deployments must include Varlock and its dependencies alongside the app schema.
+Bun's automatic `.env` loading is disabled in `bunfig.toml`, so Varlock is the only source of configuration.
+
+One coupling worth knowing: `BETTER_AUTH_URL` must match the port the dev server actually binds, because Better Auth's `trustedOrigins` is derived from it. If they disagree, sign-out fails with `INVALID_ORIGIN` while sign-in still appears to work.
 
 ## Deployment
 
-### Docker Compose
+Four services in `docker-compose.yml`: the site, the database, object storage, and the placeholder app. The dev compose file starts just the two backing services.
 
-- Target: web + server
-- Config: `docker-compose.yml` (app Dockerfiles live in `apps/*/Dockerfile`)
-- Build images: bun run docker:build
-- Start: bun run docker:up
-- Logs: bun run docker:logs
-- Stop: bun run docker:down
+```bash
+bun run docker:build    # build images
+bun run docker:up       # build and start
+bun run docker:logs     # tail logs
+bun run docker:down     # stop
+```
 
-Environment variables are read from each app's `.env` file (baked into web builds for public variables) and overridden in `docker-compose.yml` for container networking.
+Real environment values come from `apps/web/.env` and the compose overrides; `.env.production` holds build-time placeholders only. See [`docs/infrastructure.md`](./docs/infrastructure.md).
 
-Docker Compose uses the local `./.data/local.db` file. Run `bun run db:push` before starting the stack.
+## Scripts
 
-For more details, see the guide on [Deploying with Docker Compose](https://www.better-t-stack.dev/docs/guides/docker).
+|  |  |
+| --- | --- |
+| `bun run dev` | infra, migrate, then every app |
+| `bun run dev:web` | just the site |
+| `bun run dev:infra` | just the database and object storage |
+| `bun run build` | build everything |
+| `bun run check-types` | typecheck everything |
+| `bun run test` | run the tests |
+| `bun run check` | lint |
+| `bun run fix` | lint and format |
+| `bun run db:push` / `db:generate` / `db:migrate` / `db:studio` / `db:local` | database tasks |
+| `bun run docker:build` / `up` / `down` / `logs` | containers |
+| `bun run env:generate` | regenerate the env modules |
 
-## Project Structure
+A pre-commit hook runs lint-staged, which formats staged files. **Nothing runs typechecking or tests automatically** — there is no CI. Run them yourself before committing anything that touches types.
+
+## Project structure
 
 ```
 aloysius/
 ├── apps/
-│   └── web/         # Fullstack application (React + TanStack Start)
+│   ├── web/         the site
+│   └── building/    the "coming soon" placeholder
 ├── packages/
-│   ├── ui/          # Shared StyleX-based UI components
-│   ├── api/         # API layer / business logic
-│   ├── auth/        # Authentication configuration & logic
-│   └── db/          # Database schema & queries
+│   ├── api/         oRPC routers, permission tiers, the approval appliers
+│   ├── auth/        roles, permissions, credential provisioning
+│   ├── config/      shared TypeScript settings (one file)
+│   ├── db/          Drizzle schema — 24 tables
+│   ├── storage/     MinIO behind a four-method interface
+│   └── ui/          design system, page components, content constants
+├── docs/            start at docs/README.md
+└── specs/           the product and technical specs
 ```
 
-## Available Scripts
+## Known gaps
 
-- `bun run dev`: Start all applications in development mode
-- `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run check-types`: Check TypeScript types across all apps
-- `bun run dev:types`: Watch API and dependency declarations when running an app individually. The root `dev` command already starts this watcher; installation and builds generate declarations automatically.
-- `bun run db:push`: Push schema changes to database
-- `bun run db:generate`: Generate database client/types
-- `bun run db:migrate`: Run database migrations
-- `bun run db:studio`: Open database studio UI
-- `bun run db:local`: Start the local SQLite database
-- `bun run docker:build`: Build the Docker Compose images
-- `bun run docker:up`: Build and start the Docker Compose stack
-- `bun run docker:logs`: Tail logs from the Docker Compose stack
-- `bun run docker:down`: Stop the Docker Compose stack
+The architecture document's "Known problems" section is the honest list. The ones most likely to surprise you:
+
+- **No CI.** Lint-staged on commit is the only automated gate.
+- **Sports, houses and prefects do not render.** There is no sports data model at all, and the components for all three are unreachable from any route.
+- **A club's name and slug cannot be changed.** Excluded from the submission schema as "CMS-owned", and no CMS endpoint can edit them either. A club _can_ change its own description, cover banner and section background, approval-gated, on `/club/profile`.
+- **The API has no tests.** Over a hundred procedures, ten content appliers, and not one test file in the package.
+
+## License
+
+Private.
