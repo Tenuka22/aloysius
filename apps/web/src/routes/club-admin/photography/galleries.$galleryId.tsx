@@ -800,7 +800,11 @@ const GalleryLinksPanel = ({ galleryId }: { galleryId: string }) => {
     (link) => link.target === target && link.targetId === targetId
   );
 
-  const mine = mineQuery.data ?? { events: [], achievements: [], announcements: [] };
+  const mine = mineQuery.data ?? {
+    events: [],
+    achievements: [],
+    announcements: [],
+  };
 
   /*
    * Only the club charged with the school's photography is offered records
@@ -936,9 +940,7 @@ const GalleryLinksPanel = ({ galleryId }: { galleryId: string }) => {
           wide
         />
         <Field
-          hint={
-            options.length === 0 ? EMPTY_LINK_HINT[target] : "Pick one."
-          }
+          hint={options.length === 0 ? EMPTY_LINK_HINT[target] : "Pick one."}
           kind="select"
           label="Which one"
           onChange={setTargetId}
@@ -1108,7 +1110,9 @@ const GalleryDetailPage = () => {
   );
 };
 
-export const Route = createFileRoute("/club/galleries/$galleryId")({
+export const Route = createFileRoute(
+  "/club-admin/photography/galleries/$galleryId"
+)({
   head: () => ({
     meta: [
       { title: "Gallery — Club portal — St. Aloysius' College" },

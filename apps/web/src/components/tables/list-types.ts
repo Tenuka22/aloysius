@@ -1,5 +1,5 @@
-import type { InferRouterOutputs } from "@orpc/server";
 import type { AppRouter } from "@aloysius/api/routers/index";
+import type { InferRouterOutputs } from "@orpc/server";
 
 /**
  * Every list type the web layer uses, read off the router rather than re-listed.
@@ -58,11 +58,6 @@ export const toQueueRow = (
   submittedAt: row.submittedAt,
 });
 
-/* ------------------------------------------------------------- activity */
-
-type ActivityOutput = RouterOutputs["adminClubs"]["activity"];
-export type ActivityRow = ActivityOutput["rows"][number];
-
 /* ---------------------------------------------------------- submissions */
 
 type MySubmissionsOutput = RouterOutputs["clubs"]["listMySubmissions"];
@@ -76,11 +71,7 @@ export type AccountRow = AdminUsersListOutput["rows"][number];
 /* ------------------------------------------------------------ sort keys */
 
 /** The columns a queue header may order by, as the server accepts them. */
-export const QUEUE_SORT_KEYS = [
-  "submittedAt",
-  "target",
-  "operation",
-] as const;
+export const QUEUE_SORT_KEYS = ["submittedAt", "target", "operation"] as const;
 export type QueueSortKey = (typeof QUEUE_SORT_KEYS)[number];
 
 /** The columns an accounts header may order by. */
@@ -90,7 +81,3 @@ export type AccountSortKey = (typeof ACCOUNT_SORT_KEYS)[number];
 /** The columns the club's own submissions list may order by. */
 export const SUBMISSION_SORT_KEYS = ["submittedAt", "target"] as const;
 export type SubmissionSortKey = (typeof SUBMISSION_SORT_KEYS)[number];
-
-/** The columns the activity trail may order by. */
-export const ACTIVITY_SORT_KEYS = ["createdAt", "action"] as const;
-export type ActivitySortKey = (typeof ACTIVITY_SORT_KEYS)[number];

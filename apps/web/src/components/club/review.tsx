@@ -1,13 +1,10 @@
 import {
   CmsButton,
-  EmptyState,
   Field,
   Notice,
   Panel,
   PanelHead,
   Pill,
-  RecordList,
-  RecordRow,
 } from "@aloysius/ui/components/cms/cms-primitives";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -27,7 +24,7 @@ import {
 import { orpc } from "@/utils/orpc";
 
 /**
- * The reviewer's card, shared by /cms/clubs and /club-admin/photography.
+ * The reviewer's card, used by the shared queue table at /cms/clubs.
  *
  * Everything a club submits reaches the website only through a decision on one
  * of these cards, so both review surfaces have to behave identically: the same
@@ -253,150 +250,6 @@ export const ReviewCard = ({
           </CmsButton>
         </div>
       )}
-    </Panel>
-  );
-};
-
-export const QueueList = ({ rows }: { rows: readonly ReviewRow[] }) => {
-  if (rows.length === 0) {
-    return (
-      <EmptyState
-        note="When a club sends a gallery, event, achievement or notice it will appear here."
-        title="Nothing waiting for review."
-      />
-    );
-  }
-
-  return (
-    <RecordList label="Pending submissions">
-      {rows.map((row) => (
-        <RecordRow
-          actions={
-            <Pill tone={operationTone(row.operation)}>{row.operation}</Pill>
-          }
-          key={`${row.scope}-${row.id}`}
-          meta={
-            <>
-              <span>{describeTarget(row.target)}</span>
-              <span aria-hidden="true">·</span>
-              <span>
-                {row.clubName ?? "Club content"} · sent{" "}
-                {relativeDay(row.submittedAt)}
-              </span>
-            </>
-          }
-          name={titleFromPayload(row.payload)}
-        />
-      ))}
-    </RecordList>
-  );
-};
-
-/**
- * Ban and unban for one club's administrator.
- *
- * Shared for the same reason as `ReviewCard`: the CMS queue and the dedicated
- * club page hand out the same power, so they must render the same controls and
- * the same confirmation. Unban needs no confirmation - it is the direction
- * that restores access, and the reviewer's intent when they press it is never
- * in doubt.
- */
-export const ClubAdminPanel = ({
-  clubId,
-  clubName,
-  onDecided,
-}: {
-  clubId: string;
-  clubName: string;
-  onDecided: (message: string) => void;
-}) => {
-  const queryClient = useQueryClient();
-  const [confirming, setConfirming] = useState(false);
-
-  const refresh = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: orpc.adminClubs.list.key(),
-    });
-  };
-
-  const ban = useMutation(
-    orpc.adminClubs.ban.mutationOptions({
-      onSuccess: async () => {
-        onDecided(`${clubName} administrator banned.`);
-        setConfirming(false);
-        await refresh();
-      },
-    })
-  );
-  const unban = useMutation(
-    orpc.adminClubs.unban.mutationOptions({
-      onSuccess: async () => {
-        onDecided(`${clubName} administrator unbanned.`);
-        setConfirming(false);
-        await refresh();
-      },
-    })
-  );
-
-  return (
-    <Panel>
-      <PanelHead
-        eyebrow="Club access"
-        note="A banned administrator cannot submit anything. Their pending work stays here."
-        title={clubName}
-      />
-
-      {confirming ? (
-        <Notice tone="warning">
-          Banning {clubName} stops them submitting immediately. Anything already
-          pending still needs a decision, and nothing they have already sent is
-          withdrawn.
-        </Notice>
-      ) : null}
-
-      <div>
-        {confirming ? (
-          <>
-            <CmsButton
-              disabled={ban.isPending}
-              onClick={() => {
-                ban.mutate({ clubId });
-              }}
-              tone="danger"
-            >
-              {ban.isPending ? "Banning…" : "Yes, ban them"}
-            </CmsButton>
-            <CmsButton
-              onClick={() => {
-                setConfirming(false);
-              }}
-              tone="quiet"
-            >
-              Cancel
-            </CmsButton>
-          </>
-        ) : (
-          <>
-            <CmsButton
-              onClick={() => {
-                setConfirming(true);
-              }}
-              tone="danger"
-            >
-              Ban administrator
-            </CmsButton>
-            <CmsButton
-              disabled={unban.isPending}
-              onClick={() => {
-                unban.mutate({ clubId });
-              }}
-              tone="quiet"
-            >
-              {unban.isPending ? "Unbanning…" : "Unban administrator"}
-            </CmsButton>
-          </>
-        )}
-      </div>
     </Panel>
   );
 };

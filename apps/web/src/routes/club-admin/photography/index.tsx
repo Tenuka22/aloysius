@@ -10,8 +10,13 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { describeTarget, titleFromPayload } from "@/components/club/format";
+import {
+  describeTarget,
+  relativeDay,
+  titleFromPayload,
+} from "@/components/club/format";
 import { ClubPage, ClubPageLoading } from "@/components/club/page-parts";
+import type { SubmissionRow } from "@/components/tables/list-types";
 import { orpc } from "@/utils/orpc";
 
 /**
@@ -24,16 +29,6 @@ import { orpc } from "@/utils/orpc";
  * site. Answering it here is the whole job.
  */
 
-interface PendingRow {
-  id: string;
-  scope: "global" | "club";
-  target: string;
-  operation: string;
-  submittedAt: Date;
-  targetId: string | null;
-  payload: string;
-}
-
 const operationLabel = (operation: string) => {
   if (operation === "create") {
     return "New";
@@ -44,20 +39,7 @@ const operationLabel = (operation: string) => {
   return "Edit";
 };
 
-const relativeDay = (value: Date) => {
-  const days = Math.round(
-    (Date.now() - new Date(value).getTime()) / 86_400_000
-  );
-  if (days <= 0) {
-    return "today";
-  }
-  if (days === 1) {
-    return "yesterday";
-  }
-  return `${days} days ago`;
-};
-
-const PendingSubmissions = ({ rows }: { rows: readonly PendingRow[] }) => {
+const PendingSubmissions = ({ rows }: { rows: readonly SubmissionRow[] }) => {
   if (rows.length === 0) {
     return (
       <EmptyState
@@ -90,19 +72,12 @@ const PendingSubmissions = ({ rows }: { rows: readonly PendingRow[] }) => {
 const OverviewPage = () => {
   const clubQuery = useQuery(orpc.clubs.myClub.queryOptions());
   const galleryQuery = useQuery(orpc.clubs.listMyGalleries.queryOptions());
-  const pendingQuery = useQuery(orpc.clubs.listMySubmissions.queryOptions());
+  const pendingQuery = useQuery(
+    orpc.clubs.listMySubmissions.queryOptions({ input: { pageSize: 200 } })
+  );
 
   const galleries = galleryQuery.data ?? [];
-  const pending: PendingRow[] = [
-    ...(pendingQuery.data?.global ?? []).map((row) => ({
-      ...row,
-      scope: "global" as const,
-    })),
-    ...(pendingQuery.data?.club ?? []).map((row) => ({
-      ...row,
-      scope: "club" as const,
-    })),
-  ];
+  const pending = pendingQuery.data?.rows ?? [];
 
   const imageCount = galleries.reduce(
     (total, gallery) => total + gallery.items.length,
@@ -210,12 +185,12 @@ const OverviewPage = () => {
             name="It goes live"
           />
         </RecordList>
-      </Panel>{" "}
+      </Panel>
     </ClubPage>
   );
 };
 
-export const Route = createFileRoute("/club/")({
+export const Route = createFileRoute("/club-admin/photography/")({
   head: () => ({
     meta: [
       { title: "Overview — Club portal — St. Aloysius' College" },

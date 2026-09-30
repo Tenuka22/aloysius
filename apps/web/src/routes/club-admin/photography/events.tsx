@@ -242,7 +242,7 @@ const EventsPage = () => {
   );
 };
 
-export const Route = createFileRoute("/club/events")({
+export const Route = createFileRoute("/club-admin/photography/events")({
   validateSearch: (search: Record<string, unknown>) =>
     submissionSearch.routeSearch(search),
   loaderDeps: ({ search }) => search,

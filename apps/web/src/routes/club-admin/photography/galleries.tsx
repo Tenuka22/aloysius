@@ -226,7 +226,7 @@ const GalleryList = ({
                 </Pill>
                 {hasCover ? null : <Pill tone="warning">No cover</Pill>}
                 <CmsLink
-                  href={`/club/galleries/${gallery.id}`}
+                  href={`/club-admin/photography/galleries/${gallery.id}`}
                   onClick={(event) => {
                     event.preventDefault();
                     onOpen(gallery.id);
@@ -278,7 +278,7 @@ const GalleriesPage = () => {
         galleries={galleries}
         onOpen={(galleryId) => {
           navigate({
-            to: "/club/galleries/$galleryId",
+            to: "/club-admin/photography/galleries/$galleryId",
             params: { galleryId },
           });
         }}
@@ -306,7 +306,7 @@ const GalleriesPage = () => {
   );
 };
 
-export const Route = createFileRoute("/club/galleries")({
+export const Route = createFileRoute("/club-admin/photography/galleries")({
   head: () => ({
     meta: [
       { title: "Galleries — Club portal — St. Aloysius' College" },

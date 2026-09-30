@@ -5,13 +5,12 @@ import {
   readPageSize,
   readString,
 } from "@aloysius/ui/components/data-table/list-search";
-import { useListSearchWriter } from "@aloysius/ui/components/data-table/use-list-search-writer";
 import type { RouteSearch } from "@aloysius/ui/components/data-table/list-search";
+import { useListSearchWriter } from "@aloysius/ui/components/data-table/use-list-search-writer";
 
 import {
   QUEUE_SORT_KEYS,
   SUBMISSION_SORT_KEYS,
-  ACTIVITY_SORT_KEYS,
   ACCOUNT_SORT_KEYS,
 } from "./list-types";
 
@@ -42,22 +41,20 @@ export interface ListSearch<TSortKey extends string> {
   size: number;
 }
 
-/** The four list kinds, and the sort key each one orders by. */
-type ListKind = "queue" | "submission" | "activity" | "account";
+/** The three list kinds, and the sort key each one orders by. */
+type ListKind = "queue" | "submission" | "account";
 
 type SortKeyFor<TKind extends ListKind> = (typeof KEYS)[TKind][number];
 
 const KEYS = {
   queue: QUEUE_SORT_KEYS,
   submission: SUBMISSION_SORT_KEYS,
-  activity: ACTIVITY_SORT_KEYS,
   account: ACCOUNT_SORT_KEYS,
 } as const;
 
 const DEFAULT_SORT = {
   queue: "submittedAt",
   submission: "submittedAt",
-  activity: "createdAt",
   account: "name",
 } as const;
 
@@ -69,9 +66,7 @@ const DEFAULT_SORT = {
  * key in a hand-edited URL falls back to the list's default rather than reaching
  * the server as something its `sortBy` check does not name.
  */
-export const makeListSearchParser = <TKind extends ListKind>(
-  kind: TKind
-) => {
+export const makeListSearchParser = <TKind extends ListKind>(kind: TKind) => {
   const parse = (
     search: Record<string, unknown>
   ): ListSearch<SortKeyFor<TKind>> => ({
@@ -142,9 +137,9 @@ export const makeListSearchParser = <TKind extends ListKind>(
   const useWrite = () =>
     useListSearchWriter(
       parse as (raw: Record<string, unknown>) => ListSearch<SortKeyFor<TKind>>,
-      toParams as (search: ListSearch<SortKeyFor<TKind>>) => RouteSearch<
-        ListSearch<SortKeyFor<TKind>>
-      >
+      toParams as (
+        search: ListSearch<SortKeyFor<TKind>>
+      ) => RouteSearch<ListSearch<SortKeyFor<TKind>>>
     );
 
   return {
@@ -158,7 +153,7 @@ export const makeListSearchParser = <TKind extends ListKind>(
 };
 
 /**
- * The four lists that exist today, each named once.
+ * The three lists that exist today, each named once.
  *
  * A surface imports its own — `queueSearch` for the pending queues, and so on —
  * and everything the surface needs (parse, route contract, server input, URL
@@ -168,5 +163,4 @@ export const makeListSearchParser = <TKind extends ListKind>(
  */
 export const queueSearch = makeListSearchParser("queue");
 export const submissionSearch = makeListSearchParser("submission");
-export const activitySearch = makeListSearchParser("activity");
 export const accountSearch = makeListSearchParser("account");

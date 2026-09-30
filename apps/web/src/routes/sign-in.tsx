@@ -24,7 +24,13 @@ const GENERIC_FAILURE =
  * could do by signing in.
  */
 const DEFAULT_DESTINATION = "/cms";
-const CLUB_DESTINATION = "/club";
+/**
+ * Every club administrator's workspace lives at `/club-admin/<slug>`, one
+ * hardcoded page per club - the same pattern `HARDCODED_CLUBS` uses server
+ * side. There is exactly one club today, so this is that club's address;
+ * the next one adds a branch here alongside its own page.
+ */
+const CLUB_DESTINATION = "/club-admin/photography";
 
 /** Only same-origin, absolute-path redirects are honoured. Without this an
  * attacker can send `/sign-in?redirect=https://evil.example` and use the

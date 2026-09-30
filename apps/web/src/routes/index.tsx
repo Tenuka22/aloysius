@@ -61,7 +61,11 @@ const HomeContent = () => {
     const items = [];
     const { role } = session.user;
     if (role === "club-admin") {
-      items.push({ id: "club", label: "Club portal", href: "/club" });
+      items.push({
+        id: "club",
+        label: "Club portal",
+        href: "/club-admin/photography",
+      });
     }
     if (role === "admin" || role === "cms") {
       items.push({ id: "cms", label: "CMS", href: "/cms" });

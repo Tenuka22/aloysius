@@ -22,6 +22,7 @@ import type {
 import { useId, useMemo } from "react";
 
 import {
+  describeTarget,
   operationTone,
   relativeDay,
   titleFromPayload,
@@ -58,6 +59,12 @@ const buildColumns = ({ club, global }: WithdrawMutations) => [
     meta: { label: "Submission" },
     enableSorting: false,
     cell: (cell) => cell.getValue() || "Untitled",
+  }),
+  columnHelper.accessor((row) => describeTarget(row.target), {
+    id: "target",
+    meta: { label: "Where" },
+    enableSorting: false,
+    cell: (cell) => cell.getValue(),
   }),
   columnHelper.accessor("operation", {
     id: "operation",

@@ -42,7 +42,11 @@ const PhotographyClubContent = () => {
       items.push({ id: "admin", label: "Admin", href: "/admin" });
     }
     if (role === "club-admin") {
-      items.push({ id: "club", label: "Club portal", href: "/club" });
+      items.push({
+        id: "club",
+        label: "Club portal",
+        href: "/club-admin/photography",
+      });
     }
     return items;
   })();

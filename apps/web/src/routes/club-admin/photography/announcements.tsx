@@ -148,7 +148,7 @@ const AnnouncementsPage = () => {
   );
 };
 
-export const Route = createFileRoute("/club/announcements")({
+export const Route = createFileRoute("/club-admin/photography/announcements")({
   head: () => ({
     meta: [
       { title: "Announcements — Club portal — St. Aloysius' College" },

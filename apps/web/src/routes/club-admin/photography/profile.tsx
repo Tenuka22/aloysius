@@ -305,7 +305,7 @@ const ClubProfilePage = () => {
   );
 };
 
-export const Route = createFileRoute("/club/profile")({
+export const Route = createFileRoute("/club-admin/photography/profile")({
   head: () => ({
     meta: [
       { title: "Club profile — Club portal — St. Aloysius' College" },

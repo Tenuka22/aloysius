@@ -158,7 +158,7 @@ const AchievementsPage = () => {
   );
 };
 
-export const Route = createFileRoute("/club/achievements")({
+export const Route = createFileRoute("/club-admin/photography/achievements")({
   head: () => ({
     meta: [
       { title: "Achievements — Club portal — St. Aloysius' College" },
