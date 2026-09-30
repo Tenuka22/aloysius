@@ -37,7 +37,22 @@ import * as v from "valibot";
 
 const nullableText = v.nullable(v.string());
 const nullableId = v.nullable(v.pipe(v.string(), v.minLength(1)));
-const nullableDate = v.nullish(v.date());
+
+/**
+ * A payload date that survives the trip this value actually takes: a fresh
+ * submission carries a live `Date`, but every payload is `JSON.stringify`d
+ * into the submission's `payload` column and `JSON.parse`d back out again
+ * when a reviewer approves it - and by then it is an ISO string, not a
+ * `Date`. `v.date()` alone accepts only the first shape, which made every
+ * approval of a payload carrying one of these fields fail re-validation with
+ * a payload that was valid at submit time. This accepts either and always
+ * returns a `Date`.
+ */
+const jsonDateSchema = v.pipe(
+  v.union([v.date(), v.pipe(v.string(), v.isoTimestamp())]),
+  v.transform((value) => (value instanceof Date ? value : new Date(value)))
+);
+const nullableDate = v.nullish(jsonDateSchema);
 
 /**
  * An off-site album URL.
@@ -229,8 +244,8 @@ export const clubEventCreatePayloadSchema = v.object({
   title: v.pipe(v.string(), v.minLength(1)),
   description: v.optional(nullableText),
   location: v.optional(nullableText),
-  startsAt: v.date(),
-  endsAt: v.date(),
+  startsAt: jsonDateSchema,
+  endsAt: jsonDateSchema,
   coverImageId: v.optional(fileIdSchema),
 });
 
@@ -239,8 +254,8 @@ export const clubEventUpdatePayloadSchema = v.object({
   title: v.optional(v.pipe(v.string(), v.minLength(1))),
   description: v.optional(nullableText),
   location: v.optional(nullableText),
-  startsAt: v.optional(v.date()),
-  endsAt: v.optional(v.date()),
+  startsAt: v.optional(jsonDateSchema),
+  endsAt: v.optional(jsonDateSchema),
   coverImageId: v.optional(fileIdSchema),
 });
 

@@ -174,12 +174,15 @@ export const DataTableFrame = <TData extends RowData>({
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
+              {headerGroup.headers.map((header, index) => (
                 <th
                   key={header.id}
                   aria-sort={ariaSortFor(header.column)}
                   scope="col"
-                  {...stylex.props(styles.head)}
+                  {...stylex.props(
+                    styles.head,
+                    index === 0 ? styles.headGrow : styles.headNarrow
+                  )}
                 >
                   {header.isPlaceholder
                     ? null
@@ -234,6 +237,26 @@ const styles = stylex.create({
     textTransform: "uppercase",
     textAlign: "start",
     whiteSpace: "nowrap",
+  },
+  /*
+   * The first column is always the row's own title/description, and every
+   * other column is a short, fixed-shape value (a pill, a date, a button) -
+   * so the first column is the one asked to grow. Without this, `100%`-wide
+   * table with five short header words spreads them evenly across the full
+   * width, leaving the actual values stranded in wide gaps instead of read
+   * next to their labels.
+   */
+  headGrow: {
+    width: "auto",
+  },
+  /*
+   * `width: 1%` is the standard trick for "shrink this column to its content":
+   * browsers cannot honour 1% literally once the content is wider, so the
+   * column collapses to its natural width and the remaining space in the
+   * `100%` table goes to whichever column has no such constraint.
+   */
+  headNarrow: {
+    width: "1%",
   },
   row: {
     borderTopWidth: space.px,
