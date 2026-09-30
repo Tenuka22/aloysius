@@ -24,6 +24,7 @@
         "@fontsource-variable/libre-baskerville": "^5.3.0",
         "@fontsource/poppins": "^5.3.0",
         "@stylexjs/stylex": "catalog:",
+        "@tanstack/react-table": "^9.2.4",
         "react": "catalog:",
         "react-dom": "catalog:",
       },
@@ -64,6 +65,7 @@
         "@tanstack/react-router": "^1.170.32",
         "@tanstack/react-router-ssr-query": "^1.167.2",
         "@tanstack/react-start": "^1.168.49",
+        "@tanstack/react-table": "^9.2.4",
         "@varlock/vite-integration": "1.5.1",
         "better-auth": "catalog:",
         "libsql": "catalog:",
@@ -105,6 +107,7 @@
         "@orpc/openapi": "catalog:",
         "@orpc/publisher": "^1.14.11",
         "@orpc/server": "catalog:",
+        "@tanstack/react-table": "^9.2.4",
         "drizzle-orm": "1.0.0-rc.4",
         "sharp": "^0.35.4",
         "valibot": "catalog:",
@@ -119,6 +122,7 @@
       "name": "@aloysius/auth",
       "dependencies": {
         "@aloysius/db": "workspace:*",
+        "@tanstack/react-table": "^9.2.4",
         "better-auth": "catalog:",
         "drizzle-orm": "1.0.0-rc.4",
       },
@@ -131,11 +135,15 @@
     "packages/config": {
       "name": "@aloysius/config",
       "version": "0.0.0",
+      "dependencies": {
+        "@tanstack/react-table": "^9.2.4",
+      },
     },
     "packages/db": {
       "name": "@aloysius/db",
       "dependencies": {
         "@libsql/client": "catalog:",
+        "@tanstack/react-table": "^9.2.4",
         "drizzle-orm": "1.0.0-rc.4",
         "libsql": "catalog:",
         "valibot": "catalog:",
@@ -152,6 +160,7 @@
     "packages/storage": {
       "name": "@aloysius/storage",
       "dependencies": {
+        "@tanstack/react-table": "^9.2.4",
         "minio": "^8.0.7",
       },
       "devDependencies": {
@@ -166,6 +175,7 @@
       "dependencies": {
         "@stylexjs/stylex": "catalog:",
         "@tanstack/react-router": "^1.170.32",
+        "@tanstack/react-table": "^9.2.4",
         "@tiptap/core": "^3.31.3",
         "@tiptap/pm": "^3.31.3",
         "@tiptap/react": "^3.31.3",
@@ -761,6 +771,8 @@
 
     "@tanstack/react-store": ["@tanstack/react-store@0.11.1", "", { "dependencies": { "@tanstack/store": "0.11.1", "use-sync-external-store": "^1.6.0" }, "peerDependencies": { "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-HaIGKI3YLmjBYIvy5DFDY23oNaYZIsTZfngey07Uh5iLVJgM3bIGCnZeOFOqzjFld9JHWcaHJnasD/bKoGKwJQ=="],
 
+    "@tanstack/react-table": ["@tanstack/react-table@9.2.4", "", { "dependencies": { "@tanstack/react-store": "^0.11.1", "@tanstack/table-core": "9.2.4" }, "peerDependencies": { "react": ">=18" } }, "sha512-Rzp1Q4e0/nIgEjmISYR5HeEgLTNtrG+C7NFZf/AbCxPO5hg+zC3yNGwcoECigUk8SFzzvhXbd2rFdtP2ZiGrfA=="],
+
     "@tanstack/router-core": ["@tanstack/router-core@1.171.30", "", { "dependencies": { "@tanstack/history": "1.162.4", "cookie-es": "^3.0.0", "seroval": "^1.6.2", "seroval-plugins": "^1.6.2" } }, "sha512-wtS1yCAb/k5CJBauvrCyqf2n4/kRc3aiz81tFBJ1QXH4Utsu81xFTMq15AdmNWgWmt2UstUSMfWi4Ua7ph2F+w=="],
 
     "@tanstack/router-devtools-core": ["@tanstack/router-devtools-core@1.168.2", "", { "dependencies": { "clsx": "^2.1.1", "goober": "^2.1.16" }, "peerDependencies": { "@tanstack/router-core": "^1.171.30", "csstype": "^3.0.10" }, "optionalPeers": ["csstype"] }, "sha512-pCCdQ5M/NUeWdiAbPmjyfcNdls6G4vaVlIQbPf1IqZk1FLYFr00aQvi578yUuWFBNM2KNS2QcwM1uPucbtGf5Q=="],
@@ -784,6 +796,8 @@
     "@tanstack/start-storage-context": ["@tanstack/start-storage-context@1.167.32", "", { "dependencies": { "@tanstack/router-core": "1.171.30" } }, "sha512-Di2mLQPXy1oPFU0o9jb0oMA/XXX9sJc+FEMJo3PMiSyB6cPnbAjsR1VgvavfsCBMi7kOE+ctdK+ELDX2MwKvIA=="],
 
     "@tanstack/store": ["@tanstack/store@0.11.1", "", {}, "sha512-mzTOBhypOuDJAy/D8n2MfUZ1HFkXnmSETviRyhqEC8LUE7/IZQExOTxMANj3KjTofYTkFNpBY67qaVrT41YccA=="],
+
+    "@tanstack/table-core": ["@tanstack/table-core@9.2.4", "", { "dependencies": { "@tanstack/store": "^0.11.1" } }, "sha512-GwdDyGGr6UXAtubF14yAwcXvdaogqfsQgIk89Suebjxob/Rjq2xvfmXsjDF1rQmKmhHsJm9TOY7myxv3i6geJw=="],
 
     "@tanstack/virtual-file-routes": ["@tanstack/virtual-file-routes@1.162.0", "", {}, "sha512-uhOeFyxLcU41HzvrxsGpiWdcMbScY1EDgbZ5K7DVRMYInbLYWAC0EA/kx9wXAoSM8q82bUG2hRl8+EAjE6XAbA=="],
 

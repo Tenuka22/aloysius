@@ -18,6 +18,7 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, useCallback, useRef, useState } from "react";
 
+import { uploadImage } from "@/components/club/upload";
 import { client, orpc } from "@/utils/orpc";
 
 const StudentsContent = () => {
@@ -44,28 +45,7 @@ const StudentsContent = () => {
     })
   );
 
-  const handleUpload = useCallback(async (file: File) => {
-    const upload = await client.files.getUploadUrl({
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    });
-    const response = await fetch(upload.uploadUrl, {
-      body: file,
-      headers: { "Content-Type": file.type },
-      method: "PUT",
-    });
-    if (!response.ok) {
-      throw new Error("The media upload failed.");
-    }
-    const record = await client.files.completeUpload({
-      key: upload.key,
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    });
-    return record.url;
-  }, []);
+  const handleUpload = uploadImage;
 
   const handleSaveDraft = useCallback(async () => {
     const blocks = editorRef.current?.getBlocks();

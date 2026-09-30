@@ -14,6 +14,12 @@ import * as v from "valibot";
 
 import { protectedProcedure, requireClubPermission } from "../../index";
 import { findClubByAdminUsername, findHardcodedClub } from "./config";
+import {
+  listOffset,
+  listParamsSchema,
+  sortDirectionOf,
+} from "../list-params";
+import { titleFromPayload } from "../list-format";
 import { assertLinkTargetExists, linkTargetTitle } from "./link-targets";
 /**
  * The club side of the approval workflow.
@@ -745,8 +751,9 @@ export const submitAchievementCreate = clubAdminProcedure
 // ─── Queue visibility ────────────────────────────────────────────────────────
 
 /** Everything the caller has in flight, across all of their clubs. */
-export const listMySubmissions = clubAdminProcedure.handler(
-  async ({ context }) => {
+export const listMySubmissions = clubAdminProcedure
+  .input(listParamsSchema)
+  .handler(async ({ context, input }) => {
     const [global, clubScoped] = await Promise.all([
       context.db
         .select()
@@ -772,9 +779,70 @@ export const listMySubmissions = clubAdminProcedure.handler(
         .all(),
     ]);
 
-    return { global, club: clubScoped };
-  }
-);
+    /*
+     * Merged into one list before the slice: the caller's queue is one queue to
+     * them, whatever table backs each row, and a page that cuts the club queue
+     * off at row N before the global rows are interleaved would hide rows the
+     * caller cannot find anywhere else. The scope tag is what the client uses
+     * to route a withdraw to the right table.
+     */
+    const merged = [
+      ...global.map((row) => ({
+        id: row.id,
+        target: row.target,
+        operation: row.operation,
+        payload: row.payload,
+        status: row.status,
+        submittedAt: row.submittedAt,
+        reviewNote: row.reviewNote,
+        scope: "global" as const,
+      })),
+      ...clubScoped.map((row) => ({
+        id: row.id,
+        target: row.target,
+        operation: row.operation,
+        payload: row.payload,
+        status: row.status,
+        submittedAt: row.submittedAt,
+        reviewNote: row.reviewNote,
+        scope: "club" as const,
+      })),
+    ];
+
+    const term = input.q.toLowerCase();
+    const direction = sortDirectionOf(input, "desc");
+
+    const matching = term
+      ? merged.filter((row) =>
+          [row.target, titleFromPayload(row.payload)]
+            .filter(Boolean)
+            .some((field) =>
+              String(field).toLowerCase().includes(term)
+            )
+        )
+      : merged;
+
+    const sorted =
+      input.sortBy === "target"
+        ? [...matching].toSorted(
+            (a, b) =>
+              (direction === "asc" ? 1 : -1) *
+              a.target.localeCompare(b.target)
+          )
+        : [...matching].toSorted(
+            (a, b) =>
+              (direction === "asc" ? 1 : -1) *
+              (b.submittedAt.getTime() - a.submittedAt.getTime())
+          );
+
+    const total = sorted.length;
+    const start = listOffset(input);
+
+    return {
+      rows: sorted.slice(start, start + input.pageSize),
+      total,
+    };
+  });
 
 /** Propose recording something the club itself achieved. */
 export const submitClubAchievement = clubAdminProcedure

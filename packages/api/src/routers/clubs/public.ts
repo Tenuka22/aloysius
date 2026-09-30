@@ -18,6 +18,7 @@ import {
   photoGallery,
 } from "@aloysius/db/schema/gallery";
 import { achievement, event, person } from "@aloysius/db/schema/root-content";
+import { ORPCError } from "@orpc/server";
 import {
   and,
   asc,
@@ -848,4 +849,206 @@ export const listAnnouncements = publicProcedure
         );
       })
       .slice(0, limit);
+  });
+
+/**
+ * One club's public page, by slug, in one call.
+ *
+ * The club pages are static routes (`/photography-club`, not
+ * `/clubs/$slug`), so the slug arrives from hand-typed code rather than a URL
+ * parameter - but the *content* still comes from the live tables, because the
+ * page has to show the club's current events, achievements, announcements and
+ * galleries without a redeploy.
+ *
+ * Everything here is the already-public slice: only approved rows have a
+ * `publishedAt` to find, and the gallery query reuses `publishedGallery` - the
+ * same predicate every other public gallery query runs. A club page can
+ * therefore never show an unapproved submission, because there is no approved
+ * row for it to find.
+ *
+ * One round trip per section, all in parallel, rather than the caller issuing
+ * four queries - the same reasoning as `listMyGalleries`: a page that must wait
+ * on serial round trips is a page visitors learn not to trust.
+ */
+export const getClubPage = publicProcedure
+  .input(v.object({ slug: v.pipe(v.string(), v.minLength(1)) }))
+  .handler(async ({ context, input }) => {
+    const clubId = await resolveClubId(context.db, input.slug);
+    if (!clubId) {
+      throw new ORPCError("NOT_FOUND", { message: "No such club" });
+    }
+
+    const [clubRow, events, achievements, announcements, galleries] =
+      await Promise.all([
+        context.db
+          .select({
+            id: club.id,
+            slug: club.slug,
+            name: club.name,
+            description: club.description,
+            coverImageId: club.coverImageId,
+            backgroundImageId: club.backgroundImageId,
+          })
+          .from(club)
+          .where(eq(club.id, clubId))
+          .get(),
+        context.db
+          .select({
+            id: clubEvent.id,
+            title: clubEvent.title,
+            description: clubEvent.description,
+            location: clubEvent.location,
+            startsAt: clubEvent.startsAt,
+            endsAt: clubEvent.endsAt,
+            coverImageId: clubEvent.coverImageId,
+          })
+          .from(clubEvent)
+          .where(
+            and(eq(clubEvent.clubId, clubId), isNotNull(clubEvent.publishedAt))
+          )
+          .orderBy(asc(clubEvent.startsAt))
+          .limit(20)
+          .all(),
+        context.db
+          .select({
+            id: clubAchievement.id,
+            title: clubAchievement.title,
+            detail: clubAchievement.detail,
+            category: clubAchievement.category,
+            achievedOn: clubAchievement.achievedOn,
+            imageId: clubAchievement.imageId,
+          })
+          .from(clubAchievement)
+          .where(
+            and(
+              eq(clubAchievement.clubId, clubId),
+              isNotNull(clubAchievement.publishedAt)
+            )
+          )
+          .orderBy(desc(clubAchievement.publishedAt))
+          .limit(12)
+          .all(),
+        context.db
+          .select({
+            id: clubAnnouncement.id,
+            title: clubAnnouncement.title,
+            body: clubAnnouncement.body,
+            imageId: clubAnnouncement.imageId,
+            publishedAt: clubAnnouncement.publishedAt,
+          })
+          .from(clubAnnouncement)
+          .where(
+            and(
+              eq(clubAnnouncement.clubId, clubId),
+              isNotNull(clubAnnouncement.publishedAt),
+              withinWindow(
+                clubAnnouncement.effectiveFrom,
+                clubAnnouncement.expiresAt,
+                new Date()
+              )
+            )
+          )
+          .orderBy(desc(clubAnnouncement.publishedAt))
+          .limit(10)
+          .all(),
+        context.db
+          .select({
+            id: gallery.id,
+            slug: gallery.slug,
+            kind: gallery.kind,
+            title: gallery.title,
+            summary: gallery.summary,
+            albumUrl: gallery.albumUrl,
+            albumLabel: gallery.albumLabel,
+            publishedAt: gallery.publishedAt,
+          })
+          .from(gallery)
+          .where(and(publishedGallery, eq(gallery.ownerClubId, clubId)))
+          .orderBy(desc(gallery.publishedAt))
+          .limit(12)
+          .all(),
+      ]);
+
+    /*
+     * Every image across the whole page resolved in one lookup, however many
+     * rows carry one - the same pattern as `listClubs`.
+     */
+    const urls = await resolveFileUrls(context.db, [
+      clubRow?.coverImageId ?? "",
+      clubRow?.backgroundImageId ?? "",
+      ...events.map((row) => row.coverImageId ?? ""),
+      ...achievements.map((row) => row.imageId ?? ""),
+      ...announcements.map((row) => row.imageId ?? ""),
+    ]);
+
+    const urlFor = (id: string | null) => (id ? (urls.get(id) ?? null) : null);
+
+    return {
+      club: clubRow
+        ? {
+            ...clubRow,
+            coverImageUrl: urlFor(clubRow.coverImageId),
+            backgroundImageUrl: urlFor(clubRow.backgroundImageId),
+          }
+        : null,
+      events: events.map((row) => ({
+        ...row,
+        coverImageUrl: urlFor(row.coverImageId),
+      })),
+      achievements: achievements.map((row) => ({
+        ...row,
+        imageUrl: urlFor(row.imageId),
+      })),
+      announcements: announcements.map((row) => ({
+        ...row,
+        imageUrl: urlFor(row.imageId),
+      })),
+      galleries,
+    };
+  });
+
+/**
+ * Published announcements for one club, newest first.
+ *
+ * The club page fetch inlines its announcements, so this is for any surface
+ * that wants the club's notices without the rest of the page - a gallery page
+ * naming which announcement its photographs belong to, or the announcements
+ * strip if it ever wants per-club sections. The window predicate is the same
+ * `withinWindow` the site-wide feed applies, so a club cannot keep a notice
+ * alive past its own expiry by changing where it is read from.
+ */
+export const listClubAnnouncements = publicProcedure
+  .input(v.object({ clubSlug: slugInput, limit: limitInput }))
+  .handler(async ({ context, input }) => {
+    if (!input.clubSlug) {
+      return [];
+    }
+    const clubId = await resolveClubId(context.db, input.clubSlug);
+    if (!clubId) {
+      return [];
+    }
+
+    return context.db
+      .select({
+        id: clubAnnouncement.id,
+        title: clubAnnouncement.title,
+        body: clubAnnouncement.body,
+        imageId: clubAnnouncement.imageId,
+        publishedAt: clubAnnouncement.publishedAt,
+      })
+      .from(clubAnnouncement)
+      .where(
+        and(
+          eq(clubAnnouncement.clubId, clubId),
+          isNotNull(clubAnnouncement.publishedAt),
+          withinWindow(
+            clubAnnouncement.effectiveFrom,
+            clubAnnouncement.expiresAt,
+            new Date()
+          )
+        )
+      )
+      .orderBy(desc(clubAnnouncement.publishedAt))
+      .limit(input.limit ?? 20)
+      .all();
   });

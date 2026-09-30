@@ -78,9 +78,20 @@ export interface Club {
    * the plain surface rather than reserving an empty box.
    */
   coverImageUrl?: string | null;
+  /**
+   * The club's own page, when it has one. Static routes, hand-typed: a club
+   * without a dedicated page renders a plain card, and one with a page links
+   * to an address that was written on purpose, not derived from a slug.
+   */
+  href?: string;
 }
 
 export const CLUBS: readonly Club[] = [
+  {
+    id: "photography",
+    name: "Photography Club",
+    href: "/photography-club",
+  },
   { id: "debating", name: "Debating Society" },
   { id: "science", name: "Science Society" },
   { id: "media", name: "Media Unit" },

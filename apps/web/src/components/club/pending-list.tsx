@@ -11,6 +11,16 @@ import { ClubPageLoading } from "@/components/club/page-parts";
 import { orpc } from "@/utils/orpc";
 
 /**
+ * The input the shared list endpoint takes for this slice: everything at once,
+ * filtered client-side by target. The four screens that end with this list show
+ * one target each, and the queue is small enough that paging it per screen would
+ * hide rows the caller cannot find anywhere else.
+ */
+const LIST_INPUT = {
+  pageSize: 200,
+} as const;
+
+/**
  * What this club has sent that nobody has decided on yet.
  *
  * Read from the submission queue rather than from any content table, because a
@@ -39,18 +49,19 @@ const OPERATION_LABEL: Record<string, string> = {
 
 export const PendingList = ({ target }: { target: string }) => {
   const queryClient = useQueryClient();
-  const query = useQuery(orpc.clubs.listMySubmissions.queryOptions());
+  const query = useQuery(
+    orpc.clubs.listMySubmissions.queryOptions({ input: LIST_INPUT })
+  );
 
-  const rows: PendingRow[] = [
-    ...(query.data?.club ?? []).map((row) => ({
-      ...row,
-      scope: "club" as const,
-    })),
-    ...(query.data?.global ?? []).map((row) => ({
-      ...row,
-      scope: "global" as const,
-    })),
-  ].filter((row) => row.target === target);
+  const rows: PendingRow[] = (query.data?.rows ?? [])
+    .filter((row) => row.target === target)
+    .map((row) => ({
+      id: row.id,
+      scope: row.scope,
+      operation: row.operation,
+      payload: row.payload,
+      submittedAt: row.submittedAt,
+    }));
 
   const refresh = async () => {
     await queryClient.invalidateQueries({

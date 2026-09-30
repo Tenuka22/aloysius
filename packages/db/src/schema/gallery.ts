@@ -66,14 +66,20 @@ export type DigitalFormat = (typeof DIGITAL_FORMATS)[number];
  * of `event` and `achievement` because the underlying tables are separate and
  * differently owned - see `LINK_TARGET_RESOLVERS` in the API, which is the one
  * place that has to agree with this list.
+ *
+ * The announcement targets exist for the same reason: a gallery of the
+ * prize-giving photographs belongs beside the announcement that told the school
+ * the prize-giving was happening, whether the school or a club wrote it.
  */
 export const GALLERY_LINK_TARGETS = [
   "person",
   "event",
   "achievement",
   "exhibition",
+  "announcement",
   "clubEvent",
   "clubAchievement",
+  "clubAnnouncement",
 ] as const;
 export type GalleryLinkTarget = (typeof GALLERY_LINK_TARGETS)[number];
 

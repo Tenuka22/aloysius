@@ -22,6 +22,12 @@ import { requireAuth } from "../context";
 import { adminProcedure, cmsProcedure, requireClubPermission } from "../index";
 import { approveClubSubmission, approveGlobalSubmission } from "./clubs/apply";
 import { HARDCODED_CLUBS, findHardcodedClub } from "./clubs/config";
+import {
+  listOffset,
+  listParamsSchema,
+  sortDirectionOf,
+} from "./list-params";
+import { titleFromPayload } from "./list-format";
 
 export { HARDCODED_CLUBS } from "./clubs/config";
 
@@ -332,10 +338,13 @@ export const adminClubsRouter = {
 
   activity: adminProcedure
     .input(
-      v.object({ clubId: v.optional(idInput), limit: v.optional(v.number()) })
+      v.intersect([
+        listParamsSchema,
+        v.object({ clubId: v.optional(idInput) }),
+      ])
     )
-    .handler(({ context, input }) =>
-      activityFeed(
+    .handler(async ({ context, input }) => {
+      const merged = await activityFeed(
         context.db,
         {
           clubId: input.clubId,
@@ -343,9 +352,51 @@ export const adminClubsRouter = {
             ? findHardcodedClub(input.clubId)?.adminUsername
             : undefined,
         },
-        input.limit ?? 100
-      )
-    ),
+        // The merge of the audit trail and the submission tables happens in
+        // memory over a bounded window, so the fetch cap is generous and the
+        // paging slice happens after the merge and the sort.
+        500
+      );
+
+      const term = input.q.toLowerCase();
+      const direction = sortDirectionOf(input, "desc");
+
+      const matching = term
+        ? merged.filter((entry) =>
+            [
+              entry.actorUsername,
+              entry.actorRole,
+              entry.action,
+              entry.targetType,
+              entry.targetId,
+            ]
+              .filter(Boolean)
+              .some((field) =>
+                String(field).toLowerCase().includes(term)
+              )
+          )
+        : merged;
+
+      const sorted =
+        input.sortBy === "action"
+          ? [...matching].toSorted((a, b) =>
+              (direction === "asc" ? 1 : -1) *
+              a.action.localeCompare(b.action)
+            )
+          : [...matching].toSorted(
+              (a, b) =>
+                (direction === "asc" ? 1 : -1) *
+                (b.createdAt.getTime() - a.createdAt.getTime())
+            );
+
+      const total = sorted.length;
+      const start = listOffset(input);
+
+      return {
+        rows: sorted.slice(start, start + input.pageSize),
+        total,
+      };
+    }),
 
   myActivity: clubAdminProcedure
     .input(v.object({ limit: v.optional(v.number()) }))
@@ -358,8 +409,13 @@ export const adminClubsRouter = {
     ),
 
   pendingClub: cmsProcedure
-    .input(v.object({ clubId: v.optional(idInput) }))
-    .handler(({ context, input }) => {
+    .input(
+      v.intersect([
+        listParamsSchema,
+        v.object({ clubId: v.optional(idInput) }),
+      ])
+    )
+    .handler(async ({ context, input }) => {
       const filters = [
         eq(clubContentSubmission.status, "pending"),
         ...(input.clubId
@@ -367,7 +423,10 @@ export const adminClubsRouter = {
           : []),
       ];
 
-      return context.db
+      const term = input.q.toLowerCase();
+      const direction = sortDirectionOf(input, "desc");
+
+      const rows = await context.db
         .select({
           id: clubContentSubmission.id,
           clubId: clubContentSubmission.clubId,
@@ -385,28 +444,117 @@ export const adminClubsRouter = {
         .where(and(...filters))
         .orderBy(desc(clubContentSubmission.submittedAt))
         .all();
+
+      /*
+       * Search and sort are applied over the fetched page-set rather than in
+       * SQL because the searchable text - the title - lives inside the stored
+       * JSON payload, and SQLite has no index over a JSON path worth asking
+       * for. The result set is a queue the size of days, not years, so reading
+       * it whole and slicing here is honest and keeps the payload parsing in
+       * one place - the same parse the review card below this handler does.
+       */
+      const matching = term
+        ? rows.filter((row) =>
+            [
+              row.clubName,
+              row.submittedBy,
+              row.target,
+              titleFromPayload(row.payload),
+            ]
+              .filter(Boolean)
+              .some((field) =>
+                String(field).toLowerCase().includes(term)
+              )
+          )
+        : rows;
+
+      const sorted =
+        input.sortBy === "operation"
+          ? [...matching].toSorted((a, b) =>
+              a.operation.localeCompare(b.operation)
+            )
+          : input.sortBy === "target"
+            ? [...matching].toSorted((a, b) =>
+                a.target.localeCompare(b.target)
+              )
+            : [...matching].toSorted(
+                (a, b) =>
+                  (direction === "asc" ? 1 : -1) *
+                  (b.submittedAt.getTime() - a.submittedAt.getTime())
+              );
+
+      const total = sorted.length;
+      const start = listOffset(input);
+
+      return {
+        rows: sorted.slice(start, start + input.pageSize),
+        total,
+      };
     }),
 
-  pendingGlobal: cmsProcedure.handler(({ context }) =>
-    context.db
-      .select({
-        id: globalContentSubmission.id,
-        clubId: globalContentSubmission.submittedByClubId,
-        clubName: club.name,
-        target: globalContentSubmission.target,
-        operation: globalContentSubmission.operation,
-        payload: globalContentSubmission.payload,
-        baseSnapshot: globalContentSubmission.baseSnapshot,
-        submittedAt: globalContentSubmission.submittedAt,
-        submittedBy: user.name,
-      })
-      .from(globalContentSubmission)
-      .leftJoin(club, eq(club.id, globalContentSubmission.submittedByClubId))
-      .innerJoin(user, eq(user.id, globalContentSubmission.submittedById))
-      .where(eq(globalContentSubmission.status, "pending"))
-      .orderBy(desc(globalContentSubmission.submittedAt))
-      .all()
-  ),
+  pendingGlobal: cmsProcedure
+    .input(listParamsSchema)
+    .handler(async ({ context, input }) => {
+      const rows = await context.db
+        .select({
+          id: globalContentSubmission.id,
+          clubId: globalContentSubmission.submittedByClubId,
+          clubName: club.name,
+          target: globalContentSubmission.target,
+          operation: globalContentSubmission.operation,
+          payload: globalContentSubmission.payload,
+          baseSnapshot: globalContentSubmission.baseSnapshot,
+          submittedAt: globalContentSubmission.submittedAt,
+          submittedBy: user.name,
+        })
+        .from(globalContentSubmission)
+        .leftJoin(club, eq(club.id, globalContentSubmission.submittedByClubId))
+        .innerJoin(user, eq(user.id, globalContentSubmission.submittedById))
+        .where(eq(globalContentSubmission.status, "pending"))
+        .orderBy(desc(globalContentSubmission.submittedAt))
+        .all();
+
+      const term = input.q.toLowerCase();
+      const direction = sortDirectionOf(input, "desc");
+
+      const matching = term
+        ? rows.filter((row) =>
+            [
+              row.clubName,
+              row.submittedBy,
+              row.target,
+              titleFromPayload(row.payload),
+            ]
+              .filter(Boolean)
+              .some((field) =>
+                String(field).toLowerCase().includes(term)
+              )
+          )
+        : rows;
+
+      const sorted =
+        input.sortBy === "operation"
+          ? [...matching].toSorted((a, b) =>
+              a.operation.localeCompare(b.operation)
+            )
+          : input.sortBy === "target"
+            ? [...matching].toSorted((a, b) =>
+                a.target.localeCompare(b.target)
+              )
+            : [...matching].toSorted(
+                (a, b) =>
+                  (direction === "asc" ? 1 : -1) *
+                  (b.submittedAt.getTime() - a.submittedAt.getTime())
+              );
+
+      const total = sorted.length;
+      const start = listOffset(input);
+
+      return {
+        rows: sorted.slice(start, start + input.pageSize),
+        total,
+      };
+    }),
 
   updatePayload: cmsProcedure
     .input(

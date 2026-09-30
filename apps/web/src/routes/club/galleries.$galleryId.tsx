@@ -37,7 +37,7 @@ import {
   ClubPageLoading,
   FieldStack,
 } from "@/components/club/page-parts";
-import { uploadImage } from "@/components/club/upload";
+import { uploadImageFile } from "@/components/club/upload";
 import { client, orpc } from "@/utils/orpc";
 
 /**
@@ -165,7 +165,7 @@ const CoverPanel = ({
     setBusy(true);
     setNotice(null);
     try {
-      const fileId = await uploadImage(file);
+      const fileId = await uploadImageFile(file);
       await client.clubs.submitGalleryItemCreate({
         galleryId,
         payload: {
@@ -438,7 +438,7 @@ const UploadImagesPanel = ({
      */
     const settled = await Promise.allSettled(
       batch.map(async (image, index) => {
-        const fileId = await uploadImage(image.file);
+        const fileId = await uploadImageFile(image.file);
         /*
          * Only the first image of the batch may claim a unique role. The rest
          * would each fail the one-per-gallery partial index, so they go in as
@@ -664,8 +664,10 @@ const AlbumLinkPanel = ({
 
 const TARGET_LABEL: Record<string, string> = {
   achievement: "a school achievement",
-  clubAchievement: "one of your club's achievements",
-  clubEvent: "one of your club's events",
+  announcement: "a school announcement",
+  clubAchievement: "a club achievement",
+  clubAnnouncement: "a club announcement",
+  clubEvent: "a club event",
   event: "a school event",
   exhibition: "an exhibition",
   person: "a person",
@@ -673,10 +675,12 @@ const TARGET_LABEL: Record<string, string> = {
 
 /** The link targets a club can actually pick from, in the order they are offered. */
 const TARGET_OPTIONS = [
-  { label: "One of your club's events", value: "clubEvent" },
-  { label: "One of your club's achievements", value: "clubAchievement" },
-  { label: "A school event", value: "event" },
-  { label: "A school achievement", value: "achievement" },
+  { label: "Club events", value: "clubEvent" },
+  { label: "Club achievements", value: "clubAchievement" },
+  { label: "Club announcements", value: "clubAnnouncement" },
+  { label: "School events", value: "event" },
+  { label: "School achievements", value: "achievement" },
+  { label: "School announcements", value: "announcement" },
 ] as const;
 
 type LinkTarget = (typeof TARGET_OPTIONS)[number]["value"];
@@ -692,11 +696,14 @@ type LinkTarget = (typeof TARGET_OPTIONS)[number]["value"];
  */
 const EMPTY_LINK_HINT: Record<LinkTarget, string> = {
   clubEvent:
-    "You have not had an event approved yet. Propose one on the Events page, then link its photographs here.",
+    "No club events to link yet — yours appear once proposed on the Events page, and other clubs' once they have events.",
   clubAchievement:
-    "You have not had an achievement approved yet. Propose one on the Achievements page, then link its photographs here.",
-  event: "The school has no upcoming events yet.",
+    "No club achievements to link yet — propose one on the Achievements page, then link its photographs here.",
+  clubAnnouncement:
+    "No club announcements to link yet — propose one on the Announcements page, then link its photographs here.",
+  event: "The school has no events yet.",
   achievement: "The school has not published any achievements yet.",
+  announcement: "The school has not published any announcements yet.",
 };
 
 /**
@@ -715,19 +722,74 @@ const EMPTY_LINK_HINT: Record<LinkTarget, string> = {
  * the very event it is trying to attach photographs to would find nothing to
  * pick. A link and the event it names are approved separately, so a club has to
  * be able to name an event before either exists publicly.
+ *
+ * The school's photography club is additionally offered the school-wide tables
+ * and every other club's records, each labelled with the club that owns it.
+ * Reading another club's titles is not a leak: a link is a pointer, not a
+ * permission, and the photographs of another club's event are exactly what the
+ * school's photographers exist to publish. The other club does not approve the
+ * link - the CMS does, in the same queue as everything else.
  */
+/** A title with its date appended, for an option label. */
+const dated = (title: string, when: string | Date | null) =>
+  when ? `${title} — ${new Date(when).toLocaleDateString("en-GB")}` : title;
+
+/** The shape `listMyLinkTargets` and `listSchoolLinkTargets` return rows in. */
+interface TargetRecord {
+  id: string;
+  title: string;
+  startsAt?: Date | null;
+  achievedOn?: string | null;
+  category?: string | null;
+  clubName?: string | null;
+}
+
+/**
+ * The picker's options for one target kind.
+ *
+ * Module scope rather than inline in the panel: it reads only its arguments,
+ * and the panel body is already at the complexity budget. Own records come
+ * first, then other clubs' labelled with the club that owns them - the club
+ * reaches for its own event far more often than for another club's.
+ */
+const optionsFor = (
+  target: LinkTarget,
+  mine: readonly TargetRecord[],
+  schoolRows: readonly TargetRecord[],
+  otherClubRows: readonly TargetRecord[]
+) => {
+  const label = (row: TargetRecord) => {
+    if (target === "clubEvent" || target === "event") {
+      return dated(row.title, row.startsAt ?? null);
+    }
+    if (target === "achievement" || target === "clubAchievement") {
+      return row.achievedOn
+        ? `${row.title} (${row.achievedOn})`
+        : row.category
+          ? `${row.title} (${row.category})`
+          : row.title;
+    }
+    return row.title;
+  };
+
+  return [
+    ...mine.map((row) => ({ label: label(row), value: row.id })),
+    ...otherClubRows.map((row) => ({
+      label: `${label(row)} — ${row.clubName ?? "another club"}`,
+      value: row.id,
+    })),
+    ...schoolRows.map((row) => ({ label: label(row), value: row.id })),
+  ];
+};
+
 const GalleryLinksPanel = ({ galleryId }: { galleryId: string }) => {
   const queryClient = useQueryClient();
   const linksQuery = useQuery(
     orpc.clubs.listMyGalleryLinks.queryOptions({ input: { galleryId } })
   );
   const mineQuery = useQuery(orpc.clubs.listMyLinkTargets.queryOptions());
-  const achievementsQuery = useQuery(
-    orpc.clubs.listAchievements.queryOptions({ input: { limit: 50 } })
-  );
-  const eventsQuery = useQuery(
-    orpc.clubs.listEvents.queryOptions({ input: { limit: 50 } })
-  );
+  const schoolQuery = useQuery(orpc.clubs.listSchoolLinkTargets.queryOptions());
+  const myClubQuery = useQuery(orpc.clubs.myClub.queryOptions());
 
   const [target, setTarget] = useState<LinkTarget>("clubEvent");
   const [targetId, setTargetId] = useState("");
@@ -738,35 +800,46 @@ const GalleryLinksPanel = ({ galleryId }: { galleryId: string }) => {
     (link) => link.target === target && link.targetId === targetId
   );
 
-  const myEvents = mineQuery.data?.events ?? [];
-  const myAchievements = mineQuery.data?.achievements ?? [];
+  const mine = mineQuery.data ?? { events: [], achievements: [], announcements: [] };
 
-  const options = (() => {
-    if (target === "clubEvent") {
-      return myEvents.map((row) => ({
-        label: `${row.title} — ${new Date(row.startsAt).toLocaleDateString("en-GB")}`,
-        value: row.id,
-      }));
-    }
-    if (target === "clubAchievement") {
-      return myAchievements.map((row) => ({
-        label: row.achievedOn ? `${row.title} (${row.achievedOn})` : row.title,
-        value: row.id,
-      }));
-    }
-    if (target === "event") {
-      return (eventsQuery.data ?? []).map((row) => ({
-        label: `${row.title} — ${new Date(row.startsAt).toLocaleDateString("en-GB")}`,
-        value: row.id,
-      }));
-    }
-    return (achievementsQuery.data ?? []).map((row) => ({
-      label: `${row.title} (${row.category})`,
-      value: row.id,
-    }));
-  })();
+  /*
+   * Only the club charged with the school's photography is offered records
+   * beyond its own. `listSchoolLinkTargets` returns the school-wide tables and
+   * every other club's records; without the capability the picker shows only
+   * what `listMyLinkTargets` returned, and the cross-club lists are never
+   * relied on.
+   */
+  const managesSchoolGalleries =
+    myClubQuery.data?.capabilities.managesSchoolGalleries ?? false;
+  const school = schoolQuery.data?.school;
+  const otherClubs = managesSchoolGalleries
+    ? schoolQuery.data?.otherClubs
+    : undefined;
 
-  const emptyHint = EMPTY_LINK_HINT;
+  const options = optionsFor(
+    target,
+    (target === "clubEvent"
+      ? mine.events
+      : target === "clubAchievement"
+        ? mine.achievements
+        : target === "clubAnnouncement"
+          ? mine.announcements
+          : []) as readonly TargetRecord[],
+    (target === "event"
+      ? (school?.events ?? [])
+      : target === "achievement"
+        ? (school?.achievements ?? [])
+        : target === "announcement"
+          ? (school?.announcements ?? [])
+          : []) as readonly TargetRecord[],
+    (target === "clubEvent"
+      ? (otherClubs?.events ?? [])
+      : target === "clubAchievement"
+        ? (otherClubs?.achievements ?? [])
+        : target === "clubAnnouncement"
+          ? (otherClubs?.announcements ?? [])
+          : []) as readonly TargetRecord[]
+  );
 
   const submit = useMutation(
     orpc.clubs.submitGalleryLinkCreate.mutationOptions({
@@ -863,7 +936,9 @@ const GalleryLinksPanel = ({ galleryId }: { galleryId: string }) => {
           wide
         />
         <Field
-          hint={options.length === 0 ? emptyHint[target] : "Pick one."}
+          hint={
+            options.length === 0 ? EMPTY_LINK_HINT[target] : "Pick one."
+          }
           kind="select"
           label="Which one"
           onChange={setTargetId}

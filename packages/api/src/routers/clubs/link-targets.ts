@@ -1,4 +1,9 @@
-import { clubAchievement, clubEvent } from "@aloysius/db/schema/clubContent";
+import { announcement } from "@aloysius/db/schema/announcements";
+import {
+  clubAchievement,
+  clubAnnouncement,
+  clubEvent,
+} from "@aloysius/db/schema/clubContent";
 import { achievement, event, person } from "@aloysius/db/schema/root-content";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
@@ -76,6 +81,32 @@ const LINK_TARGET_RESOLVERS: Record<string, LinkTargetResolver> = {
       .select({ title: clubAchievement.title })
       .from(clubAchievement)
       .where(eq(clubAchievement.id, targetId))
+      .get();
+    return row?.title ?? null;
+  },
+
+  /*
+   * Announcements, school-wide and club-owned.
+   *
+   * A gallery of the prize-giving photographs belongs beside the announcement
+   * that told the school the prize-giving was happening, whoever wrote it. Both
+   * tables carry a `title`, so the resolver shape is the same as every other
+   * target; the ownership difference between the two mirrors the difference
+   * between `event` and `clubEvent` above.
+   */
+  announcement: async (db, targetId) => {
+    const row = await db
+      .select({ title: announcement.title })
+      .from(announcement)
+      .where(eq(announcement.id, targetId))
+      .get();
+    return row?.title ?? null;
+  },
+  clubAnnouncement: async (db, targetId) => {
+    const row = await db
+      .select({ title: clubAnnouncement.title })
+      .from(clubAnnouncement)
+      .where(eq(clubAnnouncement.id, targetId))
       .get();
     return row?.title ?? null;
   },

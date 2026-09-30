@@ -43,7 +43,9 @@ File management (`getUploadUrl`, `completeUpload`, `listFiles`, `deleteFile`) is
 2. Client `PUT`s the file directly to that URL, setting the `Content-Type` header itself — the presigned URL does not encode content type
 3. Client calls `files.completeUpload({ key, name, type, size })` → server inserts the `files` DB record (id derived from the key's UUID segment) and returns the file's metadata + serving URL
 
-There is no server-side image processing step in this flow — no WebP conversion, no `sharp` usage. The server only ever touches metadata; the object bytes flow client → MinIO directly.
+There is no _server-side_ image processing step in this flow — no `sharp` usage. The server only ever touches metadata; the object bytes flow client → MinIO directly.
+
+**WebP conversion happens in the browser, before the upload.** `apps/web/src/components/club/upload.ts` (`convertToWebP`) decodes the image with `createImageBitmap`, downscales it so its longest edge is at most 2560px, and re-encodes it as WebP at quality 0.85 via `OffscreenCanvas`/`canvas.toBlob`. The converted file is what gets presigned, PUT, and registered — so MinIO effectively only stores WebP for image uploads, and the server still never transcodes anything. WebP inputs pass through untouched, non-image types pass through untouched, and browsers without the bitmap/`toBlob` WebP support fall back to uploading the original bytes. All upload paths (club portal, CMS block editors) go through this helper.
 
 ## Role Enforcement
 
@@ -110,7 +112,7 @@ Since only admins can call `getUploadUrl` (see [Admin-Only File Operations](#adm
 
 ## No Server-Side Image Processing
 
-Earlier revisions of this project converted uploaded images to WebP via `sharp` on the server. That flow is gone: uploads now go directly from the client to MinIO via a presigned URL (see [Presigned URL Uploads](#presigned-url-uploads)), so the server never has the bytes in hand to transcode. `sharp` remains listed as a dependency in `packages/api/package.json` and `apps/web/package.json` but nothing in the upload path imports it anymore — don't assume WebP conversion happens on upload.
+Earlier revisions of this project converted uploaded images to WebP via `sharp` on the server. That flow is gone: uploads now go directly from the client to MinIO via a presigned URL (see [Presigned URL Uploads](#presigned-url-uploads)), so the server never has the bytes in hand to transcode. `sharp` remains listed as a dependency in `packages/api/package.json` and `apps/web/package.json` but nothing in the upload path imports it anymore — don't assume _server-side_ WebP conversion happens on upload. The conversion that does happen is client-side, in the browser, before the presigned upload starts (see above).
 
 ## Server Bootstrap
 

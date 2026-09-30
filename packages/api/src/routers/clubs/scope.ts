@@ -1,8 +1,14 @@
-import { clubAchievement, clubEvent } from "@aloysius/db/schema/clubContent";
+import { announcement } from "@aloysius/db/schema/announcements";
+import {
+  clubAchievement,
+  clubAnnouncement,
+  clubEvent,
+} from "@aloysius/db/schema/clubContent";
 import { club } from "@aloysius/db/schema/clubs";
 import { gallery, galleryItem, galleryLink } from "@aloysius/db/schema/gallery";
+import { achievement, event } from "@aloysius/db/schema/root-content";
 import { ORPCError } from "@orpc/server";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
 import * as v from "valibot";
 
 import { protectedProcedure } from "../../index";
@@ -122,6 +128,12 @@ export const myClub = protectedProcedure.handler(async ({ context }) => {
     ...shown,
     coverImageUrl: urlFor(images, shown.coverImageId),
     backgroundImageUrl: urlFor(images, shown.backgroundImageId),
+    /**
+     * What this club is charged with beyond its own pages. The portal reads
+     * this to decide which link targets to offer - only a club that manages
+     * the school's galleries is offered other clubs' records.
+     */
+    capabilities: configured.capabilities,
   };
 });
 
@@ -310,7 +322,7 @@ export const listMyLinkTargets = protectedProcedure.handler(
   async ({ context }) => {
     const configured = requireOwnClub(context.session?.user?.username);
 
-    const [events, achievements] = await Promise.all([
+    const [events, achievements, announcements] = await Promise.all([
       context.db
         .select({
           id: clubEvent.id,
@@ -333,8 +345,141 @@ export const listMyLinkTargets = protectedProcedure.handler(
         .where(eq(clubAchievement.clubId, configured.id))
         .orderBy(desc(clubAchievement.publishedAt))
         .all(),
+      context.db
+        .select({
+          id: clubAnnouncement.id,
+          title: clubAnnouncement.title,
+          publishedAt: clubAnnouncement.publishedAt,
+        })
+        .from(clubAnnouncement)
+        .where(eq(clubAnnouncement.clubId, configured.id))
+        .orderBy(desc(clubAnnouncement.publishedAt))
+        .all(),
     ]);
 
-    return { events, achievements };
+    return { events, achievements, announcements };
+  }
+);
+
+/**
+ * Everything outside the caller's own club that a gallery can link to.
+ *
+ * `listMyLinkTargets` answers "what of mine is there to attach to"; this
+ * answers "what else is there" - school-wide events, achievements and
+ * announcements, plus every *other* club's events, achievements and
+ * announcements, each row carrying the club's name so a picker can label it.
+ *
+ * Reading another club's titles is deliberate and is not a leak: a gallery link
+ * is a pointer, not a permission, and the photographs of another club's event
+ * are exactly what the school's photography club exists to publish. The other
+ * club does not approve the link - the CMS does, in the same queue as every
+ * other submission. Pending rows are included, because a link may be reviewed
+ * before the record it names is.
+ *
+ * The caller's own club is excluded so the two procedures stay disjoint; the
+ * picker offers "yours" from `listMyLinkTargets` and "theirs and the school's"
+ * from this, and no record can appear in both.
+ */
+export const listSchoolLinkTargets = protectedProcedure.handler(
+  async ({ context }) => {
+    const configured = requireOwnClub(context.session?.user?.username);
+
+    const [schoolEvents, schoolAchievements, schoolAnnouncements, clubRows] =
+      await Promise.all([
+        context.db
+          .select({
+            id: event.id,
+            title: event.title,
+            startsAt: event.startsAt,
+            publishedAt: event.publishedAt,
+          })
+          .from(event)
+          .orderBy(desc(event.startsAt))
+          .all(),
+        context.db
+          .select({
+            id: achievement.id,
+            title: achievement.title,
+            category: achievement.category,
+            publishedAt: achievement.publishedAt,
+          })
+          .from(achievement)
+          .orderBy(desc(achievement.publishedAt))
+          .all(),
+        context.db
+          .select({
+            id: announcement.id,
+            title: announcement.title,
+            publishedAt: announcement.publishedAt,
+          })
+          .from(announcement)
+          .orderBy(desc(announcement.publishedAt))
+          .all(),
+        context.db.select({ id: club.id, name: club.name }).from(club).all(),
+      ]);
+
+    const clubName = new Map(clubRows.map((row) => [row.id, row.name]));
+
+    const otherClubEvents = await context.db
+      .select({
+        id: clubEvent.id,
+        title: clubEvent.title,
+        clubId: clubEvent.clubId,
+        startsAt: clubEvent.startsAt,
+        publishedAt: clubEvent.publishedAt,
+      })
+      .from(clubEvent)
+      .where(ne(clubEvent.clubId, configured.id))
+      .orderBy(desc(clubEvent.startsAt))
+      .all();
+
+    const otherClubAchievements = await context.db
+      .select({
+        id: clubAchievement.id,
+        title: clubAchievement.title,
+        clubId: clubAchievement.clubId,
+        achievedOn: clubAchievement.achievedOn,
+        publishedAt: clubAchievement.publishedAt,
+      })
+      .from(clubAchievement)
+      .where(ne(clubAchievement.clubId, configured.id))
+      .orderBy(desc(clubAchievement.publishedAt))
+      .all();
+
+    const otherClubAnnouncements = await context.db
+      .select({
+        id: clubAnnouncement.id,
+        title: clubAnnouncement.title,
+        clubId: clubAnnouncement.clubId,
+        publishedAt: clubAnnouncement.publishedAt,
+      })
+      .from(clubAnnouncement)
+      .where(ne(clubAnnouncement.clubId, configured.id))
+      .orderBy(desc(clubAnnouncement.publishedAt))
+      .all();
+
+    const label = (clubId: string) => clubName.get(clubId) ?? "Another club";
+
+    return {
+      school: {
+        events: schoolEvents,
+        achievements: schoolAchievements,
+        announcements: schoolAnnouncements,
+      },
+      otherClubs: {
+        events: otherClubEvents.map((row) => ({
+          ...row,
+          clubName: label(row.clubId),
+        })),
+        achievements: otherClubAchievements.map((row) => ({
+          ...row,
+          clubName: label(row.clubId),
+        })),
+        announcements: otherClubAnnouncements.map((row) => ({
+          ...row,
+          clubName: label(row.clubId),
+        })),
+      },
+    };
   }
 );

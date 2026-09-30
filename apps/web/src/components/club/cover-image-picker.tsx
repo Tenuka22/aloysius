@@ -5,7 +5,7 @@ import * as stylex from "@stylexjs/stylex";
 import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 
-import { uploadImage } from "./upload";
+import { uploadImageFile } from "./upload";
 
 /**
  * Choosing the one image that represents a club.
@@ -136,7 +136,7 @@ export const CoverImagePicker = ({
     setProblem(null);
     setBusy(true);
     try {
-      const fileId = await uploadImage(file);
+      const fileId = await uploadImageFile(file);
       const previewUrl = URL.createObjectURL(file);
       releasePreview(previewRef.current);
       previewRef.current = previewUrl;

@@ -27,6 +27,31 @@ export const describeTarget = (target: string) =>
     .replaceAll("_", " ")
     .toLowerCase();
 
+/** Tone for the operation pill on a queue row or a review card. */
+export const operationTone = (operation: string) => {
+  if (operation === "create") {
+    return "warning" as const;
+  }
+  if (operation === "delete") {
+    return "danger" as const;
+  }
+  return "neutral" as const;
+};
+
+/** How long ago a submission or audit entry was made, in reviewer-facing words. */
+export const relativeDay = (value: Date) => {
+  const days = Math.round(
+    (Date.now() - new Date(value).getTime()) / 86_400_000
+  );
+  if (days <= 0) {
+    return "today";
+  }
+  if (days === 1) {
+    return "yesterday";
+  }
+  return `${days} days ago`;
+};
+
 /** How a submission operation reads in a sentence. */
 export const describeOperation = (operation: string) => {
   if (operation === "create") {

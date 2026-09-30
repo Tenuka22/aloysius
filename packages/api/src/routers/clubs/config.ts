@@ -4,6 +4,21 @@ export interface HardcodedClub {
   readonly name: string;
   readonly status: "active" | "archived";
   readonly adminUsername: string;
+  /**
+   * What this club is for, beyond its own pages.
+   *
+   * `managesSchoolGalleries` marks the club charged with the school's
+   * photography: it covers school events, uploads the photographs, and curates
+   * galleries that sit at the top level of the site rather than under one
+   * club's page. It widens what the club may *link* its galleries to - any
+   * club's events and announcements, not just its own - but it does not widen
+   * who approves: every submission still lands in the same CMS queue, and the
+   * club's own events and announcements stay exactly as club-scoped as any
+   * other club's.
+   */
+  readonly capabilities: {
+    readonly managesSchoolGalleries: boolean;
+  };
 }
 
 /** The supported clubs and their single administrator identities. */
@@ -14,6 +29,7 @@ export const HARDCODED_CLUBS = [
     name: "Photography Club",
     status: "active",
     adminUsername: "photography-admin",
+    capabilities: { managesSchoolGalleries: true },
   },
 ] as const satisfies readonly HardcodedClub[];
 

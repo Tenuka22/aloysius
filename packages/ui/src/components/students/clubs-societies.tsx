@@ -108,6 +108,21 @@ const styles = stylex.create({
     width: "100%",
     objectFit: "cover",
   },
+  /*
+   * A card that links to the club's own page. The whole card becomes the hit
+   * target and the name underlines on hover - the affordance a visitor expects
+   * from a card that is also a link, without repainting the tile.
+   */
+  linkedCard: {
+    textDecoration: "none",
+    color: "inherit",
+  },
+  linkedName: {
+    textDecoration: {
+      default: "none",
+      ":hover": "underline",
+    },
+  },
   // `Heading` and `Lead` both reset their margins, so the gap between them is
   // the caller's to supply.
   heading: {
@@ -115,6 +130,73 @@ const styles = stylex.create({
     marginBlockEnd: space.sm,
   },
 });
+
+/**
+ * One club tile: a link when the club has its own page, a plain card when it
+ * does not. Both render the same visual, so a linked club is discoverable by
+ * the underline-on-hover affordance rather than by a different layout.
+ */
+const CardInner = ({ club }: { club: Club }) => {
+  const body = (
+    <>
+      {club.coverImageUrl ? (
+        // Decorative next to the club's name, which is right beside it,
+        // so an empty alt is correct rather than a missed description.
+        <img
+          alt=""
+          src={club.coverImageUrl}
+          style={{ aspectRatio: aspectRatios.mosaicTile }}
+          {...stylex.props(styles.banner)}
+        />
+      ) : null}
+      <div
+        {...stylex.props(club.coverImageUrl ? styles.bannerText : undefined)}
+      >
+        <h3
+          {...stylex.props(
+            styles.name,
+            club.href ? styles.linkedName : undefined
+          )}
+        >
+          {club.name}
+        </h3>
+        {/*
+          No filler when the society has not published what it does:
+          an empty slot is honest, `[CMS: description]` is not.
+          */}
+        {club.description ? (
+          <p {...stylex.props(styles.description)}>{club.description}</p>
+        ) : null}
+      </div>
+    </>
+  );
+
+  if (!club.href) {
+    return (
+      <div
+        {...stylex.props(
+          styles.card,
+          club.coverImageUrl ? styles.cardWithBanner : undefined
+        )}
+      >
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={club.href}
+      {...stylex.props(
+        styles.card,
+        styles.linkedCard,
+        club.coverImageUrl ? styles.cardWithBanner : undefined
+      )}
+    >
+      {body}
+    </a>
+  );
+};
 
 export const ClubsSocieties = ({
   clubs = CLUBS,
@@ -133,44 +215,7 @@ export const ClubsSocieties = ({
         {clubs.map((club) => (
           <li key={club.id} {...stylex.props(styles.cell)}>
             <Reveal direction="up" style={styles.cell}>
-              <div
-                {...stylex.props(
-                  styles.card,
-                  /*
-                   * `undefined`, never `null`: StyleX compiles a literal null
-                   * argument into a rule with an empty selector, which fails the
-                   * whole stylesheet at build time rather than at this call site.
-                   */
-                  club.coverImageUrl ? styles.cardWithBanner : undefined
-                )}
-              >
-                {club.coverImageUrl ? (
-                  // Decorative next to the club's name, which is right beside it,
-                  // so an empty alt is correct rather than a missed description.
-                  <img
-                    alt=""
-                    src={club.coverImageUrl}
-                    style={{ aspectRatio: aspectRatios.mosaicTile }}
-                    {...stylex.props(styles.banner)}
-                  />
-                ) : null}
-                <div
-                  {...stylex.props(
-                    club.coverImageUrl ? styles.bannerText : undefined
-                  )}
-                >
-                  <h3 {...stylex.props(styles.name)}>{club.name}</h3>
-                  {/*
-                    No filler when the society has not published what it does:
-                    an empty slot is honest, `[CMS: description]` is not.
-                    */}
-                  {club.description ? (
-                    <p {...stylex.props(styles.description)}>
-                      {club.description}
-                    </p>
-                  ) : null}
-                </div>
-              </div>
+              <CardInner club={club} />
             </Reveal>
           </li>
         ))}

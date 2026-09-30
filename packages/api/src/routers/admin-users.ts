@@ -10,6 +10,11 @@ import * as v from "valibot";
 
 import { requireAuth } from "../context";
 import { adminProcedure } from "../index";
+import {
+  listOffset,
+  listParamsSchema,
+  sortDirectionOf,
+} from "./list-params";
 import { HARDCODED_CLUBS, findHardcodedClub } from "./clubs/config";
 
 const username = v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(64));
@@ -17,21 +22,66 @@ const password = v.pipe(v.string(), v.minLength(8), v.maxLength(200));
 const name = v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(120));
 
 export const adminUsersRouter = {
-  list: adminProcedure.handler(({ context }) =>
-    context.db
-      .select({
-        id: user.id,
-        name: user.name,
-        role: user.role,
-        username: user.username,
-        banned: user.banned,
-        banReason: user.banReason,
-      })
-      .from(user)
-      .where(eq(user.role, "club-admin"))
-      .orderBy(asc(user.name))
-      .all()
-  ),
+  list: adminProcedure
+    .input(listParamsSchema)
+    .handler(async ({ context, input }) => {
+      const rows = await context.db
+        .select({
+          id: user.id,
+          name: user.name,
+          role: user.role,
+          username: user.username,
+          banned: user.banned,
+          banReason: user.banReason,
+        })
+        .from(user)
+        .where(eq(user.role, "club-admin"))
+        .orderBy(asc(user.name))
+        .all();
+
+      const term = input.q.toLowerCase();
+      const direction = sortDirectionOf(input, "asc");
+
+      const matching = term
+        ? rows.filter((row) =>
+            [row.name, row.username, row.role]
+              .filter(Boolean)
+              .some((field) =>
+                String(field).toLowerCase().includes(term)
+              )
+          )
+        : rows;
+
+      const bannedOf = (row: (typeof rows)[number]) =>
+        row.banned === null ? false : row.banned;
+
+      const sorted =
+        input.sortBy === "username"
+          ? [...matching].toSorted(
+              (a, b) =>
+                (direction === "asc" ? 1 : -1) *
+                (a.username ?? "").localeCompare(b.username ?? "")
+            )
+          : input.sortBy === "banned"
+            ? [...matching].toSorted(
+                (a, b) =>
+                  (direction === "asc" ? 1 : -1) *
+                  (Number(bannedOf(b)) - Number(bannedOf(a)))
+              )
+            : [...matching].toSorted(
+                (a, b) =>
+                  (direction === "asc" ? 1 : -1) *
+                  a.name.localeCompare(b.name)
+              );
+
+      const total = sorted.length;
+      const start = listOffset(input);
+
+      return {
+        rows: sorted.slice(start, start + input.pageSize),
+        total,
+      };
+    }),
 
   clubs: adminProcedure.handler(() => HARDCODED_CLUBS),
 

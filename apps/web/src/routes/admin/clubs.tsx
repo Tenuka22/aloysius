@@ -16,7 +16,7 @@ import type {
 import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import {
@@ -444,6 +444,7 @@ const ActivityPanel = ({
 /* ------------------------------------------------------------------ page */
 
 const AdminClubsPage = () => {
+  const navigate = useNavigate();
   const [clubId, setClubId] = useState("");
   const [credential, setCredential] = useState<CredentialState>(
     INITIAL_CREDENTIAL_STATE
@@ -547,6 +548,24 @@ const AdminClubsPage = () => {
           Every rotation is written to the audit trail below.
         </p>
       </div>
+
+      {isClubAdmin ? null : (
+        <Panel>
+          <PanelHead
+            eyebrow="Dedicated pages"
+            note="Per-club review pages, hand-typed routes rather than a dynamic parameter, so a club has no page until one is written for it."
+            title="Photography Club"
+          />
+          <CmsButton
+            onClick={() => {
+              void navigate({ to: "/admin/clubs/photography-club" });
+            }}
+            tone="primary"
+          >
+            Open /admin/clubs/photography-club
+          </CmsButton>
+        </Panel>
+      )}
 
       <Panel accent>
         <PanelHead
