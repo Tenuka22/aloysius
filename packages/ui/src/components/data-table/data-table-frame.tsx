@@ -1,9 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
-import type {
-  Column,
-  ReactTable,
-  RowData,
-} from "@tanstack/react-table";
+import type { Column, ReactTable, RowData } from "@tanstack/react-table";
+import { flexRender } from "@tanstack/react-table";
 import type { ReactNode } from "react";
 
 import { color, font, space } from "../../tokens/tokens.stylex";
@@ -103,7 +100,10 @@ const SkeletonRows = ({
       <tr key={`skeleton-row-${row}`} aria-hidden="true">
         {Array.from({ length: columnCount }, (_placeholder, cell) => (
           // oxlint-disable-next-line react/no-array-index-key -- static placeholder cells
-          <td key={`skeleton-cell-${row}-${cell}`} {...stylex.props(styles.cell)}>
+          <td
+            key={`skeleton-cell-${row}-${cell}`}
+            {...stylex.props(styles.cell)}
+          >
             <span aria-hidden="true" {...stylex.props(styles.skeleton)} />
           </td>
         ))}
@@ -154,7 +154,7 @@ export const DataTableFrame = <TData extends RowData>({
       <tr key={row.id} {...stylex.props(styles.row)}>
         {row.getVisibleCells().map((cell) => (
           <td key={cell.id} {...stylex.props(styles.cell)}>
-            {cell.renderValue() as ReactNode}
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </td>
         ))}
       </tr>
@@ -183,7 +183,10 @@ export const DataTableFrame = <TData extends RowData>({
                 >
                   {header.isPlaceholder
                     ? null
-                    : (header.column.columnDef.header as ReactNode)}
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                 </th>
               ))}
             </tr>

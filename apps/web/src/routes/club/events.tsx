@@ -6,13 +6,24 @@ import {
   Panel,
   PanelHead,
 } from "@aloysius/ui/components/cms/cms-primitives";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  searchToPagination,
+  searchToSorting,
+} from "@aloysius/ui/components/data-table/list-search";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { SLUG_PATTERN, slugify } from "@/components/club/format";
 import { ClubPage, FieldStack } from "@/components/club/page-parts";
-import { PendingList } from "@/components/club/pending-list";
+import { submissionSearch } from "@/components/tables/queue-search";
+import { SubmissionsTable } from "@/components/tables/submissions-table";
+import { useTableCallbacks } from "@/components/tables/use-list-state";
 import { orpc } from "@/utils/orpc";
 
 /**
@@ -26,6 +37,9 @@ import { orpc } from "@/utils/orpc";
 
 const MAX_TITLE = 160;
 const MAX_DESCRIPTION = 2000;
+
+/** The submission-queue target this screen's rows are filtered to. */
+const EVENT_TARGET = "clubEvent";
 
 /** `datetime-local` gives `YYYY-MM-DDTHH:mm`; `new Date` needs it parseable. */
 const parseLocal = (value: string) => {
@@ -43,6 +57,22 @@ const EventsPage = () => {
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
+
+  const submissions = submissionSearch.parse(Route.useSearch());
+  const writeSubmissions = submissionSearch.write();
+  const submissionsCallbacks = useTableCallbacks({
+    search: submissions,
+    writeSearch: writeSubmissions,
+  });
+  const submissionsQuery = useQuery(
+    orpc.clubs.listMySubmissions.queryOptions({
+      input: {
+        ...submissionSearch.toListInput(submissions),
+        target: EVENT_TARGET,
+      },
+      placeholderData: keepPreviousData,
+    })
+  );
 
   const parsedStart = parseLocal(startsAt);
   const parsedEnd = parseLocal(endsAt);
@@ -193,19 +223,38 @@ const EventsPage = () => {
         </form>
       </Panel>
 
-      <Panel>
-        <PanelHead
-          eyebrow="Queue"
-          note="Events you have sent that have not been approved or rejected yet."
-          title="Awaiting review"
-        />
-        <PendingList target="clubEvent" />
-      </Panel>
+      <SubmissionsTable
+        emptyNote="Anything you submit will appear here until a CMS editor has looked at it."
+        emptyTitle="Nothing waiting for review."
+        isError={submissionsQuery.isError}
+        isFetching={submissionsQuery.isFetching}
+        isLoading={submissionsQuery.isPending}
+        onPaginationChange={submissionsCallbacks.onPaginationChange}
+        onSearchChange={submissionsCallbacks.onSearchChange}
+        onSortingChange={submissionsCallbacks.onSortingChange}
+        pagination={searchToPagination(submissions)}
+        rows={submissionsQuery.data?.rows ?? []}
+        search={submissions.q}
+        sorting={searchToSorting(submissions)}
+        total={submissionsQuery.data?.total ?? 0}
+      />
     </ClubPage>
   );
 };
 
 export const Route = createFileRoute("/club/events")({
+  validateSearch: (search: Record<string, unknown>) =>
+    submissionSearch.routeSearch(search),
+  loaderDeps: ({ search }) => search,
+  loader: ({ context, deps }) =>
+    context.queryClient.ensureQueryData(
+      orpc.clubs.listMySubmissions.queryOptions({
+        input: {
+          ...submissionSearch.toListInput(submissionSearch.parse(deps)),
+          target: EVENT_TARGET,
+        },
+      })
+    ),
   head: () => ({
     meta: [
       { title: "Events — Club portal — St. Aloysius' College" },

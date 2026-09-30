@@ -1,14 +1,18 @@
 import {
+  CmsButton,
   EmptyState,
   Notice,
   Panel,
   PanelHead,
+  Pill,
 } from "@aloysius/ui/components/cms/cms-primitives";
 import { DataTableColumnHeader } from "@aloysius/ui/components/data-table/data-table-column-header";
 import { DataTableFrame } from "@aloysius/ui/components/data-table/data-table-frame";
 import { DataTablePagination } from "@aloysius/ui/components/data-table/data-table-pagination";
 import { DataTableSearchField } from "@aloysius/ui/components/data-table/data-table-search-field";
 import { listTableFeatures } from "@aloysius/ui/components/data-table/list-table-features";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { UseMutationResult } from "@tanstack/react-query";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import type {
   OnChangeFn,
@@ -17,40 +21,47 @@ import type {
 } from "@tanstack/react-table";
 import { useId, useMemo } from "react";
 
-import { relativeDay } from "@/components/club/format";
+import {
+  operationTone,
+  relativeDay,
+  titleFromPayload,
+} from "@/components/club/format";
+import { orpc } from "@/utils/orpc";
 
-import type { ActivityRow } from "./list-types";
+import type { SubmissionRow } from "./list-types";
 
 /**
- * The activity trail, as a table.
+ * A club's own submissions for one screen, as a table.
  *
- * The same kit and the same URL contract as the queue table: search, sort and
+ * Same kit and the same URL contract as the review queue — search, sort and
  * paging are the server's, the route's loader fetched the page, and the table
- * owns nothing. Where the queue's rows act, this table's rows only describe —
- * an audit trail is history, and history has no buttons.
- *
- * `titleOf` is handed in rather than derived here because the two surfaces that
- * show this trail name an entry differently (the photography page reads the
- * stored payload; the general accounts page reads the action alone), and the
- * table should not own either decision.
+ * owns nothing beyond the withdraw action. Where the review queue decides a
+ * row, this table only lets the sender take it back: `target` is fixed by the
+ * caller (this is *this* screen's submissions, not every screen's), so the
+ * columns describe operation and status rather than which target a row is.
  */
 const columnHelper = createColumnHelper<
   typeof listTableFeatures,
-  ActivityRow
+  SubmissionRow
 >();
 
 const PAGE_SIZES = [10, 25, 50, 100] as const;
 
-const buildColumns = (titleOf: (entry: ActivityRow) => string) => [
-  columnHelper.accessor((entry) => titleOf(entry), {
+interface WithdrawMutations {
+  club: UseMutationResult<unknown, Error, { submissionId: string }>;
+  global: UseMutationResult<unknown, Error, { submissionId: string }>;
+}
+
+const buildColumns = ({ club, global }: WithdrawMutations) => [
+  columnHelper.accessor((row) => titleFromPayload(row.payload), {
     id: "title",
-    meta: { label: "What" },
+    meta: { label: "Submission" },
     enableSorting: false,
-    cell: (cell) => cell.getValue() || "—",
+    cell: (cell) => cell.getValue() || "Untitled",
   }),
-  columnHelper.accessor("action", {
-    id: "action",
-    meta: { label: "Action" },
+  columnHelper.accessor("operation", {
+    id: "operation",
+    meta: { label: "Change" },
     header: (header) => (
       <DataTableColumnHeader
         label={header.column.columnDef.meta?.label ?? header.column.id}
@@ -60,22 +71,13 @@ const buildColumns = (titleOf: (entry: ActivityRow) => string) => [
         sorted={header.column.getIsSorted()}
       />
     ),
-    cell: (cell) => cell.getValue(),
+    cell: (cell) => (
+      <Pill tone={operationTone(cell.getValue())}>{cell.getValue()}</Pill>
+    ),
   }),
-  columnHelper.accessor("actorUsername", {
-    id: "actor",
-    meta: { label: "Who" },
-    enableSorting: false,
-    cell: (cell) => {
-      const entry = cell.row.original;
-      return entry.actorUsername
-        ? `@${entry.actorUsername}`
-        : (entry.actorRole ?? "system");
-    },
-  }),
-  columnHelper.accessor("createdAt", {
-    id: "createdAt",
-    meta: { label: "When" },
+  columnHelper.accessor("submittedAt", {
+    id: "submittedAt",
+    meta: { label: "Sent" },
     header: (header) => (
       <DataTableColumnHeader
         label={header.column.columnDef.meta?.label ?? header.column.id}
@@ -91,10 +93,32 @@ const buildColumns = (titleOf: (entry: ActivityRow) => string) => [
       </span>
     ),
   }),
+  columnHelper.display({
+    id: "actions",
+    meta: { label: "" },
+    enableSorting: false,
+    cell: (cell) => {
+      const row = cell.row.original;
+      const mutation = row.scope === "club" ? club : global;
+      const busy =
+        mutation.isPending && mutation.variables?.submissionId === row.id;
+      return (
+        <CmsButton
+          disabled={busy}
+          onClick={() => {
+            mutation.mutate({ submissionId: row.id });
+          }}
+          tone="danger"
+        >
+          {busy ? "Withdrawing…" : "Withdraw"}
+        </CmsButton>
+      );
+    },
+  }),
 ];
 
-export interface ActivityTableProps {
-  rows: readonly ActivityRow[];
+export interface SubmissionsTableProps {
+  rows: readonly SubmissionRow[];
   total: number;
   isLoading: boolean;
   isFetching: boolean;
@@ -105,15 +129,11 @@ export interface ActivityTableProps {
   onSortingChange: OnChangeFn<SortingState>;
   pagination: PaginationState;
   onPaginationChange: OnChangeFn<PaginationState>;
-  /** The one row of a table, in the words the surface names it: "entry", "account". */
-  noun: string;
   emptyTitle: string;
   emptyNote: string;
-  titleOf: (entry: ActivityRow) => string;
 }
-// eslint note: `onDecided` was removed from this table on purpose - history has no buttons.
 
-export const ActivityTable = ({
+export const SubmissionsTable = ({
   rows,
   total,
   isLoading,
@@ -125,20 +145,35 @@ export const ActivityTable = ({
   onSortingChange,
   pagination,
   onPaginationChange,
-  noun,
   emptyTitle,
   emptyNote,
-  titleOf,
-}: ActivityTableProps) => {
+}: SubmissionsTableProps) => {
   const ids = useId();
+  const queryClient = useQueryClient();
 
-  const columns = useMemo(() => buildColumns(titleOf), [titleOf]) as never;
+  const refresh = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: orpc.clubs.listMySubmissions.key(),
+    });
+  };
+
+  const withdraw = useMutation(
+    orpc.clubs.withdrawClubSubmission.mutationOptions({ onSuccess: refresh })
+  );
+  const withdrawGlobal = useMutation(
+    orpc.clubs.withdrawGlobalSubmission.mutationOptions({ onSuccess: refresh })
+  );
+
+  const columns = useMemo(
+    () => buildColumns({ club: withdraw, global: withdrawGlobal }),
+    [withdraw, withdrawGlobal]
+  ) as never;
 
   const table = useTable({
     features: listTableFeatures,
     columns,
     data: isLoading || isError ? [] : rows,
-    getRowId: (row) => row.id,
+    getRowId: (row) => `${row.scope}-${row.id}`,
     rowCount: total,
     manualPagination: true,
     manualSorting: true,
@@ -151,9 +186,9 @@ export const ActivityTable = ({
   return (
     <Panel>
       <PanelHead
-        eyebrow="History"
-        note="Credentials changed and submissions decided, newest first."
-        title="Activity"
+        eyebrow="Queue"
+        note={`${total} waiting. Withdraw a submission to pull it back before a CMS editor decides it.`}
+        title="Awaiting review"
       />
 
       <div
@@ -167,19 +202,19 @@ export const ActivityTable = ({
         <DataTableSearchField
           id={`${ids}-search`}
           onCommit={onSearchChange}
-          placeholder="Action, actor, or target"
+          placeholder="Title"
           value={search}
         />
       </div>
 
       {isError ? (
         <Notice tone="danger">
-          The activity trail could not be loaded. Reload the page to try again.
+          Your submissions could not be loaded. Reload the page to try again.
         </Notice>
       ) : null}
 
       <DataTableFrame
-        caption={`Administrator activity. ${total} ${noun}s.`}
+        caption={`Your pending submissions. ${total} waiting.`}
         emptyContent={<EmptyState note={emptyNote} title={emptyTitle} />}
         isError={isError}
         isFetching={isFetching}
@@ -191,7 +226,7 @@ export const ActivityTable = ({
       {isError ? null : (
         <DataTablePagination
           id={ids}
-          noun={noun}
+          noun="submission"
           pageSizes={PAGE_SIZES}
           table={table}
           total={total}

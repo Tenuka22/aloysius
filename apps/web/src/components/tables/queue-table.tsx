@@ -6,16 +6,13 @@ import {
   PanelHead,
   Pill,
 } from "@aloysius/ui/components/cms/cms-primitives";
-import { DataTableFrame } from "@aloysius/ui/components/data-table/data-table-frame";
 import { DataTableColumnHeader } from "@aloysius/ui/components/data-table/data-table-column-header";
+import { DataTableFrame } from "@aloysius/ui/components/data-table/data-table-frame";
 import { DataTablePagination } from "@aloysius/ui/components/data-table/data-table-pagination";
 import { DataTableSearchField } from "@aloysius/ui/components/data-table/data-table-search-field";
 import { listTableFeatures } from "@aloysius/ui/components/data-table/list-table-features";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  createColumnHelper,
-  useTable,
-} from "@tanstack/react-table";
+import { createColumnHelper, useTable } from "@tanstack/react-table";
 import type {
   OnChangeFn,
   PaginationState,
@@ -52,28 +49,24 @@ import type { QueueRow } from "./list-types";
  * `getRowId` returns the submission id with its scope, so a row key is stable
  * across a page change and the opened card is diffable by React.
  */
-const columnHelper =
-  createColumnHelper<typeof listTableFeatures, QueueRow>();
+const columnHelper = createColumnHelper<typeof listTableFeatures, QueueRow>();
 
 const PAGE_SIZES = [10, 25, 50, 100] as const;
 
 const buildColumns = (onReview: (row: QueueRow) => void) => [
-  columnHelper.accessor(
-    (row) => titleFromPayload(row.payload),
-    {
-      id: "title",
-      meta: { label: "Submission" },
-      enableSorting: false,
-      cell: (cell) => (
-        <>
-          <strong>{cell.getValue() || "Untitled"}</strong>
-          <span style={{ display: "block", opacity: 0.7 }}>
-            {describeTarget(cell.row.original.target)}
-          </span>
-        </>
-      ),
-    }
-  ),
+  columnHelper.accessor((row) => titleFromPayload(row.payload), {
+    id: "title",
+    meta: { label: "Submission" },
+    enableSorting: false,
+    cell: (cell) => (
+      <>
+        <strong>{cell.getValue() || "Untitled"}</strong>
+        <span style={{ display: "block", opacity: 0.7 }}>
+          {describeTarget(cell.row.original.target)}
+        </span>
+      </>
+    ),
+  }),
   columnHelper.accessor("clubName", {
     id: "club",
     meta: { label: "Club" },
@@ -215,7 +208,14 @@ export const QueueTable = ({
           title="Pending submissions"
         />
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end" }}>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "1rem",
+            alignItems: "flex-end",
+          }}
+        >
           <DataTableSearchField
             id={`${ids}-search`}
             onCommit={onSearchChange}
@@ -232,9 +232,7 @@ export const QueueTable = ({
 
         <DataTableFrame
           caption={`Pending submissions. ${total} waiting.`}
-          emptyContent={
-            <EmptyState note={emptyNote} title={emptyTitle} />
-          }
+          emptyContent={<EmptyState note={emptyNote} title={emptyTitle} />}
           isError={isError}
           isFetching={isFetching}
           isLoading={isLoading}
@@ -242,7 +240,7 @@ export const QueueTable = ({
           table={table}
         />
 
-        {!isError ? (
+        {isError ? null : (
           <DataTablePagination
             id={ids}
             noun="submission"
@@ -250,7 +248,7 @@ export const QueueTable = ({
             table={table}
             total={total}
           />
-        ) : null}
+        )}
       </Panel>
 
       {reviewing ? (

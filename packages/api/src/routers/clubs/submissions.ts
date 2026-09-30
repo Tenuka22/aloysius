@@ -13,13 +13,9 @@ import { and, desc, eq } from "drizzle-orm";
 import * as v from "valibot";
 
 import { protectedProcedure, requireClubPermission } from "../../index";
-import { findClubByAdminUsername, findHardcodedClub } from "./config";
-import {
-  listOffset,
-  listParamsSchema,
-  sortDirectionOf,
-} from "../list-params";
 import { titleFromPayload } from "../list-format";
+import { listOffset, listParamsSchema, sortDirectionOf } from "../list-params";
+import { findClubByAdminUsername, findHardcodedClub } from "./config";
 import { assertLinkTargetExists, linkTargetTitle } from "./link-targets";
 /**
  * The club side of the approval workflow.
@@ -752,7 +748,12 @@ export const submitAchievementCreate = clubAdminProcedure
 
 /** Everything the caller has in flight, across all of their clubs. */
 export const listMySubmissions = clubAdminProcedure
-  .input(listParamsSchema)
+  .input(
+    v.intersect([
+      listParamsSchema,
+      v.object({ target: v.optional(v.string()) }),
+    ])
+  )
   .handler(async ({ context, input }) => {
     const [global, clubScoped] = await Promise.all([
       context.db
@@ -809,25 +810,32 @@ export const listMySubmissions = clubAdminProcedure
       })),
     ];
 
+    /*
+     * `target` narrows to one screen's own submissions (events, achievements,
+     * galleries, announcements) before search and paging run, so a page
+     * asking for "my pending events" gets an accurate total and offset rather
+     * than one client-filtered out of an unrelated page's worth of rows.
+     */
+    const scoped = input.target
+      ? merged.filter((row) => row.target === input.target)
+      : merged;
+
     const term = input.q.toLowerCase();
     const direction = sortDirectionOf(input, "desc");
 
     const matching = term
-      ? merged.filter((row) =>
+      ? scoped.filter((row) =>
           [row.target, titleFromPayload(row.payload)]
             .filter(Boolean)
-            .some((field) =>
-              String(field).toLowerCase().includes(term)
-            )
+            .some((field) => String(field).toLowerCase().includes(term))
         )
-      : merged;
+      : scoped;
 
     const sorted =
       input.sortBy === "target"
         ? [...matching].toSorted(
             (a, b) =>
-              (direction === "asc" ? 1 : -1) *
-              a.target.localeCompare(b.target)
+              (direction === "asc" ? 1 : -1) * a.target.localeCompare(b.target)
           )
         : [...matching].toSorted(
             (a, b) =>

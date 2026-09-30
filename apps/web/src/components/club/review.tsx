@@ -27,7 +27,7 @@ import {
 import { orpc } from "@/utils/orpc";
 
 /**
- * The reviewer's card, shared by /cms/clubs and /admin/clubs/photography-club.
+ * The reviewer's card, shared by /cms/clubs and /club-admin/photography.
  *
  * Everything a club submits reaches the website only through a decision on one
  * of these cards, so both review surfaces have to behave identically: the same

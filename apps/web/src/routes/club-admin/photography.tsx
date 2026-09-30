@@ -1,31 +1,30 @@
-import {
-  Notice,
-} from "@aloysius/ui/components/cms/cms-primitives";
-import {
-  searchToPagination,
-  searchToSorting,
-} from "@aloysius/ui/components/data-table/list-search";
+import { Notice } from "@aloysius/ui/components/cms/cms-primitives";
 import {
   ScreenHead,
   ScreenWrap,
 } from "@aloysius/ui/components/cms/screen-head";
+import {
+  searchToPagination,
+  searchToSorting,
+} from "@aloysius/ui/components/data-table/list-search";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { titleFromPayload } from "@/components/club/format";
 import { ClubAdminPanel } from "@/components/club/review";
+import { ActivityTable } from "@/components/tables/activity-table";
+import { CredentialPanel } from "@/components/tables/credential-panel";
 import { toQueueRow } from "@/components/tables/list-types";
 import { activitySearch, queueSearch } from "@/components/tables/queue-search";
 import { QueueTable } from "@/components/tables/queue-table";
-import { ActivityTable } from "@/components/tables/activity-table";
-import { CredentialPanel } from "@/components/tables/credential-panel";
 import { useTableCallbacks } from "@/components/tables/use-list-state";
 import { orpc } from "@/utils/orpc";
 
 /**
- * The Photography Club's own review page - a *static* route, hand-typed into
- * the file tree rather than derived from a `$slug` parameter.
+ * The Photography Club's own review page, at `/club-admin/photography` - a
+ * *static* route, hand-typed into the file tree rather than derived from a
+ * `$slug` parameter.
  *
  * The general queue at /cms/clubs stays the place where every club's work is
  * reviewed together; this page is the same decisions, scoped to the one club
@@ -38,6 +37,10 @@ import { orpc } from "@/utils/orpc";
  * see what is waiting, decide it, then manage the account that sent it. Both
  * lists are URL-state tables backed by the same shared kit, so a deep link to
  * "page 2 of the photography queue, newest first" is a link that works.
+ *
+ * Every future club's admin page is the same shape, at `/club-admin/<slug>`:
+ * copy this file, swap `CLUB_ID` and `CLUB_NAME`, rename the file to the
+ * club's slug.
  */
 
 const CLUB_ID = "club-photography";
@@ -51,7 +54,10 @@ const PhotographyClubPage = () => {
   const queueWriter = queueSearch.write();
   const activityWriter = activitySearch.write();
 
-  const queueCallbacks = useTableCallbacks({ search: queue, writeSearch: queueWriter });
+  const queueCallbacks = useTableCallbacks({
+    search: queue,
+    writeSearch: queueWriter,
+  });
   const activityCallbacks = useTableCallbacks({
     search: activity,
     writeSearch: activityWriter,
@@ -153,7 +159,7 @@ const PhotographyClubPage = () => {
   );
 };
 
-export const Route = createFileRoute("/admin/clubs/photography-club")({
+export const Route = createFileRoute("/club-admin/photography")({
   validateSearch: (search: Record<string, unknown>) => ({
     ...queueSearch.routeSearch(search),
     ...activitySearch.routeSearch(search),

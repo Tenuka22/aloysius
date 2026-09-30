@@ -558,11 +558,11 @@ const AdminClubsPage = () => {
           />
           <CmsButton
             onClick={() => {
-              void navigate({ to: "/admin/clubs/photography-club" });
+              void navigate({ to: "/club-admin/photography" });
             }}
             tone="primary"
           >
-            Open /admin/clubs/photography-club
+            Open /club-admin/photography
           </CmsButton>
         </Panel>
       )}
