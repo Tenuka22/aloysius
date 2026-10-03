@@ -73,12 +73,6 @@ export interface Storage {
   ) => Promise<void>;
   get: (key: string) => Promise<StoredObject | null>;
   remove: (key: string) => Promise<void>;
-  /** One-time presigned URL for direct client → S3/MinIO upload. */
-  getPresignedUploadUrl: (
-    key: string,
-    contentType: string,
-    expiresIn?: number
-  ) => Promise<string>;
 }
 ```
 
@@ -88,11 +82,11 @@ export interface Storage {
 - Auto-creates the bucket on first use (`bucketExists` → `makeBucket`), memoized so concurrent first calls don't race
 - Bucket name from `MINIO_BUCKET` (default: `"aloysius"`)
 - Content type stored as object metadata, read back via `statObject` on `get`
-- `getPresignedUploadUrl` returns a `presignedPutObject` URL; the URL itself carries no `Content-Type` — the uploading client must set that header explicitly
+- **There is no presigned upload.** `getPresignedUploadUrl` was removed: it required MinIO to be reachable _from the browser_, which it is not (`minio:9000` is a compose-network address and the port is not published). The browser PUTs to `/api/files/<key>` on this app instead, and that route holds the credentials — the same arrangement `/api/files/<key>` already used to serve every image back out. In `docker-compose.yml` MinIO publishes no ports at all; in `docker-compose.dev.yml` it binds `127.0.0.1` only, because the dev server runs on the host.
 
 ### Key Format
 
-Keys are not passed through any normalization helper (there is no `normalizeStorageKey()` anymore) — each caller builds its own key. The only caller today, `staff.getUploadUrl`, uses `admin/{uuid}.{extension}` (a fixed `admin/` prefix, not the uploading user's ID).
+Keys are not passed through any normalization helper (there is no `normalizeStorageKey()` anymore) — each caller builds its own key. The only caller today, `files.getUploadUrl`, uses `admin/{uuid}.{extension}` (a fixed `admin/` prefix, not the uploading user's ID), and `PUT /api/files/$` refuses any key outside that pattern.
 
 ## Database
 

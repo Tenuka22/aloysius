@@ -9,7 +9,8 @@ import {
 } from "react";
 
 import type { BlockField, PageBlock } from "../../content/cms";
-import { getImageAspectRatio } from "../../content/cms";
+import { getImageRatioKey } from "../../content/cms";
+import { aspectRatios } from "../../tokens/aspect-ratios";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
 import { VisuallyHidden } from "../primitives/layout";
@@ -470,7 +471,6 @@ const FieldSlot = ({
   if (field.kind === "image") {
     return (
       <MediaField
-        aspectRatio={getImageAspectRatio(field.id)}
         defaultImage={defaultImages?.[field.id]}
         field={field}
         onChange={(next) => onChange(field.id, next)}
@@ -650,8 +650,16 @@ export const HomepageEditor = forwardRef<
           fields: block.fields.map((f) => ({
             id: f.id,
             value: valueOf(f),
+            /*
+             * From the token, never from `f.aspectRatio`. The saved value was
+             * meant to remember a per-field crop, but a crop can no longer be
+             * chosen: the uploader crops to the token ratio before the file is
+             * ever stored, so a persisted ratio could only ever disagree with
+             * the shape of the image it describes. Deriving it here keeps the
+             * renderer and the uploader reading the same declaration.
+             */
             ...(f.kind === "image"
-              ? { aspectRatio: f.aspectRatio ?? getImageAspectRatio(f.id) }
+              ? { aspectRatio: aspectRatios[getImageRatioKey(f.id)] }
               : {}),
           })),
         })),

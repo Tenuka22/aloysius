@@ -18,6 +18,5 @@ describe("Storage backend", () => {
     expect(storage.put).toBeTypeOf("function");
     expect(storage.get).toBeTypeOf("function");
     expect(storage.remove).toBeTypeOf("function");
-    expect(storage.getPresignedUploadUrl).toBeTypeOf("function");
   });
 });

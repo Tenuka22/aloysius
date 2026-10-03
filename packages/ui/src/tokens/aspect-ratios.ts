@@ -94,3 +94,20 @@ export const aspectRatioMinWidth: Record<AspectRatioKey, number> = {
   achievementCard: 800,
   alumniPhoto: 800,
 };
+
+/**
+ * Everything the uploader needs to know about one ratio, in one lookup.
+ *
+ * The three maps above are separate on purpose — the number, the name and the
+ * minimum width are different kinds of fact — but every consumer wants all three
+ * at once, and reading them in parallel at each call site is how a hint ends up
+ * describing a different ratio from the one being enforced. `ratioSpec` is the
+ * single read that keeps them together.
+ */
+export const ratioSpec = (key: AspectRatioKey) => ({
+  key,
+  ratio: aspectRatios[key],
+  name: aspectRatioNames[key],
+  label: aspectRatioLabels[key],
+  minWidth: aspectRatioMinWidth[key],
+});

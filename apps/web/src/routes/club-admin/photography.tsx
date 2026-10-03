@@ -26,33 +26,35 @@ import { client } from "@/utils/orpc";
  *
  * Task order, not alphabetical: submit work, then watch what happened to it.
  * `My submissions` is last because it is the answer to "did that go through",
- * not a place to start. `Club profile` is first after the overview because it
- * is the only screen that changes how the club itself looks rather than what
- * it has published - the cover banner, which every other page then inherits.
+ * not a place to start.
+ *
+ * `Club profile` is absent on purpose. The club is barred from editing its own
+ * profile for now, so the page is switched off at the route
+ * (`PROFILE_EDITING_ENABLED` in `photography/profile.tsx`) and its nav item is
+ * removed here rather than left as a dead link. Put both back together.
  */
 const CLUB_ADMIN_USERNAME = "photography-admin";
 
 const NAV_ITEMS = [
   { num: "01", label: "Overview", href: "/club-admin/photography" },
-  { num: "02", label: "Club profile", href: "/club-admin/photography/profile" },
-  { num: "03", label: "Galleries", href: "/club-admin/photography/galleries" },
-  { num: "04", label: "Events", href: "/club-admin/photography/events" },
+  { num: "02", label: "Galleries", href: "/club-admin/photography/galleries" },
+  { num: "03", label: "Events", href: "/club-admin/photography/events" },
   {
-    num: "05",
+    num: "04",
     label: "Achievements",
     href: "/club-admin/photography/achievements",
   },
   {
-    num: "06",
+    num: "05",
     label: "Announcements",
     href: "/club-admin/photography/announcements",
   },
   {
-    num: "07",
+    num: "06",
     label: "My submissions",
     href: "/club-admin/photography/submissions",
   },
-  { num: "08", label: "My account", href: "/club-admin/photography/account" },
+  { num: "07", label: "My account", href: "/club-admin/photography/account" },
 ] as const;
 
 const isCurrentSection = (pathname: string, href: string) =>

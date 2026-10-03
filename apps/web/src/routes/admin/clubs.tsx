@@ -348,22 +348,44 @@ const AdministratorPanel = ({
 
 /* ------------------------------------------------------- activity panel */
 
+/** One line of the audit trail, as either of the two activity handlers reports it. */
+interface ActivityEntry {
+  id: string;
+  action: string;
+  targetType: string;
+  targetId: string | null;
+  actorUsername: string | null;
+  createdAt: Date;
+}
+
+/**
+ * One list, from whichever activity query the signed-in role actually runs.
+ *
+ * The two do not answer in the same shape: `myActivity` is a bare array,
+ * because a club administrator can only ever have their own handful of entries,
+ * while `activity` is a page envelope, because a site administrator reads a
+ * filtered, paginated feed. Normalising here is what lets the panel take one
+ * type, and it lives out here rather than inline in the page because inlining it
+ * pushed the page over the complexity limit for no gain.
+ *
+ * Loading and error still come from the one query that is *enabled*: a disabled
+ * query reports `isPending` forever, so combining both would hang the panel on
+ * "Loading…" for whichever role is not supposed to be reading it.
+ */
+const activityEntriesFor = (
+  isClubAdmin: boolean,
+  mine: { data: readonly ActivityEntry[] | undefined },
+  everyone: { data: { rows: readonly ActivityEntry[] } | undefined }
+): readonly ActivityEntry[] =>
+  isClubAdmin ? (mine.data ?? []) : (everyone.data?.rows ?? []);
+
 const ActivityPanel = ({
   entries,
   isLoading,
   error,
   hasSelection,
 }: {
-  entries:
-    | readonly {
-        id: string;
-        action: string;
-        targetType: string;
-        targetId: string | null;
-        actorUsername: string | null;
-        createdAt: Date;
-      }[]
-    | undefined;
+  entries: readonly ActivityEntry[] | undefined;
   isLoading: boolean;
   error: Error | null;
   hasSelection: boolean;
@@ -478,6 +500,11 @@ const AdminClubsPage = () => {
   const activityQueryForRole = isClubAdmin ? myActivityQuery : activityQuery;
   const hasSelection = isClubAdmin || clubId.length > 0;
   const members = membersFor(isClubAdmin, myAccountQuery.data, adminQuery.data);
+  const activityEntries = activityEntriesFor(
+    isClubAdmin,
+    myActivityQuery,
+    activityQuery
+  );
 
   /**
    * One call does the right thing for whichever state the account is in: the
@@ -622,7 +649,7 @@ const AdminClubsPage = () => {
       />
 
       <ActivityPanel
-        entries={activityQueryForRole.data}
+        entries={activityEntries}
         error={activityQueryForRole.error}
         hasSelection={hasSelection}
         isLoading={activityQueryForRole.isPending && hasSelection}

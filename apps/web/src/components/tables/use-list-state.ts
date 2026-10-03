@@ -1,13 +1,20 @@
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { functionalUpdate } from "@tanstack/react-table";
-import type { OnChangeFn, PaginationState, SortingState } from "@tanstack/react-table";
-import { useCallback } from "react";
-
 import {
   searchToPagination,
   searchToSorting,
 } from "@aloysius/ui/components/data-table/list-search";
 import { useListSearchWriter } from "@aloysius/ui/components/data-table/use-list-search-writer";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { functionalUpdate } from "@tanstack/react-table";
+import type {
+  OnChangeFn,
+  PaginationState,
+  SortingState,
+} from "@tanstack/react-table";
+import { useCallback } from "react";
 
 import type { ListSearch } from "./queue-search";
 
@@ -109,13 +116,10 @@ export const useTableCallbacks = <TSortKey extends string>({
 export const useListInvalidation = (key: readonly unknown[]) => {
   const queryClient = useQueryClient();
 
-  return useCallback(
-    async () => {
-      // The prefix that covers every filter combination of this one procedure.
-      await queryClient.invalidateQueries({
-        queryKey: key.slice(0, 2),
-      });
-    },
-    [key, queryClient]
-  );
+  return useCallback(async () => {
+    // The prefix that covers every filter combination of this one procedure.
+    await queryClient.invalidateQueries({
+      queryKey: key.slice(0, 2),
+    });
+  }, [key, queryClient]);
 };

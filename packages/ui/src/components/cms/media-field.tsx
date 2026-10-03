@@ -2,32 +2,43 @@ import * as stylex from "@stylexjs/stylex";
 import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 
-import "react-image-crop/dist/ReactCrop.css";
-import { centerCrop, makeAspectCrop, ReactCrop } from "react-image-crop";
-import type { PercentCrop } from "react-image-crop";
-
 import type { BlockField } from "../../content/cms";
+import { getImageRatioKey } from "../../content/cms";
 import { aspectRatios } from "../../tokens/aspect-ratios";
 import { bp } from "../../tokens/breakpoints.stylex";
-import {
-  palette,
-  color,
-  font,
-  motionToken,
-  space,
-} from "../../tokens/tokens.stylex";
-import { CmsButton } from "./cms-primitives";
+import { palette, color, font, space } from "../../tokens/tokens.stylex";
+import { CmsButton, Notice } from "./cms-primitives";
+import { FileUploader, MediaModeSwitch } from "./file-uploader";
 
+/**
+ * The CMS's image field: one image, cropped to the shape its slot renders at.
+ *
+ * All of the choosing lives in `FileUploader`. What is left here is the part that
+ * is specific to a CMS block field and nothing else:
+ *
+ * - the **hero**, which on five pages may be a photograph, a video or a brand
+ *   colour rather than an image, and
+ * - the **persisted value**, which for the hero is `image:`/`video:`/`color:`
+ *   prefixed so the renderer knows which of the three it is looking at.
+ *
+ * The cropper, the ratio tokens, the encoding and the upload error handling used
+ * to be duplicated here and in three club-portal components, which is why the same
+ * photograph could reach storage cropped to three different shapes.
+ */
 type MediaMode = "image" | "video" | "color";
 
 const IMAGE_PREFIX = "image:";
 const VIDEO_PREFIX = "video:";
 const COLOR_PREFIX = "color:";
 
-// The hero always renders a fixed dark scrim plus cream text over this fill,
-// so only shades of the brand green stay legible and on-brand -
-// anything lighter (cream, gold) turns into a muddy off-brand tint under the
-// scrim, and anything else (black, crimson) reads as an unrelated colour.
+/**
+ * The colours the hero can be tinted.
+ *
+ * The hero always renders a fixed dark scrim plus cream text over this fill, so
+ * only shades of the brand green stay legible and on-brand — anything lighter
+ * (cream, gold) turns into a muddy off-brand tint under the scrim, and anything
+ * else (black, crimson) reads as an unrelated colour.
+ */
 const COLOR_CHOICES = [
   palette.greenBright,
   palette.greenMid,
@@ -72,47 +83,7 @@ const styles = stylex.create({
     color: color.onSurfaceMuted,
   },
 
-  /* --- mode segmented control --- */
-  modeBar: {
-    display: "inline-flex",
-    gap: 0,
-    margin: 0,
-    padding: 0,
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.borderStrong,
-    borderRadius: "0.375rem",
-    overflow: "hidden",
-    backgroundColor: color.surface,
-  },
-  mode: {
-    minHeight: "2rem",
-    paddingBlock: space["2xs"],
-    paddingInline: space.sm,
-    borderWidth: 0,
-    borderInlineEndWidth: space.px,
-    borderInlineEndStyle: "solid",
-    borderInlineEndColor: color.borderStrong,
-    borderStyle: "solid",
-    backgroundColor: {
-      default: "transparent",
-      ":hover": "rgba(1, 52, 5, 0.04)",
-    },
-    color: color.onSurfaceMuted,
-    fontFamily: font.body,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    cursor: "pointer",
-    transitionProperty: "background-color, color",
-    transitionDuration: motionToken.fast,
-    transitionTimingFunction: motionToken.ease,
-  },
-  modeActive: {
-    backgroundColor: color.accent,
-    color: color.onAccent,
-  },
-
-  /* --- preview area (display only) --- */
+  /* --- non-image media --- */
   preview: {
     position: "relative",
     display: "grid",
@@ -142,27 +113,6 @@ const styles = stylex.create({
     fontSize: font.sizeSm,
     color: color.onSurfaceMuted,
   },
-
-  /* --- crop --- */
-  cropWrap: {
-    width: "100%",
-    maxHeight: "28rem",
-    overflow: "auto",
-    backgroundColor: palette.black,
-  },
-  cropImage: {
-    maxWidth: "100%",
-    display: "block",
-  },
-  cropBar: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: space["2xs"],
-    paddingBlockStart: space["2xs"],
-  },
-
-  /* --- color --- */
   colorPreview: {
     width: "100%",
     borderWidth: space.px,
@@ -172,7 +122,6 @@ const styles = stylex.create({
   colorRow: {
     display: "flex",
     flexWrap: "wrap",
-    alignItems: "center",
     gap: space.xs,
   },
   colorSwatch: {
@@ -184,18 +133,8 @@ const styles = stylex.create({
     borderColor: "transparent",
     borderRadius: "0.375rem",
     cursor: "pointer",
-    transitionProperty: "border-color, transform",
-    transitionDuration: motionToken.fast,
-    transitionTimingFunction: motionToken.ease,
-    transform: {
-      default: "scale(1)",
-      ":hover": "scale(1.1)",
-    },
   },
-  colorSwatchActive: {
-    borderColor: color.onSurface,
-    transform: "scale(1.1)",
-  },
+  colorSwatchActive: { borderColor: color.onSurface },
 
   /* --- shared --- */
   actions: {
@@ -203,9 +142,7 @@ const styles = stylex.create({
     flexWrap: "wrap",
     gap: space["2xs"],
   },
-  fileInput: {
-    display: "none",
-  },
+  fileInput: { display: "none" },
   hint: {
     margin: 0,
     fontSize: font.size2xs,
@@ -213,30 +150,136 @@ const styles = stylex.create({
     color: color.onSurfaceMuted,
     textWrap: "pretty",
   },
-  error: {
-    margin: 0,
-    color: color.danger,
-    fontSize: font.size2xs,
-  },
 });
 
-const defaultCrop: PercentCrop = {
-  unit: "%",
-  x: 0,
-  y: 0,
-  width: 100,
-  height: 100,
+/**
+ * The video and colour branches.
+ *
+ * Split out because they share nothing with the image branch: no ratio cropping,
+ * no upload validation, and a different value encoding. Inlining them made the
+ * component one large branch on `mode`, which is exactly the shape that grows a
+ * fourth kind later without anyone noticing the others had stopped being
+ * reviewed.
+ */
+const NonImageMedia = ({
+  mode,
+  onChange,
+  onRemove,
+  onUpload,
+  ratio,
+  sourceValue,
+  uploading,
+  problem,
+}: {
+  mode: Exclude<MediaMode, "image">;
+  onChange: (value: string) => void;
+  onRemove: () => void;
+  onUpload?: (file: File) => Promise<string>;
+  /** Number, because a `<video>` and a colour swatch only need a box to fill. */
+  ratio: number;
+  sourceValue: string;
+  uploading: boolean;
+  problem: string | null;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !onUpload) {
+      return;
+    }
+    try {
+      onChange(await onUpload(file));
+    } catch {
+      // Surfaced through the uploader's own problem slot rather than a second
+      // error channel; the operator only needs to know it did not work.
+    }
+  };
+
+  if (mode === "color") {
+    return (
+      <>
+        <div
+          style={{ aspectRatio: ratio, backgroundColor: sourceValue }}
+          {...stylex.props(styles.colorPreview)}
+        />
+        <div {...stylex.props(styles.colorRow)}>
+          {COLOR_CHOICES.map((choice) => (
+            <button
+              aria-label={`Use ${choice}`}
+              aria-pressed={sourceValue === choice}
+              key={choice}
+              onClick={() => {
+                onChange(choice);
+              }}
+              style={{ backgroundColor: choice }}
+              type="button"
+              {...stylex.props(
+                styles.colorSwatch,
+                sourceValue === choice && styles.colorSwatchActive
+              )}
+            />
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div style={{ aspectRatio: ratio }} {...stylex.props(styles.preview)}>
+        {sourceValue ? (
+          <video
+            aria-hidden="true"
+            controls
+            preload="metadata"
+            src={sourceValue}
+            {...stylex.props(styles.previewVideo)}
+          >
+            <track kind="captions" label="No captions available" src="" />
+          </video>
+        ) : (
+          <p {...stylex.props(styles.previewHint)}>
+            {uploading ? "Uploading…" : "No video selected"}
+          </p>
+        )}
+      </div>
+
+      <input
+        accept="video/*"
+        disabled={uploading || !onUpload}
+        onChange={(event) => {
+          void handleFile(event);
+        }}
+        ref={inputRef}
+        type="file"
+        {...stylex.props(styles.fileInput)}
+      />
+
+      <div {...stylex.props(styles.actions)}>
+        <CmsButton
+          disabled={uploading || !onUpload}
+          onClick={() => {
+            inputRef.current?.click();
+          }}
+          tone="quiet"
+        >
+          {sourceValue ? "Replace video" : "Choose video"}
+        </CmsButton>
+        {sourceValue ? (
+          <CmsButton disabled={uploading} onClick={onRemove} tone="quiet">
+            Remove
+          </CmsButton>
+        ) : null}
+      </div>
+
+      {problem ? <Notice tone="danger">{problem}</Notice> : null}
+    </>
+  );
 };
 
-// oxlint-disable react/todo promise/avoid-new -- canvas.toBlob is callback-based, Promise wrapper required
-const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> =>
-  new Promise((resolve) => {
-    canvas.toBlob(resolve, "image/jpeg", 0.9);
-  });
-
-// oxlint-disable react-doctor/no-giant-component eslint/complexity -- splitting would fragment tightly-coupled crop/upload/color logic
 export const MediaField = ({
-  aspectRatio = aspectRatios.hero,
   defaultImage,
   field,
   onChange,
@@ -245,364 +288,154 @@ export const MediaField = ({
   variant = "image",
   wide,
 }: {
-  aspectRatio?: number;
-  /** Fallback image URL shown when no value is set. */
-  defaultImage?: string;
   field: BlockField;
   onChange: (value: string) => void;
   onUpload?: (file: File) => Promise<string>;
   value?: string;
+  /** Fallback image URL shown when no value has been saved yet. */
+  defaultImage?: string;
   variant?: "image" | "hero";
   wide?: boolean;
 }) => {
-  const initialMode = variant === "hero" ? getHeroMode(value) : "image";
-  const [mode, setMode] = useState<MediaMode>(initialMode);
-  const [crop, setCrop] = useState<PercentCrop>(defaultCrop);
-  const [previewUrl, setPreviewUrl] = useState<string>();
-  const [isCropping, setIsCropping] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState<string>();
-  const imageRef = useRef<HTMLImageElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const ratioKey = getImageRatioKey(field.id);
+  const spec = aspectRatios[ratioKey];
+  const isHero = variant === "hero";
+
+  const [mode, setMode] = useState<MediaMode>(
+    isHero ? getHeroMode(value) : "image"
+  );
+  const [uploading, setUploading] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
 
   const sourceValue = getHeroValue(value);
-  const isHero = variant === "hero";
-  const currentMode = mode;
 
-  const handleMode = (nextMode: MediaMode) => {
-    setMode(nextMode);
-    setIsCropping(false);
-    setError(undefined);
-    if (
-      nextMode === "image" &&
-      sourceValue &&
-      !sourceValue.startsWith("data:")
-    ) {
-      setPreviewUrl(sourceValue);
-    }
+  const handleMode = (next: MediaMode) => {
+    setMode(next);
+    setProblem(null);
   };
 
-  const handleImageFile = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-    if (!file.type.startsWith("image/")) {
-      setError("Choose an image file.");
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-    setCrop(defaultCrop);
-    setIsCropping(true);
-    setError(undefined);
-    event.target.value = "";
-  };
-
-  const handleImageLoad = () => {
-    const image = imageRef.current;
-    if (!image || !aspectRatio) {
-      return;
-    }
-    setCrop(
-      makeAspectCrop(
-        { unit: "%", width: 80 },
-        aspectRatio,
-        image.naturalWidth,
-        image.naturalHeight
-      )
-    );
-  };
-
-  const handleUseCrop = async () => {
-    const image = imageRef.current;
-    if (!image) {
-      return;
-    }
+  /**
+   * Wrap the caller's `onUpload` so the video branch gets the same busy and
+   * error handling the image branch gets from `FileUploader`. Passing the raw
+   * prop to both meant the video branch silently had neither.
+   */
+  const uploadVideo = async (file: File): Promise<string> => {
     if (!onUpload) {
-      setError("Media upload is not available.");
-      return;
+      throw new Error("Media upload is not available.");
     }
-    setIsUploading(true);
-    setError(undefined);
+    setUploading(true);
+    setProblem(null);
+
+    // No `finally`: React Compiler cannot lower one, so the busy flag is
+    // cleared on both paths by hand — once after a successful upload, once
+    // while rethrowing a failed one.
     try {
-      const pixelCrop = centerCrop(
-        crop,
-        image.naturalWidth,
-        image.naturalHeight
+      const id = await onUpload(file);
+      setUploading(false);
+      return id;
+    } catch (error) {
+      setProblem(
+        error instanceof Error
+          ? error.message
+          : "The video could not be uploaded."
       );
-      if (pixelCrop.width <= 0 || pixelCrop.height <= 0) {
-        setError("Choose a crop with visible dimensions.");
-        return;
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = pixelCrop.width;
-      canvas.height = pixelCrop.height;
-      const context = canvas.getContext("2d");
-      if (!context) {
-        setError("The browser could not prepare the image crop.");
-        return;
-      }
-      context.drawImage(
-        image,
-        pixelCrop.x,
-        pixelCrop.y,
-        pixelCrop.width,
-        pixelCrop.height,
-        0,
-        0,
-        pixelCrop.width,
-        pixelCrop.height
-      );
-      const blob = await canvasToBlob(canvas);
-      if (!blob) {
-        setError("The cropped image could not be created.");
-        return;
-      }
-      const file = new File([blob], "homepage-crop.jpg", {
-        type: "image/jpeg",
-      });
-      const url = await onUpload(file);
-      onChange(isHero ? `${IMAGE_PREFIX}${url}` : url);
-      setPreviewUrl(url);
-      setIsCropping(false);
-    } catch (cropError) {
-      setError(
-        cropError instanceof Error ? cropError.message : "Upload failed."
-      );
-    } finally {
-      setIsUploading(false);
+      setUploading(false);
+      throw error;
     }
   };
 
-  const handleVideoFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-    if (!file.type.startsWith("video/")) {
-      setError("Choose a video file.");
-      return;
-    }
-    if (!onUpload) {
-      setError("Media upload is not available.");
-      return;
-    }
-    setIsUploading(true);
-    setError(undefined);
-    try {
-      const url = await onUpload(file);
-      onChange(`${VIDEO_PREFIX}${url}`);
-      setPreviewUrl(url);
-    } catch (videoError) {
-      setError(
-        videoError instanceof Error ? videoError.message : "Upload failed."
-      );
-    } finally {
-      setIsUploading(false);
-      event.target.value = "";
-    }
-  };
-
-  const handleColor = (nextColor: string) => {
-    onChange(`${COLOR_PREFIX}${nextColor}`);
-    setError(undefined);
-  };
-
-  const handleRemove = () => {
+  const remove = () => {
+    setProblem(null);
     onChange("");
-    setPreviewUrl(undefined);
-    setIsCropping(false);
-    setError(undefined);
   };
 
-  const openFilePicker = () => fileRef.current?.click();
+  /*
+   * The label and hint belong to `FileUploader` in image mode — it renders
+   * both, and rendering them here as well is how a field ends up with two
+   * headings and two copies of the same guidance. The non-image branches have
+   * no uploader of their own, so they take them here.
+   *
+   * Built as two values rather than one nested conditional: a ternary inside a
+   * ternary made the three-way split of this field unreadable at a glance.
+   */
+  const imageMode = onUpload ? (
+    <FileUploader
+      hint={field.hint}
+      label={field.label}
+      onChange={(next) => {
+        onChange(isHero ? `${IMAGE_PREFIX}${next}` : (next ?? ""));
+      }}
+      onUpload={onUpload}
+      previewUrl={sourceValue || defaultImage || null}
+      ratioKey={ratioKey}
+      value={sourceValue}
+      wide={wide}
+    />
+  ) : (
+    /*
+     * No uploader available: the field still has to render, or a CMS page
+     * loaded without upload rights would lose its image slots entirely. The
+     * existing image is shown read-only and the gap is stated.
+     */
+    <>
+      <span {...stylex.props(styles.label)}>{field.label}</span>
+      <div style={{ aspectRatio: spec }} {...stylex.props(styles.preview)}>
+        {sourceValue || defaultImage ? (
+          <img
+            alt=""
+            loading="lazy"
+            src={sourceValue || defaultImage}
+            {...stylex.props(styles.previewImage)}
+          />
+        ) : (
+          <p {...stylex.props(styles.previewHint)}>No image selected</p>
+        )}
+      </div>
+      <Notice tone="warning">
+        You cannot upload images with this account, so this field is read-only.
+      </Notice>
+      {field.hint ? <p {...stylex.props(styles.hint)}>{field.hint}</p> : null}
+    </>
+  );
 
-  const renderImagePreview = () => {
-    if (sourceValue) {
-      return (
-        <img
-          alt=""
-          loading="lazy"
-          src={sourceValue}
-          {...stylex.props(styles.previewImage)}
+  /*
+   * `null` while the field is in image mode: that comparison is what narrows
+   * `mode` for `NonImageMedia` below, which takes only the two non-image modes.
+   * Building this unconditionally would hand it the union of all three.
+   */
+  const nonImageMode =
+    mode === "image" ? null : (
+      <>
+        <span {...stylex.props(styles.label)}>{field.label}</span>
+        <NonImageMedia
+          mode={mode}
+          onChange={(next) => {
+            onChange(
+              `${mode === "video" ? VIDEO_PREFIX : COLOR_PREFIX}${next}`
+            );
+          }}
+          onRemove={remove}
+          onUpload={onUpload ? uploadVideo : undefined}
+          problem={problem}
+          ratio={spec}
+          sourceValue={sourceValue}
+          uploading={uploading}
         />
-      );
-    }
-    if (defaultImage) {
-      return (
-        <img
-          alt="Default"
-          loading="lazy"
-          src={defaultImage}
-          {...stylex.props(styles.previewImage)}
-        />
-      );
-    }
-    return (
-      <p {...stylex.props(styles.previewHint)}>
-        {isUploading ? "Uploading…" : "No image selected"}
-      </p>
+        {field.hint ? <p {...stylex.props(styles.hint)}>{field.hint}</p> : null}
+      </>
     );
-  };
 
   return (
     <div {...stylex.props(styles.root, wide && styles.rootWide)}>
-      <span {...stylex.props(styles.label)}>{field.label}</span>
-
       {isHero ? (
-        <fieldset
-          aria-label={`${field.label} type`}
-          {...stylex.props(styles.modeBar)}
-        >
-          {(["image", "video", "color"] as MediaMode[]).map((option) => (
-            <button
-              aria-pressed={currentMode === option}
-              key={option}
-              onClick={() => handleMode(option)}
-              type="button"
-              {...stylex.props(
-                styles.mode,
-                currentMode === option && styles.modeActive
-              )}
-            >
-              {option[0]?.toUpperCase()}
-              {option.slice(1)}
-            </button>
-          ))}
-        </fieldset>
+        <MediaModeSwitch
+          label={`${field.label} type`}
+          onSelect={handleMode}
+          value={mode}
+        />
       ) : null}
 
-      {currentMode === "color" ? (
-        <>
-          <div
-            style={{
-              aspectRatio,
-              backgroundColor: sourceValue || palette.greenDeep,
-            }}
-            {...stylex.props(styles.colorPreview)}
-          />
-          <div {...stylex.props(styles.colorRow)}>
-            {COLOR_CHOICES.map((choice) => (
-              <button
-                aria-label={`Use ${choice}`}
-                aria-pressed={sourceValue === choice}
-                key={choice}
-                onClick={() => handleColor(choice)}
-                style={{ backgroundColor: choice }}
-                type="button"
-                {...stylex.props(
-                  styles.colorSwatch,
-                  sourceValue === choice && styles.colorSwatchActive
-                )}
-              />
-            ))}
-          </div>
-        </>
-      ) : null}
-
-      {currentMode === "video" ? (
-        <div style={{ aspectRatio }} {...stylex.props(styles.preview)}>
-          {sourceValue ? (
-            <video
-              aria-hidden="true"
-              controls
-              preload="metadata"
-              src={sourceValue}
-              {...stylex.props(styles.previewVideo)}
-            >
-              <track kind="captions" label="No captions available" src="" />
-            </video>
-          ) : (
-            <p {...stylex.props(styles.previewHint)}>
-              {isUploading ? "Uploading…" : "No video selected"}
-            </p>
-          )}
-        </div>
-      ) : null}
-
-      {currentMode === "image" && isCropping ? (
-        <>
-          <div {...stylex.props(styles.cropWrap)}>
-            <ReactCrop
-              aspect={aspectRatio}
-              crop={crop}
-              onChange={(_pixelCrop, percentageCrop) => setCrop(percentageCrop)}
-              onComplete={(_pixelCrop, percentageCrop) =>
-                setCrop(percentageCrop)
-              }
-            >
-              <img
-                alt=""
-                onLoad={handleImageLoad}
-                ref={imageRef}
-                src={previewUrl ?? sourceValue}
-                {...stylex.props(styles.cropImage)}
-              />
-            </ReactCrop>
-          </div>
-          <div {...stylex.props(styles.cropBar)}>
-            <CmsButton
-              disabled={isUploading}
-              onClick={handleUseCrop}
-              tone="primary"
-            >
-              {isUploading ? "Uploading…" : "Use cropped image"}
-            </CmsButton>
-            <CmsButton
-              disabled={isUploading}
-              onClick={() => {
-                setIsCropping(false);
-                setPreviewUrl(undefined);
-              }}
-              tone="quiet"
-            >
-              Cancel
-            </CmsButton>
-          </div>
-        </>
-      ) : null}
-
-      {currentMode === "image" && !isCropping ? (
-        <div style={{ aspectRatio }} {...stylex.props(styles.preview)}>
-          {renderImagePreview()}
-        </div>
-      ) : null}
-
-      {currentMode !== "color" && (
-        <div {...stylex.props(styles.actions)}>
-          <input
-            accept={currentMode === "video" ? "video/*" : "image/*"}
-            onChange={
-              currentMode === "video" ? handleVideoFile : handleImageFile
-            }
-            ref={fileRef}
-            type="file"
-            {...stylex.props(styles.fileInput)}
-          />
-          <CmsButton
-            disabled={isUploading}
-            onClick={openFilePicker}
-            tone="quiet"
-          >
-            {sourceValue
-              ? `Replace ${currentMode === "video" ? "video" : "image"}`
-              : `Choose ${currentMode === "video" ? "video" : "image"}`}
-          </CmsButton>
-          {sourceValue && !isCropping ? (
-            <CmsButton
-              disabled={isUploading}
-              onClick={handleRemove}
-              tone="quiet"
-            >
-              Remove
-            </CmsButton>
-          ) : null}
-        </div>
-      )}
-
-      {field.hint ? <p {...stylex.props(styles.hint)}>{field.hint}</p> : null}
-      {error ? <p {...stylex.props(styles.error)}>{error}</p> : null}
+      {mode === "image" ? imageMode : nonImageMode}
     </div>
   );
 };

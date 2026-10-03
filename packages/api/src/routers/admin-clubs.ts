@@ -22,12 +22,8 @@ import { requireAuth } from "../context";
 import { adminProcedure, cmsProcedure, requireClubPermission } from "../index";
 import { approveClubSubmission, approveGlobalSubmission } from "./clubs/apply";
 import { HARDCODED_CLUBS, findHardcodedClub } from "./clubs/config";
-import {
-  listOffset,
-  listParamsSchema,
-  sortDirectionOf,
-} from "./list-params";
 import { titleFromPayload } from "./list-format";
+import { listOffset, listParamsSchema, sortDirectionOf } from "./list-params";
 
 export { HARDCODED_CLUBS } from "./clubs/config";
 
@@ -78,34 +74,41 @@ const activityFeed = async (
   filter: { clubId?: string; actorUserId?: string; targetUsername?: string },
   limit: number
 ): Promise<ClubActivityEntry[]> => {
-  const auditRows = await db
-    .select()
-    .from(adminActivity)
-    .orderBy(desc(adminActivity.createdAt))
-    .limit(limit)
-    .all();
-  const globalRows = await db
-    .select()
-    .from(globalContentSubmission)
-    .where(
-      filter.clubId
-        ? eq(globalContentSubmission.submittedByClubId, filter.clubId)
-        : eq(globalContentSubmission.submittedById, filter.actorUserId ?? "")
-    )
-    .orderBy(desc(globalContentSubmission.submittedAt))
-    .limit(limit)
-    .all();
-  const clubRows = await db
-    .select()
-    .from(clubContentSubmission)
-    .where(
-      filter.clubId
-        ? eq(clubContentSubmission.clubId, filter.clubId)
-        : eq(clubContentSubmission.submittedById, filter.actorUserId ?? "")
-    )
-    .orderBy(desc(clubContentSubmission.submittedAt))
-    .limit(limit)
-    .all();
+  /*
+   * Three independent reads of three different tables. Nothing here waits on
+   * anything above it, so they go out together: the feed is the first thing on
+   * an admin page and it is three round trips otherwise.
+   */
+  const [auditRows, globalRows, clubRows] = await Promise.all([
+    db
+      .select()
+      .from(adminActivity)
+      .orderBy(desc(adminActivity.createdAt))
+      .limit(limit)
+      .all(),
+    db
+      .select()
+      .from(globalContentSubmission)
+      .where(
+        filter.clubId
+          ? eq(globalContentSubmission.submittedByClubId, filter.clubId)
+          : eq(globalContentSubmission.submittedById, filter.actorUserId ?? "")
+      )
+      .orderBy(desc(globalContentSubmission.submittedAt))
+      .limit(limit)
+      .all(),
+    db
+      .select()
+      .from(clubContentSubmission)
+      .where(
+        filter.clubId
+          ? eq(clubContentSubmission.clubId, filter.clubId)
+          : eq(clubContentSubmission.submittedById, filter.actorUserId ?? "")
+      )
+      .orderBy(desc(clubContentSubmission.submittedAt))
+      .limit(limit)
+      .all(),
+  ]);
 
   const submissions: ClubActivityEntry[] = [...globalRows, ...clubRows].map(
     (row) => ({
@@ -121,17 +124,74 @@ const activityFeed = async (
     })
   );
 
-  const relevantAudit = auditRows.filter((row) =>
-    filter.targetUsername
-      ? row.targetId === filter.targetUsername
-      : filter.actorUserId
-        ? row.actorUserId === filter.actorUserId
-        : true
-  );
+  /*
+   * A target narrows the feed to one thing; failing that, an actor narrows it to
+   * one person's history; failing that it is everything. Written as early
+   * returns rather than a nested ternary because the middle step is a *condition
+   * on the filter*, not a value, and reading it as a value is how the wrong
+   * branch gets picked.
+   */
+  const auditIsRelevant = (row: (typeof auditRows)[number]) => {
+    if (filter.targetUsername) {
+      return row.targetId === filter.targetUsername;
+    }
+    if (filter.actorUserId) {
+      return row.actorUserId === filter.actorUserId;
+    }
+    return true;
+  };
+
+  const relevantAudit = auditRows.filter(auditIsRelevant);
 
   return [...relevantAudit, ...submissions]
     .toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, limit);
+};
+
+/**
+ * The three fields both pending queues sort on.
+ *
+ * Exported because it appears in the router's inferred output type, and a
+ * declaration file cannot name a type it cannot see.
+ */
+export interface PendingRow {
+  operation: string;
+  target: string;
+  submittedAt: Date;
+}
+
+/**
+ * Sorting for `pendingClub` and `pendingGlobal`, which differ only in which table
+ * they read.
+ *
+ * One function rather than a chain of ternaries in each handler: the two queues
+ * are the same list over different tables, and a reviewer changing the order of
+ * one queue should not have to wonder whether the other means the same thing.
+ *
+ * `sortDirection` only applies to the default column. The queue's natural order
+ * is newest first, so "descending" there means oldest first, and the two named
+ * columns are alphabetical in both directions — which is what the column headers
+ * say they do.
+ */
+const sortPending = (
+  rows: readonly PendingRow[],
+  sortBy: string | undefined,
+  sortDirection: "asc" | "desc"
+): PendingRow[] => {
+  const copy = [...rows];
+
+  if (sortBy === "operation") {
+    return copy.toSorted((a, b) => a.operation.localeCompare(b.operation));
+  }
+
+  if (sortBy === "target") {
+    return copy.toSorted((a, b) => a.target.localeCompare(b.target));
+  }
+
+  const sign = sortDirection === "asc" ? 1 : -1;
+  return copy.toSorted(
+    (a, b) => sign * (b.submittedAt.getTime() - a.submittedAt.getTime())
+  );
 };
 
 export const adminClubsRouter = {
@@ -288,8 +348,14 @@ export const adminClubsRouter = {
       }
     }),
 
-  myAccount: clubAdminProcedure.handler(async ({ context }) =>
-    context.db
+  /*
+   * `provisioned: true` is unconditional here, and that is the point of the
+   * route: it is only reachable by a signed-in club administrator, so reaching
+   * it at all is the proof. Written as a plain `await` rather than a `.then()`
+   * because there is nothing to overlap it with — one row, one lookup.
+   */
+  myAccount: clubAdminProcedure.handler(async ({ context }) => {
+    const account = await context.db
       .select({
         id: user.id,
         name: user.name,
@@ -299,11 +365,10 @@ export const adminClubsRouter = {
       })
       .from(user)
       .where(eq(user.id, context.session.user.id))
-      .get()
-      .then((account) =>
-        account ? { ...account, provisioned: true as const } : account
-      )
-  ),
+      .get();
+
+    return account ? { ...account, provisioned: true as const } : account;
+  }),
 
   rotateMyPassword: clubAdminProcedure
     .input(v.object({}))
@@ -338,10 +403,7 @@ export const adminClubsRouter = {
 
   activity: adminProcedure
     .input(
-      v.intersect([
-        listParamsSchema,
-        v.object({ clubId: v.optional(idInput) }),
-      ])
+      v.intersect([listParamsSchema, v.object({ clubId: v.optional(idInput) })])
     )
     .handler(async ({ context, input }) => {
       const merged = await activityFeed(
@@ -371,17 +433,16 @@ export const adminClubsRouter = {
               entry.targetId,
             ]
               .filter(Boolean)
-              .some((field) =>
-                String(field).toLowerCase().includes(term)
-              )
+              .some((field) => String(field).toLowerCase().includes(term))
           )
         : merged;
 
       const sorted =
         input.sortBy === "action"
-          ? [...matching].toSorted((a, b) =>
-              (direction === "asc" ? 1 : -1) *
-              a.action.localeCompare(b.action)
+          ? [...matching].toSorted(
+              (a, b) =>
+                (direction === "asc" ? 1 : -1) *
+                a.action.localeCompare(b.action)
             )
           : [...matching].toSorted(
               (a, b) =>
@@ -410,10 +471,7 @@ export const adminClubsRouter = {
 
   pendingClub: cmsProcedure
     .input(
-      v.intersect([
-        listParamsSchema,
-        v.object({ clubId: v.optional(idInput) }),
-      ])
+      v.intersect([listParamsSchema, v.object({ clubId: v.optional(idInput) })])
     )
     .handler(async ({ context, input }) => {
       const filters = [
@@ -462,27 +520,11 @@ export const adminClubsRouter = {
               titleFromPayload(row.payload),
             ]
               .filter(Boolean)
-              .some((field) =>
-                String(field).toLowerCase().includes(term)
-              )
+              .some((field) => String(field).toLowerCase().includes(term))
           )
         : rows;
 
-      const sorted =
-        input.sortBy === "operation"
-          ? [...matching].toSorted((a, b) =>
-              a.operation.localeCompare(b.operation)
-            )
-          : input.sortBy === "target"
-            ? [...matching].toSorted((a, b) =>
-                a.target.localeCompare(b.target)
-              )
-            : [...matching].toSorted(
-                (a, b) =>
-                  (direction === "asc" ? 1 : -1) *
-                  (b.submittedAt.getTime() - a.submittedAt.getTime())
-              );
-
+      const sorted = sortPending(matching, input.sortBy, direction);
       const total = sorted.length;
       const start = listOffset(input);
 
@@ -526,27 +568,11 @@ export const adminClubsRouter = {
               titleFromPayload(row.payload),
             ]
               .filter(Boolean)
-              .some((field) =>
-                String(field).toLowerCase().includes(term)
-              )
+              .some((field) => String(field).toLowerCase().includes(term))
           )
         : rows;
 
-      const sorted =
-        input.sortBy === "operation"
-          ? [...matching].toSorted((a, b) =>
-              a.operation.localeCompare(b.operation)
-            )
-          : input.sortBy === "target"
-            ? [...matching].toSorted((a, b) =>
-                a.target.localeCompare(b.target)
-              )
-            : [...matching].toSorted(
-                (a, b) =>
-                  (direction === "asc" ? 1 : -1) *
-                  (b.submittedAt.getTime() - a.submittedAt.getTime())
-              );
-
+      const sorted = sortPending(matching, input.sortBy, direction);
       const total = sorted.length;
       const start = listOffset(input);
 

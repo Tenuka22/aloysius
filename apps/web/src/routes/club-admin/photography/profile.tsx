@@ -8,17 +8,17 @@ import {
   RecordList,
   RecordRow,
 } from "@aloysius/ui/components/cms/cms-primitives";
+import { FileUploader } from "@aloysius/ui/components/cms/file-uploader";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { CoverImagePicker } from "@/components/club/cover-image-picker";
-import type { CoverImageSelection } from "@/components/club/cover-image-picker";
 import {
   ClubPage,
   ClubPageLoading,
   FieldStack,
 } from "@/components/club/page-parts";
+import { uploadImageFile } from "@/components/club/upload";
 import { orpc } from "@/utils/orpc";
 
 /**
@@ -131,17 +131,22 @@ const LiveProfilePanel = ({ club }: { club: ClubProfile }) => (
 const ProfileForm = ({ club }: { club: ClubProfile }) => {
   const queryClient = useQueryClient();
   const [description, setDescription] = useState<string | null>(null);
-  const [cover, setCover] = useState<CoverImageSelection | null>(null);
-  const [background, setBackground] = useState<CoverImageSelection | null>(
-    null
-  );
+
+  /*
+   * `undefined` is "untouched" and `null` is "take it down", which is the same
+   * three-state distinction the payload makes below. Storing both as one nullable
+   * string would mean an editor who opened the form and pressed save could
+   * silently strip a banner they never meant to touch.
+   */
+  const [cover, setCover] = useState<string | null | undefined>();
+  const [background, setBackground] = useState<string | null | undefined>();
 
   const submit = useMutation(
     orpc.clubs.submitClubProfileUpdate.mutationOptions({
       onSuccess: async () => {
         setDescription(null);
-        setCover(null);
-        setBackground(null);
+        setCover(undefined);
+        setBackground(undefined);
         await queryClient.invalidateQueries({
           queryKey: orpc.clubs.myClub.key(),
         });
@@ -167,11 +172,11 @@ const ProfileForm = ({ club }: { club: ClubProfile }) => {
   if (description !== null && shownDescription !== (club.description ?? "")) {
     payload.description = shownDescription.trim() || null;
   }
-  if (cover) {
-    payload.coverImageId = cover.fileId;
+  if (cover !== undefined) {
+    payload.coverImageId = cover;
   }
-  if (background) {
-    payload.backgroundImageId = background.fileId;
+  if (background !== undefined) {
+    payload.backgroundImageId = background;
   }
 
   const changed = Object.keys(payload).length > 0;
@@ -218,18 +223,34 @@ const ProfileForm = ({ club }: { club: ClubProfile }) => {
             wide
           />
 
-          <CoverImagePicker
-            currentUrl={club.coverImageUrl}
+          {/*
+           * Both images are cropped before they are stored, and both at the
+           * shape they are actually rendered at rather than the shape the
+           * browser happened to produce. `mosaicTile` for the cover because that
+           * is the ratio the students page reserves for a club banner; `hero` for
+           * the background because it sits behind a whole section and is cropped
+           * by the viewport rather than by a frame.
+           */}
+          <FileUploader
+            clearable
+            clearedNote="This banner will be taken down when the change is approved."
             label="Cover banner"
-            onSelect={setCover}
-            selected={cover}
+            onChange={setCover}
+            onUpload={uploadImageFile}
+            previewUrl={club.coverImageUrl}
+            ratioKey="mosaicTile"
+            value={cover ?? ""}
           />
 
-          <CoverImagePicker
-            currentUrl={club.backgroundImageUrl}
+          <FileUploader
+            clearable
+            clearedNote="This background will be taken down when the change is approved."
             label="Section background"
-            onSelect={setBackground}
-            selected={background}
+            onChange={setBackground}
+            onUpload={uploadImageFile}
+            previewUrl={club.backgroundImageUrl}
+            ratioKey="hero"
+            value={background ?? ""}
           />
 
           {descriptionTooLong ? (
@@ -305,7 +326,26 @@ const ClubProfilePage = () => {
   );
 };
 
+/**
+ * Club administrators are temporarily barred from editing the club profile.
+ *
+ * Hard-coded on purpose, and in two places. This flag turns the page off at the
+ * route itself, so a bookmark, a stale nav item or a pasted URL all land
+ * somewhere that works instead of on a form that silently does nothing; the nav
+ * item in `club-admin/photography.tsx` is gone too, so there is nothing to click.
+ *
+ * Flipping this back to `true` restores the page, and nothing else has to be
+ * reconnected - the form, the mutation and the review queue behind it are all
+ * still here.
+ */
+const PROFILE_EDITING_ENABLED = false;
+
 export const Route = createFileRoute("/club-admin/photography/profile")({
+  beforeLoad: () => {
+    if (!PROFILE_EDITING_ENABLED) {
+      throw redirect({ to: "/club-admin/photography" });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Club profile — Club portal — St. Aloysius' College" },

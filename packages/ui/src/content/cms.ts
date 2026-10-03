@@ -12,7 +12,7 @@
  * findings in the homepage audit and the same rule applies here.
  */
 
-import { aspectRatios } from "../tokens/aspect-ratios";
+import type { AspectRatioKey } from "../tokens/aspect-ratios";
 import {
   PRINCIPAL_BLOCK_ID,
   PRINCIPAL_DEFAULTS,
@@ -162,32 +162,45 @@ export interface PageBlock {
  * built in `components/home`, so the editor never offers a control for
  * something the page cannot display.
  */
-export const getImageAspectRatio = (fieldId: string): number => {
-  const ratios: Partial<Record<string, number>> = {
-    "hero-bg": aspectRatios.hero,
-    "heritage-image-1": aspectRatios.heritagePhoto,
-    "heritage-image-2": aspectRatios.heritageDetail,
-    "principal-portrait": aspectRatios.principalPortrait,
-    "life-sports": aspectRatios.mosaicTile,
-    "life-music": aspectRatios.mosaicTile,
-    "alumni-image": aspectRatios.alumniPhoto,
-    "founder1-image": aspectRatios.principalPortrait,
-    "founder2-image": aspectRatios.principalPortrait,
-    "history-1-image": aspectRatios.heritagePhoto,
-    "history-2-image": aspectRatios.heritagePhoto,
-    "history-3-image": aspectRatios.heritagePhoto,
-    "history-4-image": aspectRatios.heritagePhoto,
-    "anthem-image": aspectRatios.alumniPhoto,
-    "anthem-sinhala-image": aspectRatios.alumniPhoto,
-    "news-hero-image": aspectRatios.hero,
-    "notices-hero-image": aspectRatios.hero,
-    "media-hero-image": aspectRatios.hero,
-    "students-hero-image": aspectRatios.hero,
-    "alumni-hero-image": aspectRatios.hero,
-  };
-
-  return ratios[fieldId] ?? aspectRatios.newsCard;
+/**
+ * The ratio every image field is composed for, by field id.
+ *
+ * A map from field id to `AspectRatioKey` rather than to a number: the uploader
+ * needs the key, because the key is what carries the ratio, the name shown in
+ * the crop dialog and the minimum-width warning together. Returning
+ * `aspectRatios[key]` here would hand the uploader one third of that and leave
+ * it looking the other two up separately — which is how a hint ends up
+ * describing a different ratio from the one being enforced.
+ *
+ * `newsCard` is the fallback because a field id added to the CMS without a line
+ * here should still get a sensible landscape crop rather than silently render
+ * uncropped.
+ */
+const IMAGE_RATIO_KEYS: Partial<Record<string, AspectRatioKey>> = {
+  "hero-bg": "hero",
+  "heritage-image-1": "heritagePhoto",
+  "heritage-image-2": "heritageDetail",
+  "principal-portrait": "principalPortrait",
+  "life-sports": "mosaicTile",
+  "life-music": "mosaicTile",
+  "alumni-image": "alumniPhoto",
+  "founder1-image": "principalPortrait",
+  "founder2-image": "principalPortrait",
+  "history-1-image": "heritagePhoto",
+  "history-2-image": "heritagePhoto",
+  "history-3-image": "heritagePhoto",
+  "history-4-image": "heritagePhoto",
+  "anthem-image": "alumniPhoto",
+  "anthem-sinhala-image": "alumniPhoto",
+  "news-hero-image": "hero",
+  "notices-hero-image": "hero",
+  "media-hero-image": "hero",
+  "students-hero-image": "hero",
+  "alumni-hero-image": "hero",
 };
+
+export const getImageRatioKey = (fieldId: string): AspectRatioKey =>
+  IMAGE_RATIO_KEYS[fieldId] ?? "newsCard";
 
 export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
   {

@@ -1,25 +1,23 @@
-import {
-  aspectRatioNames,
-  aspectRatios,
-} from "@aloysius/ui/tokens/aspect-ratios";
+import { ratioSpec } from "@aloysius/ui/tokens/aspect-ratios";
+import type { AspectRatioKey } from "@aloysius/ui/tokens/aspect-ratios";
 
 /**
  * What each image in a gallery is for, and therefore what it is cropped to.
  *
  * The three roles are the crop, not a label. The same photograph is asked to
  * represent a gallery in a listing, span the top of a gallery page, and sit in a
- * masonry grid among its peers, and those need three different shapes. The role
- * is a column in the database for the same reason it is a map here: declared once,
+ * grid among its peers, and those need three different shapes. The role is a
+ * column in the database for the same reason it is a map here: declared once,
  * read by both the uploader and the renderer.
  *
- * ## The ratios come from `tokens/aspect-ratios.ts`
+ * ## Why the roles map to ratio *keys*
  *
- * They used to be restated as the strings "3:2 landscape", "16:9 wide" and
- * "1:1 square" in the gallery screen, with a comment admitting they duplicated
- * the token file. That is the failure the token file exists to prevent: the CMS
- * says `aspectRatios.hero` and the club portal said "16:9", and nothing would have
- * told anyone when one of them changed. Referencing the tokens means a ratio
- * change propagates on its own.
+ * They map to `AspectRatioKey` and not to `number`, because the uploader needs
+ * the key. The key is what carries the ratio, the name shown in the crop dialog
+ * and the minimum-width warning together; handing over `aspectRatios.cover` as a
+ * bare number would leave the picker looking the other two up separately, which
+ * is how a hint ends up describing a different ratio from the one being cropped
+ * to.
  *
  * The mapping is not one-to-one with the token names, and deliberately so:
  * - `cover` is a landscape tile, so `mosaicTile` (3:2) rather than
@@ -29,24 +27,37 @@ import {
  */
 export type ImageRole = "item" | "cover" | "banner";
 
-export const IMAGE_ROLE_RATIO: Record<ImageRole, number> = {
-  banner: aspectRatios.hero,
-  cover: aspectRatios.mosaicTile,
-  item: aspectRatios.galleryThumb,
+export const IMAGE_ROLE_RATIO: Record<ImageRole, AspectRatioKey> = {
+  banner: "hero",
+  cover: "mosaicTile",
+  item: "galleryThumb",
+};
+
+/**
+ * The same mapping as a number, for the read-only frames that render an image
+ * already in a gallery.
+ *
+ * `ratioSpec` rather than indexing `aspectRatios` directly, so a role added
+ * without a matching token fails here rather than rendering at `NaN`.
+ */
+export const IMAGE_ROLE_FRAME: Record<ImageRole, number> = {
+  banner: ratioSpec(IMAGE_ROLE_RATIO.banner).ratio,
+  cover: ratioSpec(IMAGE_ROLE_RATIO.cover).ratio,
+  item: ratioSpec(IMAGE_ROLE_RATIO.item).ratio,
 };
 
 /**
  * The words shown next to a role in a picker or a hint.
  *
- * A bare number ("1.78") is not something a photographer can act on, so the name
- * comes from `aspectRatioNames` beside the number it describes. The reason clause
- * is what makes it actionable: a club told "3:2 — landscape tile" can compose for
- * it, and one told "3:2" has to guess where it will be cropped.
+ * Built from `aspectRatioNames` rather than restated. A bare number ("1.78") is
+ * not something a photographer can act on, and the reason clause is what makes
+ * it actionable: a club told "3:2 — landscape tile" can compose for it, and one
+ * told "3:2" has to guess where it will be cropped.
  */
 export const IMAGE_ROLE_CROP: Record<ImageRole, string> = {
-  banner: `${aspectRatioNames.hero} — full-width banner`,
-  cover: `${aspectRatioNames.mosaicTile} — landscape tile`,
-  item: `${aspectRatioNames.galleryThumb} — square grid tile`,
+  banner: "full-width banner",
+  cover: "landscape tile",
+  item: "square grid tile",
 };
 
 /** Tone for the role pill in a list, so a cover is findable at a glance. */

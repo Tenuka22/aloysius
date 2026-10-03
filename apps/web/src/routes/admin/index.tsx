@@ -25,11 +25,10 @@ import { orpc } from "@/utils/orpc";
 /**
  * The administration overview.
  *
- * Neither of the other two admin pages can answer "is anything unprovisioned?"
- * - `/admin/clubs` will say nothing until a club is picked, and `/admin/users`
- * only lists accounts that already exist. This page is the roll-up: every
- * configured club, the state of its administrator account, and the audit trail
- * behind those states.
+ * `/admin/clubs` is scoped to one club at a time and will say nothing until a
+ * club is picked, so it cannot answer "is anything unprovisioned?" on its own.
+ * This page is the roll-up: every configured club, the state of its
+ * administrator account, and the audit trail behind those states.
  */
 
 const ACTIVITY_LIMIT = 10;
@@ -296,7 +295,11 @@ const CoveragePanel = ({
         {rows.map((row) => {
           const state = COVERAGE_STATE[row.state];
           const needsAccount = row.state === "missing";
-          const target = needsAccount ? "/admin/users" : "/admin/clubs";
+          // Always `/admin/clubs`, including for a club with no account yet: the
+          // issue-credential action there creates the account when there is none
+          // and rotates it when there is, so there is nothing a separate
+          // provisioning screen would have to add.
+          const target = "/admin/clubs";
 
           return (
             <RecordRow
@@ -407,13 +410,22 @@ const ActivityPanel = ({
 
 const AdminOverviewPage = () => {
   const clubsQuery = useQuery(orpc.adminUsers.clubs.queryOptions());
-  const accountsQuery = useQuery(orpc.adminUsers.list.queryOptions());
+  const accountsQuery = useQuery(
+    orpc.adminUsers.list.queryOptions({ input: { pageSize: 200 } })
+  );
   const activityQuery = useQuery(
     orpc.adminClubs.activity.queryOptions({ input: { limit: ACTIVITY_LIMIT } })
   );
 
   const clubs = clubsQuery.data ?? [];
-  const accounts = accountsQuery.data ?? [];
+  /*
+   * `.rows`, not the response: both list handlers answer with a page envelope
+   * (`rows` plus `total`) because they are paginated. One page is enough here —
+   * the roll-up covers configured clubs, of which there are as many as fit on one
+   * screen — and an account beyond the limit would show as a club with no
+   * administrator, which is the one wrong answer this page must not give.
+   */
+  const accounts = accountsQuery.data?.rows ?? [];
   const summary = summarizeCoverage(clubs, accounts);
 
   return (
@@ -434,7 +446,7 @@ const AdminOverviewPage = () => {
       />
 
       <ActivityPanel
-        entries={activityQuery.data ?? []}
+        entries={activityQuery.data?.rows ?? []}
         error={activityQuery.error}
         loading={activityQuery.isPending}
       />

@@ -10,16 +10,52 @@ import * as v from "valibot";
 
 import { requireAuth } from "../context";
 import { adminProcedure } from "../index";
-import {
-  listOffset,
-  listParamsSchema,
-  sortDirectionOf,
-} from "./list-params";
 import { HARDCODED_CLUBS, findHardcodedClub } from "./clubs/config";
+import { listOffset, listParamsSchema, sortDirectionOf } from "./list-params";
 
 const username = v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(64));
 const password = v.pipe(v.string(), v.minLength(8), v.maxLength(200));
 const name = v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(120));
+
+/**
+ * One row of `adminUsers.list`, as selected above.
+ *
+ * Exported because it appears in the router's inferred output type, and a
+ * declaration file cannot name a type it cannot see.
+ */
+export interface AccountRow {
+  id: string;
+  name: string;
+  role: string | null;
+  username: string | null;
+  banned: boolean | null;
+  banReason: string | null;
+}
+
+/** `banned` is nullable in the schema, so "not banned" has to be spelled out. */
+const bannedOf = (row: AccountRow) =>
+  row.banned === null ? false : row.banned;
+
+const compareByName = (a: AccountRow, b: AccountRow) =>
+  a.name.localeCompare(b.name);
+
+/**
+ * The sort keys this handler honours, looked up by name.
+ *
+ * A table rather than a chain of ternaries: an unknown or absent `sortBy` falls
+ * through to the name comparator either way, and adding a sortable column means
+ * adding a line rather than re-indenting the two beside it.
+ */
+const ACCOUNT_SORTERS: Record<
+  string,
+  (a: AccountRow, b: AccountRow) => number
+> = {
+  name: compareByName,
+  username: (a, b) => (a.username ?? "").localeCompare(b.username ?? ""),
+  // Banned first on a descending sort, which is why this one is negated
+  // relative to the others: the sign is applied by the caller.
+  banned: (a, b) => Number(bannedOf(a)) - Number(bannedOf(b)),
+};
 
 export const adminUsersRouter = {
   list: adminProcedure
@@ -46,33 +82,13 @@ export const adminUsersRouter = {
         ? rows.filter((row) =>
             [row.name, row.username, row.role]
               .filter(Boolean)
-              .some((field) =>
-                String(field).toLowerCase().includes(term)
-              )
+              .some((field) => String(field).toLowerCase().includes(term))
           )
         : rows;
 
-      const bannedOf = (row: (typeof rows)[number]) =>
-        row.banned === null ? false : row.banned;
-
-      const sorted =
-        input.sortBy === "username"
-          ? [...matching].toSorted(
-              (a, b) =>
-                (direction === "asc" ? 1 : -1) *
-                (a.username ?? "").localeCompare(b.username ?? "")
-            )
-          : input.sortBy === "banned"
-            ? [...matching].toSorted(
-                (a, b) =>
-                  (direction === "asc" ? 1 : -1) *
-                  (Number(bannedOf(b)) - Number(bannedOf(a)))
-              )
-            : [...matching].toSorted(
-                (a, b) =>
-                  (direction === "asc" ? 1 : -1) *
-                  a.name.localeCompare(b.name)
-              );
+      const sign = direction === "asc" ? 1 : -1;
+      const compare = ACCOUNT_SORTERS[input.sortBy ?? ""] ?? compareByName;
+      const sorted = [...matching].toSorted((a, b) => sign * compare(a, b));
 
       const total = sorted.length;
       const start = listOffset(input);

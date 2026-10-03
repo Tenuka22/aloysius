@@ -18,9 +18,14 @@ services:
 
   minio:
     image: quay.io/minio/minio:latest
+    # Loopback only. The dev web server runs on the host and has to reach
+    # `localhost:9000`, but nothing else on the network should be able to -
+    # `0.0.0.0:9000` would put the console on the LAN every time somebody ran
+    # this on a shared or tethered connection. Production publishes neither
+    # port at all; see the note in docker-compose.yml.
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin

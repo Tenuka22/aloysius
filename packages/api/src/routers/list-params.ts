@@ -22,10 +22,7 @@ import * as v from "valibot";
  *   is a big page, not an unbounded one.
  */
 export const listParamsSchema = v.object({
-  q: v.optional(
-    v.pipe(v.string(), v.trim(), v.maxLength(200)),
-    ""
-  ),
+  q: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(200)), ""),
   /** One of the handler's own sortable keys; unknown values are ignored. */
   sortBy: v.optional(v.pipe(v.string(), v.maxLength(40))),
   sortDirection: v.optional(v.picklist(["asc", "desc"]), "asc"),

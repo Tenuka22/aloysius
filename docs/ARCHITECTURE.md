@@ -219,8 +219,8 @@ Five sub-routers, 101 procedures total:
 | `cms` | 55 | the block editor: read, save draft, publish, watch, history |
 | `clubs` | 28 | public club content reads, the club admin's own view, 15 submit endpoints |
 | `adminClubs` | 14 | the review queue, ban/unban, credential rotation, audit feed |
-| `files` | 4 | presigned upload, register, list, delete |
-| `adminUsers` | 4 | list and provision club admin accounts |
+| `files` | 4 | issue an upload path on this app, register, list, delete |
+| `adminUsers` | 4 | list accounts and clubs (provisioning moved to `adminClubs.rotatePassword`, which creates the account when there is none) |
 
 ## Who is allowed to do what
 

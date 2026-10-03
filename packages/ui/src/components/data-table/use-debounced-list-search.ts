@@ -9,31 +9,45 @@ import { useEffect, useRef, useState } from "react";
  * reports it on a timer, and the URL — and therefore the query — only hears about
  * terms somebody stopped typing long enough to mean.
  *
- * `draft` is what the box displays; `onCommit` is what the URL hears. They start
- * equal and the draft is reset whenever the committed value catches up to what the
- * draft was, which is also what makes an external change (Back, a cleared filter)
- * repaint the box: the effect below notices the committed value has moved off the
- * last draft and re-adopts it.
+ * `draft` is what the box displays; `onCommit` is what the URL hears.
  */
 const DEFAULT_DELAY_MS = 300;
+
+/** A draft, remembered together with the committed value it was typed against. */
+interface Draft {
+  /** The committed value in force when this text was typed. */
+  committed: string;
+  text: string;
+}
 
 export const useDebouncedListSearch = (
   value: string,
   onCommit: (next: string) => void,
   delayMs = DEFAULT_DELAY_MS
 ) => {
-  const [draft, setDraft] = useState(value);
+  const [typed, setTyped] = useState<Draft>({ committed: value, text: value });
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latest = useRef({ onCommit, value });
+  const commitRef = useRef(onCommit);
 
-  latest.current = { onCommit, value };
+  /*
+   * The draft is stored against the committed value it was typed for, and
+   * displayed only while that value is still the current one. So an external
+   * change — Back, a cleared filter, a reset — makes the stored draft stale and
+   * the box falls back to the committed value, which is what "the committed
+   * value is the truth" means. Doing it this way rather than in an effect is the
+   * difference between a re-render and a render *plus* another one.
+   */
+  const draft = typed.committed === value ? typed.text : value;
 
+  /*
+   * The timer outlives the render that scheduled it, so it must call the
+   * `onCommit` in force *now* rather than the one captured when it was set.
+   * Written in an effect, because assigning a ref during render is the one
+   * version of this React is free to throw away.
+   */
   useEffect(() => {
-    // The committed value is the truth. A draft that no longer differs from it is
-    // either the initial mount or a round trip that caught up, and both mean the
-    // box should show the truth.
-    setDraft((current) => (current === latest.current.value ? current : latest.current.value));
-  }, [value]);
+    commitRef.current = onCommit;
+  }, [onCommit]);
 
   useEffect(
     () => () => {
@@ -44,17 +58,17 @@ export const useDebouncedListSearch = (
     []
   );
 
-  const setDraftAndSchedule = (next: string) => {
-    setDraft(next);
+  const setDraft = (next: string) => {
+    setTyped({ committed: value, text: next });
 
     if (timer.current) {
       clearTimeout(timer.current);
     }
     timer.current = setTimeout(() => {
       timer.current = null;
-      latest.current.onCommit(next);
+      commitRef.current(next);
     }, delayMs);
   };
 
-  return { draft, setDraft: setDraftAndSchedule };
+  return { draft, setDraft };
 };

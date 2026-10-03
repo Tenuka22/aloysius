@@ -11,27 +11,27 @@ import {
 } from "@aloysius/ui/components/cms/cms-primitives";
 import type { NoticeTone } from "@aloysius/ui/components/cms/cms-primitives";
 import {
+  FileBatchUploader,
+  FileUploader,
+  MAX_IMAGES_PER_BATCH,
+} from "@aloysius/ui/components/cms/file-uploader";
+import type { QueuedImage } from "@aloysius/ui/components/cms/file-uploader";
+import {
   MediaFrame,
   MediaThumb,
 } from "@aloysius/ui/components/primitives/media-frame";
-import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import {
   IMAGE_ROLE_CROP,
+  IMAGE_ROLE_FRAME,
   IMAGE_ROLE_OPTIONS,
   IMAGE_ROLE_RATIO,
   IMAGE_ROLE_TONE,
 } from "@/components/club/gallery-roles";
 import type { ImageRole as GalleryImageRole } from "@/components/club/gallery-roles";
-import {
-  ImageBatchPicker,
-  MAX_IMAGES_PER_BATCH,
-} from "@/components/club/image-batch-picker";
-import type { SelectedImage } from "@/components/club/image-batch-picker";
 import {
   ClubPage,
   ClubPageLoading,
@@ -67,41 +67,11 @@ interface GalleryItem {
   imageUrl: string | null;
 }
 
-const styles = stylex.create({
-  coverInput: {
-    display: "block",
-    width: "100%",
-    minHeight: "2.75rem",
-    paddingBlock: space["2xs"],
-    paddingInline: space.xs,
-    backgroundColor: color.surfaceSunken,
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.borderStrong,
-    color: color.onSurface,
-    fontFamily: font.body,
-    fontSize: font.sizeSm,
-    cursor: "pointer",
-  },
-  hint: {
-    margin: 0,
-    fontSize: font.sizeXs,
-    lineHeight: font.leadingNormal,
-    color: color.onSurfaceMuted,
-  },
-});
-
 const ROLE_CROP = IMAGE_ROLE_CROP;
+const ROLE_FRAME = IMAGE_ROLE_FRAME;
 const ROLE_TONE = IMAGE_ROLE_TONE;
 
 const ALBUM_URL_PATTERN = /^https?:\/\/\S+$/iu;
-
-const ACCEPTED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/avif",
-];
 
 /**
  * The cover image, as its own upload.
@@ -124,8 +94,14 @@ const CoverPanel = ({
   itemCount: number;
 }) => {
   const queryClient = useQueryClient();
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  /*
+   * The uploaded file's id, not the file. `FileUploader` has already cropped and
+   * uploaded by the time it calls back, so all that is left to do is attach an id
+   * and an alt text to a submission — and holding the `File` here would mean
+   * keeping a cropped copy of the image in memory for a form the club may not
+   * submit.
+   */
+  const [fileId, setFileId] = useState<string | null>(null);
   const [altText, setAltText] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{
@@ -158,14 +134,13 @@ const CoverPanel = ({
    */
   const canClear = cover !== null && itemCount > 0;
 
-  const upload = async () => {
-    if (!file || altText.trim() === "") {
+  const submit = async () => {
+    if (!fileId || altText.trim() === "") {
       return;
     }
     setBusy(true);
     setNotice(null);
     try {
-      const fileId = await uploadImageFile(file);
       await client.clubs.submitGalleryItemCreate({
         galleryId,
         payload: {
@@ -181,11 +156,7 @@ const CoverPanel = ({
           position: itemCount,
         },
       });
-      setFile(null);
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-      setPreviewUrl(null);
+      setFileId(null);
       setAltText("");
       setNotice({
         tone: "success",
@@ -219,7 +190,7 @@ const CoverPanel = ({
         <>
           <MediaFrame
             alt={cover.altText}
-            aspectRatio={IMAGE_ROLE_RATIO.cover}
+            aspectRatio={ROLE_FRAME.cover}
             src={cover.imageUrl}
           />
           <RecordRow
@@ -250,16 +221,18 @@ const CoverPanel = ({
       ) : (
         <>
           {/*
-           * The container appears before a file is chosen, not only after. It is
-           * the same dashed frame the CMS shows for an empty media field, and it
-           * answers "what shape does this want?" before the club picks a file
-           * rather than after.
+           * `FileUploader` owns the frame, the crop and the upload, so this panel
+           * is left with only the submission: an alt text is required before the
+           * cover can be sent for review.
            */}
-          <MediaFrame
-            alt={file?.name ?? ""}
-            aspectRatio={IMAGE_ROLE_RATIO.cover}
-            hint={`Choose a photograph — it will be cropped to ${IMAGE_ROLE_CROP.cover}`}
-            src={previewUrl}
+          <FileUploader
+            disabled={busy}
+            hint={`Landscape works best. Cropped to ${ROLE_CROP.cover} before it is uploaded.`}
+            label="Cover photograph"
+            onChange={setFileId}
+            onUpload={uploadImageFile}
+            ratioKey={IMAGE_ROLE_RATIO.cover}
+            value={fileId}
           />
           <Field
             hint="Describe the photograph for someone who cannot see it. Required."
@@ -268,37 +241,15 @@ const CoverPanel = ({
             value={altText}
             wide
           />
-          <input
-            accept={ACCEPTED_IMAGE_TYPES.join(",")}
-            aria-label="Cover image file"
-            disabled={busy}
-            onChange={(event) => {
-              const chosen = event.target.files?.[0];
-              // Released at the point a new one replaces it, rather than in an
-              // effect: each object URL pins the whole file in memory, so holding
-              // a superseded one for the life of the page is a real leak on a
-              // screen that may be picked at repeatedly.
-              if (previewUrl) {
-                URL.revokeObjectURL(previewUrl);
-              }
-              setPreviewUrl(chosen ? URL.createObjectURL(chosen) : null);
-              setFile(chosen ?? null);
-            }}
-            type="file"
-            {...stylex.props(styles.coverInput)}
-          />
-          <p {...stylex.props(styles.hint)}>
-            JPEG, PNG, WebP or AVIF, up to 10 MB. Landscape works best.
-          </p>
           <div>
             <CmsButton
-              disabled={!file || altText.trim() === "" || busy}
+              disabled={!fileId || altText.trim() === "" || busy}
               onClick={() => {
-                void upload();
+                void submit();
               }}
               tone="primary"
             >
-              {busy ? "Uploading…" : "Send cover for review"}
+              {busy ? "Sending…" : "Send cover for review"}
             </CmsButton>
           </div>
         </>
@@ -384,7 +335,7 @@ const UploadImagesPanel = ({
   position: number;
 }) => {
   const queryClient = useQueryClient();
-  const [images, setImages] = useState<SelectedImage[]>([]);
+  const [images, setImages] = useState<QueuedImage[]>([]);
   const [altText, setAltText] = useState("");
   const [caption, setCaption] = useState("");
   const [role, setRole] = useState<ImageRole>("item");
@@ -501,15 +452,18 @@ const UploadImagesPanel = ({
       {notice ? <Notice tone={notice.tone}>{notice.text}</Notice> : null}
 
       <FieldStack>
-        <ImageBatchPicker
-          /*
-           * Previews are reserved at the ratio of the role currently chosen
-           * below, so a portrait offered as a 16:9 banner looks wrong while it is
-           * being picked rather than after approval.
-           */
-          aspectRatio={IMAGE_ROLE_RATIO[role]}
-          onSelect={setImages}
-          selected={images}
+        {/*
+         * The batch is cropped to the role chosen below, and changing the role
+         * re-crops nothing already chosen — the frames follow the new role so a
+         * portrait offered as a 16:9 banner looks wrong while it is being picked,
+         * and the club can see that before they submit rather than after approval.
+         */}
+        <FileBatchUploader
+          disabled={isUploading}
+          images={images}
+          label="Images"
+          onChange={setImages}
+          ratioKey={IMAGE_ROLE_RATIO[role]}
         />
 
         <Field
@@ -745,6 +699,65 @@ interface TargetRecord {
 }
 
 /**
+ * The picker's label for one record.
+ *
+ * An achievement or an announcement carries two different dates or kinds, and
+ * showing whichever one it has is the difference between a list a club can pick
+ * from and a list of identical titles.
+ */
+const labelFor = (target: LinkTarget, row: TargetRecord): string => {
+  if (target === "clubEvent" || target === "event") {
+    return dated(row.title, row.startsAt ?? null);
+  }
+
+  if (target === "achievement" || target === "clubAchievement") {
+    if (row.achievedOn) {
+      return `${row.title} (${row.achievedOn})`;
+    }
+    return row.category ? `${row.title} (${row.category})` : row.title;
+  }
+
+  return row.title;
+};
+
+/**
+ * The records of one kind, from one source.
+ *
+ * A lookup rather than a chain of ternaries at the call site: the three sources
+ * are three different shapes (`mine` is always present, `school` and `otherClubs`
+ * are not), and an unrecognised target has to mean "nothing to pick from" rather
+ * than "everything".
+ */
+const recordsFor = (
+  target: LinkTarget,
+  source:
+    | {
+        events?: readonly TargetRecord[] | undefined;
+        achievements?: readonly TargetRecord[] | undefined;
+        announcements?: readonly TargetRecord[] | undefined;
+      }
+    | undefined
+): readonly TargetRecord[] => {
+  switch (target) {
+    case "clubEvent":
+    case "event": {
+      return source?.events ?? [];
+    }
+    case "clubAchievement":
+    case "achievement": {
+      return source?.achievements ?? [];
+    }
+    case "clubAnnouncement":
+    case "announcement": {
+      return source?.announcements ?? [];
+    }
+    default: {
+      return [];
+    }
+  }
+};
+
+/**
  * The picker's options for one target kind.
  *
  * Module scope rather than inline in the panel: it reads only its arguments,
@@ -757,30 +770,17 @@ const optionsFor = (
   mine: readonly TargetRecord[],
   schoolRows: readonly TargetRecord[],
   otherClubRows: readonly TargetRecord[]
-) => {
-  const label = (row: TargetRecord) => {
-    if (target === "clubEvent" || target === "event") {
-      return dated(row.title, row.startsAt ?? null);
-    }
-    if (target === "achievement" || target === "clubAchievement") {
-      return row.achievedOn
-        ? `${row.title} (${row.achievedOn})`
-        : row.category
-          ? `${row.title} (${row.category})`
-          : row.title;
-    }
-    return row.title;
-  };
-
-  return [
-    ...mine.map((row) => ({ label: label(row), value: row.id })),
-    ...otherClubRows.map((row) => ({
-      label: `${label(row)} — ${row.clubName ?? "another club"}`,
-      value: row.id,
-    })),
-    ...schoolRows.map((row) => ({ label: label(row), value: row.id })),
-  ];
-};
+) => [
+  ...mine.map((row) => ({ label: labelFor(target, row), value: row.id })),
+  ...otherClubRows.map((row) => ({
+    label: `${labelFor(target, row)} — ${row.clubName ?? "another club"}`,
+    value: row.id,
+  })),
+  ...schoolRows.map((row) => ({
+    label: labelFor(target, row),
+    value: row.id,
+  })),
+];
 
 const GalleryLinksPanel = ({ galleryId }: { galleryId: string }) => {
   const queryClient = useQueryClient();
@@ -822,27 +822,9 @@ const GalleryLinksPanel = ({ galleryId }: { galleryId: string }) => {
 
   const options = optionsFor(
     target,
-    (target === "clubEvent"
-      ? mine.events
-      : target === "clubAchievement"
-        ? mine.achievements
-        : target === "clubAnnouncement"
-          ? mine.announcements
-          : []) as readonly TargetRecord[],
-    (target === "event"
-      ? (school?.events ?? [])
-      : target === "achievement"
-        ? (school?.achievements ?? [])
-        : target === "announcement"
-          ? (school?.announcements ?? [])
-          : []) as readonly TargetRecord[],
-    (target === "clubEvent"
-      ? (otherClubs?.events ?? [])
-      : target === "clubAchievement"
-        ? (otherClubs?.achievements ?? [])
-        : target === "clubAnnouncement"
-          ? (otherClubs?.announcements ?? [])
-          : []) as readonly TargetRecord[]
+    recordsFor(target, mine),
+    recordsFor(target, school),
+    recordsFor(target, otherClubs)
   );
 
   const submit = useMutation(

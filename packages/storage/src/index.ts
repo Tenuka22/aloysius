@@ -23,15 +23,6 @@ export interface Storage {
   ) => Promise<void>;
   get: (key: string) => Promise<StoredObject | null>;
   remove: (key: string) => Promise<void>;
-  /**
-   * Generate a one-time presigned URL for direct client upload to S3/MinIO.
-   * The client uploads the file directly, bypassing the server for data transfer.
-   */
-  getPresignedUploadUrl: (
-    key: string,
-    contentType: string,
-    expiresIn?: number
-  ) => Promise<string>;
 }
 
 const createMinioBackend = (config: StorageConfig): Storage => {
@@ -99,20 +90,26 @@ const createMinioBackend = (config: StorageConfig): Storage => {
       const client = await getClient();
       await client.removeObject(bucket, key);
     },
-    async getPresignedUploadUrl(key, _contentType, expiresIn = 300) {
-      await ensureBucket();
-      const client = await getClient();
-      const url = await client.presignedPutObject(bucket, key, expiresIn);
-      // MinIO presigned URLs don't carry Content-Type in the URL itself;
-      // the client must set the header when uploading.
-      return url;
-    },
   };
 };
 
 /**
  * Blob storage backed by MinIO (or any S3-compatible endpoint).
  * Used in both development and production — no local file fallback.
+ *
+ * ## Why there is no presigned upload
+ *
+ * There used to be a `getPresignedUploadUrl`, and the browser PUT straight to
+ * MinIO. That requires MinIO to be reachable *from the browser*, which it is not
+ * in the Docker topology: inside the compose network it answers to the hostname
+ * `minio` on port 9000, and a browser on the host has no way to resolve either.
+ * Exposing 9000 was the only way to make it work, which meant a storage port open
+ * to the internet purely to service uploads.
+ *
+ * Uploads now go through the app's own `/api/files/upload/*` route, which holds
+ * the credentials and is the only thing that ever addresses MinIO. Reads already
+ * worked this way — `/api/files/*` streams every image on the site — so this
+ * makes the two directions consistent rather than introducing a proxy.
  */
 export const createStorage = (config: StorageConfig): Storage =>
   createMinioBackend(config);

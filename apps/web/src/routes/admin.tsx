@@ -9,16 +9,23 @@ import { WorkspaceShell } from "@/components/workspace-shell";
 import { client } from "@/utils/orpc";
 
 /**
- * Order is task order, not feature order: see the state of the estate, edit
- * content, then act on an account. `Club accounts` and `Set up an account` are
- * both about the same club administrator but from opposite ends - the first
- * works with an account that exists, the second creates the one that does not.
+ * Order is task order, not feature order: see the state of the estate, then
+ * edit content, then act on an account.
+ *
+ * There used to be a fourth page, `Set up an account`, for provisioning the
+ * club administrator that does not exist yet. It is gone because `/admin/clubs`
+ * already covers both directions: `adminClubs.rotatePassword` creates the
+ * account when there is none and rotates it when there is, so the second screen
+ * was the same work with a second set of rules - and worse, it decided whether a
+ * club needed an account by listing accounts *by role*, so a username that
+ * existed under any other role read as "no account yet" and the submit failed
+ * with "a user with that username already exists". One screen, one source of
+ * truth for whether an account exists.
  */
 const ADMIN_NAV_ITEMS = [
   { num: "01", label: "Overview", href: "/admin" },
   { num: "02", label: "Content", href: "/cms" },
   { num: "03", label: "Club accounts", href: "/admin/clubs" },
-  { num: "04", label: "Set up an account", href: "/admin/users" },
 ] as const;
 
 const isCurrentSection = (pathname: string, href: string) =>
