@@ -1,31 +1,24 @@
 import {
   CmsButton,
-  CmsLink,
-  EmptyState,
   Field,
   Notice,
   Panel,
   PanelHead,
-  Pill,
-  RecordList,
-  RecordRow,
 } from "@aloysius/ui/components/cms/cms-primitives";
-import { MediaThumb } from "@aloysius/ui/components/primitives/media-frame";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  createFileRoute,
-  Outlet,
-  useMatch,
-  useNavigate,
-} from "@tanstack/react-router";
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { createFileRoute, Outlet, useMatch } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { SLUG_PATTERN, slugify } from "@/components/club/format";
-import {
-  ClubPage,
-  ClubPageLoading,
-  FieldStack,
-} from "@/components/club/page-parts";
+import { GalleriesTable } from "@/components/club/galleries-table";
+import { ClubPage, FieldStack } from "@/components/club/page-parts";
+import { gallerySearch } from "@/components/tables/queue-search";
+import { useTableCallbacks } from "@/components/tables/use-list-state";
 import { orpc } from "@/utils/orpc";
 
 /**
@@ -38,10 +31,16 @@ import { orpc } from "@/utils/orpc";
  * belong to exists, and every abandoned step would leave an orphaned upload
  * behind.
  *
- * The list shows each gallery's cover and what it is about. Both are the two
- * things most likely to be missing on a gallery that looks otherwise finished,
- * and both are only fixable on the gallery's own screen - so a "No cover" pill
- * here is a to-do, not a description.
+ * The list is a table whose search, order and page are the URL and whose page
+ * the loader fetched, so a refresh, a shared link and the Back button all arrive
+ * on the same page of galleries. Two of its columns are the two things most
+ * likely to be missing on a gallery that looks otherwise finished - its cover
+ * and what it is about - and both are only fixable on the gallery's own screen,
+ * so a "No cover" pill here is a to-do, not a description.
+ *
+ * Like `admin/clubs`, this route is the *parent* of `galleries.$galleryId`, so
+ * it yields to `<Outlet />` whenever the child has matched: one screen in the
+ * viewport, not a list painted over a gallery.
  */
 
 const MAX_SUMMARY = 500;
@@ -152,126 +151,31 @@ const NewGalleryPanel = () => {
   );
 };
 
-interface GallerySummary {
-  id: string;
-  title: string;
-  summary: string | null;
-  albumUrl: string | null;
-  status: "archived" | "published";
-  items: readonly unknown[];
-  coverItem: { imageUrl: string | null } | null;
-  links: readonly { id: string; targetTitle: string | null }[];
-}
-
-/**
- * What a gallery is, in one line under its title.
- *
- * Three facts a club administrator needs before clicking into a gallery, because
- * all three are the reason a gallery is not finished: how many photographs it
- * has, whether anyone can be sent to the full album off-site, and what it is
- * about. A list that only shows a count left "is this the one?" unanswerable
- * without opening every gallery.
- */
-const describeGallery = (gallery: {
-  albumUrl: string | null;
-  summary: string | null;
-  links: readonly { targetTitle: string | null }[];
-}) => {
-  const parts = [
-    gallery.albumUrl ? "Full album off-site" : "No off-site album",
-  ];
-
-  if (gallery.links.length === 0) {
-    parts.push("Not linked to anything");
-  } else {
-    const named = gallery.links
-      .map((link) => link.targetTitle)
-      .filter((title): title is string => title !== null);
-    parts.push(
-      named.length > 0
-        ? `About ${named.join(", ")}`
-        : `${gallery.links.length} broken link${gallery.links.length === 1 ? "" : "s"}`
-    );
-  }
-
-  return gallery.summary
-    ? `${gallery.summary} — ${parts.join(" · ")}`
-    : parts.join(" · ");
-};
-
-const GalleryList = ({
-  galleries,
-  onOpen,
-}: {
-  galleries: readonly GallerySummary[];
-  onOpen: (galleryId: string) => void;
-}) => {
-  if (galleries.length === 0) {
-    return (
-      <EmptyState
-        note="Create your first gallery below. A CMS editor reviews it before it appears on the site."
-        title="No galleries yet."
-      />
-    );
-  }
-
-  return (
-    <RecordList label="Galleries">
-      {galleries.map((gallery) => {
-        const needsImages = gallery.items.length === 0;
-        const isLive = gallery.status === "published";
-        const hasCover = Boolean(gallery.coverItem);
-
-        return (
-          <RecordRow
-            actions={
-              <>
-                <Pill tone={isLive ? "positive" : "neutral"}>
-                  {isLive ? "Live" : "Archived"}
-                </Pill>
-                {hasCover ? null : <Pill tone="warning">No cover</Pill>}
-                <CmsLink
-                  href={`/club-admin/photography/galleries/${gallery.id}`}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    onOpen(gallery.id);
-                  }}
-                  tone="quiet"
-                >
-                  {needsImages ? "Add images" : "Manage"}
-                </CmsLink>
-              </>
-            }
-            key={gallery.id}
-            meta={
-              <>
-                <MediaThumb src={gallery.coverItem?.imageUrl ?? null} />
-                <span>
-                  {gallery.items.length}{" "}
-                  {gallery.items.length === 1 ? "image" : "images"}
-                </span>
-                <span aria-hidden="true">·</span>
-                <span>{describeGallery(gallery)}</span>
-              </>
-            }
-            name={gallery.title}
-          />
-        );
-      })}
-    </RecordList>
-  );
-};
-
 const GalleriesPage = () => {
-  const navigate = useNavigate();
-  const query = useQuery(orpc.clubs.listMyGalleries.queryOptions());
-  const galleries = query.data ?? [];
+  /*
+   * The list's five params are the URL, and the same parser reads them here, in
+   * the route's `validateSearch` and in the loader — so a hand-typed URL and a
+   * link written by this page ask the server for the same page of rows.
+   */
+  const search = gallerySearch.parse(Route.useSearch());
+  const writeSearch = gallerySearch.write();
+  const { onSearchChange, onSortingChange, onPaginationChange } =
+    useTableCallbacks({ search, writeSearch });
+
+  const query = useQuery(
+    orpc.clubs.listMyGalleries.queryOptions({
+      input: gallerySearch.toListInput(search),
+      placeholderData: keepPreviousData,
+    })
+  );
+
   /*
    * `galleries.$galleryId` is a child of this route, so a gallery's own screen
-   * draws only where the child slot is drawn. Without yielding here the list
+   * draws only where the child slot is drawn. Without yielding here the table
    * would paint over it and the gallery would never be reachable from its own
    * URL — so the child owns the viewport for as long as its URL is open, and
-   * this list returns untouched when the URL leaves it.
+   * this list returns untouched when the URL leaves it. Every hook above still
+   * runs either way, so the order is identical whether the child is open or not.
    */
   const isGalleryDetail = Boolean(
     useMatch({
@@ -284,44 +188,23 @@ const GalleriesPage = () => {
     return <Outlet />;
   }
 
-  const body = (() => {
-    if (query.isPending) {
-      return <ClubPageLoading what="your galleries" />;
-    }
-    if (query.error) {
-      return (
-        <Notice tone="danger">
-          Your galleries could not be loaded. Reload the page to try again.
-        </Notice>
-      );
-    }
-    return (
-      <GalleryList
-        galleries={galleries}
-        onOpen={(galleryId) => {
-          navigate({
-            to: "/club-admin/photography/galleries/$galleryId",
-            params: { galleryId },
-          });
-        }}
-      />
-    );
-  })();
-
   return (
     <ClubPage
       eyebrow="Club / Galleries"
       note="Each gallery is a set of photographs with a cover and, usually, something it is about. Open one to add images, choose its cover, and link it to an event or achievement. Everything is reviewed before it appears on the website."
       title="Galleries"
     >
-      <Panel>
-        <PanelHead
-          eyebrow="Live"
-          note="These are on the website. A gallery without a cover still shows — it just has no picture in listings."
-          title="Your galleries"
-        />
-        {body}
-      </Panel>
+      <GalleriesTable
+        isError={query.isError}
+        isFetching={query.isFetching}
+        isLoading={query.isPending}
+        onPaginationChange={onPaginationChange}
+        onSearchChange={onSearchChange}
+        onSortingChange={onSortingChange}
+        rows={query.data?.rows ?? []}
+        search={search}
+        total={query.data?.total ?? 0}
+      />
 
       <NewGalleryPanel />
     </ClubPage>
@@ -329,6 +212,21 @@ const GalleriesPage = () => {
 };
 
 export const Route = createFileRoute("/club-admin/photography/galleries")({
+  /*
+   * The route's own validated type — every default omitted — re-parsed before it
+   * becomes a server input. Same parser, idempotent, and the one place that
+   * guarantees a bare URL and a hand-typed one cannot ask the server for two
+   * different pages.
+   */
+  validateSearch: (search: Record<string, unknown>) =>
+    gallerySearch.routeSearch(search),
+  loaderDeps: ({ search }) => search,
+  loader: ({ context, deps }) =>
+    context.queryClient.ensureQueryData(
+      orpc.clubs.listMyGalleries.queryOptions({
+        input: gallerySearch.toListInput(gallerySearch.parse(deps)),
+      })
+    ),
   head: () => ({
     meta: [
       { title: "Galleries — Club portal — St. Aloysius' College" },

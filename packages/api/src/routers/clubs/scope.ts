@@ -8,11 +8,13 @@ import { club } from "@aloysius/db/schema/clubs";
 import { gallery, galleryItem, galleryLink } from "@aloysius/db/schema/gallery";
 import { achievement, event } from "@aloysius/db/schema/root-content";
 import { ORPCError } from "@orpc/server";
-import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, ne } from "drizzle-orm";
 import * as v from "valibot";
 
 import { protectedProcedure } from "../../index";
+import { listOffset, listParamsSchema, sortDirectionOf } from "../list-params";
 import { findClubByAdminUsername } from "./config";
+import type { DbLike } from "./db";
 import { resolveFileUrls, withImageUrls } from "./file-urls";
 import { linkTargetTitle } from "./link-targets";
 
@@ -138,7 +140,56 @@ export const myClub = protectedProcedure.handler(async ({ context }) => {
 });
 
 /**
- * The signed-in club's own galleries, with their items and their relations.
+ * The columns a gallery table's header may order by.
+ *
+ * Exported because the web layer builds its sortable headers from this list
+ * rather than writing its own: a header that offers a column this handler
+ * cannot order by is a control that silently does nothing, and the fix for that
+ * is not a second list to remember.
+ */
+export const GALLERY_SORT_KEYS = [
+  "title",
+  "status",
+  "itemCount",
+  "publishedAt",
+] as const;
+
+/** What a gallery header may ask the handler to order by. */
+export type GallerySortKey = (typeof GALLERY_SORT_KEYS)[number];
+
+/** A gallery row as the list reads it, before its relations are attached. */
+type GalleryBase = typeof gallery.$inferSelect;
+
+/** One row as the sorters see it: the row, plus what its Images column shows. */
+interface SortableGallery {
+  row: GalleryBase;
+  itemCount: number;
+}
+
+/**
+ * A gallery that was never published sorts as the epoch rather than as "no
+ * value", so it lands where an ascending date column puts it and where a
+ * descending one hides it — the same bargain `admin-clubs` makes for activity.
+ */
+const publishedAtOf = (row: GalleryBase) => row.publishedAt?.getTime() ?? 0;
+
+/** The order the list is in when the URL names no sort: newest first. */
+const comparePublishedAt = (a: SortableGallery, b: SortableGallery) =>
+  publishedAtOf(a.row) - publishedAtOf(b.row);
+
+/** One comparator per name the gallery headers may send. */
+const GALLERY_SORTERS: Record<
+  string,
+  (a: SortableGallery, b: SortableGallery) => number
+> = {
+  title: (a, b) => a.row.title.localeCompare(b.row.title),
+  status: (a, b) => a.row.status.localeCompare(b.row.status),
+  itemCount: (a, b) => a.itemCount - b.itemCount,
+  publishedAt: comparePublishedAt,
+};
+
+/**
+ * Every gallery's items, cover and links, attached in one pass.
  *
  * Everything the gallery screens need in one call, because a club with a dozen
  * galleries would otherwise issue a query per gallery for each of the three
@@ -148,106 +199,200 @@ export const myClub = protectedProcedure.handler(async ({ context }) => {
  * Items arrive in `position` order carrying their image role *and* a resolved
  * `imageUrl`, so the list can show each gallery's cover as a thumbnail and the
  * detail screen can offer "make this the cover" against the actual picture
- * rather than a caption.
+ * rather than a caption. An empty row set is returned as one rather than
+ * issuing an `IN ()` clause over nothing.
+ */
+const attachGalleryRelations = async (
+  db: DbLike,
+  rows: readonly GalleryBase[]
+) => {
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const galleryIds = rows.map((row) => row.id);
+
+  const [items, links] = await Promise.all([
+    withImageUrls(
+      db,
+      await db
+        .select()
+        .from(galleryItem)
+        .where(inArray(galleryItem.galleryId, galleryIds))
+        .orderBy(asc(galleryItem.position), asc(galleryItem.createdAt))
+        .all()
+    ),
+    db
+      .select()
+      .from(galleryLink)
+      .where(inArray(galleryLink.galleryId, galleryIds))
+      .all(),
+  ]);
+
+  const byGallery = new Map<string, typeof items>();
+  for (const item of items) {
+    const bucket = byGallery.get(item.galleryId);
+    if (bucket) {
+      bucket.push(item);
+    } else {
+      byGallery.set(item.galleryId, [item]);
+    }
+  }
+
+  /*
+   * Target titles resolved for every link across every gallery at once, rather
+   * than one lookup per link. A link to a deleted target comes back with a null
+   * title rather than being dropped, because the club has to be able to see it
+   * in order to clear it - see `submitGalleryLinkDelete`.
+   */
+  const titles = new Map<string, string | null>();
+  const linksByGallery = new Map<string, typeof links>();
+  for (const link of links) {
+    const bucket = linksByGallery.get(link.galleryId);
+    if (bucket) {
+      bucket.push(link);
+    } else {
+      linksByGallery.set(link.galleryId, [link]);
+    }
+  }
+
+  await Promise.all(
+    [...linksByGallery.values()].flat().map(async (link) => {
+      titles.set(
+        link.id,
+        await linkTargetTitle(db, link.target, link.targetId)
+      );
+    })
+  );
+
+  return rows.map((row) => {
+    const galleryItems = byGallery.get(row.id) ?? [];
+    return {
+      ...row,
+      items: galleryItems,
+      /** The one image that represents the gallery, if it has one. */
+      coverItem: galleryItems.find((item) => item.isCover) ?? null,
+      links: (linksByGallery.get(row.id) ?? []).map((link) => ({
+        id: link.id,
+        target: link.target,
+        targetId: link.targetId,
+        targetTitle: titles.get(link.id) ?? null,
+      })),
+    };
+  });
+};
+
+/**
+ * The signed-in club's own galleries, as one filtered, sorted, paginated page.
+ *
+ * Search, sort and paging are the URL's, and the relations are attached to the
+ * *page* rather than to every gallery: the counts the sort orders by come from
+ * one grouped read, so a club with fifty galleries asks for fifty rows' worth of
+ * items rather than all of them. The detail screen reads a gallery of its own
+ * through `getMyGallery`, which is why this one is allowed to be a page.
  */
 export const listMyGalleries = protectedProcedure
   .input(
-    v.optional(
-      v.object({ status: v.optional(v.picklist(["published", "archived"])) })
-    )
+    v.intersect([
+      listParamsSchema,
+      v.object({ status: v.optional(v.picklist(["published", "archived"])) }),
+    ])
   )
   .handler(async ({ context, input }) => {
     const configured = requireOwnClub(context.session?.user?.username);
 
-    const status = input?.status;
-    const rows = await context.db
-      .select()
-      .from(gallery)
-      .where(
-        status
-          ? and(
-              eq(gallery.ownerClubId, configured.id),
-              eq(gallery.status, status)
-            )
-          : eq(gallery.ownerClubId, configured.id)
-      )
-      .orderBy(desc(gallery.publishedAt))
-      .all();
-
-    if (rows.length === 0) {
-      return [];
-    }
-
-    const galleryIds = rows.map((row) => row.id);
-
-    const [items, links] = await Promise.all([
-      withImageUrls(
-        context.db,
-        await context.db
-          .select()
-          .from(galleryItem)
-          .where(inArray(galleryItem.galleryId, galleryIds))
-          .orderBy(asc(galleryItem.position), asc(galleryItem.createdAt))
-          .all()
-      ),
+    const [rows, itemCounts] = await Promise.all([
       context.db
         .select()
-        .from(galleryLink)
-        .where(inArray(galleryLink.galleryId, galleryIds))
+        .from(gallery)
+        .where(
+          input.status
+            ? and(
+                eq(gallery.ownerClubId, configured.id),
+                eq(gallery.status, input.status)
+              )
+            : eq(gallery.ownerClubId, configured.id)
+        )
+        .all(),
+      context.db
+        .select({ galleryId: galleryItem.galleryId, items: count() })
+        .from(galleryItem)
+        .innerJoin(gallery, eq(galleryItem.galleryId, gallery.id))
+        .where(eq(gallery.ownerClubId, configured.id))
+        .groupBy(galleryItem.galleryId)
         .all(),
     ]);
 
-    const byGallery = new Map<string, typeof items>();
-    for (const item of items) {
-      const bucket = byGallery.get(item.galleryId);
-      if (bucket) {
-        bucket.push(item);
-      } else {
-        byGallery.set(item.galleryId, [item]);
-      }
-    }
-
     /*
-     * Target titles resolved for every link across every gallery at once, rather
-     * than one lookup per link. A link to a deleted target comes back with a null
-     * title rather than being dropped, because the club has to be able to see it
-     * in order to clear it - see `submitGalleryLinkDelete`.
+     * Indexed rather than looked up per row: the counts are read once and read
+     * once per gallery, which is the difference between two reads and a nested
+     * loop for the Images column's sort.
      */
-    const titles = new Map<string, string | null>();
-    await Promise.all(
-      links.map(async (link) => {
-        titles.set(
-          link.id,
-          await linkTargetTitle(context.db, link.target, link.targetId)
-        );
-      })
+    const itemCountByGallery = new Map(
+      itemCounts.map((row) => [row.galleryId, Number(row.items) || 0])
     );
 
-    const linksByGallery = new Map<string, typeof links>();
-    for (const link of links) {
-      const bucket = linksByGallery.get(link.galleryId);
-      if (bucket) {
-        bucket.push(link);
-      } else {
-        linksByGallery.set(link.galleryId, [link]);
+    const term = input.q.toLowerCase();
+    const matching = rows.filter((row) => {
+      if (!term) {
+        return true;
       }
+      return [row.title, row.summary, row.slug]
+        .filter((field): field is string => field !== null)
+        .some((field) => field.toLowerCase().includes(term));
+    });
+
+    const sign = sortDirectionOf(input, "desc") === "asc" ? 1 : -1;
+    const compare = GALLERY_SORTERS[input.sortBy ?? ""] ?? comparePublishedAt;
+    const decorated = matching.map((row) => ({
+      row,
+      itemCount: itemCountByGallery.get(row.id) ?? 0,
+    }));
+    const sorted = [...decorated].toSorted((a, b) => sign * compare(a, b));
+
+    const total = sorted.length;
+    const start = listOffset(input);
+    const page = sorted.slice(start, start + input.pageSize);
+
+    return {
+      rows: await attachGalleryRelations(
+        context.db,
+        page.map((entry) => entry.row)
+      ),
+      total,
+    };
+  });
+
+/**
+ * One gallery, for the gallery's own screen.
+ *
+ * A read of its own rather than a find over the list above, because the list is
+ * a *page*: a gallery on page three of the club's list is not in the page the
+ * detail screen would have searched, and "not on this page" must not be
+ * renderable as "no such gallery". Ownership is checked in the same statement
+ * that reads the row, so another club's id is a 404 and never a hit.
+ */
+export const getMyGallery = protectedProcedure
+  .input(v.object({ galleryId: v.pipe(v.string(), v.minLength(1)) }))
+  .handler(async ({ context, input }) => {
+    const configured = requireOwnClub(context.session?.user?.username);
+
+    const owned = await context.db
+      .select()
+      .from(gallery)
+      .where(
+        and(
+          eq(gallery.id, input.galleryId),
+          eq(gallery.ownerClubId, configured.id)
+        )
+      )
+      .get();
+    if (!owned) {
+      throw new ORPCError("NOT_FOUND", { message: "Gallery not found" });
     }
 
-    return rows.map((row) => {
-      const galleryItems = byGallery.get(row.id) ?? [];
-      return {
-        ...row,
-        items: galleryItems,
-        /** The one image that represents the gallery, if it has one. */
-        coverItem: galleryItems.find((item) => item.isCover) ?? null,
-        links: (linksByGallery.get(row.id) ?? []).map((link) => ({
-          id: link.id,
-          target: link.target,
-          targetId: link.targetId,
-          targetTitle: titles.get(link.id) ?? null,
-        })),
-      };
-    });
+    const [withRelations] = await attachGalleryRelations(context.db, [owned]);
+    return withRelations;
   });
 
 /**
@@ -384,79 +529,83 @@ export const listSchoolLinkTargets = protectedProcedure.handler(
   async ({ context }) => {
     const configured = requireOwnClub(context.session?.user?.username);
 
-    const [schoolEvents, schoolAchievements, schoolAnnouncements, clubRows] =
-      await Promise.all([
-        context.db
-          .select({
-            id: event.id,
-            title: event.title,
-            startsAt: event.startsAt,
-            publishedAt: event.publishedAt,
-          })
-          .from(event)
-          .orderBy(desc(event.startsAt))
-          .all(),
-        context.db
-          .select({
-            id: achievement.id,
-            title: achievement.title,
-            category: achievement.category,
-            publishedAt: achievement.publishedAt,
-          })
-          .from(achievement)
-          .orderBy(desc(achievement.publishedAt))
-          .all(),
-        context.db
-          .select({
-            id: announcement.id,
-            title: announcement.title,
-            publishedAt: announcement.publishedAt,
-          })
-          .from(announcement)
-          .orderBy(desc(announcement.publishedAt))
-          .all(),
-        context.db.select({ id: club.id, name: club.name }).from(club).all(),
-      ]);
+    const [
+      schoolEvents,
+      schoolAchievements,
+      schoolAnnouncements,
+      clubRows,
+      otherClubEvents,
+      otherClubAchievements,
+      otherClubAnnouncements,
+    ] = await Promise.all([
+      context.db
+        .select({
+          id: event.id,
+          title: event.title,
+          startsAt: event.startsAt,
+          publishedAt: event.publishedAt,
+        })
+        .from(event)
+        .orderBy(desc(event.startsAt))
+        .all(),
+      context.db
+        .select({
+          id: achievement.id,
+          title: achievement.title,
+          category: achievement.category,
+          publishedAt: achievement.publishedAt,
+        })
+        .from(achievement)
+        .orderBy(desc(achievement.publishedAt))
+        .all(),
+      context.db
+        .select({
+          id: announcement.id,
+          title: announcement.title,
+          publishedAt: announcement.publishedAt,
+        })
+        .from(announcement)
+        .orderBy(desc(announcement.publishedAt))
+        .all(),
+      context.db.select({ id: club.id, name: club.name }).from(club).all(),
+      context.db
+        .select({
+          id: clubEvent.id,
+          title: clubEvent.title,
+          clubId: clubEvent.clubId,
+          startsAt: clubEvent.startsAt,
+          publishedAt: clubEvent.publishedAt,
+        })
+        .from(clubEvent)
+        .where(ne(clubEvent.clubId, configured.id))
+        .orderBy(desc(clubEvent.startsAt))
+        .all(),
+      context.db
+        .select({
+          id: clubAchievement.id,
+          title: clubAchievement.title,
+          clubId: clubAchievement.clubId,
+          achievedOn: clubAchievement.achievedOn,
+          publishedAt: clubAchievement.publishedAt,
+        })
+        .from(clubAchievement)
+        .where(ne(clubAchievement.clubId, configured.id))
+        .orderBy(desc(clubAchievement.publishedAt))
+        .all(),
+      context.db
+        .select({
+          id: clubAnnouncement.id,
+          title: clubAnnouncement.title,
+          clubId: clubAnnouncement.clubId,
+          publishedAt: clubAnnouncement.publishedAt,
+        })
+        .from(clubAnnouncement)
+        .where(ne(clubAnnouncement.clubId, configured.id))
+        .orderBy(desc(clubAnnouncement.publishedAt))
+        .all(),
+    ]);
 
     const clubName = new Map(clubRows.map((row) => [row.id, row.name]));
-
-    const otherClubEvents = await context.db
-      .select({
-        id: clubEvent.id,
-        title: clubEvent.title,
-        clubId: clubEvent.clubId,
-        startsAt: clubEvent.startsAt,
-        publishedAt: clubEvent.publishedAt,
-      })
-      .from(clubEvent)
-      .where(ne(clubEvent.clubId, configured.id))
-      .orderBy(desc(clubEvent.startsAt))
-      .all();
-
-    const otherClubAchievements = await context.db
-      .select({
-        id: clubAchievement.id,
-        title: clubAchievement.title,
-        clubId: clubAchievement.clubId,
-        achievedOn: clubAchievement.achievedOn,
-        publishedAt: clubAchievement.publishedAt,
-      })
-      .from(clubAchievement)
-      .where(ne(clubAchievement.clubId, configured.id))
-      .orderBy(desc(clubAchievement.publishedAt))
-      .all();
-
-    const otherClubAnnouncements = await context.db
-      .select({
-        id: clubAnnouncement.id,
-        title: clubAnnouncement.title,
-        clubId: clubAnnouncement.clubId,
-        publishedAt: clubAnnouncement.publishedAt,
-      })
-      .from(clubAnnouncement)
-      .where(ne(clubAnnouncement.clubId, configured.id))
-      .orderBy(desc(clubAnnouncement.publishedAt))
-      .all();
 
     const label = (clubId: string) => clubName.get(clubId) ?? "Another club";
 

@@ -79,6 +79,11 @@ export type ClubDetail = ClubOutput;
 type ClubActivityOutput = RouterOutputs["adminClubs"]["activity"];
 export type ClubActivityRow = ClubActivityOutput["rows"][number];
 
+/* ------------------------------------------------------------ galleries */
+
+type MyGalleriesOutput = RouterOutputs["clubs"]["listMyGalleries"];
+export type GalleryRow = MyGalleriesOutput["rows"][number];
+
 /* ------------------------------------------------------------ sort keys */
 
 /** The columns a queue header may order by, as the server accepts them. */
@@ -94,7 +99,7 @@ export const SUBMISSION_SORT_KEYS = ["submittedAt", "target"] as const;
 export type SubmissionSortKey = (typeof SUBMISSION_SORT_KEYS)[number];
 
 /*
- * The two lists whose keys are declared by the router rather than written here.
+ * The three lists whose keys are declared by the router rather than written here.
  *
  * They are re-exported rather than duplicated because the sort key list is the
  * one part of a table's contract that has to match the server's exactly: a
@@ -109,3 +114,5 @@ export type {
   ActivitySortKey,
   ClubAccountSortKey,
 } from "@aloysius/api/routers/admin-clubs";
+export { GALLERY_SORT_KEYS } from "@aloysius/api/routers/clubs/scope";
+export type { GallerySortKey } from "@aloysius/api/routers/clubs/scope";

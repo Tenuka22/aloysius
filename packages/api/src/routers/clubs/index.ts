@@ -14,6 +14,7 @@ import {
   listPeople,
 } from "./public";
 import {
+  getMyGallery,
   listMyGalleries,
   listMyGalleryLinks,
   listMyLinkTargets,
@@ -57,6 +58,7 @@ export const clubsRouter = {
   getClubPage,
   myClub,
   listMyGalleries,
+  getMyGallery,
   listMyGalleryLinks,
   listMyLinkTargets,
   listSchoolLinkTargets,

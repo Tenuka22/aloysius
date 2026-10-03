@@ -10,6 +10,7 @@ import { useListSearchWriter } from "@aloysius/ui/components/data-table/use-list
 
 import {
   ACTIVITY_SORT_KEYS,
+  GALLERY_SORT_KEYS,
   QUEUE_SORT_KEYS,
   SUBMISSION_SORT_KEYS,
   ACCOUNT_SORT_KEYS,
@@ -42,8 +43,8 @@ export interface ListSearch<TSortKey extends string> {
   size: number;
 }
 
-/** The four list kinds, and the sort key each one orders by. */
-type ListKind = "queue" | "submission" | "account" | "activity";
+/** The five list kinds, and the sort key each one orders by. */
+type ListKind = "queue" | "submission" | "account" | "activity" | "gallery";
 
 type SortKeyFor<TKind extends ListKind> = (typeof KEYS)[TKind][number];
 
@@ -52,6 +53,7 @@ const KEYS = {
   submission: SUBMISSION_SORT_KEYS,
   account: ACCOUNT_SORT_KEYS,
   activity: ACTIVITY_SORT_KEYS,
+  gallery: GALLERY_SORT_KEYS,
 } as const;
 
 const DEFAULT_SORT = {
@@ -59,6 +61,7 @@ const DEFAULT_SORT = {
   submission: "submittedAt",
   account: "name",
   activity: "createdAt",
+  gallery: "publishedAt",
 } as const;
 
 /**
@@ -164,11 +167,11 @@ export const makeListSearchParser = <TKind extends ListKind>(kind: TKind) => {
 };
 
 /**
- * The four lists that exist today, each named once.
+ * The five lists that exist today, each named once.
  *
  * A surface imports its own — `queueSearch` for the pending queues, and so on —
  * and everything the surface needs (parse, route contract, server input, URL
- * writer) is on that one object. Adding a fifth list is one line here and one
+ * writer) is on that one object. Adding a sixth list is one line here and one
  * route file there, and the parsing can never drift between them because it is
  * literally the same function.
  *
@@ -185,3 +188,4 @@ export const queueSearch = makeListSearchParser("queue");
 export const submissionSearch = makeListSearchParser("submission");
 export const accountSearch = makeListSearchParser("account");
 export const activitySearch = makeListSearchParser("activity");
+export const gallerySearch = makeListSearchParser("gallery");

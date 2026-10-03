@@ -71,12 +71,16 @@ const PendingSubmissions = ({ rows }: { rows: readonly SubmissionRow[] }) => {
 
 const OverviewPage = () => {
   const clubQuery = useQuery(orpc.clubs.myClub.queryOptions());
-  const galleryQuery = useQuery(orpc.clubs.listMyGalleries.queryOptions());
+  const galleryQuery = useQuery(
+    // The overview counts galleries, so it asks for every one of them rather
+    // than for the first page a table would have shown.
+    orpc.clubs.listMyGalleries.queryOptions({ input: { pageSize: 200 } })
+  );
   const pendingQuery = useQuery(
     orpc.clubs.listMySubmissions.queryOptions({ input: { pageSize: 200 } })
   );
 
-  const galleries = galleryQuery.data ?? [];
+  const galleries = galleryQuery.data?.rows ?? [];
   const pending = pendingQuery.data?.rows ?? [];
 
   const imageCount = galleries.reduce(

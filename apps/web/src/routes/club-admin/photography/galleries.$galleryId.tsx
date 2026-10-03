@@ -57,7 +57,7 @@ import { client, orpc } from "@/utils/orpc";
 
 type ImageRole = GalleryImageRole;
 
-/** The item shape `listMyGalleries` returns, narrowed to what this screen uses. */
+/** The item shape `getMyGallery` returns, narrowed to what this screen uses. */
 interface GalleryItem {
   id: string;
   altText: string;
@@ -975,8 +975,16 @@ const GalleryLinksPanel = ({ galleryId }: { galleryId: string }) => {
 const GalleryDetailPage = () => {
   const { galleryId } = Route.useParams();
   const queryClient = useQueryClient();
-  const query = useQuery(orpc.clubs.listMyGalleries.queryOptions());
-  const gallery = (query.data ?? []).find((row) => row.id === galleryId);
+  /*
+   * This gallery, read by id rather than found in `listMyGalleries`: that list
+   * is a *page* now, so a gallery the club owns but that sits on another page
+   * would find nothing here and render as "no such gallery". Ownership is the
+   * server's check, and a gallery another club owns is a 404 there.
+   */
+  const query = useQuery(
+    orpc.clubs.getMyGallery.queryOptions({ input: { galleryId } })
+  );
+  const gallery = query.data ?? null;
 
   /*
    * One mutation for every per-image role change. Hoisted to the page rather than
