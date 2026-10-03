@@ -1,673 +1,143 @@
+import { Notice } from "@aloysius/ui/components/cms/cms-primitives";
 import {
-  CmsButton,
-  EmptyState,
-  Field,
-  Notice,
-  Panel,
-  PanelHead,
-  Pill,
-  RecordList,
-  RecordRow,
-} from "@aloysius/ui/components/cms/cms-primitives";
-import type {
-  NoticeTone,
-  PillTone,
-} from "@aloysius/ui/components/cms/cms-primitives";
-import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+  ScreenHead,
+  ScreenWrap,
+} from "@aloysius/ui/components/cms/screen-head";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { createFileRoute, Outlet, useMatch } from "@tanstack/react-router";
 
 import {
-  describeActivity,
-  describeAuditTarget,
-  formatAuditTime,
-  submissionOutcome,
-} from "@/components/admin/audit";
-import { authClient } from "@/lib/auth-client";
-import { client, orpc } from "@/utils/orpc";
+  ANY_FILTER,
+  hasClubListFilters,
+  parseClubListSearch,
+  toClubListInput,
+  toClubListParams,
+  useClubListSearchWriter,
+} from "@/components/admin/club-list-search";
+import { ClubsTable } from "@/components/admin/clubs-table";
+import { useTableCallbacks } from "@/components/tables/use-list-state";
+import { orpc } from "@/utils/orpc";
 
 /**
- * One club's administrator account.
+ * The club accounts table.
  *
- * Two roles land here. A club administrator sees only their own account and
- * can rotate their own password; a site administrator picks a club and manages
- * its credential. Both are the same screen because the work is the same - the
- * difference is only how wide the account scope is.
- */
-
-interface CredentialState {
-  generatedFor: string | null;
-  generatedPassword: string | null;
-  isGenerating: boolean;
-  notice: { tone: NoticeTone; text: string } | null;
-  rotatingUsername: string | null;
-  copied: boolean;
-}
-
-const INITIAL_CREDENTIAL_STATE: CredentialState = {
-  generatedFor: null,
-  generatedPassword: null,
-  isGenerating: false,
-  notice: null,
-  rotatingUsername: null,
-  copied: false,
-};
-
-const styles = stylex.create({
-  wrap: {
-    display: "grid",
-    gap: space.md,
-    alignContent: "start",
-  },
-  lead: {
-    display: "grid",
-    gap: space["3xs"],
-  },
-  leadTitle: {
-    margin: 0,
-    fontFamily: font.display,
-    fontSize: font.size2xl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingSnug,
-    color: color.onSurface,
-    textWrap: "balance",
-  },
-  leadNote: {
-    margin: 0,
-    maxWidth: "58ch",
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingNormal,
-    color: color.onSurfaceMuted,
-    textWrap: "pretty",
-  },
-  block: {
-    display: "grid",
-    gap: space["2xs"],
-    marginBlockStart: space.sm,
-  },
-  /*
-   * A one-time secret. Heavier than a notice on purpose: it is the only thing
-   * on this screen the operator has to write down before it is gone for good,
-   * and a phrase they can retype is the whole reason it is a phrase.
-   */
-  generated: {
-    display: "grid",
-    justifyItems: "start",
-    gap: space["2xs"],
-    marginBlockStart: space.sm,
-    padding: space.sm,
-    backgroundColor: "rgba(255, 178, 3, 0.14)",
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: "rgba(122, 84, 0, 0.35)",
-  },
-  generatedLabel: {
-    margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightExtrabold,
-    letterSpacing: font.trackingWider,
-    textTransform: "uppercase",
-    color: "#7a5400",
-  },
-  generatedValue: {
-    margin: 0,
-    overflowWrap: "anywhere",
-    fontFamily: font.mono,
-    fontSize: font.sizeXl,
-    fontWeight: font.weightBold,
-    lineHeight: font.leadingSnug,
-    // A little tracking so four words and two digits read as groups rather
-    // than as one run of characters.
-    letterSpacing: "0.01em",
-    color: color.onSurface,
-    // Tabular figures and wrapping hyphenation: the digits are the part people
-    // mistype, and the line has to be able to break on the hyphens.
-    hyphens: "auto",
-  },
-  generatedHint: {
-    margin: 0,
-    maxWidth: "40ch",
-    fontSize: font.sizeXs,
-    lineHeight: font.leadingNormal,
-    color: color.onSurfaceMuted,
-  },
-  timestamp: {
-    fontFamily: font.mono,
-    fontSize: font.sizeXs,
-    color: color.onSurfaceMuted,
-    whiteSpace: "nowrap",
-  },
-});
-
-const messageOf = (error: unknown, fallback: string) =>
-  error instanceof Error ? error.message : fallback;
-
-interface AccountState {
-  banned: boolean | null;
-  provisioned?: boolean;
-}
-
-const accountState = ({
-  banned,
-  provisioned,
-}: AccountState): { label: string; tone: PillTone } => {
-  if (banned) {
-    return { label: "Banned", tone: "danger" };
-  }
-  if (provisioned === false) {
-    return { label: "No credential", tone: "warning" };
-  }
-  return { label: "Active", tone: "positive" };
-};
-
-/**
- * One button, and its label says which of the two things it is about to do.
+ * Search, both filters, the order and the page are the URL, and the loader reads
+ * the page on the server before the HTML is sent — so the first paint is the
+ * answered question rather than a spinner, and a refresh, a shared link and the
+ * Back button all arrive on the same page of rows. The validated params are
+ * clamped and stripped of their defaults by the contract module; the page re-runs
+ * the same parser over what it is handed, so a hand-typed URL and a link written
+ * here arrive as one type.
  *
- * The API does both from the same call — it creates the account if there isn't
- * one and rotates the password if there is — so the label is the only place the
- * difference is visible, and it has to be honest about it. An operator should
- * be able to read the row and know what pressing it will do.
+ * Each row opens that club's own screen, which is where its password, its access
+ * and its actions live. One screen per club rather than an expandable row: the
+ * controls are a second page's worth of state, and a table row that grows a
+ * password field is a row with two jobs.
+ *
+ * There is no `beforeLoad` here. The `/admin` layout already refuses anyone whose
+ * role is not `admin`, and it runs first — a second guard in the child could only
+ * ever agree with it.
+ *
+ * This route is also the *parent* of `clubs.$clubId`, because the file router
+ * nests a `clubs.$clubId.tsx` under a `clubs.tsx`. A parent that draws its own
+ * screen and never renders `<Outlet />` hides the child completely, which is how
+ * a club URL can show the table it was opened from. So the table yields whenever
+ * the child has matched: one screen in the viewport, not two stacked.
  */
-const credentialActionLabel = (provisioned: boolean | undefined) => {
-  if (!provisioned) {
-    return "Create account";
-  }
-  return "Set new password";
-};
-
-const accountNoteFor = (isClubAdmin: boolean, hasSelection: boolean) => {
-  if (isClubAdmin) {
-    return "Your account is scoped to your club. Only a site administrator can see another club.";
-  }
-  if (hasSelection) {
-    return "Account access is scoped to the selected club.";
-  }
-  return "Choose a club to see its administrator.";
-};
-
-/**
- * A club administrator's own account query returns one row, the site
- * administrator's returns every row for the selected club. Normalised to a
- * list here so the panel below has a single shape to render.
- */
-const membersFor = (
-  isClubAdmin: boolean,
-  ownAccount: ClubAccountRow | undefined | null,
-  clubAccounts: readonly ClubAccountRow[] | undefined
-): ClubAccountRow[] => {
-  if (isClubAdmin) {
-    return ownAccount ? [ownAccount] : [];
-  }
-  return [...(clubAccounts ?? [])];
-};
-
-/* -------------------------------------------------------- account panel */
-
-interface ClubAccountRow {
-  id: string;
-  name: string;
-  username: string | null;
-  role: string | null;
-  banned: boolean | null;
-  provisioned?: boolean;
-}
-
-const AdministratorPanel = ({
-  isClubAdmin,
-  hasSelection,
-  isLoading,
-  error,
-  members,
-  credential,
-  onIssue,
-  onCopy,
-  onDismiss,
-}: {
-  isClubAdmin: boolean;
-  hasSelection: boolean;
-  isLoading: boolean;
-  error: Error | null;
-  members: readonly ClubAccountRow[];
-  credential: CredentialState;
-  /** Issues a credential for this username: creates the account, or rotates. */
-  onIssue: (username: string) => void;
-  onCopy: () => void;
-  /** Clears a password that has already been copied or written down. */
-  onDismiss: () => void;
-}) => {
-  const accountNote = accountNoteFor(isClubAdmin, hasSelection);
-
-  let body = (
-    <EmptyState
-      note={
-        isClubAdmin
-          ? "This account has no credential yet. Ask a site administrator to provision it."
-          : "Pick a club above to see who administers it."
-      }
-      title="No administrator to show."
-    />
+const AdminClubsPage = () => {
+  const search = parseClubListSearch(Route.useSearch());
+  const writeSearch = useClubListSearchWriter();
+  const isClubDetail = Boolean(
+    useMatch({ from: "/admin/clubs/$clubId", shouldThrow: false })
   );
 
-  if (isLoading) {
-    body = <Notice tone="info">Loading the administrator…</Notice>;
-  } else if (members.length > 0) {
-    body = (
-      <RecordList label="Club administrator">
-        {members.map((member) => {
-          const state = accountState(member);
-          const { username } = member;
-          const isWorking =
-            credential.isGenerating && credential.rotatingUsername === username;
+  const { onSearchChange, onSortingChange, onPaginationChange } =
+    useTableCallbacks({ search, writeSearch });
 
-          return (
-            <RecordRow
-              actions={
-                <>
-                  <Pill tone={state.tone}>{state.label}</Pill>
-                  {username ? (
-                    <CmsButton
-                      disabled={credential.isGenerating}
-                      onClick={() => {
-                        onIssue(username);
-                      }}
-                      tone="quiet"
-                    >
-                      {isWorking
-                        ? "Working…"
-                        : credentialActionLabel(member.provisioned)}
-                    </CmsButton>
-                  ) : null}
-                </>
-              }
-              key={member.id}
-              meta={
-                <>
-                  <span>@{username ?? "no username"}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{member.role ?? "user"}</span>
-                </>
-              }
-              name={member.name}
-            />
-          );
-        })}
-      </RecordList>
-    );
+  const query = useQuery(
+    orpc.adminClubs.clubAccounts.queryOptions({
+      input: toClubListInput(search),
+      placeholderData: keepPreviousData,
+    })
+  );
+
+  /*
+   * A club's own screen is this route's child, so it draws where the child slot
+   * is drawn — and here the slot would sit underneath the table. Yield first:
+   * the child owns the viewport for as long as its URL is open, and the table
+   * comes back untouched when the URL leaves it. Every hook above still runs so
+   * the order stays identical whether the child is open or not.
+   */
+  if (isClubDetail) {
+    return <Outlet />;
   }
 
   return (
-    <Panel>
-      <PanelHead
-        eyebrow="Access"
-        note={accountNote}
-        title="Club administrator"
+    <ScreenWrap>
+      <ScreenHead
+        eyebrow="Clubs / Accounts"
+        heading="Club accounts"
+        note="Every club runs on one administrator account. Open a club to issue or rotate its password, block or restore its sign-in, and read everything it has done."
       />
-
-      {error ? (
-        <Notice tone="danger">
-          {messageOf(error, "The club administrator could not be loaded.")}
-        </Notice>
-      ) : null}
-
-      {body}
 
       {/*
-       * The one-time secret. It stays on screen until it is explicitly
-       * dismissed, because regenerating used to replace it silently: press the
-       * button twice and the password already copied or written down stops
-       * working, with nothing on the page saying so. The warning below is the
-       * replacement for that surprise.
-       */}
-      {credential.generatedFor && credential.generatedPassword ? (
-        <div {...stylex.props(styles.generated)}>
-          <p {...stylex.props(styles.generatedLabel)}>
-            Password for @{credential.generatedFor}
-          </p>
-          <code {...stylex.props(styles.generatedValue)}>
-            {credential.generatedPassword}
-          </code>
-          <p {...stylex.props(styles.generatedHint)}>
-            Four words and two digits, so it can be written down and typed back
-            in. Shown once — if it is lost, set a new one.
-          </p>
-          <div {...stylex.props(styles.block)}>
-            <CmsButton onClick={onCopy} tone="primary">
-              {credential.copied ? "Copied" : "Copy password"}
-            </CmsButton>
-            <CmsButton onClick={onDismiss} tone="quiet">
-              Done
-            </CmsButton>
-          </div>
-        </div>
-      ) : null}
-    </Panel>
-  );
-};
-
-/* ------------------------------------------------------- activity panel */
-
-/** One line of the audit trail, as either of the two activity handlers reports it. */
-interface ActivityEntry {
-  id: string;
-  action: string;
-  targetType: string;
-  targetId: string | null;
-  actorUsername: string | null;
-  createdAt: Date;
-}
-
-/**
- * One list, from whichever activity query the signed-in role actually runs.
- *
- * The two do not answer in the same shape: `myActivity` is a bare array,
- * because a club administrator can only ever have their own handful of entries,
- * while `activity` is a page envelope, because a site administrator reads a
- * filtered, paginated feed. Normalising here is what lets the panel take one
- * type, and it lives out here rather than inline in the page because inlining it
- * pushed the page over the complexity limit for no gain.
- *
- * Loading and error still come from the one query that is *enabled*: a disabled
- * query reports `isPending` forever, so combining both would hang the panel on
- * "Loading…" for whichever role is not supposed to be reading it.
- */
-const activityEntriesFor = (
-  isClubAdmin: boolean,
-  mine: { data: readonly ActivityEntry[] | undefined },
-  everyone: { data: { rows: readonly ActivityEntry[] } | undefined }
-): readonly ActivityEntry[] =>
-  isClubAdmin ? (mine.data ?? []) : (everyone.data?.rows ?? []);
-
-const ActivityPanel = ({
-  entries,
-  isLoading,
-  error,
-  hasSelection,
-}: {
-  entries: readonly ActivityEntry[] | undefined;
-  isLoading: boolean;
-  error: Error | null;
-  hasSelection: boolean;
-}) => {
-  let body = (
-    <EmptyState
-      note="Choose a club above to see who has changed its credentials."
-      title="No club selected."
-    />
-  );
-
-  if (isLoading) {
-    body = <Notice tone="info">Loading activity…</Notice>;
-  } else if (!hasSelection) {
-    body = (
-      <EmptyState
-        note="Choose a club above to see who has changed its credentials."
-        title="No club selected."
-      />
-    );
-  } else if (entries && entries.length > 0) {
-    body = (
-      <RecordList label="Administrator activity">
-        {entries.map((entry) => {
-          const outcome = submissionOutcome(entry.action);
-
-          return (
-            <RecordRow
-              actions={
-                <>
-                  {outcome ? (
-                    <Pill tone={outcome.tone}>{outcome.label}</Pill>
-                  ) : null}
-                  <time
-                    dateTime={new Date(entry.createdAt).toISOString()}
-                    {...stylex.props(styles.timestamp)}
-                  >
-                    {formatAuditTime(entry.createdAt)}
-                  </time>
-                </>
-              }
-              key={entry.id}
-              meta={describeAuditTarget(entry)}
-              name={describeActivity(entry.action)}
-            />
-          );
-        })}
-      </RecordList>
-    );
-  } else {
-    body = (
-      <EmptyState
-        note="Rotating a password, banning an account or reviewing a submission is recorded here."
-        title="No administrator activity yet."
-      />
-    );
-  }
-
-  return (
-    <Panel>
-      <PanelHead
-        eyebrow="Audit trail"
-        note="Credential changes, bans, unbans, and account actions are recorded here."
-        title="Administrator activity"
-      />
-
-      {error ? (
+        A failed read is named here as well as in the table, because the table's
+        own error state replaces the table body — and an administrator who has
+        just pressed a filter deserves to be told the filter is what failed.
+      */}
+      {query.isError ? (
         <Notice tone="danger">
-          {messageOf(error, "The activity trail could not be loaded.")}
+          {query.error instanceof Error
+            ? query.error.message
+            : "The club list could not be loaded."}
         </Notice>
       ) : null}
 
-      {body}
-    </Panel>
-  );
-};
-
-/* ------------------------------------------------------------------ page */
-
-const AdminClubsPage = () => {
-  const navigate = useNavigate();
-  const [clubId, setClubId] = useState("");
-  const [credential, setCredential] = useState<CredentialState>(
-    INITIAL_CREDENTIAL_STATE
-  );
-  const { data: session } = authClient.useSession();
-  const isClubAdmin = session?.user?.role === "club-admin";
-  const clubsQuery = useQuery(orpc.adminClubs.list.queryOptions());
-  const adminQuery = useQuery(
-    orpc.adminClubs.admin.queryOptions({
-      input: { clubId },
-      enabled: clubId.length > 0,
-    })
-  );
-  const myAccountQuery = useQuery(
-    orpc.adminClubs.myAccount.queryOptions({ enabled: isClubAdmin })
-  );
-  const activityQuery = useQuery(
-    orpc.adminClubs.activity.queryOptions({
-      input: { clubId: clubId || undefined, limit: 100 },
-      enabled: !isClubAdmin && clubId.length > 0,
-    })
-  );
-  const myActivityQuery = useQuery(
-    orpc.adminClubs.myActivity.queryOptions({
-      input: { limit: 100 },
-      enabled: isClubAdmin,
-    })
-  );
-
-  const accountQuery = isClubAdmin ? myAccountQuery : adminQuery;
-  const activityQueryForRole = isClubAdmin ? myActivityQuery : activityQuery;
-  const hasSelection = isClubAdmin || clubId.length > 0;
-  const members = membersFor(isClubAdmin, myAccountQuery.data, adminQuery.data);
-  const activityEntries = activityEntriesFor(
-    isClubAdmin,
-    myActivityQuery,
-    activityQuery
-  );
-
-  /**
-   * One call does the right thing for whichever state the account is in: the
-   * API creates the credential when there is no account and rotates it when
-   * there is, so the button above never has to branch.
-   */
-  const issueCredential = async (target: string) => {
-    setCredential((current) => ({
-      ...current,
-      isGenerating: true,
-      notice: null,
-      rotatingUsername: target,
-    }));
-    try {
-      const result = isClubAdmin
-        ? await client.adminClubs.rotateMyPassword({})
-        : await client.adminClubs.rotatePassword({ username: target });
-      setCredential({
-        generatedFor: target,
-        generatedPassword: result.password,
-        isGenerating: false,
-        notice: {
-          tone: "success",
-          text: `New password issued for @${target}. Copy it now — it is not shown again.`,
-        },
-        rotatingUsername: null,
-        copied: false,
-      });
-    } catch (error) {
-      setCredential((current) => ({
-        ...current,
-        isGenerating: false,
-        notice: {
-          tone: "danger",
-          text: messageOf(error, "A new password could not be issued."),
-        },
-        rotatingUsername: null,
-      }));
-    }
-  };
-
-  const copyPassword = async () => {
-    const password = credential.generatedPassword;
-    if (!password) {
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(password);
-      setCredential((current) => ({ ...current, copied: true }));
-    } catch {
-      setCredential((current) => ({
-        ...current,
-        copied: false,
-        notice: {
-          tone: "warning",
-          text: "The browser blocked clipboard access. Select the password and copy it by hand.",
-        },
-      }));
-    }
-  };
-
-  return (
-    <div {...stylex.props(styles.wrap)}>
-      <div {...stylex.props(styles.lead)}>
-        <h1 {...stylex.props(styles.leadTitle)}>Club accounts</h1>
-        <p {...stylex.props(styles.leadNote)}>
-          Issue and rotate the credentials a club administrator signs in with.
-          Every rotation is written to the audit trail below.
-        </p>
-      </div>
-
-      {isClubAdmin ? null : (
-        <Panel>
-          <PanelHead
-            eyebrow="Dedicated pages"
-            note="Per-club review pages, hand-typed routes rather than a dynamic parameter, so a club has no page until one is written for it."
-            title="Photography Club"
-          />
-          <CmsButton
-            onClick={() => {
-              void navigate({ to: "/club-admin/photography" });
-            }}
-            tone="primary"
-          >
-            Open /club-admin/photography
-          </CmsButton>
-        </Panel>
-      )}
-
-      <Panel accent>
-        <PanelHead
-          eyebrow="Club administration"
-          note={
-            isClubAdmin
-              ? "Your account is scoped to your club. Only a site administrator can see another club."
-              : "Manage the single administrator account for a club."
-          }
-          title={isClubAdmin ? "Your account" : "Choose a club"}
-        />
-        {isClubAdmin ? null : (
-          <Field
-            hint="Everything below is scoped to this club."
-            kind="select"
-            label="Club"
-            onChange={(next) => {
-              setClubId(next);
-              setCredential(INITIAL_CREDENTIAL_STATE);
-            }}
-            options={[
-              { label: "Select a club", value: "" },
-              ...(clubsQuery.data?.map((club) => ({
-                label: club.name,
-                value: club.id,
-              })) ?? []),
-            ]}
-            value={clubId}
-          />
-        )}
-        {credential.notice ? (
-          <Notice tone={credential.notice.tone}>
-            {credential.notice.text}
-          </Notice>
-        ) : null}
-      </Panel>
-
-      <AdministratorPanel
-        credential={credential}
-        error={accountQuery.error}
-        hasSelection={hasSelection}
-        isClubAdmin={isClubAdmin}
-        isLoading={accountQuery.isPending && hasSelection}
-        members={members}
-        onCopy={() => {
-          void copyPassword();
+      <ClubsTable
+        hasFilters={hasClubListFilters(search)}
+        isError={query.isError}
+        isFetching={query.isFetching}
+        isLoading={query.isPending}
+        onAccountChange={(account) => {
+          writeSearch({ account, page: 1 });
         }}
-        onDismiss={() => {
-          setCredential(INITIAL_CREDENTIAL_STATE);
+        onPaginationChange={onPaginationChange}
+        onResetFilters={() => {
+          writeSearch({
+            q: "",
+            status: ANY_FILTER,
+            account: ANY_FILTER,
+            page: 1,
+          });
         }}
-        onIssue={(username) => {
-          void issueCredential(username);
+        onSearchChange={onSearchChange}
+        onSortingChange={onSortingChange}
+        onStatusChange={(status) => {
+          writeSearch({ status, page: 1 });
         }}
+        rows={query.data?.rows ?? []}
+        search={search}
+        total={query.data?.total ?? 0}
       />
-
-      <ActivityPanel
-        entries={activityEntries}
-        error={activityQueryForRole.error}
-        hasSelection={hasSelection}
-        isLoading={activityQueryForRole.isPending && hasSelection}
-      />
-    </div>
+    </ScreenWrap>
   );
 };
 
 export const Route = createFileRoute("/admin/clubs")({
-  beforeLoad: async () => {
-    const session = await client.getSession();
-    if (
-      session?.user?.role !== "admin" &&
-      session?.user?.role !== "club-admin"
-    ) {
-      throw redirect({ to: "/" });
-    }
-  },
+  validateSearch: (search) => toClubListParams(parseClubListSearch(search)),
+  /*
+   * `deps` is the route's own validated type — every default omitted — so it is
+   * re-parsed here before it becomes a server input. Same parser, idempotent, and
+   * the one place that guarantees a bare URL and a hand-typed one cannot ask the
+   * server for two different things.
+   */
+  loaderDeps: ({ search }) => search,
+  loader: ({ context, deps }) =>
+    context.queryClient.ensureQueryData(
+      orpc.adminClubs.clubAccounts.queryOptions({
+        input: toClubListInput(parseClubListSearch(deps)),
+      })
+    ),
   head: () => ({
     meta: [
       { title: "Club accounts — Admin — St. Aloysius' College" },

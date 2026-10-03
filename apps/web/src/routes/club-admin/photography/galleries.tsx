@@ -12,7 +12,12 @@ import {
 } from "@aloysius/ui/components/cms/cms-primitives";
 import { MediaThumb } from "@aloysius/ui/components/primitives/media-frame";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  useMatch,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useState } from "react";
 
 import { SLUG_PATTERN, slugify } from "@/components/club/format";
@@ -261,6 +266,23 @@ const GalleriesPage = () => {
   const navigate = useNavigate();
   const query = useQuery(orpc.clubs.listMyGalleries.queryOptions());
   const galleries = query.data ?? [];
+  /*
+   * `galleries.$galleryId` is a child of this route, so a gallery's own screen
+   * draws only where the child slot is drawn. Without yielding here the list
+   * would paint over it and the gallery would never be reachable from its own
+   * URL — so the child owns the viewport for as long as its URL is open, and
+   * this list returns untouched when the URL leaves it.
+   */
+  const isGalleryDetail = Boolean(
+    useMatch({
+      from: "/club-admin/photography/galleries/$galleryId",
+      shouldThrow: false,
+    })
+  );
+
+  if (isGalleryDetail) {
+    return <Outlet />;
+  }
 
   const body = (() => {
     if (query.isPending) {

@@ -68,6 +68,17 @@ export type SubmissionRow = MySubmissionsOutput["rows"][number];
 type AdminUsersListOutput = RouterOutputs["adminUsers"]["list"];
 export type AccountRow = AdminUsersListOutput["rows"][number];
 
+/* --------------------------------------------------------- club accounts */
+
+type ClubAccountsOutput = RouterOutputs["adminClubs"]["clubAccounts"];
+export type ClubAccountRow = ClubAccountsOutput["rows"][number];
+
+type ClubOutput = RouterOutputs["adminClubs"]["club"];
+export type ClubDetail = ClubOutput;
+
+type ClubActivityOutput = RouterOutputs["adminClubs"]["activity"];
+export type ClubActivityRow = ClubActivityOutput["rows"][number];
+
 /* ------------------------------------------------------------ sort keys */
 
 /** The columns a queue header may order by, as the server accepts them. */
@@ -81,3 +92,20 @@ export type AccountSortKey = (typeof ACCOUNT_SORT_KEYS)[number];
 /** The columns the club's own submissions list may order by. */
 export const SUBMISSION_SORT_KEYS = ["submittedAt", "target"] as const;
 export type SubmissionSortKey = (typeof SUBMISSION_SORT_KEYS)[number];
+
+/*
+ * The two lists whose keys are declared by the router rather than written here.
+ *
+ * They are re-exported rather than duplicated because the sort key list is the
+ * one part of a table's contract that has to match the server's exactly: a
+ * header that offers a column the handler cannot order by is a control that
+ * silently does nothing, and the fix for that is not a second list to remember.
+ */
+export {
+  ACTIVITY_SORT_KEYS,
+  CLUB_ACCOUNT_SORT_KEYS,
+} from "@aloysius/api/routers/admin-clubs";
+export type {
+  ActivitySortKey,
+  ClubAccountSortKey,
+} from "@aloysius/api/routers/admin-clubs";

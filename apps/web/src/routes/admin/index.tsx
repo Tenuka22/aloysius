@@ -1,37 +1,37 @@
 import {
   CmsLink,
-  EmptyState,
   Notice,
   Panel,
   PanelHead,
-  Pill,
-  RecordList,
-  RecordRow,
 } from "@aloysius/ui/components/cms/cms-primitives";
-import type { PillTone } from "@aloysius/ui/components/cms/cms-primitives";
+import { ScreenWrap } from "@aloysius/ui/components/cms/screen-head";
 import { color, font, space } from "@aloysius/ui/tokens/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 
-import {
-  describeActivity,
-  describeAuditTarget,
-  formatAuditTime,
-  submissionOutcome,
-} from "@/components/admin/audit";
+import { ActivityTable } from "@/components/admin/activity-table";
+import { activitySearch } from "@/components/tables/queue-search";
+import { useTableCallbacks } from "@/components/tables/use-list-state";
 import { orpc } from "@/utils/orpc";
 
 /**
  * The administration overview.
  *
- * `/admin/clubs` is scoped to one club at a time and will say nothing until a
- * club is picked, so it cannot answer "is anything unprovisioned?" on its own.
- * This page is the roll-up: every configured club, the state of its
- * administrator account, and the audit trail behind those states.
+ * ## What this page is, now that `/admin/clubs` is a table
+ *
+ * Two questions, kept deliberately apart. **"Is anything wrong with a club's
+ * access?"** is a roll-up — one figure, two notices, no list to page through —
+ * and it is answered here in full. **"Which club do I want to work on?"** is a
+ * list, and it lives at `/admin/clubs`, where it can be searched and filtered and
+ * every row opens that club's own screen. Duplicating the club list here would
+ * have meant two places to keep the same answer.
+ *
+ * **"What has been done lately?"** is also a list, and it is the second thing on
+ * this page as a table for the same reason: an audit trail that shows the last ten
+ * rows and cannot say what the eleventh was is a list that stops silently at a
+ * cap and reads as complete.
  */
-
-const ACTIVITY_LIMIT = 10;
 
 const styles = stylex.create({
   wrap: {
@@ -39,32 +39,11 @@ const styles = stylex.create({
     gap: space.md,
     alignContent: "start",
   },
-  lead: {
-    display: "grid",
-    gap: space["3xs"],
-  },
-  leadTitle: {
-    margin: 0,
-    fontFamily: font.display,
-    fontSize: font.size2xl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingSnug,
-    color: color.onSurface,
-    textWrap: "balance",
-  },
-  leadNote: {
-    margin: 0,
-    maxWidth: "58ch",
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingNormal,
-    color: color.onSurfaceMuted,
-    textWrap: "pretty",
-  },
   /*
-   * One figure, not a row of tiles. The only question this page has to answer
-   * in its first second is "is anything unprovisioned", and a single number
-   * leading a sentence settles it in one glance where a tile row would make the
-   * operator read four of them.
+   * One figure, not a row of tiles. The only question this page has to answer in
+   * its first second is "is anything unprovisioned", and a single number leading a
+   * sentence settles it in one glance where a tile row would make the operator
+   * read four of them.
    */
   coverage: {
     display: "flex",
@@ -92,66 +71,23 @@ const styles = stylex.create({
     color: color.onSurfaceMuted,
     textWrap: "pretty",
   },
-  timestamp: {
-    fontFamily: font.mono,
-    fontSize: font.sizeXs,
-    color: color.onSurfaceMuted,
-    whiteSpace: "nowrap",
-  },
   noticeStack: {
     display: "grid",
     gap: space["2xs"],
   },
-  loading: {
+  backLink: {
     margin: 0,
-    fontSize: font.sizeSm,
-    color: color.onSurfaceMuted,
+    justifySelf: "start",
   },
 });
 
-/* ----------------------------------------------------------------- state */
-
-type CoverageState = "provisioned" | "missing" | "banned";
-
-const COVERAGE_STATE: Record<
-  CoverageState,
-  { label: string; tone: PillTone; note: string }
-> = {
-  provisioned: {
-    label: "Provisioned",
-    tone: "positive",
-    note: "The administrator can sign in.",
-  },
-  missing: {
-    label: "No account",
-    tone: "warning",
-    note: "No administrator has been created yet.",
-  },
-  banned: {
-    label: "Banned",
-    tone: "danger",
-    note: "The account exists but cannot sign in.",
-  },
-};
-
-interface ClubAccount {
-  username: string | null;
-  banned: boolean | null;
-}
-
-const coverageStateOf = (account: ClubAccount | undefined): CoverageState => {
-  if (!account) {
-    return "missing";
-  }
-  if (account.banned) {
-    return "banned";
-  }
-  return "provisioned";
-};
-
-const errorText = (error: Error) =>
-  `${error.message} Reload the page to try again.`;
-
+/**
+ * One clause naming several clubs.
+ *
+ * "Photography Club" reads as a list of one and "Photography Club and Robotics
+ * Club" as a list of two; anything longer needs commas and an "and", and getting
+ * that right in three places is exactly what this is for.
+ */
 const listNames = (names: readonly string[]) => {
   if (names.length <= 1) {
     return names[0] ?? "";
@@ -162,38 +98,38 @@ const listNames = (names: readonly string[]) => {
   return `${names.slice(0, -1).join(", ")}, and ${names.at(-1)}`;
 };
 
-interface CoverageRow {
-  club: { id: string; name: string; adminUsername: string };
-  state: CoverageState;
+interface ClubAccount {
+  username: string | null;
+  banned: boolean | null;
 }
 
 interface CoverageSummary {
-  rows: CoverageRow[];
   ready: number;
+  total: number;
   gapNames: string[];
   /**
-   * Club-admin accounts whose username matches no configured club. Config
-   * drift, not a user mistake: they can sign in and then edit nothing.
+   * Club-admin accounts whose username matches no configured club. Config drift,
+   * not a user mistake: they can sign in and then edit nothing.
    */
   orphanHandles: string[];
 }
 
 /**
- * The whole roll-up in one pass over each list. Every figure on this page comes
- * out of here, so "1 of 1 clubs has an account" can never disagree with the
- * ledger printed underneath it.
+ * The roll-up in one pass over each list.
+ *
+ * Every figure on this page comes out of here, so "1 of 1 clubs has an account"
+ * can never disagree with the notices printed underneath it.
  */
 const summarizeCoverage = (
   clubs: readonly { id: string; name: string; adminUsername: string }[],
   accounts: readonly ClubAccount[]
 ): CoverageSummary => {
-  const rows: CoverageRow[] = [];
-  const gapNames: string[] = [];
   const configured = new Set(clubs.map((club) => club.adminUsername));
+  const gapNames: string[] = [];
   let ready = 0;
 
-  // Indexed by username: one lookup per club instead of a scan of every
-  // account, and the orphan pass below reuses the same key set.
+  // Indexed by username: one lookup per club instead of a scan of every account,
+  // and the orphan pass below reuses the same key set.
   const byUsername = new Map<string, ClubAccount>();
   for (const account of accounts) {
     const { username } = account;
@@ -203,9 +139,10 @@ const summarizeCoverage = (
   }
 
   for (const club of clubs) {
-    const state = coverageStateOf(byUsername.get(club.adminUsername));
-    rows.push({ club, state });
-    if (state === "provisioned") {
+    const account = byUsername.get(club.adminUsername);
+    // A banned account is not a working one: the club still cannot submit, which
+    // is the whole question this figure answers.
+    if (account && account.banned !== true) {
       ready += 1;
     } else {
       gapNames.push(club.name);
@@ -219,205 +156,120 @@ const summarizeCoverage = (
     }
   }
 
-  return { rows, ready, gapNames, orphanHandles };
+  return { gapNames, orphanHandles, ready, total: clubs.length };
 };
 
-/* --------------------------------------------------------------- panels */
+/**
+ * The sentence the roll-up leads with.
+ *
+ * Nothing while the figure is still travelling, a success only when every
+ * configured club is covered, and otherwise the named gaps - because a
+ * bare count of clubs that cannot submit is not something an administrator
+ * can act on.
+ */
+const coverageNote = (summary: CoverageSummary | null) => {
+  if (!summary) {
+    return null;
+  }
 
-const CoveragePanel = ({
-  clubs,
-  loading,
-  error,
-  summary,
-}: {
-  clubs: readonly { id: string; name: string }[];
-  loading: boolean;
-  error: Error | null;
-  summary: CoverageSummary;
-}) => {
-  const navigate = useNavigate();
-  const { rows, ready, gapNames, orphanHandles } = summary;
-
-  if (loading) {
+  if (summary.gapNames.length === 0) {
     return (
-      <Panel accent>
-        <PanelHead eyebrow="Club access" title="Account coverage" />
-        <p {...stylex.props(styles.loading)}>Loading club accounts…</p>
-      </Panel>
+      <Notice tone="success">
+        Every configured club has an administrator account, and none of them are
+        banned.
+      </Notice>
     );
   }
 
   return (
+    <Notice tone="warning">
+      {listNames(summary.gapNames)}{" "}
+      {summary.gapNames.length === 1 ? "needs" : "need"} attention before{" "}
+      {summary.gapNames.length === 1 ? "its" : "their"} editors can sign in.
+    </Notice>
+  );
+};
+
+/**
+ * The access roll-up.
+ *
+ * Loading is a sentence rather than an empty panel, because "no clubs have an
+ * administrator" and "the figure has not arrived" are different facts and the
+ * second one is what a reader would otherwise conclude from the first.
+ */
+const CoveragePanel = ({
+  clubs,
+  isLoading,
+  error,
+  summary,
+}: {
+  clubs: readonly { id: string; name: string }[];
+  isLoading: boolean;
+  error: Error | null;
+  summary: CoverageSummary | null;
+}) => {
+  const summaryNote = (
+    <div {...stylex.props(styles.noticeStack)}>
+      {coverageNote(summary)}
+
+      {summary && summary.orphanHandles.length > 0 ? (
+        <Notice tone="warning">
+          {summary.orphanHandles.length === 1
+            ? "One account matches"
+            : `${summary.orphanHandles.length} accounts match`}{" "}
+          no club in the configuration: {summary.orphanHandles.join(", ")}.{" "}
+          {summary.orphanHandles.length === 1 ? "It" : "They"} can sign in but
+          have nothing to edit.
+        </Notice>
+      ) : null}
+    </div>
+  );
+
+  return (
     <Panel accent>
       <PanelHead
+        action={
+          <CmsLink href="/admin/clubs" tone="quiet">
+            Manage club accounts
+          </CmsLink>
+        }
         eyebrow="Club access"
         note="A club can only submit content once its administrator account exists and is not banned."
         title="Account coverage"
       />
 
-      {error ? <Notice tone="danger">{errorText(error)}</Notice> : null}
+      {error ? (
+        <Notice tone="danger">
+          {error.message} Reload the page to try again.
+        </Notice>
+      ) : null}
 
-      <div {...stylex.props(styles.coverage)}>
-        <p {...stylex.props(styles.coverageValue)}>{ready}</p>
-        <p {...stylex.props(styles.coverageLabel)}>
-          of {clubs.length} {clubs.length === 1 ? "club has" : "clubs have"} a
-          working administrator account.
-        </p>
-      </div>
+      {isLoading ? (
+        <p {...stylex.props(styles.coverageLabel)}>Loading club accounts…</p>
+      ) : (
+        <div {...stylex.props(styles.coverage)}>
+          <p {...stylex.props(styles.coverageValue)}>{summary?.ready ?? 0}</p>
+          <p {...stylex.props(styles.coverageLabel)}>
+            of {summary?.total ?? clubs.length}{" "}
+            {(summary?.total ?? clubs.length) === 1 ? "club has" : "clubs have"}{" "}
+            a working administrator account.
+          </p>
+        </div>
+      )}
 
-      <div {...stylex.props(styles.noticeStack)}>
-        {gapNames.length === 0 ? (
-          <Notice tone="success">
-            Every configured club has an administrator account, and none of them
-            are banned.
-          </Notice>
-        ) : (
-          <Notice tone="warning">
-            {listNames(gapNames)} {gapNames.length === 1 ? "needs" : "need"}{" "}
-            attention before {gapNames.length === 1 ? "its" : "their"} editors
-            can sign in.
-          </Notice>
-        )}
-
-        {orphanHandles.length > 0 ? (
-          <Notice tone="warning">
-            {orphanHandles.length === 1
-              ? "One account matches"
-              : `${orphanHandles.length} accounts match`}{" "}
-            no club in the configuration: {orphanHandles.join(", ")}.{" "}
-            {orphanHandles.length === 1 ? "It" : "They"} can sign in but have
-            nothing to edit.
-          </Notice>
-        ) : null}
-      </div>
-
-      <RecordList label="Club account coverage">
-        {rows.map((row) => {
-          const state = COVERAGE_STATE[row.state];
-          const needsAccount = row.state === "missing";
-          // Always `/admin/clubs`, including for a club with no account yet: the
-          // issue-credential action there creates the account when there is none
-          // and rotates it when there is, so there is nothing a separate
-          // provisioning screen would have to add.
-          const target = "/admin/clubs";
-
-          return (
-            <RecordRow
-              actions={
-                <>
-                  <Pill tone={state.tone}>{state.label}</Pill>
-                  <CmsLink
-                    href={target}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      navigate({ to: target });
-                    }}
-                    tone="quiet"
-                  >
-                    {needsAccount ? "Create account" : "Manage"}
-                  </CmsLink>
-                </>
-              }
-              key={row.club.id}
-              meta={
-                <>
-                  <span>@{row.club.adminUsername}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{state.note}</span>
-                </>
-              }
-              name={row.club.name}
-            />
-          );
-        })}
-      </RecordList>
+      {isLoading ? null : summaryNote}
     </Panel>
   );
 };
-
-const ActivityPanel = ({
-  entries,
-  loading,
-  error,
-}: {
-  entries: readonly {
-    id: string;
-    action: string;
-    targetType: string;
-    targetId: string | null;
-    actorUsername: string | null;
-    createdAt: Date;
-  }[];
-  loading: boolean;
-  error: Error | null;
-}) => {
-  let body = (
-    <EmptyState
-      note="Rotating a password, banning an account or reviewing a submission is recorded here."
-      title="No administrative activity yet."
-    />
-  );
-
-  if (loading) {
-    body = <p {...stylex.props(styles.loading)}>Loading activity…</p>;
-  } else if (entries.length > 0) {
-    body = (
-      <RecordList label="Recent administrative activity">
-        {entries.map((entry) => {
-          const outcome = submissionOutcome(entry.action);
-
-          return (
-            <RecordRow
-              actions={
-                <>
-                  {outcome ? (
-                    <Pill tone={outcome.tone}>{outcome.label}</Pill>
-                  ) : null}
-                  <time
-                    dateTime={new Date(entry.createdAt).toISOString()}
-                    {...stylex.props(styles.timestamp)}
-                  >
-                    {formatAuditTime(entry.createdAt)}
-                  </time>
-                </>
-              }
-              key={entry.id}
-              meta={describeAuditTarget(entry)}
-              name={describeActivity(entry.action)}
-            />
-          );
-        })}
-      </RecordList>
-    );
-  }
-
-  return (
-    <Panel>
-      <PanelHead
-        eyebrow="Audit trail"
-        note="Credential rotations, bans and content decisions, newest first."
-        title="Recent administrative activity"
-      />
-
-      {error ? <Notice tone="danger">{errorText(error)}</Notice> : null}
-
-      {body}
-    </Panel>
-  );
-};
-
-/* ------------------------------------------------------------------ page */
 
 const AdminOverviewPage = () => {
-  const clubsQuery = useQuery(orpc.adminUsers.clubs.queryOptions());
-  const accountsQuery = useQuery(
-    orpc.adminUsers.list.queryOptions({ input: { pageSize: 200 } })
-  );
-  const activityQuery = useQuery(
-    orpc.adminClubs.activity.queryOptions({ input: { limit: ACTIVITY_LIMIT } })
-  );
+  const search = activitySearch.parse(Route.useSearch());
+  const writeSearch = activitySearch.write();
 
-  const clubs = clubsQuery.data ?? [];
+  const { onSearchChange, onSortingChange, onPaginationChange } =
+    useTableCallbacks({ search, writeSearch });
+
+  const clubsQuery = useQuery(orpc.adminUsers.clubs.queryOptions());
   /*
    * `.rows`, not the response: both list handlers answer with a page envelope
    * (`rows` plus `total`) because they are paginated. One page is enough here —
@@ -425,36 +277,67 @@ const AdminOverviewPage = () => {
    * screen — and an account beyond the limit would show as a club with no
    * administrator, which is the one wrong answer this page must not give.
    */
-  const accounts = accountsQuery.data?.rows ?? [];
-  const summary = summarizeCoverage(clubs, accounts);
+  const accountsQuery = useQuery(
+    orpc.adminUsers.list.queryOptions({ input: { pageSize: 200 } })
+  );
+  const activityQuery = useQuery(
+    orpc.adminClubs.activity.queryOptions({
+      input: activitySearch.toListInput(search),
+      placeholderData: keepPreviousData,
+    })
+  );
+
+  const clubs = clubsQuery.data ?? [];
+  const summary =
+    clubsQuery.isPending || accountsQuery.isPending
+      ? null
+      : summarizeCoverage(clubs, accountsQuery.data?.rows ?? []);
 
   return (
-    <div {...stylex.props(styles.wrap)}>
-      <div {...stylex.props(styles.lead)}>
-        <h1 {...stylex.props(styles.leadTitle)}>Overview</h1>
-        <p {...stylex.props(styles.leadNote)}>
-          Every club runs on exactly one administrator account. This is where
-          you see which clubs have theirs, and who last changed a credential.
-        </p>
+    <ScreenWrap>
+      <div {...stylex.props(styles.wrap)}>
+        <CoveragePanel
+          clubs={clubs}
+          error={clubsQuery.error ?? accountsQuery.error}
+          isLoading={clubsQuery.isPending || accountsQuery.isPending}
+          summary={summary}
+        />
+
+        <ActivityTable
+          emptyNote="Rotating a password, banning an account or reviewing a submission is recorded here."
+          emptyTitle="No administrative activity yet."
+          isError={activityQuery.isError}
+          isFetching={activityQuery.isFetching}
+          isLoading={activityQuery.isPending}
+          note="Every credential change, ban and content decision, newest first. Open a club to see only its own."
+          onPaginationChange={onPaginationChange}
+          onSearchChange={onSearchChange}
+          onSortingChange={onSortingChange}
+          rows={activityQuery.data?.rows ?? []}
+          search={search}
+          title="Recent administrative activity"
+          total={activityQuery.data?.total ?? 0}
+        />
       </div>
-
-      <CoveragePanel
-        clubs={clubs}
-        error={clubsQuery.error}
-        loading={clubsQuery.isPending || accountsQuery.isPending}
-        summary={summary}
-      />
-
-      <ActivityPanel
-        entries={activityQuery.data?.rows ?? []}
-        error={activityQuery.error}
-        loading={activityQuery.isPending}
-      />
-    </div>
+    </ScreenWrap>
   );
 };
 
 export const Route = createFileRoute("/admin/")({
+  validateSearch: activitySearch.routeSearch,
+  loaderDeps: ({ search }) => search,
+  loader: ({ context, deps }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(orpc.adminUsers.clubs.queryOptions()),
+      context.queryClient.ensureQueryData(
+        orpc.adminUsers.list.queryOptions({ input: { pageSize: 200 } })
+      ),
+      context.queryClient.ensureQueryData(
+        orpc.adminClubs.activity.queryOptions({
+          input: activitySearch.toListInput(activitySearch.parse(deps)),
+        })
+      ),
+    ]),
   head: () => ({
     meta: [
       { title: "Overview — Admin — St. Aloysius' College" },

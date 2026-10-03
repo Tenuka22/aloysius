@@ -9,6 +9,7 @@ import type { RouteSearch } from "@aloysius/ui/components/data-table/list-search
 import { useListSearchWriter } from "@aloysius/ui/components/data-table/use-list-search-writer";
 
 import {
+  ACTIVITY_SORT_KEYS,
   QUEUE_SORT_KEYS,
   SUBMISSION_SORT_KEYS,
   ACCOUNT_SORT_KEYS,
@@ -41,8 +42,8 @@ export interface ListSearch<TSortKey extends string> {
   size: number;
 }
 
-/** The three list kinds, and the sort key each one orders by. */
-type ListKind = "queue" | "submission" | "account";
+/** The four list kinds, and the sort key each one orders by. */
+type ListKind = "queue" | "submission" | "account" | "activity";
 
 type SortKeyFor<TKind extends ListKind> = (typeof KEYS)[TKind][number];
 
@@ -50,13 +51,32 @@ const KEYS = {
   queue: QUEUE_SORT_KEYS,
   submission: SUBMISSION_SORT_KEYS,
   account: ACCOUNT_SORT_KEYS,
+  activity: ACTIVITY_SORT_KEYS,
 } as const;
 
 const DEFAULT_SORT = {
   queue: "submittedAt",
   submission: "submittedAt",
   account: "name",
+  activity: "createdAt",
 } as const;
+
+/**
+ * What the server is asked, for a URL. The one bridge between the two.
+ *
+ * At module scope rather than inside the factory below: it reads only its own
+ * argument, so there is nothing to capture, and a copy rebuilt per list would be
+ * recreated on every call for no reason.
+ */
+const toListInput = <TSortKey extends string>(
+  search: ListSearch<TSortKey>
+) => ({
+  q: search.q || undefined,
+  sortBy: search.sort,
+  sortDirection: search.dir,
+  page: search.page,
+  pageSize: search.size,
+});
 
 /**
  * The parser for one list, parameterised by which kind it is.
@@ -117,15 +137,6 @@ export const makeListSearchParser = <TKind extends ListKind>(kind: TKind) => {
     search: Record<string, unknown>
   ): RouteSearch<ListSearch<SortKeyFor<TKind>>> => toParams(parse(search));
 
-  /** What the server is asked, for a URL. The one bridge between the two. */
-  const toListInput = (search: ListSearch<SortKeyFor<TKind>>) => ({
-    q: search.q || undefined,
-    sortBy: search.sort,
-    sortDirection: search.dir,
-    page: search.page,
-    pageSize: search.size,
-  });
-
   /**
    * The URL writer, as a hook.
    *
@@ -153,14 +164,24 @@ export const makeListSearchParser = <TKind extends ListKind>(kind: TKind) => {
 };
 
 /**
- * The three lists that exist today, each named once.
+ * The four lists that exist today, each named once.
  *
  * A surface imports its own — `queueSearch` for the pending queues, and so on —
  * and everything the surface needs (parse, route contract, server input, URL
  * writer) is on that one object. Adding a fifth list is one line here and one
  * route file there, and the parsing can never drift between them because it is
  * literally the same function.
+ *
+ * ## The activity list's direction reads backwards, on purpose
+ *
+ * `toParams` leaves `dir` off the URL when it is `desc`, which is the default the
+ * factory assumes for every list. The activity feed's *own* convention is the
+ * other way round — `activity` treats ascending as newest first for its date
+ * column, because that handler was written against a queue whose natural order is
+ * the same. So `activitySearch` writes `dir=asc` and means it: ascending is
+ * newest-first here, and that is the order an audit trail is read in.
  */
 export const queueSearch = makeListSearchParser("queue");
 export const submissionSearch = makeListSearchParser("submission");
 export const accountSearch = makeListSearchParser("account");
+export const activitySearch = makeListSearchParser("activity");
