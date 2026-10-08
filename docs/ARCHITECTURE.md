@@ -90,17 +90,19 @@ There are exactly two kinds of author in this system, and neither of them has a 
 
 **Editors** work on snapshots. When a CMS editor changes a headline, the change lands in a `content_version` row marked as a _draft_. The live page keeps showing the last _published_ snapshot. When the editor publishes, the old published row is retired and a new one is inserted. Nothing is ever overwritten, so "what was on the homepage last Tuesday" is a query rather than a reconstruction.
 
-**Club administrators** submit directly into the content table, but a submission is not content yet. The Photography Club's admin can insert a row into `club_photo`, `announcement`, `event` or `news_post`, but every row they can reach starts `status = 'pending'`, and every public read filters on `status = 'approved'`. A CMS reviewer (`admin` or `cms`) flips that status with a single `update`, which is the entire publish step — there is no separate live table a reviewer copies the row into, and no JSON proposal to hand-edit, only approve or reject with an optional note.
+**Club administrators** submit directly into one content table: `club_photo`. The Photography Club's admin can insert a row there, but a submission is not content yet - every row they can reach starts `status = 'pending'`, and the public read (`listApprovedPhotos`) filters on `status = 'approved'`. A CMS reviewer (`admin` or `cms`) flips that status with a single `update`, which is the entire publish step - there is no separate live table a reviewer copies the row into, and no JSON proposal to hand-edit, only approve or reject with an optional note, plus an optional link to a related news post, event or achievement (`club.setPhotoLink`).
+
+`announcement`, `event` and `news_post` used to follow the same submit-then-review shape, but no longer do: they are CMS-direct content now, written, edited and deleted straight by CMS staff (`packages/api/src/routers/cms/{announcements,events,news-posts}.ts`), live the instant they are saved. A club seat cannot touch them at all any more.
 
 Three separate mechanisms enforce this, deliberately overlapping:
 
-1. **The schema.** Club-submittable tables (`club_photo`, `announcement`, `event`, `news_post`) carry a `status` that starts at `pending`, plus a `*_review_fields_paired` CHECK making "approved with no reviewer" and "still pending but reviewed" both unrepresentable.
-2. **The public queries.** Every read that a visitor can reach — `listApprovedPhotos`, `listApprovedAnnouncements`, `listApprovedEvents`, `listApprovedNewsPosts` — filters on `status = 'approved'` and nothing else. There is no code path in those files that can return an unapproved row.
-3. **The review endpoints.** `review*` in `packages/api/src/routers/club/` is the only code that sets `status = 'approved'`, and it is a reviewer-only procedure (`clubReviewerProcedure`).
+1. **The schema.** `club_photo` carries a `status` that starts at `pending`, plus a `club_photo_review_fields_paired` CHECK making "approved with no reviewer" and "still pending but reviewed" both unrepresentable. `announcement`, `event` and `news_post` keep the same `status`/review-triad columns for CMS-direct rows too, but with a twist: a CMS-direct row sets `status = 'approved'` at creation with the author standing in as their own reviewer, so the CHECK holds without a separate approval step.
+2. **The public queries.** `listApprovedPhotos` (`packages/api/src/routers/club/`) filters on `status = 'approved'` and nothing else - there is no code path in that file that can return an unapproved row. `cms.listAnnouncements`/`listEvents`/`listNewsPosts` need no such filter: every row that exists is CMS-authored and already live.
+3. **The review endpoints.** `reviewPhoto` in `packages/api/src/routers/club/` is the only code that moves a photo to `status = 'approved'`, and it is a reviewer-only procedure (`clubReviewerProcedure`).
 
-The practical effect: a club's submission and a reviewer's decision are recorded as `submittedAt`/`submittedById` and `reviewedAt`/`reviewedById` on the same row, so the audit trail is in the row rather than split across a queue table and a content table. That is also why the club admin screens can be simple forms without any of them needing to understand publishing.
+The practical effect: a club's photo submission and a reviewer's decision are recorded as `submittedAt`/`submittedById` and `reviewedAt`/`reviewedById` on the same row, so the audit trail is in the row rather than split across a queue table and a content table. That is also why the photo submission screen can be a simple form without needing to understand publishing.
 
-`announcement` and `event` are shared tables: a row is either CMS-authored (written and approved by the same CMS/admin seat in one step) or club-submitted (starts `pending`, needs a separate reviewer), distinguished by nothing more than who wrote it and what `status` it starts at.
+`announcement` and `event` still carry a nullable `club` column (a leftover of the table shape, not a live feature) and the same review-triad columns `club_photo` uses - but every row reaching them today goes through the CMS-direct path, `club: null`, self-reviewed, `status = 'approved'` on insert.
 
 ## How the code is laid out
 
@@ -209,12 +211,12 @@ export const appRouter = {
 };
 ```
 
-Two loose procedures plus three routers (`cms`, `files`, `club`) and one plain object (`admin`), 86 procedures total:
+Two loose procedures plus three routers (`cms`, `files`, `club`) and one plain object (`admin`), 82 procedures total:
 
 | Router | Procedures | What it's for |
 | --- | --- | --- |
-| `cms` | 55 | the block editor: read, save draft, publish, watch, history |
-| `club` | 24 | six endpoints per content type — `submit*`/`listMy*`/`withdraw*`/`listPending*`/`review*`/`listApproved*` — across four flat content types: photo, announcement, event, news post |
+| `cms` | 68 | the block editor (read, save draft, publish, watch, history) plus direct list/create/update/delete for announcements, events and news posts, and a read-only achievements list for the photo link picker |
+| `club` | 7 | photo submissions only: `submitPhoto`/`listMyPhotos`/`withdrawPhoto`/`listPendingPhotos`/`reviewPhoto`/`setPhotoLink`/`listApprovedPhotos` |
 | `files` | 5 | issue an upload path, confirm, resolve URLs, list, delete |
 | `admin` | 2 | list the seeded club seats, reset a seat's password |
 
@@ -263,13 +265,13 @@ Two tables hold school-only content and have no club-submission path: `person` a
 
 ## Clubs, societies and sports
 
-There is no club registry table, no club profile, no cover banner, and no membership model. "Club" is a hardcoded slug list (`CLUBS` in `schema/club-photos.ts`; today just `"photography"`), enforced as a `CHECK` on the `club` column of every club-submittable table.
+There is no club registry table, no club profile, no cover banner, and no membership model. "Club" is a hardcoded slug list (`CLUBS` in `schema/clubs.ts`, re-exported from `schema/club-photos.ts` for the tables that imported it from there before; today just `"photography"`), enforced as a `CHECK` on the `club` column of the one table it still constrains: `club_photo`.
 
 **The identity model is unusual and deliberate.** The one club seat's Better Auth username is the slug plus `-admin` — `photography-admin` — with the `club-admin` role. There is no username-to-club lookup: the `club` value on a submission is a field in the request body, validated against `CLUBS` and gated by the `club:submit` permission, which only the `club-admin` role grants.
 
-A club submits four independent content types — photo (`club_photo`), announcement, event, news post (`news_post`) — each with its own submit/list-my/withdraw/review/list-pending/list-approved set of endpoints in `packages/api/src/routers/club/`. There is no gallery concept, no image-role system, no gallery-link graph, and no per-club profile screen. A photo submission is a single row (file, caption, alt text, optional off-site album URL); there is no cover/banner/trending distinction and no five-item homepage cap.
+A club submits exactly one content type: photo (`club_photo`), with its own submit/list-my/withdraw/review/list-pending/list-approved set of endpoints in `packages/api/src/routers/club/`. Announcement, event and news post used to be club-submittable alongside it; they are CMS-direct content now (`packages/api/src/routers/cms/{announcements,events,news-posts}.ts`), outside the club model entirely. There is no gallery concept, no image-role system, no gallery-link graph, and no per-club profile screen. A photo submission is a single row (file, caption, alt text, optional off-site album URL, optional link to a related news post/event/achievement); there is no cover/banner/trending distinction and no five-item homepage cap.
 
-**Approved content is public.** Each content type's `listApproved*` procedure is a `publicProcedure` with no per-viewer check: a row only exists to find once a reviewer has approved it, so the approval _is_ the access control. The public gallery for a club lives at `/galleries/:slug`, and the club's own page at `/photography-club` — both static routes, not derived from a registry.
+**Approved photos are public.** `listApprovedPhotos` is a `publicProcedure` with no per-viewer check: a row only exists to find once a reviewer has approved it, so the approval _is_ the access control. The public gallery for a club lives at `/galleries/:slug`, and the club's own page at `/photography-club`, both static routes, not derived from a registry. Announcements and events on those same pages now come from `cms.listAnnouncements`/`cms.listEvents`, which need no such gate: every row that exists is already CMS-authored and live.
 
 **Sports do not exist in this system.** Not as a table, not as a schema, not as an API, not as an editable field. There are hardcoded strings in a component that no route currently mounts, and a jump link on the students page pointing at a section that does not render.
 
@@ -352,11 +354,13 @@ Because the only HTML in the system comes from that editor, it still gets saniti
 
 Covered in full in the [club deep dive](./CLUB_SOCIETIES_POSTS.md) and `specs/CLUB-ARCHITECTURE`; the shape in one paragraph:
 
-Twenty-four endpoints, six per content type (photo, announcement, event, news post): `submit*` inserts a `pending` row directly into that type's content table; `listMy*` and `withdraw*` are the submitter's own view and undo; `listPending*` and `review*` are the reviewer's queue and decision; `listApproved*` is the public read. There is no separate queue table, no JSON payload, and no applier module — the content row and the submission are the same row.
+Seven endpoints, all for one content type (photo): `submitPhoto` inserts a `pending` row directly into `club_photo`; `listMyPhotos` and `withdrawPhoto` are the submitter's own view and undo; `listPendingPhotos` and `reviewPhoto` are the reviewer's queue and decision; `listApprovedPhotos` is the public read; `setPhotoLink` attaches (or clears) an optional link from an approved or pending photo to a related news post, event or achievement. There is no separate queue table, no JSON payload, and no applier module — the content row and the submission are the same row.
 
-A club admin can only submit for their own club (the `club` field, checked against the hardcoded `CLUBS` list) and only the four content types the router exposes. There is no gallery, no achievement, and no profile for a club to touch.
+Announcement, event and news post used to follow this same shape. They don't any more: they are CMS-direct content (`packages/api/src/routers/cms/{announcements,events,news-posts}.ts`), written straight by CMS staff with no submit/review step. See [The CMS](#the-cms) above.
 
-Review is a single `update` setting `status`, `reviewedById` and `reviewedAt` together — the same statement, so the `*_review_fields_paired` CHECK on every table can never be tripped by a partial write. There is no JSON to hand-edit: a reviewer approves or rejects the row exactly as submitted, with an optional `reviewNote` on rejection. Withdrawal deletes a still-`pending` row scoped to its own submitter; once reviewed, the row (and its `reviewNote`) is the record worth keeping, so withdrawal is refused.
+A club admin can only submit for their own club (the `club` field, checked against the hardcoded `CLUBS` list) and only the one content type the router exposes: photos. There is no gallery, no achievement, and no profile for a club to touch - though a CMS reviewer can now link one of the club's photos to an existing achievement, see above.
+
+Review is a single `update` setting `status`, `reviewedById` and `reviewedAt` together — the same statement, so the `club_photo_review_fields_paired` CHECK can never be tripped by a partial write. There is no JSON to hand-edit: a reviewer approves or rejects the row exactly as submitted, with an optional `reviewNote` on rejection. Withdrawal deletes a still-`pending` row scoped to its own submitter; once reviewed, the row (and its `reviewNote`) is the record worth keeping, so withdrawal is refused.
 
 ## Accounts and roles
 
@@ -589,7 +593,9 @@ A map for when you know what you want and need to find it.
 | Looking for | Go to |
 | --- | --- |
 | Every table, column, index, constraint | `packages/db/src/schema/` — one file per domain |
-| The four club-submittable content tables | `packages/db/src/schema/club-photos.ts`, `announcements.ts`, `root-content.ts` (`event`), `news-posts.ts` |
+| The club-submittable photo table | `packages/db/src/schema/club-photos.ts` (also the home of the shared `CLUBS` re-export; the constant itself lives in `clubs.ts`) |
+| CMS-direct announcement/event/news post tables | `packages/db/src/schema/announcements.ts`, `root-content.ts` (`event`), `news-posts.ts` |
+| CMS-direct announcement/event/news post write endpoints | `packages/api/src/routers/cms/{announcements,events,news-posts}.ts` |
 | Shared field formats | `packages/db/src/schema/primitives.ts` |
 | How ids are branded | `packages/db/src/schema/brand.ts` |
 | Migration history | `packages/db/src/migrations/` |

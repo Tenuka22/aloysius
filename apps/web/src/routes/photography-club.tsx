@@ -7,7 +7,7 @@ import type {
 import { ClubPage } from "@aloysius/ui/components/pages/club-page";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
 import { orpc } from "@/utils/orpc";
@@ -37,11 +37,9 @@ const PhotographyClubContent = () => {
   const { data: photos } = useSuspenseQuery(
     orpc.club.listApprovedPhotos.queryOptions({ input: { club: CLUB } })
   );
-  const { data: events } = useSuspenseQuery(
-    orpc.club.listApprovedEvents.queryOptions({ input: { club: CLUB } })
-  );
+  const { data: events } = useSuspenseQuery(orpc.cms.listEvents.queryOptions());
   const { data: announcements } = useSuspenseQuery(
-    orpc.club.listApprovedAnnouncements.queryOptions({ input: { club: CLUB } })
+    orpc.cms.listAnnouncements.queryOptions()
   );
   const { data: session } = authClient.useSession();
 
@@ -61,6 +59,13 @@ const PhotographyClubContent = () => {
   })();
 
   const albumUrl = photos.find((photo) => photo.albumUrl)?.albumUrl ?? null;
+  const linkedTitles = [
+    ...new Set(
+      photos.flatMap((photo) =>
+        photo.linkedContent ? [photo.linkedContent.title] : []
+      )
+    ),
+  ];
   const galleries: ClubPageGallery[] =
     photos.length === 0
       ? []
@@ -70,20 +75,34 @@ const PhotographyClubContent = () => {
             albumUrl,
             id: CLUB,
             slug: CLUB,
-            summary: `${photos.length} approved photograph${photos.length === 1 ? "" : "s"}.`,
+            summary: `${photos.length} approved photograph${photos.length === 1 ? "" : "s"}.${
+              linkedTitles.length > 0
+                ? ` Related: ${linkedTitles.join(", ")}.`
+                : ""
+            }`,
             title: `${CLUB_NAME} Gallery`,
           },
         ];
 
-  const pageEvents: ClubPageEvent[] = events.map((event) => ({
-    coverImageUrl: event.coverImageUrl,
-    description: event.description,
-    endsAt: event.endsAt,
-    id: event.id,
-    location: event.location,
-    startsAt: event.startsAt,
-    title: event.title,
-  }));
+  // Read once per mount, not on every render - a `useState` lazy
+  // initializer is the one place calling `Date.now()` is safe.
+  const [now, setNow] = useState(() => Date.now());
+  void setNow;
+  const pageEvents: ClubPageEvent[] = [];
+  for (const event of events) {
+    if (new Date(event.startsAt).getTime() < now) {
+      continue;
+    }
+    pageEvents.push({
+      coverImageUrl: event.coverImageUrl,
+      description: event.description,
+      endsAt: event.endsAt,
+      id: event.id,
+      location: event.location,
+      startsAt: event.startsAt,
+      title: event.title,
+    });
+  }
 
   const pageAnnouncements: ClubPageAnnouncement[] = announcements.map(
     (announcement) => ({

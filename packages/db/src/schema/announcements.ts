@@ -13,7 +13,7 @@ import * as v from "valibot";
 import { user } from "./auth";
 import { brand } from "./brand";
 import type { Brand } from "./brand";
-import { CLUBS, clubSlugSchema } from "./club-photos";
+import { CLUBS, clubSlugSchema } from "./clubs";
 import { files } from "./files";
 
 /** `column in ('a', 'b')` for a CHECK. Values are code constants, never input. */
@@ -53,22 +53,22 @@ export type AnnouncementStatus = (typeof ANNOUNCEMENT_STATUSES)[number];
 /**
  * A school-wide announcement.
  *
- * Authored either by the CMS directly (`authorId` is a CMS/admin seat, row
- * starts `approved`-equivalent via the CMS publish flow) or submitted by a
- * club seat through `club.submitAnnouncement`, in which case `authorId` is
- * the submitting seat and `status` starts `pending` until a CMS reviewer
- * (`club.reviewAnnouncement`) approves it. `announcement_review_fields_paired`
- * makes "approved with no reviewer" and "still pending but reviewed" both
- * unrepresentable, same shape as `club_photo`.
+ * Authored directly by CMS staff (`cms.createAnnouncement`) - `authorId` is
+ * the CMS/admin seat that wrote it, and it goes live immediately, standing
+ * in as its own reviewer (`reviewedById` = `authorId`) so the existing
+ * `announcement_review_fields_paired` CHECK still holds without a separate
+ * approval step. `club` is `null` for these rows - there is no submitting
+ * club to attribute them to any more; announcements are CMS-managed
+ * content, not a club submission queue.
  */
 export const announcement = sqliteTable(
   "announcement",
   {
     id: text("id").primaryKey(),
 
-    /** Which club submitted this announcement. Same one-club-per-seat model
-     * as `club_photo` - see `club-photos.ts`. */
-    club: text("club").notNull(),
+    /** Which club this announcement is attributed to, if any. `null` for
+     * the normal case: CMS-authored, site-wide content. */
+    club: text("club"),
 
     slug: text("slug").notNull().unique(),
 
@@ -138,7 +138,10 @@ export const announcement = sqliteTable(
       "announcement_window_ordered",
       sql`${table.expiresAt} is null or ${table.effectiveFrom} is null or ${table.expiresAt} > ${table.effectiveFrom}`
     ),
-    check("announcement_club_check", sqlInList(table.club, CLUBS)),
+    check(
+      "announcement_club_check",
+      sql`${table.club} is null or ${sqlInList(table.club, CLUBS)}`
+    ),
     check(
       "announcement_status_check",
       sqlInList(table.status, ANNOUNCEMENT_STATUSES)
@@ -153,7 +156,7 @@ export const announcement = sqliteTable(
 
 export const announcementSelectSchema = createSelectSchema(announcement, {
   id: () => announcementIdSchema,
-  club: () => clubSlugSchema,
+  club: () => v.optional(v.nullable(clubSlugSchema)),
   audience: () => v.picklist(ANNOUNCEMENT_AUDIENCES),
   severity: () => v.picklist(ANNOUNCEMENT_SEVERITIES),
   status: () => v.picklist(ANNOUNCEMENT_STATUSES),
@@ -162,7 +165,7 @@ export const announcementSelectSchema = createSelectSchema(announcement, {
 });
 export const announcementInsertSchema = createInsertSchema(announcement, {
   id: () => announcementIdSchema,
-  club: () => clubSlugSchema,
+  club: () => v.optional(v.nullable(clubSlugSchema)),
   slug: () => v.pipe(v.string(), v.minLength(1)),
   title: () => v.pipe(v.string(), v.minLength(1)),
   body: () => v.pipe(v.string(), v.minLength(1)),

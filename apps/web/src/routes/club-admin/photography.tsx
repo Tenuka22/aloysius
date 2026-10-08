@@ -25,13 +25,15 @@ import { client } from "@/utils/orpc";
  * route could never make: that this address is reachable by nobody except
  * this club's own administrator.
  *
- * Four sections, flat: submit photos, announcements, events and news posts
- * straight into their own review queues (`@aloysius/api`'s `club` router -
- * `submitPhoto`/`submitAnnouncement`/`submitEvent`/`submitNewsPost` and their
- * `listMy*`/`withdraw*` counterparts). There is no combined "my submissions"
- * queue and no club-profile editor here any more - each content type owns
- * its own screen and its own queue, the same shape the CMS review side
- * (`cms/clubs/$scope`) already reads.
+ * One section: submit photos straight into the review queue (`@aloysius/api`'s
+ * `club` router - `submitPhoto` and its `listMyPhotos`/`withdrawPhoto`
+ * counterparts). Announcements, events and news posts are no longer
+ * club-submitted content - they're created directly by the CMS
+ * (`cms.createAnnouncement`/`createEvent`/`createNewsPost`), so this
+ * club-admin workspace has nothing left to do for them. There is no
+ * combined "my submissions" queue and no club-profile editor here any
+ * more - photos own their own screen and their own queue, the same shape
+ * the CMS review side (`cms/club-photos`) already reads.
  */
 const CLUB_ADMIN_USERNAME = "photography-admin";
 
@@ -39,9 +41,6 @@ const BASE = "/club-admin/photography";
 
 const BASE_NAV_ITEMS = [
   { num: "01", label: "Photos", href: `${BASE}/photos` },
-  { num: "02", label: "Announcements", href: `${BASE}/announcements` },
-  { num: "03", label: "Events", href: `${BASE}/events` },
-  { num: "04", label: "News", href: `${BASE}/news` },
 ] as const;
 
 const PhotographyClubLayout = () => {

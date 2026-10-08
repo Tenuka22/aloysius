@@ -46,7 +46,13 @@ const ClubGallery = ({
 
   const items: GalleryPageItem[] = photos.map((photo) => ({
     alt: photo.altText,
-    caption: photo.caption,
+    caption:
+      [
+        photo.caption,
+        photo.linkedContent ? `Related: ${photo.linkedContent.title}` : null,
+      ]
+        .filter((part): part is string => Boolean(part))
+        .join(" — ") || null,
     id: photo.id,
     imageUrl: photo.imageUrl,
   }));

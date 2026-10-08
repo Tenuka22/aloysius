@@ -17,7 +17,13 @@ import * as v from "valibot";
 import { user } from "./auth";
 import { brand } from "./brand";
 import type { Brand } from "./brand";
+import { CLUBS, clubSlugSchema } from "./clubs";
 import { fileIdSchema, files } from "./files";
+import { newsPost } from "./news-posts";
+import { achievement, event } from "./root-content";
+
+export { CLUBS, clubSlugSchema } from "./clubs";
+export type { ClubSlug } from "./clubs";
 
 /** `column in ('a', 'b')` for a CHECK. Values are code constants, never input. */
 const sqlInList = (column: SQLWrapper, values: readonly string[]): SQL =>
@@ -29,24 +35,16 @@ export const clubPhotoIdSchema = v.pipe(
   brand<string, "ClubPhotoId">()
 );
 
-/**
- * The clubs this register currently serves. One hardcoded slug rather than a
- * membership table: `photography-admin` is a single seeded seat
- * (`packages/auth/src/roles.ts`), and a club here means "one administrator
- * identity with a `club:submit` grant", not a roster of members. Adding a
- * second club is adding a second slug plus a second seeded seat, not a
- * schema change.
- */
-export const CLUBS = ["photography"] as const;
-export type ClubSlug = (typeof CLUBS)[number];
-export const clubSlugSchema = v.picklist(CLUBS);
-
 export const clubPhotoStatusSchema = v.picklist([
   "pending",
   "approved",
   "rejected",
 ]);
 export type ClubPhotoStatus = v.InferOutput<typeof clubPhotoStatusSchema>;
+
+export const CLUB_PHOTO_LINK_KINDS = ["news", "event", "achievement"] as const;
+export type ClubPhotoLinkKind = (typeof CLUB_PHOTO_LINK_KINDS)[number];
+export const clubPhotoLinkKindSchema = v.picklist(CLUB_PHOTO_LINK_KINDS);
 
 /**
  * One row per photo a club submits for the public gallery.
@@ -93,6 +91,29 @@ export const clubPhoto = sqliteTable(
     }),
     reviewedAt: integer("reviewed_at", { mode: "timestamp_ms" }),
     reviewNote: text("review_note"),
+
+    /**
+     * An optional tie to one piece of related content a CMS reviewer can
+     * attach while managing the photo - "this gallery is from the Science
+     * Fair" (an event), "...is the cover shot for this article" (a news
+     * post), or "...documents this achievement". At most one of the three
+     * id columns is set, matching `linkedKind`; `club_photo_linked_fields_paired`
+     * makes any other combination unrepresentable. All three default to
+     * unlinked - most photos relate to nothing in particular, and the public
+     * gallery view falls back to a plain gallery with no related-content
+     * block when that is the case.
+     */
+    linkedKind: text("linked_kind").$type<ClubPhotoLinkKind>(),
+    linkedNewsId: text("linked_news_id").references(() => newsPost.id, {
+      onDelete: "set null",
+    }),
+    linkedEventId: text("linked_event_id").references(() => event.id, {
+      onDelete: "set null",
+    }),
+    linkedAchievementId: text("linked_achievement_id").references(
+      () => achievement.id,
+      { onDelete: "set null" }
+    ),
   },
   (table) => [
     index("club_photo_club_status_idx").on(table.club, table.status),
@@ -111,6 +132,17 @@ export const clubPhoto = sqliteTable(
     check(
       "club_photo_album_url_http",
       sql`${table.albumUrl} is null or ${table.albumUrl} like 'http://%' or ${table.albumUrl} like 'https://%'`
+    ),
+    check(
+      "club_photo_linked_kind_check",
+      sql`${table.linkedKind} is null or ${sqlInList(table.linkedKind, CLUB_PHOTO_LINK_KINDS)}`
+    ),
+    check(
+      "club_photo_linked_fields_paired",
+      sql`(${table.linkedKind} is null and ${table.linkedNewsId} is null and ${table.linkedEventId} is null and ${table.linkedAchievementId} is null)
+          or (${table.linkedKind} = 'news' and ${table.linkedNewsId} is not null and ${table.linkedEventId} is null and ${table.linkedAchievementId} is null)
+          or (${table.linkedKind} = 'event' and ${table.linkedEventId} is not null and ${table.linkedNewsId} is null and ${table.linkedAchievementId} is null)
+          or (${table.linkedKind} = 'achievement' and ${table.linkedAchievementId} is not null and ${table.linkedNewsId} is null and ${table.linkedEventId} is null)`
     ),
   ]
 );
@@ -136,6 +168,10 @@ const clubPhotoColumnRefinements = {
   reviewedById: () => v.optional(v.nullable(v.string())),
   reviewNote: () =>
     v.optional(v.nullable(v.pipe(v.string(), v.maxLength(1000)))),
+  linkedKind: () => v.optional(v.nullable(clubPhotoLinkKindSchema)),
+  linkedNewsId: () => v.optional(v.nullable(v.string())),
+  linkedEventId: () => v.optional(v.nullable(v.string())),
+  linkedAchievementId: () => v.optional(v.nullable(v.string())),
 };
 
 export const clubPhotoSelectSchema = createSelectSchema(

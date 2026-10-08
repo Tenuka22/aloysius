@@ -44,7 +44,7 @@ const CmsLayout = () => {
       num: "05",
       label: "News Editor",
       href: "/cms/news",
-      active: pathname.startsWith("/cms/news"),
+      active: pathname === "/cms/news",
     },
     {
       num: "06",
@@ -84,21 +84,21 @@ const CmsLayout = () => {
     },
     {
       num: "12",
-      label: "Club Announcement Review",
-      href: "/cms/club-announcements",
-      active: pathname.startsWith("/cms/club-announcements"),
+      label: "Announcements",
+      href: "/cms/announcements",
+      active: pathname.startsWith("/cms/announcements"),
     },
     {
       num: "13",
-      label: "Club Event Review",
-      href: "/cms/club-events",
-      active: pathname.startsWith("/cms/club-events"),
+      label: "Events",
+      href: "/cms/events",
+      active: pathname.startsWith("/cms/events"),
     },
     {
       num: "14",
-      label: "Club News Review",
-      href: "/cms/club-news",
-      active: pathname.startsWith("/cms/club-news"),
+      label: "News Articles",
+      href: "/cms/news-posts",
+      active: pathname.startsWith("/cms/news-posts"),
     },
   ];
 

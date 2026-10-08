@@ -5,6 +5,20 @@ import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 
 import { cmsProcedure, protectedProcedure, publicProcedure } from "../../index";
+import { listAchievements } from "./achievements";
+import {
+  createAnnouncement,
+  deleteAnnouncement,
+  listAnnouncements,
+  updateAnnouncement,
+} from "./announcements";
+import { createEvent, deleteEvent, listEvents, updateEvent } from "./events";
+import {
+  createNewsPost,
+  deleteNewsPost,
+  listNewsPosts,
+  updateNewsPost,
+} from "./news-posts";
 import { cmsPublisher } from "./publisher";
 
 export interface CmsHomepageEvent {
@@ -1168,4 +1182,23 @@ export const cmsRouter = {
     });
     return { success: true, publishedIds };
   }),
+
+  // Announcements, events and news posts: CMS-authored directly, no draft
+  // state and no club review queue - see each router file for why.
+  listAnnouncements,
+  createAnnouncement,
+  updateAnnouncement,
+  deleteAnnouncement,
+
+  listEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+
+  listNewsPosts,
+  createNewsPost,
+  updateNewsPost,
+  deleteNewsPost,
+
+  listAchievements,
 };

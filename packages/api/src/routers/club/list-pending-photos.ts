@@ -20,6 +20,10 @@ export const listPendingPhotos = clubReviewerProcedure.handler(
         albumUrl: clubPhoto.albumUrl,
         submittedById: clubPhoto.submittedById,
         submittedAt: clubPhoto.submittedAt,
+        linkedKind: clubPhoto.linkedKind,
+        linkedNewsId: clubPhoto.linkedNewsId,
+        linkedEventId: clubPhoto.linkedEventId,
+        linkedAchievementId: clubPhoto.linkedAchievementId,
       })
       .from(clubPhoto)
       .where(eq(clubPhoto.status, "pending"))

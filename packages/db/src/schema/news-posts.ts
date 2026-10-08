@@ -17,7 +17,7 @@ import * as v from "valibot";
 import { user } from "./auth";
 import { brand } from "./brand";
 import type { Brand } from "./brand";
-import { CLUBS, clubSlugSchema } from "./club-photos";
+import { CLUBS, clubSlugSchema } from "./clubs";
 import { fileIdSchema, files } from "./files";
 
 /** `column in ('a', 'b')` for a CHECK. Values are code constants, never input. */
@@ -45,15 +45,16 @@ export type NewsPostStatus = (typeof NEWS_POST_STATUSES)[number];
 /**
  * A longer-form news article, as distinct from `announcement` (a short
  * banner) — title, summary, body and an optional cover image, the shape
- * `/news` actually renders. Same submit→review model as `club_photo` and
- * `announcement`: a row starts `pending`, and only `listApprovedNewsPosts`
- * (the public query) ever selects `approved`.
+ * `/news` actually renders. CMS-authored directly via `cms.createNewsPost`
+ * and goes live immediately, standing in as its own reviewer the same way
+ * `announcement` does. `club` is `null` for these rows - there is no
+ * submitting club to attribute them to any more.
  */
 export const newsPost = sqliteTable(
   "news_post",
   {
     id: text("id").primaryKey(),
-    club: text("club").notNull(),
+    club: text("club"),
     slug: text("slug").notNull().unique(),
     title: text("title").notNull(),
     summary: text("summary"),
@@ -84,7 +85,10 @@ export const newsPost = sqliteTable(
     index("news_post_club_status_idx").on(table.club, table.status),
     index("news_post_published_idx").on(table.publishedAt),
     index("news_post_submitted_by_idx").on(table.submittedById),
-    check("news_post_club_check", sqlInList(table.club, CLUBS)),
+    check(
+      "news_post_club_check",
+      sql`${table.club} is null or ${sqlInList(table.club, CLUBS)}`
+    ),
     check(
       "news_post_status_check",
       sqlInList(table.status, NEWS_POST_STATUSES)
@@ -103,7 +107,7 @@ export const newsPost = sqliteTable(
 
 const newsPostColumnRefinements = {
   id: () => newsPostIdSchema,
-  club: () => clubSlugSchema,
+  club: () => v.optional(v.nullable(clubSlugSchema)),
   slug: () => v.pipe(v.string(), v.minLength(1)),
   title: () => v.pipe(v.string(), v.minLength(1), v.maxLength(200)),
   summary: () => v.optional(v.nullable(v.pipe(v.string(), v.maxLength(400)))),

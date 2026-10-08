@@ -101,7 +101,7 @@ Keys are not passed through any normalization helper (there is no `normalizeStor
 
 ### Schema tables
 
-Thirteen tables across nine schema files (two of which, `brand.ts` and `primitives.ts`, define no tables). Grouped by what they are for:
+Thirteen tables across ten schema files (three of which, `brand.ts`, `primitives.ts` and `clubs.ts`, define no tables - `clubs.ts` just holds the shared `CLUBS` constant). Grouped by what they are for:
 
 | Group | Tables | Files |
 | --- | --- | --- |
@@ -109,8 +109,8 @@ Thirteen tables across nine schema files (two of which, `brand.ts` and `primitiv
 | Assets | `files` | `schema/files.ts` |
 | CMS | `content_version` | `schema/cms.ts` |
 | School-wide-only content (no public caller today) | `person`, `achievement` | `schema/root-content.ts` |
-| Shared school/club content (`club` column distinguishes; `status` gates club-submitted rows) | `announcement`, `event` | `schema/announcements.ts`, `schema/root-content.ts` |
-| Club-only content | `club_photo`, `news_post` | `schema/club-photos.ts`, `schema/news-posts.ts` |
+| CMS-direct content (`status` gates the row, but every row today is CMS-authored and starts `approved`; `club` is a nullable leftover column, unused) | `announcement`, `event`, `news_post` | `schema/announcements.ts`, `schema/root-content.ts`, `schema/news-posts.ts` |
+| Club-submitted content | `club_photo` | `schema/club-photos.ts` |
 
 Every id is a branded type (`Brand<string, "XId">`) rather than `string`, and every content table's public visibility is gated on a `publishedAt` timestamp or a `status` column. For what each table is for, see the "Data" section of [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 

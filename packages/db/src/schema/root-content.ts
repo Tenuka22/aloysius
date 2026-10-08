@@ -14,7 +14,7 @@ import * as v from "valibot";
 import { user } from "./auth";
 import { brand } from "./brand";
 import type { Brand } from "./brand";
-import { CLUBS, clubSlugSchema } from "./club-photos";
+import { CLUBS, clubSlugSchema } from "./clubs";
 import { files } from "./files";
 
 export type PersonId = Brand<string, "PersonId">;
@@ -65,8 +65,10 @@ export const event = sqliteTable(
   "event",
   {
     id: text("id").primaryKey(),
-    /** Which club submitted this event. Same model as `club_photo`/`announcement`. */
-    club: text("club").notNull(),
+    /** Which club this event is attributed to, if any. `null` for the
+     * normal case: CMS-authored directly via `cms.createEvent`, standing in
+     * as its own reviewer the same way `announcement` does. */
+    club: text("club"),
     slug: text("slug").notNull().unique(),
     title: text("title").notNull(),
     description: text("description"),
@@ -93,7 +95,10 @@ export const event = sqliteTable(
   (table) => [
     index("event_published_starts_idx").on(table.publishedAt, table.startsAt),
     index("event_club_status_idx").on(table.club, table.status),
-    check("event_club_check", sqlInList(table.club, CLUBS)),
+    check(
+      "event_club_check",
+      sql`${table.club} is null or ${sqlInList(table.club, CLUBS)}`
+    ),
     check("event_status_check", sqlInList(table.status, EVENT_STATUSES)),
     check(
       "event_review_fields_paired",
@@ -135,14 +140,14 @@ export const personInsertSchema = createInsertSchema(person, {
 });
 export const eventSelectSchema = createSelectSchema(event, {
   id: () => eventIdSchema,
-  club: () => clubSlugSchema,
+  club: () => v.optional(v.nullable(clubSlugSchema)),
   status: () => v.picklist(EVENT_STATUSES),
   reviewNote: () =>
     v.optional(v.nullable(v.pipe(v.string(), v.maxLength(1000)))),
 });
 export const eventInsertSchema = createInsertSchema(event, {
   id: () => eventIdSchema,
-  club: () => clubSlugSchema,
+  club: () => v.optional(v.nullable(clubSlugSchema)),
   slug: () => v.pipe(v.string(), v.minLength(1)),
   title: () => v.pipe(v.string(), v.minLength(1)),
   startsAt: () => v.date(),

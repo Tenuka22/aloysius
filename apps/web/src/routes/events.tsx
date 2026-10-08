@@ -5,7 +5,7 @@ import type {
 import { EventsPage } from "@aloysius/ui/components/pages/events-page";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
 import { orpc } from "@/utils/orpc";
@@ -27,9 +27,7 @@ const CLUB_NAME = "Photography Club" as const;
 const NO_ACHIEVEMENTS: readonly EventPageAchievement[] = [];
 
 const EventsContent = () => {
-  const { data: events } = useSuspenseQuery(
-    orpc.club.listApprovedEvents.queryOptions({ input: { club: CLUB } })
-  );
+  const { data: events } = useSuspenseQuery(orpc.cms.listEvents.queryOptions());
   const { data: session } = authClient.useSession();
 
   const extraNavItems = (() => {
@@ -47,18 +45,28 @@ const EventsContent = () => {
     return items;
   })();
 
-  const pageEvents: EventPageEvent[] = events.map((event) => ({
-    clubName: CLUB_NAME,
-    clubSlug: CLUB,
-    coverImageUrl: event.coverImageUrl,
-    description: event.description,
-    endsAt: event.endsAt,
-    galleries: [],
-    id: event.id,
-    location: event.location,
-    startsAt: event.startsAt,
-    title: event.title,
-  }));
+  // Read once per mount, not on every render - a `useState` lazy
+  // initializer is the one place calling `Date.now()` is safe.
+  const [now, setNow] = useState(() => Date.now());
+  void setNow;
+  const pageEvents: EventPageEvent[] = [];
+  for (const event of events) {
+    if (new Date(event.startsAt).getTime() < now) {
+      continue;
+    }
+    pageEvents.push({
+      clubName: CLUB_NAME,
+      clubSlug: CLUB,
+      coverImageUrl: event.coverImageUrl,
+      description: event.description,
+      endsAt: event.endsAt,
+      galleries: [],
+      id: event.id,
+      location: event.location,
+      startsAt: event.startsAt,
+      title: event.title,
+    });
+  }
 
   return (
     <EventsPage
