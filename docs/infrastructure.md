@@ -101,18 +101,16 @@ Keys are not passed through any normalization helper (there is no `normalizeStor
 
 ### Schema tables
 
-Twenty-four tables across twelve schema files. Grouped by what they are for:
+Thirteen tables across nine schema files (two of which, `brand.ts` and `primitives.ts`, define no tables). Grouped by what they are for:
 
 | Group | Tables | Files |
 | --- | --- | --- |
-| Identity | `user`, `session`, `account`, `verification` | `schema/auth.ts` |
+| Identity and account audit | `user`, `session`, `account`, `verification`, `account_audit_log` | `schema/auth.ts` |
 | Assets | `files` | `schema/files.ts` |
 | CMS | `content_version` | `schema/cms.ts` |
-| Audit | `admin_activity` | `schema/activity.ts` |
-| School-wide content | `announcement`, `person`, `event`, `achievement` | `schema/announcements.ts`, `schema/root-content.ts` |
-| Club registry and content | `club`, `club_event`, `club_announcement`, `club_achievement` | `schema/clubs.ts`, `schema/clubContent.ts` |
-| Galleries | `gallery`, `photo_gallery`, `art_gallery`, `digital_gallery`, `gallery_item`, `gallery_link` | `schema/gallery.ts` |
-| Review queues | `global_content_submission`, `club_content_submission` | `schema/approvals.ts` |
+| School-wide-only content (no public caller today) | `person`, `achievement` | `schema/root-content.ts` |
+| Shared school/club content (`club` column distinguishes; `status` gates club-submitted rows) | `announcement`, `event` | `schema/announcements.ts`, `schema/root-content.ts` |
+| Club-only content | `club_photo`, `news_post` | `schema/club-photos.ts`, `schema/news-posts.ts` |
 
 Every id is a branded type (`Brand<string, "XId">`) rather than `string`, and every content table's public visibility is gated on a `publishedAt` timestamp or a `status` column. For what each table is for, see the "Data" section of [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 

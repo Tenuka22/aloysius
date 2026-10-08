@@ -78,9 +78,27 @@ const CmsLayout = () => {
     },
     {
       num: "11",
-      label: "Clubs",
-      href: "/cms/clubs",
-      active: pathname.startsWith("/cms/clubs"),
+      label: "Club Photo Review",
+      href: "/cms/club-photos",
+      active: pathname.startsWith("/cms/club-photos"),
+    },
+    {
+      num: "12",
+      label: "Club Announcement Review",
+      href: "/cms/club-announcements",
+      active: pathname.startsWith("/cms/club-announcements"),
+    },
+    {
+      num: "13",
+      label: "Club Event Review",
+      href: "/cms/club-events",
+      active: pathname.startsWith("/cms/club-events"),
+    },
+    {
+      num: "14",
+      label: "Club News Review",
+      href: "/cms/club-news",
+      active: pathname.startsWith("/cms/club-news"),
     },
   ];
 

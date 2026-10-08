@@ -1,3 +1,9 @@
+import type {
+  ClubPageAchievement,
+  ClubPageAnnouncement,
+  ClubPageEvent,
+  ClubPageGallery,
+} from "@aloysius/ui/components/pages/club-page";
 import { ClubPage } from "@aloysius/ui/components/pages/club-page";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -11,21 +17,31 @@ import { orpc } from "@/utils/orpc";
  *
  * A *static* route, hand-typed into the file tree, for the same reason the
  * admin side is: a club's page exists because someone wrote it, not because a
- * URL parameter was guessed. The content is live approved data - galleries,
- * events, achievements and announcements all come from `getClubPage`, which
- * only ever returns rows a CMS reviewer has approved, so the page cannot
- * preview work still in the queue.
+ * URL parameter was guessed. The content is live approved data - photos,
+ * events and announcements all come from the flat club router's
+ * `listApproved*` procedures, which only ever return rows a CMS reviewer has
+ * approved, so the page cannot preview work still in the queue.
  *
- * This is the school's photography club, so the galleries lead: it curates
- * the school's photographs wherever they were taken, and each gallery carries
- * its own off-site album link where the full set lives elsewhere.
+ * There is no `achievement` concept left in the flat model and no separate
+ * `gallery` entity either - a club has exactly one gallery, its own stream of
+ * approved photos, so this page links to it as a single card pointing at
+ * `/galleries/photography` rather than listing several.
  */
 
-const CLUB_SLUG = "photography";
+const CLUB = "photography" as const;
+const CLUB_NAME = "Photography Club" as const;
+
+const NO_ACHIEVEMENTS: readonly ClubPageAchievement[] = [];
 
 const PhotographyClubContent = () => {
-  const { data: page } = useSuspenseQuery(
-    orpc.clubs.getClubPage.queryOptions({ input: { slug: CLUB_SLUG } })
+  const { data: photos } = useSuspenseQuery(
+    orpc.club.listApprovedPhotos.queryOptions({ input: { club: CLUB } })
+  );
+  const { data: events } = useSuspenseQuery(
+    orpc.club.listApprovedEvents.queryOptions({ input: { club: CLUB } })
+  );
+  const { data: announcements } = useSuspenseQuery(
+    orpc.club.listApprovedAnnouncements.queryOptions({ input: { club: CLUB } })
   );
   const { data: session } = authClient.useSession();
 
@@ -41,66 +57,57 @@ const PhotographyClubContent = () => {
     if (role === "admin") {
       items.push({ id: "admin", label: "Admin", href: "/admin" });
     }
-    if (role === "club-admin") {
-      items.push({
-        id: "club",
-        label: "Club portal",
-        href: "/club-admin/photography",
-      });
-    }
     return items;
   })();
 
-  if (!page.club) {
-    return (
-      <main style={{ padding: "4rem 1.5rem", textAlign: "center" }}>
-        <h1>Photography Club</h1>
-        <p>The club has not been set up yet. Please check back later.</p>
-      </main>
-    );
-  }
+  const albumUrl = photos.find((photo) => photo.albumUrl)?.albumUrl ?? null;
+  const galleries: ClubPageGallery[] =
+    photos.length === 0
+      ? []
+      : [
+          {
+            albumLabel: albumUrl ? "View the full album" : null,
+            albumUrl,
+            id: CLUB,
+            slug: CLUB,
+            summary: `${photos.length} approved photograph${photos.length === 1 ? "" : "s"}.`,
+            title: `${CLUB_NAME} Gallery`,
+          },
+        ];
+
+  const pageEvents: ClubPageEvent[] = events.map((event) => ({
+    coverImageUrl: event.coverImageUrl,
+    description: event.description,
+    endsAt: event.endsAt,
+    id: event.id,
+    location: event.location,
+    startsAt: event.startsAt,
+    title: event.title,
+  }));
+
+  const pageAnnouncements: ClubPageAnnouncement[] = announcements.map(
+    (announcement) => ({
+      body: announcement.body,
+      id: announcement.id,
+      imageUrl: announcement.imageUrl,
+      publishedAt: announcement.publishedAt,
+      title: announcement.title,
+    })
+  );
 
   return (
     <ClubPage
+      achievements={NO_ACHIEVEMENTS}
       activeHref="/photography-club"
-      achievements={page.achievements.map((achievement) => ({
-        id: achievement.id,
-        title: achievement.title,
-        detail: achievement.detail,
-        category: achievement.category,
-        achievedOn: achievement.achievedOn,
-        imageUrl: achievement.imageUrl,
-      }))}
-      announcements={page.announcements.map((announcement) => ({
-        id: announcement.id,
-        title: announcement.title,
-        body: announcement.body,
-        imageUrl: announcement.imageUrl,
-        publishedAt: announcement.publishedAt?.toISOString() ?? null,
-      }))}
-      coverImageUrl={page.club.coverImageUrl}
-      backgroundImageUrl={page.club.backgroundImageUrl}
-      description={page.club.description}
-      events={page.events.map((event) => ({
-        id: event.id,
-        title: event.title,
-        description: event.description,
-        location: event.location,
-        startsAt: event.startsAt.toISOString(),
-        endsAt: event.endsAt?.toISOString() ?? null,
-        coverImageUrl: event.coverImageUrl,
-      }))}
+      announcements={pageAnnouncements}
+      backgroundImageUrl={null}
+      coverImageUrl={photos[0]?.imageUrl ?? null}
+      description="The college's photographers, curating and submitting the school's photographs for the public gallery."
+      events={pageEvents}
       extraNavItems={extraNavItems}
-      eyebrow="Clubs & societies"
-      galleries={page.galleries.map((gallery) => ({
-        id: gallery.id,
-        slug: gallery.slug,
-        title: gallery.title,
-        summary: gallery.summary,
-        albumUrl: gallery.albumUrl,
-        albumLabel: gallery.albumLabel,
-      }))}
-      name={page.club.name}
+      eyebrow="Clubs & Societies"
+      galleries={galleries}
+      name={CLUB_NAME}
     />
   );
 };
@@ -112,7 +119,7 @@ export const Route = createFileRoute("/photography-club")({
       {
         name: "description",
         content:
-          "The Photography Club covers the college's events, curates the school's photograph galleries, and publishes the full sets to its albums.",
+          "The Photography Club's galleries, events and announcements at St. Aloysius' College, Galle.",
       },
     ],
   }),

@@ -14,7 +14,7 @@ import type { PercentCrop } from "react-image-crop";
  * different sizes. This module is the single one.
  */
 
-/** Quality passed to the WebP encoder. */
+/** Quality passed to the encoder. */
 const WEBP_QUALITY = 0.85;
 
 /**
@@ -26,12 +26,21 @@ const WEBP_QUALITY = 0.85;
  */
 const MAX_EDGE = 2560;
 
-/** The file extension every cropped image is stored under. */
-const CROP_EXTENSION = "webp";
-
 export interface ImageSize {
   width: number;
   height: number;
+}
+
+/** What a crop produced, including enough to tell the operator what happened. */
+export interface CropResult {
+  file: File;
+  /** Dimensions of the stored image, after capping and rounding. */
+  width: number;
+  height: number;
+  /** Size of the file the operator picked, for the "saved N" line. */
+  sourceBytes: number;
+  /** Size actually stored. */
+  bytes: number;
 }
 
 /**
@@ -54,6 +63,75 @@ const fitInside = (bounds: ImageSize, aspectRatio: number): ImageSize => {
 };
 
 /**
+ * A canvas of the given size, whichever kind this browser has.
+ *
+ * `OffscreenCanvas` is the better API — it does not touch the document and can be
+ * transferred — but it is not universally available, and it was used
+ * unconditionally. On a browser without it the constructor threw a `ReferenceError`
+ * out of `cropToFile`, which the crop dialog reported as "That image could not be
+ * cropped.": so the photograph that failed was not the operator's fault and the
+ * message told them nothing. Every image upload on that browser was dead, cropping
+ * and all.
+ *
+ * Both paths are kept because they produce identical pixels; only the way the
+ * bytes come back out differs, which `canvasToBlob` handles.
+ */
+const createCanvas = (width: number, height: number): Canvas => {
+  if (typeof OffscreenCanvas === "function") {
+    return new OffscreenCanvas(width, height) as unknown as Canvas;
+  }
+  const element = document.createElement("canvas");
+  element.width = width;
+  element.height = height;
+  return element;
+};
+
+/** A canvas that is either kind, without naming either in the caller's types. */
+type Canvas = OffscreenCanvas | HTMLCanvasElement;
+
+/**
+ * Encode a canvas, whichever kind it is.
+ *
+ * The MIME type actually produced is returned rather than the one requested: a
+ * browser that cannot encode WebP silently encodes PNG instead, and naming the
+ * file `.webp` when its bytes are PNG means the extension lies about the content
+ * for every downstream consumer. `cropToFile` names the file from this.
+ */
+const canvasToBlob = async (
+  canvas: Canvas,
+  type: string,
+  quality: number
+): Promise<Blob> => {
+  if ("convertToBlob" in canvas) {
+    return canvas.convertToBlob({ type, quality });
+  }
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+          return;
+        }
+        reject(
+          new Error(
+            "This browser could not encode the cropped image. Try Chrome, Edge, Firefox or Safari."
+          )
+        );
+      },
+      type,
+      quality
+    );
+  });
+};
+
+/** The file extension for a MIME type, so the name matches the bytes. */
+const extensionFor = (mimeType: string): string => {
+  const subtype = mimeType.split("/")[1] ?? "";
+  const cleaned = subtype.replace(/^x-/u, "").replace(/\+.*$/u, "");
+  return /^[a-z0-9]{1,10}$/u.test(cleaned) ? cleaned : "bin";
+};
+
+/**
  * Read an image's pixel dimensions without decoding it into the document.
  *
  * `createImageBitmap` decodes lazily and off the main thread, and it applies EXIF
@@ -62,20 +140,71 @@ const fitInside = (bounds: ImageSize, aspectRatio: number): ImageSize => {
  * been rotated by a phone camera. Reading the size twice, through two different
  * APIs, is how a crop ends up transposed on exactly the photographs most likely
  * to be uploaded from a phone.
+ *
+ * Falls back to an `<img>` for browsers without it, for the same reason
+ * `createCanvas` falls back: a missing optimisation API must not be the reason a
+ * photograph cannot be uploaded.
  */
 export const readImageSize = async (file: File): Promise<ImageSize> => {
-  const bitmap = await createImageBitmap(file);
-  const size = { width: bitmap.width, height: bitmap.height };
-  bitmap.close();
-  return size;
+  if (typeof createImageBitmap === "function") {
+    const bitmap = await createImageBitmap(file);
+    const size = { width: bitmap.width, height: bitmap.height };
+    bitmap.close();
+    return size;
+  }
+
+  const url = URL.createObjectURL(file);
+  try {
+    return await new Promise<ImageSize>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => {
+        resolve({ width: image.naturalWidth, height: image.naturalHeight });
+      };
+      image.onerror = () => {
+        reject(new Error(`"${file.name}" could not be read as an image.`));
+      };
+      image.src = url;
+    });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+};
+
+/** Decode a file to something drawable, on whichever API this browser has. */
+const decode = async (
+  file: File
+): Promise<ImageBitmap | (HTMLImageElement & { close?: () => void })> => {
+  if (typeof createImageBitmap === "function") {
+    return createImageBitmap(file);
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    return await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => {
+        resolve(image);
+      };
+      image.onerror = () => {
+        reject(new Error(`"${file.name}" could not be read as an image.`));
+      };
+      image.src = url;
+    });
+  } catch (error) {
+    throw error;
+  } finally {
+    // The image has decoded by the time either callback runs, so the URL can go.
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 0);
+  }
 };
 
 /**
- * Render a crop of `file` to a new WebP file at exactly `aspectRatio`.
+ * Render a crop of `file` to a new image file at exactly `aspectRatio`.
  *
  * Steps: decode (EXIF orientation applied), resolve the percentage crop to whole
  * pixels, shrink it to the largest box of the target shape that fits inside both
- * the crop and the source, cap the longest edge at `MAX_EDGE`, re-encode as WebP.
+ * the crop and the source, cap the longest edge at `MAX_EDGE`, re-encode.
  *
  * `centerCrop` is deliberately not used here. It returns a crop at the source's
  * own shape, not the requested one — correct for a cropper that has already
@@ -95,8 +224,8 @@ export const cropToFile = async ({
   crop: PercentCrop;
   file: File;
   naturalSize: ImageSize;
-}): Promise<File> => {
-  const bitmap = await createImageBitmap(file);
+}): Promise<CropResult> => {
+  const source = await decode(file);
 
   try {
     // The selected region, in whole pixels. `Math.min` against the source
@@ -121,11 +250,11 @@ export const cropToFile = async ({
     const width = Math.max(1, Math.round(target.width * scale));
     const height = Math.max(1, Math.round(target.height * scale));
 
-    const canvas = new OffscreenCanvas(width, height);
+    const canvas = createCanvas(width, height);
     const context = canvas.getContext("2d");
     if (!context) {
       throw new Error(
-        "This browser cannot crop images. Try Chrome, Safari or Firefox."
+        "This browser cannot crop images. Try Chrome, Edge, Firefox or Safari."
       );
     }
 
@@ -141,7 +270,7 @@ export const cropToFile = async ({
     );
 
     context.drawImage(
-      bitmap,
+      source as CanvasImageSource,
       originX,
       originY,
       target.width,
@@ -152,16 +281,36 @@ export const cropToFile = async ({
       height
     );
 
-    const blob = await canvas.convertToBlob({
-      type: "image/webp",
-      quality: WEBP_QUALITY,
-    });
+    const blob = await canvasToBlob(canvas, "image/webp", WEBP_QUALITY);
+
+    if (blob.size === 0) {
+      throw new Error(
+        "The cropped image came out empty. Try a different part of the photograph."
+      );
+    }
 
     const baseName = file.name.replace(/\.[^.]+$/u, "") || "image";
-    return new File([blob], `${baseName}.${CROP_EXTENSION}`, {
-      type: "image/webp",
-    });
+    return {
+      file: new File([blob], `${baseName}.${extensionFor(blob.type)}`, {
+        type: blob.type,
+      }),
+      width,
+      height,
+      sourceBytes: file.size,
+      bytes: blob.size,
+    };
   } finally {
-    bitmap.close();
+    source.close?.();
   }
+};
+
+/** Human-readable byte size, for the "was … now …" line. */
+export const formatBytes = (bytes: number): string => {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${Math.round(bytes / 1024)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };

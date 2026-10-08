@@ -12,6 +12,22 @@ import { protectedProcedure } from "../../index";
  */
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+/**
+ * The extension a minted key carries, or `bin`.
+ *
+ * Taken from the last dot of the name and then *reduced to what the key pattern
+ * allows* - lowercase alphanumerics only, up to ten characters. It used to be
+ * whatever followed the last dot, so a name like `photo.a/b` produced
+ * `admin/<uuid>.a/b`: a key the PUT route rejects, which meant the client got a
+ * URL it was then forbidden to use. Sanitising here means a client cannot be
+ * handed an unusable key.
+ */
+const extensionOf = (name: string): string => {
+  const candidate = name.slice(name.lastIndexOf(".") + 1).toLowerCase();
+  const safe = candidate.replaceAll(/[^a-z0-9]/gu, "");
+  return safe.length > 0 && safe.length <= 10 ? safe : "bin";
+};
+
 export const getUploadUrl = protectedProcedure
   .input(
     v.object({
@@ -22,8 +38,7 @@ export const getUploadUrl = protectedProcedure
   )
   .handler(({ input }) => {
     const id = crypto.randomUUID();
-    const extension = input.name.split(".").pop() || "bin";
-    const key = `admin/${id}.${extension}`;
+    const key = `admin/${id}.${extensionOf(input.name)}`;
 
     /*
      * A path on this app, not a presigned MinIO URL.

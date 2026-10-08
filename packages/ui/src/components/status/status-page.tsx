@@ -193,7 +193,11 @@ const styles = stylex.create({
   rule: {
     inlineSize: "3.5rem",
     blockSize: "2px",
-    border: "none",
+    // Longhand, not the `border` shorthand: StyleX drops shorthands it has no
+    // expansion for, so `border: "none"` compiles to nothing and the `<hr>`
+    // keeps its user-agent outset border on top of the gold fill.
+    borderWidth: 0,
+    borderStyle: "none",
     backgroundColor: color.accent,
     marginBlock: space.md,
     marginInline: {

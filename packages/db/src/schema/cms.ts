@@ -69,6 +69,22 @@ export const contentVersion = sqliteTable(
       .default(false)
       .notNull(),
 
+    /**
+     * Every row written by one press of Publish shares this id; a draft row
+     * carries null.
+     *
+     * The publish history groups a page's versions into "one version per
+     * publish", and the only thing that can tie those rows together is a column
+     * written the same value into all of them. `created_at` cannot do it: the
+     * rows are inserted by `Promise.all` and each one takes
+     * `unixepoch('subsecond')` individually, so a single batch of eleven
+     * homepage blocks comes back spread over ~135ms and no two of them share a
+     * timestamp. Grouping on it silently produced one history entry per *block*
+     * rather than per publish, with each entry's diff computed against an
+     * unrelated block from the same click.
+     */
+    batchId: text("batch_id"),
+
     /** User who performed this action. */
     authorId: text("author_id")
       .notNull()
@@ -84,6 +100,8 @@ export const contentVersion = sqliteTable(
     index("content_version_page_block_idx").on(table.page, table.blockId),
     index("content_version_published_idx").on(table.published),
     index("content_version_author_idx").on(table.authorId),
+    /** Reads a page's whole publish history, grouped by batch, newest first. */
+    index("content_version_page_batch_idx").on(table.page, table.batchId),
   ]
 );
 

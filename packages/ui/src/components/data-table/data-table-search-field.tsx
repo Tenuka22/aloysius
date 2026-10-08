@@ -18,6 +18,83 @@ import { useDebouncedListSearch } from "./use-debounced-list-search";
  * the same way — a request per keystroke, and a stale response repainting the list
  * with the rows for a term nobody finished typing.
  */
+
+const CONTROL_HEIGHT = "2.75rem";
+
+const styles = stylex.create({
+  field: {
+    display: "grid",
+    gap: space["3xs"],
+    minWidth: "14rem",
+    /*
+     * A basis, not `1 1 100%`. The search box used to claim the whole filter
+     * row and squeeze the two selects into a corner; capped, it takes the room
+     * it needs up to a readable measure and leaves the filters beside it.
+     */
+    flex: "1 1 18rem",
+    maxWidth: "30rem",
+  },
+  label: {
+    fontFamily: font.body,
+    fontSize: font.size2xs,
+    fontWeight: font.weightBold,
+    letterSpacing: font.trackingWider,
+    textTransform: "uppercase",
+    color: color.onSurfaceMuted,
+  },
+  controlRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: space["2xs"],
+    // Matched to `Field`'s control so the row sits on one line.
+    minHeight: CONTROL_HEIGHT,
+    paddingInline: space.xs,
+    backgroundColor: color.surfaceSunken,
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: color.borderStrong,
+    borderRadius: radius.sm,
+    ":focus-within": {
+      borderColor: color.onSurface,
+    },
+  },
+  glyph: {
+    width: "1rem",
+    height: "1rem",
+    color: color.onSurfaceSubtle,
+    flexShrink: 0,
+  },
+  input: {
+    flex: 1,
+    minWidth: 0,
+    paddingBlock: space["2xs"],
+    backgroundColor: "transparent",
+    /*
+     * Longhand, never the `border` shorthand: StyleX compiles `border: "none"`
+     * to *nothing*, so the input kept its user-agent border and the search box
+     * rendered with a second border drawn inside the one around it.
+     */
+    borderWidth: 0,
+    borderStyle: "none",
+    borderRadius: 0,
+    color: color.onSurface,
+    fontFamily: font.body,
+    // 16px minimum on the control itself: iOS Safari zooms the whole page in
+    // when a focused input's text is smaller than that.
+    fontSize: "1rem",
+    lineHeight: font.leadingNormal,
+    ":focus": {
+      outline: "none",
+    },
+    "::placeholder": {
+      color: color.onSurfaceSubtle,
+    },
+    "::-webkit-search-cancel-button": {
+      cursor: "pointer",
+    },
+  },
+});
+
 export const DataTableSearchField = ({
   id,
   label = "Search",
@@ -56,62 +133,3 @@ export const DataTableSearchField = ({
     </div>
   );
 };
-
-const styles = stylex.create({
-  field: {
-    display: "grid",
-    gap: space["3xs"],
-    minWidth: "16rem",
-    flex: "1 1 16rem",
-  },
-  label: {
-    fontFamily: font.body,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
-    textTransform: "uppercase",
-    color: color.onSurface,
-  },
-  controlRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: space["2xs"],
-    backgroundColor: color.surfaceSunken,
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.borderStrong,
-    borderRadius: radius.sm,
-    paddingInline: space["2xs"],
-    ":focus-within": {
-      borderColor: color.accent,
-    },
-  },
-  glyph: {
-    width: "1rem",
-    height: "1rem",
-    color: color.onSurfaceSubtle,
-    flexShrink: 0,
-  },
-  input: {
-    flex: 1,
-    minWidth: 0,
-    paddingBlock: space["2xs"],
-    backgroundColor: "transparent",
-    border: "none",
-    color: color.onSurface,
-    fontFamily: font.body,
-    // 16px minimum on the control itself: iOS Safari zooms the whole page in
-    // when a focused input's text is smaller than that.
-    fontSize: "1rem",
-    lineHeight: font.leadingNormal,
-    ":focus": {
-      outline: "none",
-    },
-    "::placeholder": {
-      color: color.onSurfaceSubtle,
-    },
-    "::-webkit-search-cancel-button": {
-      cursor: "pointer",
-    },
-  },
-});

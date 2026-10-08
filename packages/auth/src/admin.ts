@@ -1,5 +1,5 @@
 import type { Database } from "@aloysius/db";
-import { account, user } from "@aloysius/db/schema/auth";
+import { account, session, user } from "@aloysius/db/schema/auth";
 import { hashPassword } from "better-auth/crypto";
 import { eq, or } from "drizzle-orm";
 
@@ -195,7 +195,13 @@ export const createClubCredential = async (
   }
 };
 
-/** Replaces the credential hash for an existing club user. */
+/**
+ * Replaces the credential hash for an existing club user, then ends every
+ * active session for that account. An admin resetting a club seat's password
+ * is specifically resetting it *out from under* whoever currently holds it —
+ * so the new password is worthless as a fix if the old session just keeps
+ * working.
+ */
 export const rotateClubCredentialPassword = async (
   database: Database,
   usernameInput: string,
@@ -229,6 +235,8 @@ export const rotateClubCredentialPassword = async (
     .update(account)
     .set({ password })
     .where(eq(account.id, existingAccount.id));
+
+  await database.delete(session).where(eq(session.userId, existing.id));
 };
 
 /**

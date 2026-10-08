@@ -1,4 +1,4 @@
-> **PARTLY STALE.** The routers section documents a 25-file `routers/staff/` directory that does not exist, and the `appRouter` table omits `cms`, `adminUsers`, `adminClubs`, `clubs` and `getSession`. The file-upload tier is wrong: `getUploadUrl` and `completeUpload` are `protectedProcedure`, not `adminProcedure`, and `completeUpload` has no size cap.
+> **PARTLY STALE.** The routers section documents a 25-file `routers/staff/` directory that does not exist, and the `appRouter` table omits `cms`, `club`, `admin` and `getSession`. The file-upload tier is wrong: `getUploadUrl` and `completeUpload` are `protectedProcedure`, not `adminProcedure`, and `completeUpload` has no size cap.
 >
 > Still correct: the file-size limit, presigned expiry, the `admin/{uuid}.{ext}` key format, the response shapes, delete ordering, and the `/api/files/{key}` route.
 >

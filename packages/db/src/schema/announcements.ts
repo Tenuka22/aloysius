@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import type { SQL, SQLWrapper } from "drizzle-orm";
 import {
   check,
   index,
@@ -12,7 +13,12 @@ import * as v from "valibot";
 import { user } from "./auth";
 import { brand } from "./brand";
 import type { Brand } from "./brand";
+import { CLUBS, clubSlugSchema } from "./club-photos";
 import { files } from "./files";
+
+/** `column in ('a', 'b')` for a CHECK. Values are code constants, never input. */
+const sqlInList = (column: SQLWrapper, values: readonly string[]): SQL =>
+  sql`${column} in (${sql.raw(values.map((value) => `'${value}'`).join(", "))})`;
 
 export type AnnouncementId = Brand<string, "AnnouncementId">;
 export const announcementIdSchema = v.pipe(
@@ -37,19 +43,32 @@ export type AnnouncementAudience = (typeof ANNOUNCEMENT_AUDIENCES)[number];
 export const ANNOUNCEMENT_SEVERITIES = ["info", "important", "urgent"] as const;
 export type AnnouncementSeverity = (typeof ANNOUNCEMENT_SEVERITIES)[number];
 
+export const ANNOUNCEMENT_STATUSES = [
+  "pending",
+  "approved",
+  "rejected",
+] as const;
+export type AnnouncementStatus = (typeof ANNOUNCEMENT_STATUSES)[number];
+
 /**
  * A school-wide announcement.
  *
- * This is the *global* announcement set. It is authored by the CMS rather than
- * by a club, so it carries no submission state: the CMS reviewer is the author.
- * Club announcements that amplify one of these live in `club_announcement` and
- * reference this table - the link is itself approval-gated, because linking to
- * a global announcement puts school-level wording in front of a club audience.
+ * Authored either by the CMS directly (`authorId` is a CMS/admin seat, row
+ * starts `approved`-equivalent via the CMS publish flow) or submitted by a
+ * club seat through `club.submitAnnouncement`, in which case `authorId` is
+ * the submitting seat and `status` starts `pending` until a CMS reviewer
+ * (`club.reviewAnnouncement`) approves it. `announcement_review_fields_paired`
+ * makes "approved with no reviewer" and "still pending but reviewed" both
+ * unrepresentable, same shape as `club_photo`.
  */
 export const announcement = sqliteTable(
   "announcement",
   {
     id: text("id").primaryKey(),
+
+    /** Which club submitted this announcement. Same one-club-per-seat model
+     * as `club_photo` - see `club-photos.ts`. */
+    club: text("club").notNull(),
 
     slug: text("slug").notNull().unique(),
 
@@ -87,6 +106,19 @@ export const announcement = sqliteTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
 
+    /** `pending` until a CMS reviewer (admin|cms) decides; only `approved`
+     * rows are selected by the public notices query. */
+    status: text("status")
+      .$type<AnnouncementStatus>()
+      .default("pending")
+      .notNull(),
+
+    reviewedById: text("reviewed_by_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    reviewedAt: integer("reviewed_at", { mode: "timestamp_ms" }),
+    reviewNote: text("review_note"),
+
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
@@ -101,20 +133,36 @@ export const announcement = sqliteTable(
     index("announcement_pinned_idx").on(table.isPinned),
     index("announcement_publishedAt_idx").on(table.publishedAt),
     index("announcement_author_idx").on(table.authorId),
+    index("announcement_club_status_idx").on(table.club, table.status),
     check(
       "announcement_window_ordered",
       sql`${table.expiresAt} is null or ${table.effectiveFrom} is null or ${table.expiresAt} > ${table.effectiveFrom}`
+    ),
+    check("announcement_club_check", sqlInList(table.club, CLUBS)),
+    check(
+      "announcement_status_check",
+      sqlInList(table.status, ANNOUNCEMENT_STATUSES)
+    ),
+    check(
+      "announcement_review_fields_paired",
+      sql`(${table.status} = 'pending' and ${table.reviewedById} is null and ${table.reviewedAt} is null)
+          or (${table.status} <> 'pending' and ${table.reviewedById} is not null and ${table.reviewedAt} is not null)`
     ),
   ]
 );
 
 export const announcementSelectSchema = createSelectSchema(announcement, {
   id: () => announcementIdSchema,
+  club: () => clubSlugSchema,
   audience: () => v.picklist(ANNOUNCEMENT_AUDIENCES),
   severity: () => v.picklist(ANNOUNCEMENT_SEVERITIES),
+  status: () => v.picklist(ANNOUNCEMENT_STATUSES),
+  reviewNote: () =>
+    v.optional(v.nullable(v.pipe(v.string(), v.maxLength(1000)))),
 });
 export const announcementInsertSchema = createInsertSchema(announcement, {
   id: () => announcementIdSchema,
+  club: () => clubSlugSchema,
   slug: () => v.pipe(v.string(), v.minLength(1)),
   title: () => v.pipe(v.string(), v.minLength(1)),
   body: () => v.pipe(v.string(), v.minLength(1)),

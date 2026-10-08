@@ -6,6 +6,7 @@ import type {
   BetterAuthOptions,
 } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { createAuthMiddleware } from "better-auth/api";
 import {
   admin as adminPlugin,
   multiSession,
@@ -20,6 +21,7 @@ import {
   clubAdmin as clubAdminRole,
   user as userRole,
 } from "./permissions";
+import { forceSessionRevocationOnPasswordChange } from "./session-revocation";
 import { isValidUsername } from "./username";
 
 export { ac, admin, clubAdmin, cms, user } from "./permissions";
@@ -69,6 +71,11 @@ const buildAuthOptions = (
     },
   },
   emailAndPassword: { enabled: true },
+  hooks: {
+    before: createAuthMiddleware((ctx) =>
+      Promise.resolve(forceSessionRevocationOnPasswordChange(ctx))
+    ),
+  },
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
   plugins: [

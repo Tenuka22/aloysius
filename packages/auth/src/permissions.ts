@@ -59,3 +59,14 @@ export const cms = ac.newRole({
 export const user = ac.newRole({
   club: ["read"],
 });
+
+/** The one seeded club seat this deployment issues (see `HARDCODED_CLUBS`). */
+const SEEDED_USERNAME = "photography-admin";
+
+/** True for the role that may act on any account, including other admins. */
+export const isPrivilegedRole = (role: string | null | undefined): boolean =>
+  role === "admin";
+
+/** True for the seeded institutional account (`photography-admin`). */
+export const isSeededAccount = (username: string | null | undefined): boolean =>
+  (username ?? "").toLowerCase() === SEEDED_USERNAME;

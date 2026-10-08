@@ -53,7 +53,7 @@ export const uploadImageFile = async (file: File): Promise<string> => {
 };
 
 /**
- * Upload an image, returning its URL.
+ * Upload an image, returning a URL.
  *
  * Kept for the CMS block editors, which render straight from `record.url` and
  * store block content by URL today. Same pipeline, different return value.
@@ -61,4 +61,31 @@ export const uploadImageFile = async (file: File): Promise<string> => {
 export const uploadImage = async (file: File): Promise<string> => {
   const record = await uploadConverted(file);
   return record.url;
+};
+
+/**
+ * The public URL for each of the caller's own uploads, by file id.
+ *
+ * A content row references storage by id, and the extension lives in the storage
+ * key - so the browser cannot build a URL from an id and has to ask. Server-side
+ * readers get that for free; this is the client half, scoped to the caller's own
+ * rows by `files.resolveUrls`.
+ *
+ * It exists because without it a just-uploaded image had no URL anywhere on the
+ * client: `completeUpload` returns one, but the single-image uploader stores the
+ * *id* and so had nothing to show after the upload landed. See `FileUploader`.
+ *
+ * Returns a plain record rather than throwing on a miss. An id that does not
+ * resolve is a deleted file, which the caller renders as a placeholder - not a
+ * request that should fail and take a whole screen down with it.
+ */
+export const resolveFileUrls = async (
+  ids: readonly string[]
+): Promise<Record<string, string>> => {
+  const wanted = [...new Set(ids.filter((id) => id.length > 0))];
+  if (wanted.length === 0) {
+    return {};
+  }
+  const result = await client.files.resolveUrls({ ids: wanted });
+  return result.urls;
 };

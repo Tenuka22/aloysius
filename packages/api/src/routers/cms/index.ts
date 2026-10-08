@@ -160,33 +160,38 @@ const saveDraftBlocks = async (
 };
 
 /**
- * Publish all current drafts for a page. Creates NEW published rows for each
- * draft block (so the publish history keeps every version), then deletes the
- * draft rows.
+ * Publish the drafts a page currently holds.
+ *
+ * ## It publishes the drafts, it does not replace the page
+ *
+ * The blocks that go live are exactly the blocks that have a draft. A block with
+ * no draft is left alone - still published, at whatever it was published to.
+ *
+ * The obvious implementation, and the one this replaced, was "unpublish every
+ * published row for the page, then insert one row per draft". That reads like
+ * "publish the draft" and behaves like "replace the page with the draft", which
+ * destroys content in two ordinary situations:
+ *
+ * - **An empty draft.** Pressing Publish with nothing saved unpublished all
+ *   eleven homepage blocks and inserted nothing, and the public homepage went
+ *   blank. It reported `{ success: true, publishedIds: [] }`.
+ * - **A partial draft.** An editor who saved one block and pressed Publish took
+ *   the other ten off the live site, because the draft set is whatever that
+ *   editor last saved rather than the whole page.
+ *
+ * Both were silent: the editor saw a success toast and a working preview, and
+ * the damage was only visible on the public site.
+ *
+ * So an empty draft set is a no-op rather than a wipe, and the rows inserted are
+ * only ever the blocks being replaced. The audit trail is unchanged - each
+ * published block gets a fresh row and its predecessor is demoted, so
+ * `fetchHistory` still sees every version ever published.
  */
 const publishDraftBlocks = async (
   db: Database,
   page: string,
   userId: string
 ): Promise<{ publishedIds: string[]; publishedBlocks: SnapshotBlock[] }> => {
-  const current = await db
-    .select()
-    .from(contentVersion)
-    .where(
-      and(eq(contentVersion.page, page), eq(contentVersion.published, true))
-    )
-    .all();
-
-  await Promise.all(
-    current.map((row) =>
-      db
-        .update(contentVersion)
-        .set({ published: false })
-        .where(eq(contentVersion.id, row.id))
-        .run()
-    )
-  );
-
   const drafts = await db
     .select()
     .from(contentVersion)
@@ -196,6 +201,11 @@ const publishDraftBlocks = async (
     .orderBy(desc(contentVersion.createdAt))
     .all();
 
+  /*
+   * One draft row per block, the newest. `saveDraftBlocks` keeps that invariant,
+   * so this only ever collapses rows an older build or a direct write left
+   * behind - and it collapses them the same way for every caller.
+   */
   const seen = new Set<string>();
   const toPublish = drafts.filter((draft) => {
     if (seen.has(draft.blockId)) {
@@ -205,55 +215,170 @@ const publishDraftBlocks = async (
     return true;
   });
 
-  const publishedIds: string[] = [];
-  await Promise.all(
-    toPublish.map((draft) => {
-      const newId = crypto.randomUUID();
-      publishedIds.push(newId);
-      return db
-        .insert(contentVersion)
-        .values({
-          id: newId,
-          page,
-          blockId: draft.blockId,
-          action: "publish",
-          snapshot: draft.snapshot,
-          published: true,
-          authorId: userId,
-        })
-        .run();
+  /*
+   * Nothing to publish is not an instruction to unpublish everything. Reported
+   * as a success with no ids, because from the editor's point of view it is one:
+   * there was nothing staged, and the live page is exactly as they left it.
+   */
+  if (toPublish.length === 0) {
+    return { publishedIds: [], publishedBlocks: [] };
+  }
+
+  await db.transaction(async (tx) => {
+    /*
+     * Scoped to the blocks this publish replaces, not to the page. This is the
+     * line that was missing: a page-wide demotion is what turned a one-block
+     * edit into a nine-block deletion.
+     */
+    await Promise.all(
+      toPublish.map((draft) =>
+        tx
+          .update(contentVersion)
+          .set({ published: false })
+          .where(
+            and(
+              eq(contentVersion.page, page),
+              eq(contentVersion.blockId, draft.blockId),
+              eq(contentVersion.published, true)
+            )
+          )
+          .run()
+      )
+    );
+
+    const batchId = crypto.randomUUID();
+
+    await Promise.all(
+      toPublish.map((draft) =>
+        tx
+          .insert(contentVersion)
+          .values({
+            id: crypto.randomUUID(),
+            page,
+            blockId: draft.blockId,
+            action: "publish",
+            snapshot: draft.snapshot,
+            published: true,
+            authorId: userId,
+            batchId,
+          })
+          .run()
+      )
+    );
+
+    await Promise.all(
+      drafts.map((draft) =>
+        tx.delete(contentVersion).where(eq(contentVersion.id, draft.id)).run()
+      )
+    );
+  });
+
+  const publishedIds = await Promise.all(
+    toPublish.map(async (draft) => {
+      const row = await db
+        .select({ id: contentVersion.id })
+        .from(contentVersion)
+        .where(
+          and(
+            eq(contentVersion.page, page),
+            eq(contentVersion.blockId, draft.blockId),
+            eq(contentVersion.published, true)
+          )
+        )
+        .get();
+      return row?.id ?? "";
     })
   );
 
-  await Promise.all(
-    drafts.map((draft) =>
-      db.delete(contentVersion).where(eq(contentVersion.id, draft.id)).run()
-    )
-  );
+  return {
+    publishedIds: publishedIds.filter(Boolean),
+    publishedBlocks: toPublish.map((draft) => {
+      const snap = parseSnapshot(draft.snapshot);
+      snap.id = draft.blockId;
+      return snap;
+    }),
+  };
+};
 
-  const publishedBlocks: SnapshotBlock[] = toPublish.map((draft) => {
-    const snap = JSON.parse(draft.snapshot) as {
-      hidden?: boolean;
-      fields?: { id: string; value?: string; aspectRatio?: number }[];
-    };
-    return {
-      id: draft.blockId,
-      hidden: snap.hidden ?? false,
-      fields: (snap.fields ?? []).map((f) => ({
-        id: f.id,
-        value: f.value ?? "",
-        ...(f.aspectRatio ? { aspectRatio: f.aspectRatio } : {}),
-      })),
-    };
-  });
+/** One publish in a page's history: every block that press of Publish wrote. */
+interface PublishGroup {
+  timestamp: number;
+  versionId: string;
+  blocks: SnapshotBlock[];
+}
 
-  return { publishedIds, publishedBlocks };
+/**
+ * What ties a published row to the press of Publish that wrote it.
+ *
+ * A `batchId` when there is one - every row from one press shares it. Rows
+ * written before that column existed fall back to the exact timestamp, which is
+ * wrong for them in the same way it always was, but wrong for one page's history
+ * rather than all of them.
+ */
+const groupKeyOf = (row: { batchId: string | null; createdAt: Date }) =>
+  row.batchId ?? `ts:${row.createdAt.getTime()}`;
+
+/**
+ * Field-level changes between two publishes.
+ *
+ * Compared against the group *after* this one in the list, which is the older
+ * version. A publish that introduced a block diffs every one of its fields
+ * against nothing, which is correct: there was no previous value.
+ */
+const diffBetween = (
+  group: PublishGroup,
+  previous: PublishGroup | undefined
+): { block: string; field: string; from: string; to: string }[] => {
+  const diffs: { block: string; field: string; from: string; to: string }[] =
+    [];
+
+  if (!previous) {
+    return diffs;
+  }
+
+  const previousValues = new Map<string, Map<string, string>>();
+  for (const block of previous.blocks) {
+    previousValues.set(
+      block.id,
+      new Map(block.fields.map((field) => [field.id, field.value]))
+    );
+  }
+
+  for (const block of group.blocks) {
+    const before = previousValues.get(block.id);
+    for (const field of block.fields) {
+      const from = before?.get(field.id) ?? "";
+      if (field.value !== from) {
+        diffs.push({ block: block.id, field: field.id, from, to: field.value });
+      }
+    }
+  }
+
+  return diffs;
 };
 
 /**
  * History of published versions for a page. Returns paginated snapshots
- * grouped by publish date, with field-level diffs between consecutive
- * versions.
+ * grouped into one entry per press of Publish, with field-level diffs between
+ * consecutive entries.
+ *
+ * ## Why the grouping is by `batchId` and not by timestamp
+ *
+ * Each publish writes one row per block, and `Promise.all` means each row
+ * evaluates `unixepoch('subsecond')` for itself as it is inserted - eleven
+ * homepage blocks came back spread over 135ms with no two sharing a timestamp.
+ * Grouping on `createdAt` therefore never matched, and every history entry was
+ * one *block* instead of one *publish*. Worse, each entry's diff was computed
+ * against the next block in the list, so a page's history claimed a block
+ * changed because a completely different block had been republished at the same
+ * moment.
+ *
+ * `batchId` is written once per publish and copied into every row it inserts,
+ * which is the only thing that can carry "these rows came from one click".
+ *
+ * Rows arrive newest first, so the first row of each new key opens its group and
+ * the groups come out in publish order without a second sort - which is what
+ * makes `groups[index + 1]` reliably the version to diff against.
  */
 const fetchHistory = async (db: Database, page: string, cursor: number) => {
   const PAGE_SIZE = 10;
@@ -267,80 +392,46 @@ const fetchHistory = async (db: Database, page: string, cursor: number) => {
     .orderBy(desc(contentVersion.createdAt))
     .all();
 
-  // Group by unique publish timestamps (rows with same createdAt are from the
-  // same batch publish operation). Sort descending by timestamp.
-  const groups: {
-    timestamp: number;
-    versionId: string;
-    blocks: SnapshotBlock[];
-  }[] = [];
-  const seenTimestamps = new Set<number>();
-
+  /*
+   * One pass, not a scan of the whole list per group. The rows of a group are
+   * not adjacent in a general case - two publishes can interleave if a block is
+   * republished while another is still being written - so each row is bucketed by
+   * its key and the buckets are then read in the order their first row appeared.
+   */
+  const byKey = new Map<string, PublishGroup>();
   for (const row of allPublished) {
-    const ts = row.createdAt.getTime();
-    if (seenTimestamps.has(ts)) {
+    const key = groupKeyOf(row);
+    const group = byKey.get(key);
+    if (group) {
+      const snap = parseSnapshot(row.snapshot);
+      snap.id = row.blockId;
+      group.blocks.push(snap);
       continue;
     }
-    seenTimestamps.add(ts);
-
-    const batch = allPublished.filter((r) => r.createdAt.getTime() === ts);
-    groups.push({
-      timestamp: ts,
+    const snap = parseSnapshot(row.snapshot);
+    snap.id = row.blockId;
+    byKey.set(key, {
+      timestamp: row.createdAt.getTime(),
       versionId: row.id,
-      blocks: batch.map((b) => {
-        const snap = parseSnapshot(b.snapshot);
-        snap.id = b.blockId;
-        return snap;
-      }),
+      blocks: [snap],
     });
   }
 
+  const groups = [...byKey.values()];
   const total = groups.length;
   const page_ = groups.slice(cursor, cursor + PAGE_SIZE);
 
-  // Build diffs: compare each group to the one after it (older)
-  const items = page_.map((group, idx) => {
-    const prevGroup = page_[idx + 1] ?? groups[cursor + PAGE_SIZE + 1];
-    const prevBlockMap = new Map<string, SnapshotBlock>();
-    if (prevGroup) {
-      for (const b of prevGroup.blocks) {
-        prevBlockMap.set(b.id, b);
-      }
-    }
-
-    const diffs: { block: string; field: string; from: string; to: string }[] =
-      [];
-
-    if (prevGroup) {
-      for (const block of group.blocks) {
-        const prevBlock = prevBlockMap.get(block.id);
-        const prevFieldMap = new Map<string, string>();
-        if (prevBlock) {
-          for (const f of prevBlock.fields) {
-            prevFieldMap.set(f.id, f.value);
-          }
-        }
-        for (const field of block.fields) {
-          const prevValue = prevFieldMap.get(field.id) ?? "";
-          if (field.value !== prevValue) {
-            diffs.push({
-              block: block.id,
-              field: field.id,
-              from: prevValue,
-              to: field.value,
-            });
-          }
-        }
-      }
-    }
-
-    return {
-      versionId: group.versionId,
-      timestamp: group.timestamp,
-      blockCount: group.blocks.length,
-      diffs,
-    };
-  });
+  /*
+   * The diff reaches outside `page_` for the oldest entry on the page. Without
+   * that, the tenth row of the first page and the first row of the second both
+   * diffed against nothing and reported every field as brand new.
+   */
+  const items = page_.map((group, index) => ({
+    versionId: group.versionId,
+    timestamp: group.timestamp,
+    blockCount: group.blocks.length,
+    diffs: diffBetween(group, groups[cursor + index + 1]),
+  }));
 
   return {
     items,

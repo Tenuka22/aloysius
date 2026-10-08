@@ -1,159 +1,175 @@
 import {
   CmsButton,
   Field,
-  FieldGrid,
-  Notice,
   Panel,
   PanelHead,
+  Pill,
+  RecordList,
+  RecordRow,
 } from "@aloysius/ui/components/cms/cms-primitives";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { PillTone } from "@aloysius/ui/components/cms/cms-primitives";
+import {
+  ScreenHead,
+  ScreenWrap,
+} from "@aloysius/ui/components/cms/screen-head";
+import { FormDialog } from "@aloysius/ui/components/dialog";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { ClubPage, FieldStack } from "@/components/club/page-parts";
-import { PendingList } from "@/components/club/pending-list";
+import { mutationErrorText } from "@/components/mutation-error";
 import { orpc } from "@/utils/orpc";
 
-/**
- * A notice from the club.
- *
- * Rendered on the site's notice strip alongside school-wide announcements, and
- * tagged as club-scoped so a visitor can tell whose words they are reading.
- * That distinction is the reason a club announcement is its own row rather than
- * an edit of the global one: the club chooses its own wording, and the school
- * keeps its own.
- */
+const CLUB = "photography" as const;
 
-const MAX_TITLE = 160;
-const MAX_BODY = 5000;
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Pending review",
+  approved: "Approved — live on the notices page",
+  rejected: "Rejected",
+};
 
-const AnnouncementsPage = () => {
-  const queryClient = useQueryClient();
+const STATUS_TONE: Record<string, PillTone> = {
+  pending: "warning",
+  approved: "positive",
+  rejected: "danger",
+};
+
+const AddAnnouncementDialog = ({
+  onClose,
+  onSubmitted,
+  open,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSubmitted: () => void;
+}) => {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
 
-  const problems: string[] = [];
-  if (title.trim().length === 0) {
-    problems.push("Give the notice a title.");
-  } else if (title.length > MAX_TITLE) {
-    problems.push(`The title is longer than ${MAX_TITLE} characters.`);
-  }
-  if (body.trim().length === 0) {
-    problems.push("Write the notice itself — the title alone is not enough.");
-  } else if (body.length > MAX_BODY) {
-    problems.push(`The notice is longer than ${MAX_BODY} characters.`);
-  }
-
-  const create = useMutation(
-    orpc.clubs.submitClubAnnouncement.mutationOptions({
-      onSuccess: async () => {
+  const submitMutation = useMutation(
+    orpc.club.submitAnnouncement.mutationOptions({
+      onSuccess: () => {
         setTitle("");
         setBody("");
-        await queryClient.invalidateQueries({
-          queryKey: orpc.clubs.listMySubmissions.key(),
-        });
+        onSubmitted();
+        onClose();
+      },
+    })
+  );
+
+  const canSubmit =
+    title.trim().length > 0 &&
+    body.trim().length > 0 &&
+    !submitMutation.isPending;
+
+  return (
+    <FormDialog
+      busy={submitMutation.isPending}
+      description="Reviewed by the CMS team before it appears on the public notices page."
+      error={mutationErrorText(
+        submitMutation.error,
+        "The announcement could not be submitted."
+      )}
+      onClose={onClose}
+      onSubmit={() =>
+        submitMutation.mutate({
+          club: CLUB,
+          title: title.trim(),
+          body: body.trim(),
+        })
+      }
+      open={open}
+      submitDisabled={!canSubmit}
+      submitLabel="Submit for review"
+      title="New announcement"
+    >
+      <Field kind="text" label="Title" onChange={setTitle} value={title} />
+      <Field kind="textarea" label="Body" onChange={setBody} value={body} />
+    </FormDialog>
+  );
+};
+
+const MyAnnouncements = ({ onAdd }: { onAdd: () => void }) => {
+  const queryClient = useQueryClient();
+  const myAnnouncementsQuery = orpc.club.listMyAnnouncements.queryOptions();
+  const { data: announcements } = useSuspenseQuery(myAnnouncementsQuery);
+
+  const withdrawMutation = useMutation(
+    orpc.club.withdrawAnnouncement.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries(myAnnouncementsQuery);
       },
     })
   );
 
   return (
-    <ClubPage
-      eyebrow="Club / Announcements"
-      note="Put a notice on the site's notice strip. A CMS editor reviews it before it appears, and visitors will see it is from your club rather than from the school."
-      title="Announcements"
-    >
-      <Panel accent>
-        <PanelHead
-          note="Your club's own wording. The school's notices are written by CMS editors and are not editable from here."
-          title="Write a notice"
-        />
-
-        {create.isSuccess ? (
-          <Notice tone="success">
-            Sent for review. It will appear on the notice strip once a CMS
-            editor approves it.
-          </Notice>
-        ) : null}
-
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            create.reset();
-            create.mutate({
-              payload: {
-                body: body.trim(),
-                id: crypto.randomUUID(),
-                title: title.trim(),
-              },
-            });
-          }}
-        >
-          <FieldGrid>
-            <Field
-              hint={`${title.length} of ${MAX_TITLE} characters.`}
-              label="Title"
-              onChange={setTitle}
-              value={title}
-              wide
+    <Panel>
+      <PanelHead
+        action={
+          <CmsButton onClick={onAdd} tone="primary">
+            New announcement
+          </CmsButton>
+        }
+        title="Your announcements"
+      />
+      {announcements.length === 0 ? (
+        <p>No submissions yet.</p>
+      ) : (
+        <RecordList label="Your announcement submissions">
+          {announcements.map((item) => (
+            <RecordRow
+              actions={
+                <>
+                  <Pill tone={STATUS_TONE[item.status] ?? "neutral"}>
+                    {STATUS_LABEL[item.status] ?? item.status}
+                  </Pill>
+                  {item.status === "pending" && (
+                    <CmsButton
+                      onClick={() => withdrawMutation.mutate({ id: item.id })}
+                      tone="danger"
+                    >
+                      Withdraw
+                    </CmsButton>
+                  )}
+                </>
+              }
+              key={item.id}
+              meta={item.reviewNote && `Reviewer note: ${item.reviewNote}`}
+              name={item.title}
             />
-            <Field
-              hint="The notice itself."
-              kind="textarea"
-              label="Notice"
-              onChange={setBody}
-              value={body}
-              wide
-            />
-          </FieldGrid>
+          ))}
+        </RecordList>
+      )}
+    </Panel>
+  );
+};
 
-          {problems.length > 0 ? (
-            <Notice tone="warning">
-              <ul>
-                {problems.map((problem) => (
-                  <li key={problem}>{problem}</li>
-                ))}
-              </ul>
-            </Notice>
-          ) : null}
+const AnnouncementsContent = () => {
+  const queryClient = useQueryClient();
+  const myAnnouncementsQuery = orpc.club.listMyAnnouncements.queryOptions();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-          {create.error ? (
-            <Notice tone="danger">
-              {create.error instanceof Error
-                ? create.error.message
-                : "The notice could not be submitted."}
-            </Notice>
-          ) : null}
-
-          <FieldStack>
-            <CmsButton
-              disabled={problems.length > 0 || create.isPending}
-              tone="primary"
-              type="submit"
-            >
-              {create.isPending ? "Sending…" : "Submit notice"}
-            </CmsButton>
-          </FieldStack>
-        </form>
-      </Panel>
-
-      <Panel>
-        <PanelHead
-          eyebrow="Queue"
-          note="Notices you have sent that have not been approved or rejected yet."
-          title="Awaiting review"
-        />
-        <PendingList target="clubAnnouncement" />
-      </Panel>
-    </ClubPage>
+  return (
+    <ScreenWrap>
+      <ScreenHead
+        eyebrow="Photography Club"
+        heading="Announcements"
+        note="Every announcement is reviewed by the CMS team before it appears on the public notices page."
+      />
+      <MyAnnouncements onAdd={() => setDialogOpen(true)} />
+      <AddAnnouncementDialog
+        onClose={() => setDialogOpen(false)}
+        onSubmitted={() => queryClient.invalidateQueries(myAnnouncementsQuery)}
+        open={dialogOpen}
+      />
+    </ScreenWrap>
   );
 };
 
 export const Route = createFileRoute("/club-admin/photography/announcements")({
-  head: () => ({
-    meta: [
-      { title: "Announcements — Club portal — St. Aloysius' College" },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
-  }),
-  component: AnnouncementsPage,
+  component: AnnouncementsContent,
 });

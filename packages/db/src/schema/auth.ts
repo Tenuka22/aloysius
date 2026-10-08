@@ -101,3 +101,31 @@ export const verification = sqliteTable(
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)]
 );
+
+/**
+ * Audit trail for better-auth's admin-plugin endpoints (`/admin/*`).
+ *
+ * The plugin authorizes on the caller's role statements alone, so every call
+ * that reaches a decision — allowed, denied, or failed — is written here by
+ * `admin-endpoint-guard.ts`, independent of whatever the endpoint itself
+ * returns.
+ */
+export const accountAuditLog = sqliteTable(
+  "account_audit_log",
+  {
+    id: text("id").primaryKey(),
+    actorUserId: text("actor_user_id"),
+    actorRole: text("actor_role"),
+    action: text("action").notNull(),
+    targetUserId: text("target_user_id"),
+    outcome: text("outcome").notNull(),
+    detail: text("detail"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+  },
+  (table) => [
+    index("account_audit_log_actor_idx").on(table.actorUserId),
+    index("account_audit_log_target_idx").on(table.targetUserId),
+  ]
+);

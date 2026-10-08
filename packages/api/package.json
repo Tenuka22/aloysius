@@ -26,6 +26,7 @@
     "@orpc/publisher": "^1.14.11",
     "@orpc/server": "catalog:",
     "@tanstack/react-table": "^9.2.4",
+    "better-auth": "catalog:",
     "drizzle-orm": "1.0.0-rc.4",
     "sharp": "^0.35.4",
     "valibot": "catalog:"

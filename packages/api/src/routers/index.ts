@@ -1,7 +1,6 @@
 import { publicProcedure } from "../index";
-import { adminClubsRouter } from "./admin-clubs";
-import { adminUsersRouter } from "./admin-users";
-import { clubsRouter } from "./clubs";
+import { listSeatAccounts, setSeatPassword } from "./admin-accounts";
+import { clubRouter } from "./club";
 import { cmsRouter } from "./cms";
 import { filesRouter } from "./files";
 
@@ -16,9 +15,8 @@ export const appRouter = {
   getSession: publicProcedure.handler(({ context }) => context.session),
   cms: cmsRouter,
   files: filesRouter,
-  adminUsers: adminUsersRouter,
-  adminClubs: adminClubsRouter,
-  clubs: clubsRouter,
+  club: clubRouter,
+  admin: { listSeatAccounts, setSeatPassword },
 };
 
 export type AppRouter = typeof appRouter;

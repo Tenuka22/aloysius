@@ -16,9 +16,23 @@ export function createQueryClient() {
   return new QueryClient({
     queryCache: new QueryCache({
       onError: (error, query) => {
-        toast.error(`Error: ${error.message}`, {
+        /*
+         * Toasts are for the browser. During SSR there is nothing to render one
+         * into, and the page reports the same failure in its own `Notice` where
+         * the operator is actually looking.
+         */
+        if (import.meta.env.SSR) {
+          return;
+        }
+        toast.error(error.message, {
+          /*
+           * One toast per query, updated in place. Without an id, a screen whose
+           * loader mounts three failing queries stacks three copies of the same
+           * sentence, and the next background refetch adds a fourth.
+           */
+          id: query.queryHash,
           action: {
-            label: "retry",
+            label: "Retry",
             onClick: () => {
               query.invalidate();
             },

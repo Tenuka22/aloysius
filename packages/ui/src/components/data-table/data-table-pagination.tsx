@@ -1,11 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import type { ReactTable, RowData } from "@tanstack/react-table";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import {
   color,
@@ -16,6 +11,9 @@ import {
 } from "../../tokens/tokens.stylex";
 import type { listTableFeatures } from "./list-table-features";
 
+/** Matches `DataTableSearchField` and `Field`, so a filter row and a pager line up. */
+const CONTROL_HEIGHT = "2.75rem";
+
 const styles = stylex.create({
   bar: {
     display: "flex",
@@ -23,19 +21,24 @@ const styles = stylex.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: space.xs,
+    marginBlockStart: space["2xs"],
     color: color.onSurfaceMuted,
     fontFamily: font.body,
     fontSize: font.sizeXs,
   },
+  /*
+   * `tabular-nums` because this text changes on every keystroke that narrows a
+   * list; proportional digits make the whole bar twitch sideways as it counts.
+   */
   count: {
     margin: 0,
-    fontWeight: font.weightSemibold,
+    fontVariantNumeric: "tabular-nums",
   },
   controls: {
     display: "flex",
     flexWrap: "wrap",
     alignItems: "center",
-    gap: space.md,
+    gap: space.sm,
   },
   group: {
     display: "flex",
@@ -45,49 +48,49 @@ const styles = stylex.create({
   label: {
     fontFamily: font.body,
     fontSize: font.sizeXs,
-    fontWeight: font.weightBold,
-    color: color.onSurface,
+    color: color.onSurfaceMuted,
   },
   select: {
-    minHeight: "2.25rem",
-    paddingInline: space["2xs"],
+    minHeight: CONTROL_HEIGHT,
+    paddingInline: space.xs,
     backgroundColor: color.surface,
     borderWidth: space.px,
     borderStyle: "solid",
-    borderColor: color.borderStrong,
+    borderColor: color.border,
     borderRadius: radius.sm,
     color: color.onSurface,
     fontFamily: font.body,
-    fontSize: font.sizeSm,
+    fontSize: font.sizeXs,
     cursor: "pointer",
   },
   pageLabel: {
-    fontWeight: font.weightBold,
-    color: color.onSurface,
+    fontVariantNumeric: "tabular-nums",
+    color: color.onSurfaceMuted,
     whiteSpace: "nowrap",
   },
   pageButton: {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    width: "2.25rem",
-    height: "2.25rem",
+    width: CONTROL_HEIGHT,
+    height: CONTROL_HEIGHT,
     backgroundColor: "transparent",
     borderWidth: space.px,
     borderStyle: "solid",
-    borderColor: color.borderStrong,
+    borderColor: color.border,
     borderRadius: radius.sm,
     color: color.onSurface,
     cursor: "pointer",
     touchAction: "manipulation",
-    transitionProperty: "background-color",
+    transitionProperty: "background-color, border-color",
     transitionDuration: motionToken.fast,
     ":hover": {
       backgroundColor: color.surfaceSunken,
+      borderColor: color.borderStrong,
     },
     ":disabled": {
       cursor: "not-allowed",
-      opacity: 0.45,
+      opacity: 0.4,
     },
     ":focus-visible": {
       outline: `2px solid ${color.focusRing}`,
@@ -127,6 +130,12 @@ const rangeText = (
  * code is a decision nobody made and nobody can change. It resets to the first page
  * in the same call as the new size, because a new size re-numbers every page and
  * page 6 of fifty rows is not page 6 of ten.
+ *
+ * **The page controls are absent when there is one page.** Not disabled — absent.
+ * Four arrows and a "Page 1 of 1" under a single row is four controls that cannot
+ * do anything, and a disabled control still spends a tab stop and still reads as
+ * "there is more here". The count and the page size stay, because those are true
+ * of a one-page list too.
  */
 export const DataTablePagination = <TData extends RowData>({
   id,
@@ -148,6 +157,7 @@ export const DataTablePagination = <TData extends RowData>({
   const pageCount = table.getPageCount();
   const first = total === 0 ? 0 : pageIndex * pageSize + 1;
   const last = Math.min((pageIndex + 1) * pageSize, total);
+  const hasMultiplePages = pageCount > 1;
 
   return (
     <div {...stylex.props(styles.bar)}>
@@ -179,56 +189,42 @@ export const DataTablePagination = <TData extends RowData>({
           </select>
         </div>
 
-        <span {...stylex.props(styles.pageLabel)}>
-          Page {Math.min(pageIndex + 1, pageCount)} of {pageCount}
-        </span>
+        {hasMultiplePages ? (
+          <>
+            <span {...stylex.props(styles.pageLabel)}>
+              Page {pageIndex + 1} of {pageCount}
+            </span>
 
-        <div {...stylex.props(styles.group)}>
-          <button
-            aria-label="First page"
-            disabled={!table.getCanPreviousPage()}
-            onClick={() => {
-              table.firstPage();
-            }}
-            type="button"
-            {...stylex.props(styles.pageButton)}
-          >
-            <ChevronsLeft aria-hidden="true" {...stylex.props(styles.glyph)} />
-          </button>
-          <button
-            aria-label="Previous page"
-            disabled={!table.getCanPreviousPage()}
-            onClick={() => {
-              table.previousPage();
-            }}
-            type="button"
-            {...stylex.props(styles.pageButton)}
-          >
-            <ChevronLeft aria-hidden="true" {...stylex.props(styles.glyph)} />
-          </button>
-          <button
-            aria-label="Next page"
-            disabled={!table.getCanNextPage()}
-            onClick={() => {
-              table.nextPage();
-            }}
-            type="button"
-            {...stylex.props(styles.pageButton)}
-          >
-            <ChevronRight aria-hidden="true" {...stylex.props(styles.glyph)} />
-          </button>
-          <button
-            aria-label="Last page"
-            disabled={!table.getCanLastPage()}
-            onClick={() => {
-              table.lastPage();
-            }}
-            type="button"
-            {...stylex.props(styles.pageButton)}
-          >
-            <ChevronsRight aria-hidden="true" {...stylex.props(styles.glyph)} />
-          </button>
-        </div>
+            <div {...stylex.props(styles.group)}>
+              <button
+                aria-label="Previous page"
+                onClick={() => {
+                  table.previousPage();
+                }}
+                type="button"
+                {...stylex.props(styles.pageButton)}
+              >
+                <ChevronLeft
+                  aria-hidden="true"
+                  {...stylex.props(styles.glyph)}
+                />
+              </button>
+              <button
+                aria-label="Next page"
+                onClick={() => {
+                  table.nextPage();
+                }}
+                type="button"
+                {...stylex.props(styles.pageButton)}
+              >
+                <ChevronRight
+                  aria-hidden="true"
+                  {...stylex.props(styles.glyph)}
+                />
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   );

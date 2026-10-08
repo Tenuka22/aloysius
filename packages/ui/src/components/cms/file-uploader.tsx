@@ -161,9 +161,22 @@ export interface FileUploaderProps {
 /**
  * A single image, cropped to a declared ratio before it is uploaded.
  *
- * `value` is treated as the authority on what is stored. A local object-URL
- * preview only stands in while nothing is stored: once the upload lands, the
- * frame follows the caller, so what an editor sees is what the site will show.
+ * ## What the frame shows, in order of preference
+ *
+ * `previewUrl` when the caller can resolve the stored image, then the local
+ * object URL, then the hint.
+ *
+ * The local preview used to be released the instant the upload resolved, on the
+ * reasoning that "the stored image is the thing to show now". That is right in
+ * principle and was wrong in practice for the club portal, which stores a `fileId`
+ * rather than a URL: there was nothing to show instead, so the frame went blank at
+ * the exact moment the upload succeeded and the operator was left staring at an
+ * empty dashed box with no way to tell a finished upload from a failed one.
+ *
+ * So the object URL is kept until something better can take its place, and the
+ * caller's `previewUrl` is what replaces it. `apps/web/src/components/club/upload.ts`
+ * resolves one through `files.resolveUrls`; the CMS, which stores by URL, passes it
+ * straight in.
  */
 export const FileUploader = ({
   clearable = false,
@@ -188,13 +201,12 @@ export const FileUploader = ({
   const [problem, setProblem] = useState<string | null>(null);
 
   /*
-   * A stored value always wins over the local preview, so no effect is needed to
-   * reconcile the two: the moment `value` is non-empty the frame reads the
-   * caller's URL and the object URL stops being shown. It is released explicitly
-   * at the two points that supersede it, and on unmount by `usePreviewUrl` if
-   * something else changed `value` from outside.
+   * The stored value wins when it can be pictured, and the local preview covers
+   * everything else - including the window between "uploaded" and "the caller has
+   * resolved a URL for it", which used to be a blank frame. A cleared field shows
+   * nothing at all: there is no image to fall back to and the hint says so.
    */
-  const shown = value ? previewUrl : localPreview;
+  const shown = value ? (previewUrl ?? localPreview) : localPreview;
   const busy = disabled || uploading;
 
   let chooseLabel = `Choose image — ${spec.name}`;
@@ -234,11 +246,14 @@ export const FileUploader = ({
     setProblem(null);
     try {
       onChange(await onUpload(outcome.file));
-      // The stored image is now the thing to show. The object URL has done its
-      // job — and the cropped file it pointed at is not byte-identical to what
-      // the caller just stored, so keeping it on screen would misrepresent it.
-      preview.release();
-      setLocalPreview(null);
+      /*
+       * The local preview is deliberately kept. It is the picture the operator
+       * just chose and the only one available until the caller's `previewUrl`
+       * arrives, and releasing it here is what used to blank the frame on a
+       * successful upload. `usePreviewUrl` revokes it on unmount, and
+       * `choose`/`Remove` release the previous one before taking a new one, so
+       * nothing leaks.
+       */
     } catch (error) {
       // The preview stays: it is the cropped file that just failed, and the
       // editor needs to see which photograph to try again with.
@@ -266,8 +281,9 @@ export const FileUploader = ({
         accept={ACCEPTED_IMAGE_ATTR}
         disabled={busy}
         onChange={(event) => {
+          const file = event.target.files?.[0];
           clearInput(event);
-          choose(event.target.files?.[0]);
+          choose(file);
         }}
         ref={inputRef}
         type="file"
@@ -431,6 +447,10 @@ export const FileBatchUploader = ({
   const spec = ratioSpec(ratioKey);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const resolvedHint =
+    hint ??
+    `Up to ${max} at a time. Each is cropped to ${spec.name} before it is uploaded.`;
+
   /* Files chosen but not yet cropped, and which one the dialog is showing. */
   const [queue, setQueue] = useState<QueuedImage[]>([]);
   const [cropIndex, setCropIndex] = useState(0);
@@ -454,8 +474,17 @@ export const FileBatchUploader = ({
     setQueue([]);
   };
 
-  const handleFiles = (files: FileList | null) => {
-    const chosen = [...(files ?? [])];
+  /**
+   * `files` is a plain array of already-extracted `File` objects, not the
+   * input's live `FileList`. The caller clears the input right after reading
+   * it (`clearInput`, so re-picking the same file still fires `change`), and
+   * clearing empties the underlying `FileList` in place rather than replacing
+   * it — a `FileList` captured here would read back empty by the time this
+   * ran, silently dropping every batch pick. Extracting the files into a
+   * plain array in the event handler, before the clear, is what actually
+   * survives it.
+   */
+  const handleFiles = (chosen: File[]) => {
     if (chosen.length === 0) {
       return;
     }
@@ -546,8 +575,9 @@ export const FileBatchUploader = ({
         disabled={disabled || room === 0}
         multiple
         onChange={(event) => {
+          const files = [...(event.target.files ?? [])];
           clearInput(event);
-          handleFiles(event.target.files);
+          handleFiles(files);
         }}
         ref={inputRef}
         type="file"
@@ -573,10 +603,9 @@ export const FileBatchUploader = ({
         ) : null}
       </div>
 
-      <p {...stylex.props(styles.hint)}>
-        {hint ??
-          `Up to ${max} at a time. Each is cropped to ${spec.name} before it is uploaded.`}
-      </p>
+      {resolvedHint ? (
+        <p {...stylex.props(styles.hint)}>{resolvedHint}</p>
+      ) : null}
 
       {problem ? <Notice tone="danger">{problem}</Notice> : null}
 

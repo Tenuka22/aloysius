@@ -121,3 +121,13 @@ const requirePermission = (
 /** Club content management: the hardcoded club administrator can submit. */
 export const requireClubPermission = (action: PermissionAction) =>
   publicProcedure.use(requirePermission("club", action));
+
+/**
+ * Reviews a club's submitted content before it reaches the public site.
+ * Same audience as `cmsProcedure` (admin or the seeded `cms` seat) —
+ * submitted content is CMS content in waiting, and this app has no separate
+ * "club reviewer" seat to give it its own tier.
+ */
+export const clubReviewerProcedure = publicProcedure.use(
+  requireRole("admin", "cms")
+);

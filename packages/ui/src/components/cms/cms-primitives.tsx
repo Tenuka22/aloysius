@@ -47,12 +47,21 @@ const styles = stylex.create({
     color: color.onInverse,
   },
 
+  /*
+   * `flex-start`, not `baseline`.
+   *
+   * Baseline alignment across two flex items aligns the *last* line of one with
+   * the last line of the other, so a 2.75rem-tall action button dragged the
+   * whole heading block down until the panel's note sat 90px below the title —
+   * a band of dead space that read as a rendering fault. Top-aligned, the action
+   * lines up with the eyebrow, which is what a corner action is for.
+   */
   panelHead: {
     display: "flex",
     flexWrap: "wrap",
-    alignItems: "baseline",
+    alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: space["2xs"],
+    gap: space.xs,
     marginBlockEnd: space.md,
   },
   panelEyebrow: {
@@ -450,12 +459,27 @@ const styles = stylex.create({
     borderColor: color.borderStrong,
     boxShadow: "0 8px 28px rgba(0, 0, 0, 0.18)",
   },
+  /*
+   * Opened upwards, anchored to the trigger's top edge instead of its bottom.
+   *
+   * A select near the bottom of a scroll container has no room below it, and a
+   * menu that cannot fit is a menu whose last options cannot be reached — the
+   * scroller simply clips it. Anchoring up is the other half of the answer;
+   * `placeMenu` measures and picks, this style is what "up" looks like.
+   */
+  customSelectMenuAbove: {
+    insetBlockStart: "auto",
+    insetBlockEnd: "100%",
+    marginTop: 0,
+    marginBlockStart: space.px,
+  },
   customSelectOption: {
     display: "block",
     width: "100%",
     paddingBlock: space["2xs"],
     paddingInline: space.xs,
-    border: "none",
+    borderWidth: 0,
+    borderStyle: "none",
     backgroundColor: {
       default: "transparent",
       ":hover": "rgba(1, 52, 5, 0.08)",
@@ -658,6 +682,33 @@ const styles = stylex.create({
   buttonDisabled: {
     cursor: "not-allowed",
     opacity: 0.45,
+  },
+  /*
+   * The link's own weight, deliberately below the surrounding body text's bold.
+   * `text-underline-offset` keeps the rule off the descenders of a `y` or `g`,
+   * and `textDecorationThickness` stops it disappearing at small sizes.
+   */
+  textLink: {
+    display: "inline-block",
+    padding: 0,
+    color: color.onSurface,
+    fontFamily: font.body,
+    fontSize: font.sizeSm,
+    fontWeight: font.weightSemibold,
+    textDecorationLine: "underline",
+    textDecorationThickness: "1px",
+    textUnderlineOffset: "0.18em",
+    textDecorationColor: color.borderStrong,
+    transitionProperty: "color, text-decoration-color",
+    transitionDuration: motionToken.fast,
+    ":hover": {
+      color: color.accentOnSurface,
+      textDecorationColor: color.accentOnSurface,
+    },
+    ":focus-visible": {
+      outline: `2px solid ${color.focusRing}`,
+      outlineOffset: "2px",
+    },
   },
   highlightFlash: {
     animationName: {
@@ -923,6 +974,13 @@ const ChevronIcon = ({ open }: { open: boolean }) => (
   </svg>
 );
 
+/** The tallest a select menu is ever allowed to be, in px. */
+const MENU_MAX = 240;
+/** Below this, a menu is treated as having nowhere to go and flips instead. */
+const MENU_MIN_SPACE = 120;
+/** Breathing room between the menu and the viewport edge. */
+const MENU_GUTTER = 12;
+
 const CustomSelect = ({
   "aria-describedby": ariaDescribedBy,
   dirty,
@@ -944,14 +1002,66 @@ const CustomSelect = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
+  /**
+   * Whether the menu opens above the trigger, and how tall it may be.
+   *
+   * ## Why this is measured rather than styled
+   *
+   * A select's menu used to open strictly downwards at a fixed `15rem`, inside
+   * whatever scroll container held it. Inside `Dialog` — whose body is
+   * `overflow-y: auto` — that combination is a trap: a select in the lower half
+   * of the dialog had its menu clipped by the very scroller holding it, so the
+   * last one or two options were simply unreachable. No amount of `z-index`
+   * fixes that; the clipping ancestor is the problem.
+   *
+   * So the menu is sized to the space that actually exists and flips to the side
+   * with more of it. Both numbers come from the trigger's rect against the
+   * viewport, because a top-layer `<dialog>` is what the select is being measured
+   * inside of, and the viewport is the one edge that does not move.
+   *
+   * `MENU_MAX` is the same ceiling the old fixed `maxHeight` had: this can only
+   * ever make the menu *smaller* than before, never taller.
+   */
+  const [placement, setPlacement] = useState<{
+    above: boolean;
+    maxHeight: number;
+  } | null>(null);
+
+  const placeMenu = useCallback(() => {
+    const trigger = buttonRef.current;
+    if (!trigger) {
+      return;
+    }
+
+    const rect = trigger.getBoundingClientRect();
+    const below = window.innerHeight - rect.bottom - MENU_GUTTER;
+    const above = rect.top - MENU_GUTTER;
+    const useAbove = below < MENU_MIN_SPACE && above > below;
+
+    setPlacement({
+      above: useAbove,
+      maxHeight: Math.max(
+        MENU_MIN_SPACE,
+        Math.min(MENU_MAX, useAbove ? above : below)
+      ),
+    });
+  }, []);
+
   const selectedLabel =
     options?.find((o) => o.value === selectedValue)?.label ?? "Custom link...";
 
   const close = useCallback(() => {
     setOpen(false);
     setActiveIndex(-1);
+    setPlacement(null);
     buttonRef.current?.focus();
   }, []);
+
+  const openMenu = useCallback(() => {
+    placeMenu();
+    setActiveIndex(0);
+    setOpen(true);
+  }, [placeMenu]);
 
   useEffect(() => {
     if (!open) {
@@ -975,13 +1085,27 @@ const CustomSelect = ({
       }
     };
 
+    /*
+     * Re-measure, and close on anything that moves the trigger out from under an
+     * already-open menu. Scrolling a dialog body, resizing the window and
+     * rotating a phone all invalidate the placement, and a menu left pointing at
+     * a rectangle that no longer exists is worse than no menu.
+     */
+    const handleReflow = () => {
+      placeMenu();
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscape);
+    window.addEventListener("resize", handleReflow);
+    window.addEventListener("scroll", handleReflow, true);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("resize", handleReflow);
+      window.removeEventListener("scroll", handleReflow, true);
     };
-  }, [open, close]);
+  }, [open, close, placeMenu]);
 
   useEffect(() => {
     if (open && activeIndex >= 0 && optionRefs.current[activeIndex]) {
@@ -1000,8 +1124,7 @@ const CustomSelect = ({
         event.key === " "
       ) {
         event.preventDefault();
-        setOpen(true);
-        setActiveIndex(0);
+        openMenu();
       }
       return;
     }
@@ -1053,10 +1176,11 @@ const CustomSelect = ({
         aria-haspopup="listbox"
         id={id}
         onClick={() => {
-          setOpen((prev) => !prev);
-          if (!open) {
-            setActiveIndex(0);
+          if (open) {
+            close();
+            return;
           }
+          openMenu();
         }}
         onKeyDown={handleKeyDown}
         ref={buttonRef}
@@ -1077,7 +1201,13 @@ const CustomSelect = ({
           aria-labelledby={id}
           ref={menuRef}
           role="listbox"
-          {...stylex.props(styles.customSelectMenu)}
+          style={
+            placement ? { maxHeight: `${placement.maxHeight}px` } : undefined
+          }
+          {...stylex.props(
+            styles.customSelectMenu,
+            placement?.above && styles.customSelectMenuAbove
+          )}
         >
           {allOptions.map((option, index) => (
             <button
@@ -1136,11 +1266,12 @@ const renderSelectControl = (
 
 const INPUT_TYPE: Record<
   string,
-  "text" | "email" | "password" | "datetime-local"
+  "text" | "email" | "password" | "datetime-local" | "url"
 > = {
   datetime: "datetime-local",
   email: "email",
   password: "password",
+  url: "url",
 };
 
 /**
@@ -1327,7 +1458,8 @@ export const Field = ({
     | "select"
     | "email"
     | "password"
-    | "datetime";
+    | "datetime"
+    | "url";
   value?: string;
   hint?: string;
   wide?: boolean;
@@ -1439,7 +1571,12 @@ export const SwitchRow = ({
 
 type ButtonTone = "primary" | "dark" | "quiet" | "danger";
 
-const BUTTON_TONE: Record<ButtonTone, stylex.StyleXStyles> = {
+/**
+ * Exported alongside `styles.button` below so a control that must render as a
+ * real anchor \u2014 a row action that navigates rather than mutates \u2014 can look
+ * like a `CmsButton` without being one. See `RowActionLink`.
+ */
+export const BUTTON_TONE: Record<ButtonTone, stylex.StyleXStyles> = {
   primary: styles.buttonPrimary,
   dark: styles.buttonDark,
   quiet: styles.buttonQuiet,
@@ -1447,6 +1584,9 @@ const BUTTON_TONE: Record<ButtonTone, stylex.StyleXStyles> = {
 };
 
 export type { ButtonTone };
+
+/** The button's base shape, undecorated by tone. See `BUTTON_TONE`. */
+export const BUTTON_BASE_STYLE = styles.button;
 
 export const CmsButton = ({
   children,
@@ -1510,6 +1650,41 @@ export const CmsLink = ({
     target={external ? "_blank" : target}
     {...rest}
     {...stylex.props(styles.button, BUTTON_TONE[tone])}
+  >
+    {children}
+  </a>
+);
+
+/**
+ * A link that reads as a link: inline, underlined, no box.
+ *
+ * `CmsLink` is a button that happens to navigate, which is right for "the next
+ * step" and wrong for "a place this panel points at". As a boxed uppercase
+ * button in a panel's top-right corner it outweighed the panel's own title —
+ * a secondary jump rendered at primary-button weight.
+ */
+export type CmsTextLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
+  href: string;
+  external?: boolean;
+};
+
+/** `CmsTextLink`'s look, for a caller that must render a real router `<Link>`. */
+export const TEXT_LINK_STYLE = styles.textLink;
+
+export const CmsTextLink = ({
+  children,
+  href,
+  external = false,
+  rel,
+  target,
+  ...rest
+}: CmsTextLinkProps) => (
+  <a
+    href={href}
+    rel={external ? "noopener noreferrer" : rel}
+    target={external ? "_blank" : target}
+    {...rest}
+    {...stylex.props(styles.textLink)}
   >
     {children}
   </a>

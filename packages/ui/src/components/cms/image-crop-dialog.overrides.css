@@ -1,0 +1,17 @@
+/*
+ * `react-image-crop` wraps the image in `.ReactCrop__child-wrapper` and sets
+ * `max-height: inherit` on the `<img>` itself — inheriting straight past our
+ * own `max-height: 56vh` on the `<img>` (a plain class selector loses to this
+ * compound one) to the wrapper's unset `max-height: none`. The image then
+ * renders at its full scaled-by-width height with no cap, overflowing the
+ * dialog's `stage` by as much as the photograph is tall: a crop selection and
+ * the confirm button pushed off-screen below a near-empty-looking scrollbar.
+ *
+ * Giving the wrapper the cap directly is what `inherit` on the image actually
+ * needs to resolve to something useful. `dialog` in the selector is one
+ * compound step more specific than the library's own rule, so this wins
+ * regardless of CSS import order.
+ */
+dialog .ReactCrop__child-wrapper {
+  max-height: 56vh;
+}

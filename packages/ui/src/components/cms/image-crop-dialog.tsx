@@ -1,10 +1,14 @@
 import * as stylex from "@stylexjs/stylex";
 import { Crop, X } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { centerCrop, makeAspectCrop, ReactCrop } from "react-image-crop";
 import type { PercentCrop } from "react-image-crop";
 
-import { cropToFile } from "../../lib/image-crop";
+import "react-image-crop/dist/ReactCrop.css";
+import "./image-crop-dialog.overrides.css";
+
+import { cropToFile, formatBytes } from "../../lib/image-crop";
 import { ratioSpec } from "../../tokens/aspect-ratios";
 import type { AspectRatioKey } from "../../tokens/aspect-ratios";
 import { color, font, radius, shadow, space } from "../../tokens/tokens.stylex";
@@ -13,6 +17,11 @@ import { CmsButton, Notice } from "./cms-primitives";
 /** What `ImageCropDialog` hands back: the cropped file, or nothing on cancel. */
 export interface CropOutcome {
   file: File;
+  /** Dimensions and weight of the stored file, so the caller can report it. */
+  width: number;
+  height: number;
+  sourceBytes: number;
+  bytes: number;
 }
 
 const FULL_CROP: PercentCrop = {
@@ -92,6 +101,17 @@ const styles = stylex.create({
     display: "block",
     maxWidth: "100%",
     maxHeight: "56vh",
+  },
+  /** The cropped result, at the size it will actually be stored. */
+  result: {
+    display: "block",
+    maxWidth: "100%",
+    maxHeight: "56vh",
+    borderRadius: radius.sm,
+  },
+  summary: {
+    display: "grid",
+    gap: space["3xs"],
   },
   bar: {
     display: "flex",
@@ -176,6 +196,7 @@ export const ImageCropDialog = ({
   const [crop, setCrop] = useState<PercentCrop>(FULL_CROP);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [done, setDone] = useState<CropOutcome | null>(null);
   const [sourceWidth, setSourceWidth] = useState<number | null>(null);
   const [sourceHeight, setSourceHeight] = useState<number | null>(null);
 
@@ -220,8 +241,8 @@ export const ImageCropDialog = ({
     try {
       // `centerCrop` converts the percentage selection to whole pixels at the
       // source's natural size; `cropToFile` then resolves it against the token
-      // ratio and re-encodes. Passing percentages straight through would mean
-      // the pixel maths runs against a size the cropper never measured.
+      // ratio and re-encodes. Passing percentages straight through would mean the
+      // pixel maths runs against a size the cropper never measured.
       const pixel = centerCrop(crop, image.naturalWidth, image.naturalHeight);
       const cropped = await cropToFile({
         aspectRatio: spec.ratio,
@@ -232,7 +253,8 @@ export const ImageCropDialog = ({
           height: pixel.height || image.naturalHeight,
         },
       });
-      onCropped({ file: cropped });
+      setDone(cropped);
+      onCropped(cropped);
     } catch (error) {
       setProblem(
         error instanceof Error
@@ -243,10 +265,43 @@ export const ImageCropDialog = ({
     setBusy(false);
   };
 
+  /**
+   * An object URL for the cropped result, so the review step shows the actual
+   * stored bytes rather than the selection drawn over the original. Owned here
+   * and released when it is replaced or the dialog goes away - two owners of one
+   * URL is how it ends up revoked while still on screen.
+   */
+  const doneUrl = useMemo(
+    () => (done ? URL.createObjectURL(done.file) : null),
+    [done]
+  );
+
+  useEffect(
+    () => () => {
+      if (doneUrl) {
+        URL.revokeObjectURL(doneUrl);
+      }
+    },
+    [doneUrl]
+  );
+
+  /**
+   * What cropping and re-encoding just did, in the operator's terms.
+   *
+   * Cropping is not free and it is not obvious: the photograph they picked was
+   * 12 megapixels and several megabytes, and what gets stored is a smaller WebP
+   * at the token's ratio. Without this line the whole optimisation pass is
+   * invisible, and "why is my 4 MB photo now 180 KB" has no answer on screen.
+   */
+  const saving =
+    done && done.sourceBytes > done.bytes
+      ? `${Math.round((1 - done.bytes / done.sourceBytes) * 100)}% smaller`
+      : null;
+
   const tooNarrow =
     sourceWidth !== null && sourceWidth > 0 && sourceWidth < spec.minWidth;
 
-  return (
+  const content = (
     <dialog
       aria-labelledby={headingId}
       onCancel={(event) => {
@@ -275,28 +330,59 @@ export const ImageCropDialog = ({
       </div>
 
       <div {...stylex.props(styles.body)}>
-        <div {...stylex.props(styles.stage)}>
-          <ReactCrop
-            aspect={spec.ratio}
-            crop={crop}
-            onChange={(_pixels, percent) => {
-              setCrop(percent);
-            }}
-            onComplete={(_pixels, percent) => {
-              setCrop(percent);
-            }}
-          >
-            <img
-              alt=""
-              onLoad={handleLoad}
-              ref={imageRef}
-              src={request.previewUrl}
-              {...stylex.props(styles.image)}
-            />
-          </ReactCrop>
-        </div>
+        {done ? (
+          /*
+           * The review step. Cropping happens on the operator's own machine and
+           * silently changes both the shape and the weight of what they picked,
+           * so the result is shown before it is accepted rather than after: they
+           * can see the crop, the dimensions it will be stored at, and how much
+           * smaller it became, and go back to the cropper if any of that is wrong.
+           */
+          <>
+            <div {...stylex.props(styles.stage)}>
+              {/* eslint-disable-next-line jsx-a11y/alt-text -- the dialog's
+                  heading and this summary already describe the image */}
+              <img alt="" src={doneUrl} {...stylex.props(styles.result)} />
+            </div>
+            <Notice tone="success">
+              <span {...stylex.props(styles.summary)}>
+                <span>
+                  Stored at {done.width}×{done.height} px,{" "}
+                  {formatBytes(done.bytes)}.
+                </span>
+                {saving ? (
+                  <span>
+                    Cropped and re-encoded from {formatBytes(done.sourceBytes)}{" "}
+                    —{` ${saving}.`}
+                  </span>
+                ) : null}
+              </span>
+            </Notice>
+          </>
+        ) : (
+          <div {...stylex.props(styles.stage)}>
+            <ReactCrop
+              aspect={spec.ratio}
+              crop={crop}
+              onChange={(_pixels, percent) => {
+                setCrop(percent);
+              }}
+              onComplete={(_pixels, percent) => {
+                setCrop(percent);
+              }}
+            >
+              <img
+                alt=""
+                onLoad={handleLoad}
+                ref={imageRef}
+                src={request.previewUrl}
+                {...stylex.props(styles.image)}
+              />
+            </ReactCrop>
+          </div>
+        )}
 
-        {tooNarrow ? (
+        {!done && tooNarrow ? (
           <Notice tone="warning">
             {request.file.name} is {sourceWidth}px wide. {spec.label} is usually
             composed at {spec.minWidth}px or more, so this will look soft on a
@@ -310,20 +396,31 @@ export const ImageCropDialog = ({
           <CmsButton
             disabled={busy}
             onClick={() => {
+              if (done) {
+                onCropped(done);
+                return;
+              }
               void handleConfirm();
             }}
             tone="primary"
           >
-            {busy ? "Cropping…" : "Use this crop"}
+            {busy ? "Cropping…" : done ? "Use this image" : "Crop and optimise"}
           </CmsButton>
           <CmsButton
             disabled={busy}
             onClick={() => {
+              if (done) {
+                // Back to the cropper with the same file, rather than making the
+                // operator find it again in their file manager.
+                setDone(null);
+                setProblem(null);
+                return;
+              }
               onCropped(null);
             }}
             tone="quiet"
           >
-            Choose a different file
+            {done ? "Adjust the crop" : "Choose a different file"}
           </CmsButton>
           <p {...stylex.props(styles.spec)}>
             <Crop aria-hidden="true" {...stylex.props(styles.specIcon)} />
@@ -338,4 +435,8 @@ export const ImageCropDialog = ({
       </div>
     </dialog>
   );
+
+  return typeof document === "undefined"
+    ? content
+    : createPortal(content, document.body);
 };

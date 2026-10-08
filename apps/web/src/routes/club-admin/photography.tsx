@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { Suspense } from "react";
 
+import Loader from "@/components/loader";
 import { WorkspaceShell } from "@/components/workspace-shell";
 import { client } from "@/utils/orpc";
 
@@ -24,66 +25,47 @@ import { client } from "@/utils/orpc";
  * route could never make: that this address is reachable by nobody except
  * this club's own administrator.
  *
- * Task order, not alphabetical: submit work, then watch what happened to it.
- * `My submissions` is last because it is the answer to "did that go through",
- * not a place to start.
- *
- * `Club profile` is absent on purpose. The club is barred from editing its own
- * profile for now, so the page is switched off at the route
- * (`PROFILE_EDITING_ENABLED` in `photography/profile.tsx`) and its nav item is
- * removed here rather than left as a dead link. Put both back together.
+ * Four sections, flat: submit photos, announcements, events and news posts
+ * straight into their own review queues (`@aloysius/api`'s `club` router -
+ * `submitPhoto`/`submitAnnouncement`/`submitEvent`/`submitNewsPost` and their
+ * `listMy*`/`withdraw*` counterparts). There is no combined "my submissions"
+ * queue and no club-profile editor here any more - each content type owns
+ * its own screen and its own queue, the same shape the CMS review side
+ * (`cms/clubs/$scope`) already reads.
  */
 const CLUB_ADMIN_USERNAME = "photography-admin";
 
-const NAV_ITEMS = [
-  { num: "01", label: "Overview", href: "/club-admin/photography" },
-  { num: "02", label: "Galleries", href: "/club-admin/photography/galleries" },
-  { num: "03", label: "Events", href: "/club-admin/photography/events" },
-  {
-    num: "04",
-    label: "Achievements",
-    href: "/club-admin/photography/achievements",
-  },
-  {
-    num: "05",
-    label: "Announcements",
-    href: "/club-admin/photography/announcements",
-  },
-  {
-    num: "06",
-    label: "My submissions",
-    href: "/club-admin/photography/submissions",
-  },
-  { num: "07", label: "My account", href: "/club-admin/photography/account" },
+const BASE = "/club-admin/photography";
+
+const BASE_NAV_ITEMS = [
+  { num: "01", label: "Photos", href: `${BASE}/photos` },
+  { num: "02", label: "Announcements", href: `${BASE}/announcements` },
+  { num: "03", label: "Events", href: `${BASE}/events` },
+  { num: "04", label: "News", href: `${BASE}/news` },
 ] as const;
 
-const isCurrentSection = (pathname: string, href: string) =>
-  href === "/club-admin/photography"
-    ? pathname === href
-    : pathname.startsWith(href);
-
 const PhotographyClubLayout = () => {
-  const { user, club } = Route.useLoaderData();
+  const { user } = Route.useLoaderData();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
-  const navItems = NAV_ITEMS.map((item) => ({
+  const navItems = BASE_NAV_ITEMS.map((item) => ({
     ...item,
-    active: isCurrentSection(pathname, item.href),
+    active: pathname.startsWith(item.href),
   }));
 
   return (
     <WorkspaceShell
-      brandName={club?.name ?? "Photography Club"}
+      brandName="Photography Club"
       brandSub="Club portal"
       eyebrow="Club"
       mainId="club-admin-main"
       navItems={navItems}
-      title={club?.name ?? "Photography Club"}
+      title="Photography Club"
       userName={user.name ?? user.username ?? "Club administrator"}
       userRole="Club administrator"
     >
-      <Suspense fallback={<div>Loading…</div>}>
+      <Suspense fallback={<Loader />}>
         <Outlet />
       </Suspense>
     </WorkspaceShell>
@@ -108,10 +90,7 @@ export const Route = createFileRoute("/club-admin/photography")({
     }
     return { user: session.user };
   },
-  loader: async ({ context }) => {
-    const club = await client.clubs.myClub().catch(() => null);
-    return { club, user: context.user };
-  },
+  loader: ({ context }) => ({ user: context.user }),
   head: () => ({
     meta: [
       { title: "Photography Club — Club portal — St. Aloysius' College" },

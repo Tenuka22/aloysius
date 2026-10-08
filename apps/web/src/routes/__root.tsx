@@ -18,6 +18,7 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import type { orpc } from "@/utils/orpc";
 
+import { AppToaster } from "../components/app-toaster";
 import { DevStyleXInject } from "../components/dev-stylex-inject";
 
 import appCss from "../index.css?url";
@@ -61,6 +62,10 @@ const structuredData = JSON.stringify({
  */
 const errorReference = (error: unknown): string | undefined => {
   if (error instanceof Error) {
+    // Hide generic ReferenceError names from the UI
+    if (error.name === "ReferenceError") {
+      return undefined;
+    }
     const { digest } = error as Error & { digest?: string };
     return digest ?? error.name;
   }
@@ -80,6 +85,14 @@ const RootDocument = () => (
     <body>
       <Outlet />
       <SmoothScroll />
+      {/*
+        Mounted here rather than inside the workspace shells so a failed query
+        is announced on a public page too. It renders an empty, live-region list
+        until something is actually raised, which is why it is unconditional:
+        gating it on the client would make the first client render differ from
+        the server's.
+      */}
+      <AppToaster />
       {import.meta.env.DEV ? (
         <>
           <TanStackRouterDevtools position="bottom-left" />

@@ -2,7 +2,14 @@ import * as stylex from "@stylexjs/stylex";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
+import {
+  color,
+  font,
+  motionToken,
+  radius,
+  shadow,
+  space,
+} from "../../tokens/tokens.stylex";
 
 /**
  * The direction glyph, and the fact that it is `aria-hidden`.
@@ -176,51 +183,71 @@ const styles = stylex.create({
     display: "inline-flex",
     alignItems: "center",
     gap: space["3xs"],
-    marginInlineStart: "-0.5rem",
+    /*
+     * The negative margin plus the matching padding is what puts the label on
+     * the same optical line as the row's own first cell: the button's padding
+     * box starts half a step outside the `<th>`'s content edge and the text
+     * inside it lands exactly on that edge. Without the pair, every header
+     * label sits visibly right of the column it names.
+     */
+    marginInlineStart: `-${space["2xs"]}`,
     paddingInline: space["2xs"],
     paddingBlock: space["3xs"],
-    backgroundColor: "transparent",
-    border: "none",
+    backgroundColor: {
+      default: "transparent",
+      ":hover": "rgba(1, 52, 5, 0.06)",
+    },
+    borderRadius: radius.sm,
+    /*
+     * Longhand, never the `border` shorthand. StyleX compiles `border: "none"`
+     * to *nothing* — it has no expansion for it and drops it silently — so the
+     * user-agent `button` border survived and every sortable header rendered
+     * as a boxed control sitting in the middle of a table header.
+     */
+    borderWidth: 0,
+    borderStyle: "none",
     color: "inherit",
     fontFamily: font.body,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
+    fontSize: "inherit",
+    fontWeight: "inherit",
+    letterSpacing: "inherit",
     textAlign: "start",
     cursor: "pointer",
     transitionProperty: "color, background-color",
     transitionDuration: motionToken.fast,
     ":hover": {
-      color: color.accent,
+      color: color.onSurface,
     },
     ":focus-visible": {
-      outline: "2px solid currentColor",
-      outlineOffset: "2px",
+      outline: `2px solid ${color.focusRing}`,
+      outlineOffset: "1px",
     },
   },
   triggerOpen: {
-    color: color.accent,
+    backgroundColor: "rgba(1, 52, 5, 0.1)",
+    color: color.onSurface,
   },
   glyph: {
-    width: "0.875rem",
-    height: "0.875rem",
+    width: "0.8125rem",
+    height: "0.8125rem",
     flexShrink: 0,
   },
   glyphIdle: {
-    opacity: 0.6,
+    opacity: 0.45,
   },
   menu: {
     position: "absolute",
     insetBlockStart: "calc(100% + 2px)",
-    insetInlineStart: 0,
+    insetInlineStart: `-${space["2xs"]}`,
     zIndex: 30,
-    minWidth: "12rem",
+    minWidth: "13rem",
     padding: space["3xs"],
     backgroundColor: color.surfaceRaised,
     borderWidth: space.px,
     borderStyle: "solid",
     borderColor: color.borderStrong,
-    boxShadow: "0 4px 16px rgba(1, 52, 5, 0.14)",
+    borderRadius: radius.sm,
+    boxShadow: shadow.md,
   },
   item: {
     display: "flex",
@@ -230,7 +257,8 @@ const styles = stylex.create({
     paddingInline: space["2xs"],
     paddingBlock: space["2xs"],
     backgroundColor: "transparent",
-    border: "none",
+    borderWidth: 0,
+    borderStyle: "none",
     color: color.onSurface,
     fontFamily: font.body,
     fontSize: font.sizeSm,
@@ -244,6 +272,10 @@ const styles = stylex.create({
     ":disabled": {
       cursor: "not-allowed",
       opacity: 0.45,
+    },
+    ":focus-visible": {
+      outline: `2px solid ${color.focusRing}`,
+      outlineOffset: "-2px",
     },
   },
   itemDisabled: {

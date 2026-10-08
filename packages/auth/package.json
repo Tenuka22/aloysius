@@ -20,7 +20,8 @@
     "@aloysius/db": "workspace:*",
     "@tanstack/react-table": "^9.2.4",
     "better-auth": "catalog:",
-    "drizzle-orm": "1.0.0-rc.4"
+    "drizzle-orm": "1.0.0-rc.4",
+    "nodemailer": "^10.0.14"
   },
   "devDependencies": {
     "@aloysius/config": "workspace:*",

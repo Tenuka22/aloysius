@@ -2,6 +2,7 @@ import { StudentsPage } from "@aloysius/ui/components/pages/students-page";
 import type { StudentEvent } from "@aloysius/ui/components/pages/students-page";
 import { blocksToStudentsProps } from "@aloysius/ui/content/cms-to-pages";
 import type { GalleryItem } from "@aloysius/ui/content/home";
+import { CLUBS } from "@aloysius/ui/content/students";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -9,20 +10,27 @@ import { Suspense } from "react";
 import { authClient } from "@/lib/auth-client";
 import { orpc } from "@/utils/orpc";
 
+/**
+ * `/students` - Student Life.
+ *
+ * `clubs` is the college's own published list of societies (`content/students`),
+ * not a query - there is no more club registry to list, only the one club seat
+ * (`photography`) the flat model actually serves. Its approved photographs and
+ * upcoming events are still live data, folded into this page's gallery strip
+ * and events list; every other club on the list renders as a plain card with no
+ * content behind it yet.
+ */
+
+const CLUB = "photography" as const;
+
 const StudentsContent = () => {
   const studentsQuery = orpc.cms.getStudents.queryOptions();
   const { data: students } = useSuspenseQuery(studentsQuery);
-  const { data: clubs } = useSuspenseQuery(orpc.clubs.listClubs.queryOptions());
-  const { data: achievements } = useSuspenseQuery(
-    orpc.clubs.listAchievements.queryOptions({ input: { limit: 12 } })
+  const { data: photos } = useSuspenseQuery(
+    orpc.club.listApprovedPhotos.queryOptions({ input: { club: CLUB } })
   );
   const { data: events } = useSuspenseQuery(
-    orpc.clubs.listEvents.queryOptions({ input: { limit: 8 } })
-  );
-  const { data: media } = useSuspenseQuery(
-    orpc.clubs.getFeaturedMedia.queryOptions({
-      input: { clubSlug: "photography" },
-    })
+    orpc.club.listApprovedEvents.queryOptions({ input: { club: CLUB } })
   );
   const { data: session } = authClient.useSession();
 
@@ -30,18 +38,20 @@ const StudentsContent = () => {
     ? blocksToStudentsProps(students.blocks)
     : {};
 
-  const galleryItems: GalleryItem[] = [...media.covers, ...media.trending].map(
-    ({ item, galleryTitle }) => ({
-      id: item.id,
-      label: item.altText || item.caption || galleryTitle,
-      preferredRatio: 1.5,
-    })
-  );
+  const galleryItems: GalleryItem[] = photos.map((photo) => ({
+    id: photo.id,
+    image: photo.imageUrl
+      ? { src: photo.imageUrl, alt: photo.altText }
+      : undefined,
+    label: photo.altText || photo.caption,
+    preferredRatio: 1.5,
+  }));
+
   const studentEvents: StudentEvent[] = events.map((event) => ({
     id: event.id,
-    title: event.title,
-    startsAt: event.startsAt.toISOString(),
     location: event.location,
+    startsAt: event.startsAt,
+    title: event.title,
   }));
 
   const extraNavItems = (() => {
@@ -62,15 +72,11 @@ const StudentsContent = () => {
   return (
     <StudentsPage
       {...cmsProps}
-      achievements={achievements}
+      achievements={[]}
+      clubs={CLUBS}
       events={studentEvents}
-      galleryItems={galleryItems}
-      clubs={clubs.map((club) => ({
-        ...club,
-        description: club.description ?? undefined,
-        coverImageUrl: club.coverImageUrl,
-      }))}
       extraNavItems={extraNavItems}
+      galleryItems={galleryItems}
     />
   );
 };

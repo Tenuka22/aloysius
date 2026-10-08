@@ -27,7 +27,6 @@ This is written for a developer joining the project. It assumes you can read Typ
 
 - [How the database is shaped](#how-the-database-is-shaped)
 - [Content that belongs to the school](#content-that-belongsto-the-school)
-- [Galleries](#galleries)
 - [Clubs, societies and sports](#clubs-societies-and-sports)
 - [The editor's notebook](#the-editors-notebook)
 - [Files and images](#files-and-images)
@@ -35,7 +34,7 @@ This is written for a developer joining the project. It assumes you can read Typ
 **The subsystems**
 
 - [The CMS](#the-cms)
-- [Clubs and the approval queue](#clubs-and-the-approval-queue)
+- [Club content submission](#club-content-submission)
 - [Accounts and roles](#accounts-and-roles)
 - [The front end](#the-front-end)
 - [Design tokens and components](#design-tokens-and-components)
@@ -72,7 +71,7 @@ aloysius/
 │
 └── packages/
     ├── api/         the server: every endpoint, and the rules they enforce
-    ├── db/          the database schema — 24 tables
+    ├── db/          the database schema — 13 tables
     ├── auth/        accounts, roles, and how credentials get created
     ├── storage/     image and file storage (MinIO)
     ├── ui/          the design system and all the page components
@@ -91,17 +90,17 @@ There are exactly two kinds of author in this system, and neither of them has a 
 
 **Editors** work on snapshots. When a CMS editor changes a headline, the change lands in a `content_version` row marked as a _draft_. The live page keeps showing the last _published_ snapshot. When the editor publishes, the old published row is retired and a new one is inserted. Nothing is ever overwritten, so "what was on the homepage last Tuesday" is a query rather than a reconstruction.
 
-**Club administrators** work on proposals. The Photography Club's admin cannot edit the gallery table. What they can do is write a JSON proposal into a queue table describing what they want changed. A CMS editor reviews it, can hand-edit the JSON if the club got something wrong, and then approves. Approval is the one code path that writes to the live table — and it does the content write and the status flip in a single database transaction, so a submission can never be applied twice and a half-applied change is not a state the system can be in.
+**Club administrators** submit directly into the content table, but a submission is not content yet. The Photography Club's admin can insert a row into `club_photo`, `announcement`, `event` or `news_post`, but every row they can reach starts `status = 'pending'`, and every public read filters on `status = 'approved'`. A CMS reviewer (`admin` or `cms`) flips that status with a single `update`, which is the entire publish step — there is no separate live table a reviewer copies the row into, and no JSON proposal to hand-edit, only approve or reject with an optional note.
 
 Three separate mechanisms enforce this, deliberately overlapping:
 
-1. **The schema.** Queue tables carry a `status` that starts at `pending`. Live content tables have no `status` at all, or a `publishedAt` timestamp that nothing sets until approval does.
-2. **The public queries.** Every read that a visitor can reach filters for published state. `public.ts` opens with a comment explaining that an unapproved draft has no published row to find, so there is no code path in that file that can leak one. That is a stronger statement than "we remember to check".
-3. **The appliers.** `apply.ts` is the only module in the codebase that writes to a live content table, and it is only ever called from inside the approval transaction.
+1. **The schema.** Club-submittable tables (`club_photo`, `announcement`, `event`, `news_post`) carry a `status` that starts at `pending`, plus a `*_review_fields_paired` CHECK making "approved with no reviewer" and "still pending but reviewed" both unrepresentable.
+2. **The public queries.** Every read that a visitor can reach — `listApprovedPhotos`, `listApprovedAnnouncements`, `listApprovedEvents`, `listApprovedNewsPosts` — filters on `status = 'approved'` and nothing else. There is no code path in those files that can return an unapproved row.
+3. **The review endpoints.** `review*` in `packages/api/src/routers/club/` is the only code that sets `status = 'approved'`, and it is a reviewer-only procedure (`clubReviewerProcedure`).
 
-The practical effect: "the club changed the cover image" and "the CMS approved the new cover image" are two rows with two timestamps. That separation is what makes the whole thing auditable, and it is why the club admin screens can be simple forms without any of them needing to understand publishing.
+The practical effect: a club's submission and a reviewer's decision are recorded as `submittedAt`/`submittedById` and `reviewedAt`/`reviewedById` on the same row, so the audit trail is in the row rather than split across a queue table and a content table. That is also why the club admin screens can be simple forms without any of them needing to understand publishing.
 
-There is exactly one deliberate exception. The school-wide `announcement` table has no submission path at all, because the person reviewing the queue _is_ the person who wrote the announcement. A second gate in front of that would be ceremony, not safety.
+`announcement` and `event` are shared tables: a row is either CMS-authored (written and approved by the same CMS/admin seat in one step) or club-submitted (starts `pending`, needs a separate reviewer), distinguished by nothing more than who wrote it and what `status` it starts at.
 
 ## How the code is laid out
 
@@ -203,24 +202,21 @@ Note that the tiers are not cumulative. `adminProcedure` is built from `publicPr
 export const appRouter = {
   healthCheck,
   getSession,
-  privateData, // three loose procedures
   cms,
   files,
-  adminUsers,
-  adminClubs,
-  clubs, // five sub-routers
+  club,
+  admin,
 };
 ```
 
-Five sub-routers, 101 procedures total:
+Two loose procedures plus three routers (`cms`, `files`, `club`) and one plain object (`admin`), 86 procedures total:
 
 | Router | Procedures | What it's for |
 | --- | --- | --- |
 | `cms` | 55 | the block editor: read, save draft, publish, watch, history |
-| `clubs` | 28 | public club content reads, the club admin's own view, 15 submit endpoints |
-| `adminClubs` | 14 | the review queue, ban/unban, credential rotation, audit feed |
-| `files` | 4 | issue an upload path on this app, register, list, delete |
-| `adminUsers` | 4 | list accounts and clubs (provisioning moved to `adminClubs.rotatePassword`, which creates the account when there is none) |
+| `club` | 24 | six endpoints per content type — `submit*`/`listMy*`/`withdraw*`/`listPending*`/`review*`/`listApproved*` — across four flat content types: photo, announcement, event, news post |
+| `files` | 5 | issue an upload path, confirm, resolve URLs, list, delete |
+| `admin` | 2 | list the seeded club seats, reset a seat's password |
 
 ## Who is allowed to do what
 
@@ -245,15 +241,15 @@ The sign-in route is more careful than the others. It returns the same generic e
 
 # The data
 
-24 tables in libSQL (a SQLite fork) accessed through Drizzle ORM. Remote in production, a local file in development.
+13 tables in libSQL (a SQLite fork) accessed through Drizzle ORM. Remote in production, a local file in development.
 
 ## How the database is shaped
 
-**Every table's id is a branded type**, not a string. `GalleryId` is not assignable from a bare `string`, and a `GalleryId` cannot be passed where a `ClubId` is expected — the compiler catches it. This matters more than usual here, because ids travel through a lot of generic inference between the router builder and the database layer, which is exactly the situation where a plain `string` quietly becomes interchangeable with every other string.
+**Every table's id is a branded type**, not a string. `ClubPhotoId` is not assignable from a bare `string`, and a `ClubPhotoId` cannot be passed where a `NewsPostId` is expected — the compiler catches it. This matters more than usual here, because ids travel through a lot of generic inference between the router builder and the database layer, which is exactly the situation where a plain `string` quietly becomes interchangeable with every other string.
 
 The brand is keyed by a plain string rather than a `unique symbol` for a specific reason: symbol-keyed brands break `tsc -b` composite builds once the type flows through enough generic machinery. The comment in `schema/brand.ts` says so, having been learned the hard way.
 
-**Validation is Valibot, everywhere, and it is shared.** Drizzle can generate select and insert schemas from the table definitions, and the codebase uses that. But the important pattern is in the club submissions: the schema that validates a request on the way in is _the same schema_ re-used to parse the stored JSON on the way out at approval time. A payload that was valid when submitted cannot be applied in a shape the tables do not expect, and an editor's hand-edited JSON is validated before it can reach a live row.
+**Validation is Valibot, everywhere.** Every table has `createSelectSchema`/`createInsertSchema`/`createUpdateSchema` generated straight from its Drizzle definition, with per-column refinements (length caps, URL shape, the branded id) layered on top. A club submit endpoint's input schema is built from the same table-derived schema the row itself is read back through, so there is one definition of what a valid `club_photo` or `announcement` looks like, not a request shape and a separate storage shape that can drift apart.
 
 `schema/primitives.ts` holds the field formats that would otherwise be reinvented — email, Sri Lankan phone (which normalises `07XXXXXXXX` to `+947XXXXXXXX`), national identity card, ISO date, postal code, strong password. Only two of them are still imported. The rest are leftovers from the student records system that was removed; see [Things that are gone](#things-that-are-gone).
 
@@ -261,82 +257,23 @@ The brand is keyed by a plain string rather than a `unique symbol` for a specifi
 
 ## Content that belongs to the school
 
-Six tables hold content that is the school's own rather than any club's:
+Two tables hold school-only content and have no club-submission path: `person` and `achievement`. Both gate on a `publishedAt` timestamp and have no `status` column. Neither currently has any importer outside the schema package — they are vestiges of a wider CMS content model and are not wired into any route today.
 
-`person`, `event`, `achievement`, `announcement`, and the two that the announcements/news features are built on. Each has a `publishedAt` timestamp and no status column — the timestamp is the gate. Nothing is public until it is set, and only an approval sets it.
-
-`achievement` is the school's record of what the _school_ has done. It has a `category` and a unique index on `(category, title)`. A club's own results live in a completely separate table, and the comment explaining why is worth repeating here because it is the kind of decision that gets quietly reversed later:
-
-> Merging them would mean either a club editing school-level copy, or a global achievement quietly being attributed to whichever club logged it last.
-
-`announcement` is the school-wide notice. It carries `audience` (all, students, staff, parents, alumni), `severity` (info, important, urgent) and `isPinned`. Notice how club announcements do _not_ have those three columns — a club cannot pin a notice to the top of the school's strip, and the public feed substitutes `null` for them.
-
-## Galleries
-
-Galleries are the only place where global content and club curation overlap, and the design is deliberate enough to be worth understanding.
-
-A gallery is site-level — addressable from the homepage and any page. But it carries an `ownerClubId`, which records _which club may curate it_. The Photography Club curates the photo galleries. A gallery with no owner is CMS-authored, typically something a teacher runs, and **no club may edit it** — the ownership check fails rather than silently allowing any club admin to claim it.
-
-Galleries come in three kinds, and each kind gets its own detail table:
-
-```
-gallery  ──┬─→ photo_gallery    (shotOn, location, camera, lens, exposure)
-           ├─→ art_gallery      (medium, artist, venue, year)
-           └─→ digital_gallery  (format, durationSeconds, posterImageId)
-```
-
-Table-per-subtype rather than nullable columns on one table, so kind-specific fields are typed instead of shoe-horned. The submission applier dispatches with an `if / else if` chain rather than a `switch` specifically so that adding a fourth kind becomes a compile error at that line.
-
-**The image role system is the most interesting part.** Every image in a gallery is doing one of three jobs, and the jobs need incompatible crops:
-
-| Role     | Where it appears                               | Crop |
-| -------- | ---------------------------------------------- | ---- |
-| `cover`  | the tile that represents the gallery in a list | 3:2  |
-| `banner` | full-width at the top of a gallery page        | 16:9 |
-| `item`   | one tile in a masonry grid among its peers     | 1:1  |
-
-Without a declared role the renderer has to guess from context, and the same upload crops three different ways depending on which screen it lands on. So the role is a column.
-
-And `isCover` — a boolean that says "this is the cover" — is **not** independent. It is derived from `imageRole` every time an item is written. There is one way to say "this is the cover", not two that can disagree. A database check constraint backs that up in case anything ever writes the boolean directly.
-
-The rest of the gallery constraints are all in the database rather than in application code, because two approved submissions can race (each is a separate reviewer action) and application-level checks have a window between them:
-
-- at most one cover per gallery
-- at most one banner per gallery
-- at most five trending images per gallery, ranked 1–5, with a unique index on the rank and a range check
-- a trending image must have a rank; a non-trending image must not
-
-"Trending" is how an image reaches the homepage. A club can _propose_ promoting its own photograph, but the flag is not written until a reviewer approves — so a club cannot put its own shot on the homepage.
-
-`gallery_link` attaches a gallery to a person, an event, an achievement, an exhibition, **or one of the club's own `clubEvent` / `clubAchievement` records**. It is deliberately **polymorphic with no foreign key** on the target id. The alternative — one link table per target — means a migration and a new API branch every time a new thing becomes linkable, and the user-facing question ("show me the events in this gallery") is answered by one indexed lookup. The trade-off is that the database cannot stop a dangling target, so the API validates the target exists at both ends.
-
-The club-owned targets are separate values rather than extensions of `event` and `achievement` because `club_event` and `club_achievement` are separate tables with separate ownership. Before they existed, a club could propose an event, photograph it, and had nowhere to point the photographs — the natural link could not be expressed at all.
-
-`LINK_TARGET_RESOLVERS` in `clubs/link-targets.ts` is the single map that the submit handler, the approval applier and the club's own link screen all read. Adding a value to `GALLERY_LINK_TARGETS` without a resolver there is a runtime error naming the target, which is the intended failure mode: a link to something the site cannot render is worse than a rejected submission.
-
-Note that `sport` is deliberately _absent_ from the link targets, with a comment saying sports get their own schema. That schema does not exist. See [Known problems](#known-problems).
+`announcement` and `event` are **shared**: a row is either CMS-authored directly (a school-wide notice or event) or club-submitted through the flat club router, distinguished by the `club` column. Both carry a `status` (`pending`/`approved`/`rejected`), `submittedById`, and `reviewedById`/`reviewedAt`/`reviewNote`, paired by a `*_review_fields_paired` CHECK, plus `publishedAt` for the public gate. `announcement` additionally carries `audience` (all, students, staff, parents, alumni), `severity` (info, important, urgent) and `isPinned` — fields a club submission can set like any other, since the table is the same one the CMS writes to.
 
 ## Clubs, societies and sports
 
-A club is a registry record the CMS creates, not something a club creates for itself. It has a slug, a name, a description, two images, and an `active`/`archived` status.
+There is no club registry table, no club profile, no cover banner, and no membership model. "Club" is a hardcoded slug list (`CLUBS` in `schema/club-photos.ts`; today just `"photography"`), enforced as a `CHECK` on the `club` column of every club-submittable table.
 
-**The identity model is unusual and deliberate.** Each club has exactly one administrator, and their Better Auth username _is_ the club's identity: the slug plus `-admin`. So the Photography Club's administrator is `photography-admin`, and that username is the join key between an authenticated session and a club. It is hardcoded in a typed constant in the API.
+**The identity model is unusual and deliberate.** The one club seat's Better Auth username is the slug plus `-admin` — `photography-admin` — with the `club-admin` role. There is no username-to-club lookup: the `club` value on a submission is a field in the request body, validated against `CLUBS` and gated by the `club:submit` permission, which only the `club-admin` role grants.
 
-This is worth understanding because of what it prevents. The club a submission is for is derived from the session on **every request** and never read from a client parameter. There is no `?club=` anywhere in the club endpoints, and — as of the banner work — no `clubId` in any submit endpoint either. Every submit handler calls `ownClubScope`, which resolves the club from the username and asserts the account may submit, so there is no field a client can get wrong. (There was: the event, announcement and gallery forms all sent `clubId: ""` and every submission from them failed.)
+A club submits four independent content types — photo (`club_photo`), announcement, event, news post (`news_post`) — each with its own submit/list-my/withdraw/review/list-pending/list-approved set of endpoints in `packages/api/src/routers/club/`. There is no gallery concept, no image-role system, no gallery-link graph, and no per-club profile screen. A photo submission is a single row (file, caption, alt text, optional off-site album URL); there is no cover/banner/trending distinction and no five-item homepage cap.
 
-The registry constant decides _who may write_. The database row decides _what the club is called_. Both exist because a club can edit its own description and images but not its own name or slug — the name is referenced by other content.
+**Approved content is public.** Each content type's `listApproved*` procedure is a `publicProcedure` with no per-viewer check: a row only exists to find once a reviewer has approved it, so the approval _is_ the access control. The public gallery for a club lives at `/galleries/:slug`, and the club's own page at `/photography-club` — both static routes, not derived from a registry.
 
-The two images are the **cover banner** across the top of the club section and the **section background** behind it. They are edited on `/club/profile` and go through the ordinary club queue as target `"club"`, so a banner is approval-gated like everything else. Their payload fields are _nullable_ rather than merely optional: `undefined` is "leave this alone" and `null` is "take the banner down", and without that distinction a club could add a banner but never change or remove one.
+**Sports do not exist in this system.** Not as a table, not as a schema, not as an API, not as an editable field. There are hardcoded strings in a component that no route currently mounts, and a jump link on the students page pointing at a section that does not render.
 
-There is no membership model, no member list, and no role hierarchy inside a club. One account.
-
-**Events hold no images of their own beyond a cover.** Everything else about an event is a gallery attached to it, which is why `/events` is built entirely out of resolved links and why `listGalleriesForTarget` exists. An event with no linked gallery is legitimate — the cross-country run did not need a gallery to have happened — so the page renders one without photographs rather than treating the empty state as a fault.
-
-**Approved galleries are public.** `getGallery` is a `publicProcedure` with no per-viewer check: a gallery only has a row to find once a reviewer approved it, so the approval _is_ the access control. The route is `/galleries/:slug` rather than a club-scoped path because a gallery is global content that happens to have a curator — one with no club attached still needs an address.
-
-**Sports do not exist in this system yet.** Not as a table, not as a schema, not as an API, not as an editable field. There are hardcoded strings in a component that no route currently mounts, and a jump link on the students page pointing at a section that does not render. The full picture, including what building it would involve, is in the [club deep dive](./CLUB_SOCIETIES_POSTS.md).
-
-**Societies and clubs are the same thing.** The database comment says "a club or society"; the UI section is called "Clubs & Societies". There are eight society names hardcoded as a fallback list, and they are not rows in the `club` table.
+**Societies and clubs are the same thing.** The UI section is called "Clubs & Societies". There are eight society names hardcoded as a fallback list, and they are not rows in any table — there is no `club` table left to be a row of.
 
 ## The editor's notebook
 
@@ -411,17 +348,15 @@ Because the only HTML in the system comes from that editor, it still gets saniti
 
 **Real-time is a single in-process publisher.** Saving a draft publishes an event on a `<page>-updated` channel; the editor's `watch` endpoint is a generator subscribing to it. Two details: it is in-memory, so it only works with a single server instance; and exactly one editor screen subscribes. Two editors on the same page will not see each other's changes. Both look like oversights rather than decisions, and the resume window is sixty seconds.
 
-## Clubs and the approval queue
+## Club content submission
 
-The most intricate subsystem, and the one the spec in `specs/CLUB-ARCHITECTURE` was written for. Covered in full in the [club deep dive](./CLUB_SOCIETIES_POSTS.md); the shape in one paragraph:
+Covered in full in the [club deep dive](./CLUB_SOCIETIES_POSTS.md) and `specs/CLUB-ARCHITECTURE`; the shape in one paragraph:
 
-Fifteen `submit*` endpoints. Every one of them writes **only** to a queue table. None of them touches a content table. Two queues exist — one for club-scoped content, one for global content a club is allowed to propose — and they differ in scope, not in mechanics.
+Twenty-four endpoints, six per content type (photo, announcement, event, news post): `submit*` inserts a `pending` row directly into that type's content table; `listMy*` and `withdraw*` are the submitter's own view and undo; `listPending*` and `review*` are the reviewer's queue and decision; `listApproved*` is the public read. There is no separate queue table, no JSON payload, and no applier module — the content row and the submission are the same row.
 
-A club admin cannot touch another club's content, cannot touch the global announcement set at all, and can only _create_ — never update or delete — the school-wide `person`, `event` and `achievement` records.
+A club admin can only submit for their own club (the `club` field, checked against the hardcoded `CLUBS` list) and only the four content types the router exposes. There is no gallery, no achievement, and no profile for a club to touch.
 
-Two things make the queue pleasant to work with. Re-submitting supersedes: a second proposal for the same target replaces the first, so a reviewer never sees two competing versions and the club's most recent intent is the one reviewed. And every proposal stores a snapshot of the live row as it was at submit time, so the review screen can show a genuine before-and-after diff without re-deriving what "live" meant when the club pressed submit.
-
-The review screen lets an editor edit the proposal's JSON before approving. That is a deliberate escape hatch — the club got the slug wrong, the editor fixes the slug — and it is safe because the payload is re-validated against the same schema at approval time.
+Review is a single `update` setting `status`, `reviewedById` and `reviewedAt` together — the same statement, so the `*_review_fields_paired` CHECK on every table can never be tripped by a partial write. There is no JSON to hand-edit: a reviewer approves or rejects the row exactly as submitted, with an optional `reviewNote` on rejection. Withdrawal deletes a still-`pending` row scoped to its own submitter; once reviewed, the row (and its `reviewNote`) is the record worth keeping, so withdrawal is refused.
 
 ## Accounts and roles
 
@@ -544,9 +479,9 @@ Nine test files across the monorepo, and the distribution matters more than the 
 
 **What is tested properly:** credential creation, end to end against a real temporary database — the assertion that matters is not "a row exists" but "these exact credentials are accepted by the same endpoint a person types into". The passphrase generator's statistical properties. The rich-text sanitiser. The principal-message fallback semantics. Several page components' accessibility structure.
 
-**What is not tested at all: the entire server.** The API package has a `test` script and a Vitest config and zero test files. Nothing covers any of the hundred and one procedures, none of the ten content appliers, and not the approval transaction — which is the single most consequential piece of logic in the codebase. The database-bootstrap-and-rotate-every-boot path is untested too, and it can rotate a live password.
+**What is not tested at all: the entire server.** The API package has a `test` script and a Vitest config and zero test files. Nothing covers any of the server's procedures, including the four `review*` endpoints — the single most consequential write path in the codebase, since it is the only code that ever sets `status = 'approved'`. The database-bootstrap-and-rotate-every-boot path is untested too, and it can rotate a live password.
 
-A reader picking this up would reasonably assume the server is covered. It is not, and the two success criteria written into the club spec — that a club admin cannot target another club, and that a banned one is refused everywhere — have no executable assertion. Both would be cheap to add, because the guard they test is one function.
+A reader picking this up would reasonably assume the server is covered. It is not, and the success criterion written into the club spec — that a submission for another club is rejected — has no executable assertion, even though the guard it tests is one permission check.
 
 The database test harness is unusually good, incidentally: it creates a real on-disk temporary database with the full schema pushed, rather than mocking. That is why the auth tests are meaningful, and why the test timeout is fifteen seconds.
 
@@ -558,33 +493,15 @@ The database test harness is unusually good, incidentally: it creates a real on-
 
 Ordered roughly by how likely they are to bite. Entries marked **fixed** were found and corrected while writing this document; they are kept because the reasoning behind each fix is the part worth not re-deriving.
 
-**A gallery link to an achievement could never be approved. — fixed** Submitting one passed validation, because the submit handler checked that the target event, person _or achievement_ exists. The applier then checked only event and person, so the achievement branch fell through and the approval failed with "the linked record does not exist" — for a record that demonstrably did. A third list, in the club's own links screen, had all three. The three had drifted independently.
-
-The fix is one shared module, `clubs/link-targets.ts`, that decides which targets are resolvable and resolves them. The submit handler, the applier and the screen all call it. Adding a target to the link-target enum without adding it there is now a runtime error naming the target, which is the failure you want: a link to something the site cannot render is worse than a rejected submission.
-
-**Two tables were written and approved but never displayed. — fixed** Club achievements had a submit endpoint, an applier, and a review queue entry, but no public read endpoint — the achievements query read only the school-wide table. Club events had a public read endpoint that **no route called**; the students page fetched the school-wide events table instead. Both were fully wired except for the last metre, which is the hardest metre to notice is missing.
-
-There is now a `listClubAchievements` procedure, and `listClubEvents` has a caller: `/events`, which merges club and school events into one date-ordered list and shows each club event's linked galleries. `listClubEvents` also stopped defaulting its `from` filter to now — it could not previously ask for the past at all, and the default now lives with the caller so the `limit` applies after the filter.
-
-**The club domain did not typecheck. — fixed** Three errors, each of which broke functionality rather than merely the build. `clubs/scope.ts` never imported `club`, so `myClub` — called by every club screen for its own header — could not compile. `clubs/apply.ts` never imported `valibot`, so `parsePayload` and therefore all ten appliers were non-compiling, meaning every approval failed. And `assertLinkTargetExists` was typed as taking the root `Database` handle while being called from inside the approval transaction, which is not assignable to it; the union is now `DbLike` in `clubs/db.ts`.
-
-**Three club-portal forms could never succeed. — fixed** The event, announcement and gallery forms all sent `clubId: ""`, which resolved to no club, so every submission from them was rejected with "You are not the administrator of that club". Only `submitClubAchievement` worked, because it was the one written to derive the club server-side. All submit endpoints now derive it, and none of them accepts a `clubId`.
-
-**A club's cover banner was unreachable. — fixed** The `club` row had `coverImageId` and `backgroundImageId`, and a `club` submission target existed, but nothing could set them: there was no CMS endpoint and no club-portal screen, and the payload's image fields were optional-but-not-nullable so a banner could never be removed. There is now a `/club/profile` screen, the fields are nullable, and `applyClub` inserts the registry row from the hardcoded constant if it is missing — otherwise an approved banner could be written to zero rows and still be marked approved.
-
 **Sports, houses and prefects do not render.** There is no sports data model at all — no table, no schema, no endpoint, no editable field. The components that render them are used only by their own tests, because a second, CMS-era students page component is what the route actually mounts. The jump links on the students page still point at all three sections. The same duplication exists for the contact and news pages: eighteen production-unreachable files across three page families.
 
-**The media page never queries galleries. — partly fixed** It renders a gallery _count_ from CMS content and the words "will be displayed here once published". There are now two real pages that do show galleries — `/galleries/:slug` for one approved gallery and `/events` for the galleries linked to each event — but `/media` still calls no gallery read endpoint, so there is no browsable index of every gallery on the site.
+**The media page never queries club content.** It renders content from the CMS block editor only. `/galleries/:slug` (one club's approved photos) and `/photography-club` (the club's own page) are real, separate routes, but `/media` calls no `club.listApproved*` procedure, so there is no browsable index of a club's media from the media page itself.
 
 **Three Tailwind classes in a StyleX codebase. — fixed** Three divs used `className="mt-4"` in files that have no Tailwind, so they had no margin at all. The package already had the right answer — a `FieldStack` component whose comment explains that it exists _because_ `className` is how Tailwind-shaped habits get into a StyleX codebase. The three call sites now use it.
 
 **A user row could end up with a null role. — fixed** The `user.role` column had no default, while the auth config declared `defaultValue: "user"`. Better Auth applies its default on the paths that go through it; a direct insert does not. And a null role is indistinguishable from no role to `requireRole`, which reads `session.user.role ?? ""` — so a user created outside the auth API was locked out of everything, silently. The column now defaults to `"user"` too, and a test asserts it.
 
 **Five permission factories that could never work. — fixed** Five exported helpers checked permissions on resources that do not exist — student, mark, exam, staff, assignment. Any endpoint built from them could only ever return forbidden. They were vestiges of the removed records system, and are now deleted rather than left as a trap, with a note recording why.
-
-**A club's name and slug can never be changed.** The submission schema excludes both, on the grounds that they are "CMS-owned" because other content references them. But there is no CMS endpoint to create or edit a club either. The row is created once, lazily, when credentials are first issued, copying values from a TypeScript constant. So "CMS-owned" currently means unreachable, and the only way to rename a club is to edit the constant and redeploy. The same divergence shows up as an inconsistency between two lists: the admin screen enumerates the hardcoded constants while the public query reads the table, so a row with no matching constant would be publicly visible and invisible to the CMS.
-
-**A ban is a column write, not a Better Auth call.** The ban endpoint sets a boolean on the user row directly rather than going through the auth library's ban API. The only thing that actually stops a banned club admin is one assertion function. Six procedures deliberately do not call it — reading your own club, listing your galleries, listing your submissions, viewing your account, rotating your own password, withdrawing your own proposals. That is defensible, since none of those is creating or submitting content, but it means the ban is load-bearing on every one of the fifteen submit endpoints remembering to call that function.
 
 **Two file endpoints are more permissive than documented.** Both the presign and the confirm step require any signed-in user, not an admin — so a `club-admin` can upload. More importantly there is no MIME allowlist on the presign step and no size cap at all on the confirm step, which registers a row pointing at an object that may not exist and may be any size. The storage layer validates nothing.
 
@@ -627,7 +544,7 @@ The repository has been through a large removal. Staff records, student records,
 
 What survives of that domain: two schema files referenced only by stale build artifacts, a handful of unused permission factories, a few validation helpers for Sri Lankan phone and identity-card formats, and a large amount of documentation.
 
-The documentation is the worst of it. **Six files in `docs/` describe code that does not exist and, in most cases, never existed on this branch** — an entire staffing guide, a marking guide, a subject-structure guide, an auth guide describing a `teacher` role and env vars that were never committed, a behaviour guide, and a middleware guide describing a file that is not on disk. The infrastructure guide lists five database tables where there are twenty-four, and the readme is still the scaffold's original: it documents an import of a component that does not exist, the wrong port, two of four compose services, and a database mount that the compose file does not create.
+The documentation is the worst of it. **Six files in `docs/` describe code that does not exist and, in most cases, never existed on this branch** — an entire staffing guide, a marking guide, a subject-structure guide, an auth guide describing a `teacher` role and env vars that were never committed, a behaviour guide, and a middleware guide describing a file that is not on disk. The readme is still the scaffold's original: it documents an import of a component that does not exist, the wrong port, two of four compose services, and a database mount that the compose file does not create.
 
 If you are new to this project, **do not trust `docs/` except `CLUB_SOCIETIES_POSTS.md` and this file.** The `*-audit.md` files are past-tense records of design work and are worth reading for the reasoning, but their route inventories are out of date.
 
@@ -635,18 +552,13 @@ If you are new to this project, **do not trust `docs/` except `CLUB_SOCIETIES_PO
 
 The best thing about this codebase is that comments explain _decisions_, not mechanics. Almost every surprising-looking choice turns out to be load-bearing rather than accidental, and the comment saying so is why. A sample of the reasoning you will find if you go looking:
 
-- Why galleries are global but one club curates them, and why that is the only global-scope table a club touches.
-- Why a withdrawn submission is exempt from the check that a reviewed one records who reviewed it — because otherwise withdrawal would require naming the submitter as the reviewer of their own proposal, "a lie in the audit trail".
-- Why a pending-proposal uniqueness rule does not prevent a club from queueing five gallery images at once. (SQLite treats nulls as distinct in a unique index, and every creation has no target id.)
-- Why a competition result is stored as text rather than a date. (Competitions are logged weeks late, and "2026 Inter-house" is a real value a date field rejects.)
-- Why the club-to-administrator binding is a username match, and what that prevents.
-- Why `isCover` is derived from the image role rather than being set independently.
-- Why a club's own result cannot become a school achievement, in either direction.
+- Why `withdrawPhoto` (and its siblings) deletes a pending row rather than adding a fourth status — a withdrawn submission has nothing left for a reviewer to act on, and `listMy*` has no use for a row it would only filter back out.
+- Why `review*` writes `status`, `reviewedById` and `reviewedAt` in one `.set()` call — so the `*_review_fields_paired` CHECK can never be tripped by a partial update.
+- Why a `fileId` is validated against the uploading account before `submitPhoto` accepts it, rather than trusted — a `fileId` someone else uploaded is refused rather than silently attached to a stranger's submission.
 - Why the off-site album field is a bare URL rather than a stored embed. (The publisher changes, the terms change, and a stored copy of someone else's page is both stale and theirs.)
 
 A recurring theme is **honesty as a rendering rule.** Where the college has not published a fact, the field is optional and the component renders an honest empty state rather than a placeholder:
 
-- A club with no description shows an empty card, not a `[CMS: description]` marker.
 - A house with no published roster promotes its _colour name_ to the heading, so colour is never the only thing identifying it.
 - The prefects call-to-action renders **no button at all** when it has no destination. The design shipped `href="#"`; the comment says an honest section beats a dead control.
 - The sports list contains exactly the three sports the design names, with a comment noting that adding a plausible-looking fourth would be inventing a fact about the college.
@@ -665,23 +577,19 @@ A map for when you know what you want and need to find it.
 | --- | --- |
 | The router, all its procedures | `packages/api/src/routers/` |
 | Who may call what | `packages/api/src/index.ts` — the five procedure tiers |
-| Public club and content reads | `packages/api/src/routers/clubs/public.ts` |
-| The club admin's own view | `packages/api/src/routers/clubs/scope.ts` |
-| The submit endpoints | `packages/api/src/routers/clubs/submissions.ts` |
-| The approval logic | `packages/api/src/routers/clubs/apply.ts` |
-| Request and proposal payload shapes | `packages/api/src/routers/clubs/payloads.ts` |
-| The hardcoded club registry | `packages/api/src/routers/clubs/config.ts` |
-| Which things a gallery can link to | `packages/api/src/routers/clubs/link-targets.ts` |
-| Turning a `fileId` into a URL | `packages/api/src/routers/clubs/file-urls.ts` |
+| Every club endpoint (submit/list-my/withdraw/review/list-pending/list-approved, one file each) | `packages/api/src/routers/club/` |
+| The hardcoded club slug list | `packages/db/src/schema/club-photos.ts` (`CLUBS`) |
+| Turning a `fileId` into a URL | `packages/api/src/routers/files/file-urls.ts` |
+| Seat administration (list seeded seats, reset password) | `packages/api/src/routers/admin-accounts.ts` |
 | The CMS, the block editor endpoints | `packages/api/src/routers/cms/index.ts` |
 | Uploads | `packages/api/src/routers/files/` |
-| Credential rotation, ban, review queue | `packages/api/src/routers/admin-clubs.ts` |
 
 **The data**
 
 | Looking for | Go to |
 | --- | --- |
 | Every table, column, index, constraint | `packages/db/src/schema/` — one file per domain |
+| The four club-submittable content tables | `packages/db/src/schema/club-photos.ts`, `announcements.ts`, `root-content.ts` (`event`), `news-posts.ts` |
 | Shared field formats | `packages/db/src/schema/primitives.ts` |
 | How ids are branded | `packages/db/src/schema/brand.ts` |
 | Migration history | `packages/db/src/migrations/` |
@@ -696,16 +604,17 @@ A map for when you know what you want and need to find it.
 | The auth instance and plugins    | `packages/auth/src/index.ts`       |
 | Credential creation and rotation | `packages/auth/src/admin.ts`       |
 | The username rule                | `packages/auth/src/username.ts`    |
-| Passphrase generation            | `packages/auth/src/passphrase.ts`  |
 
 **The front end**
 
 | Looking for | Go to |
 | --- | --- |
 | Routes, and which guard protects each | `apps/web/src/routes/` |
-| A public gallery page | `apps/web/src/routes/galleries.$slug.tsx` |
+| A club's public photo gallery | `apps/web/src/routes/galleries.$slug.tsx` |
+| A club's own public page | `apps/web/src/routes/photography-club.tsx` |
+| The club admin workspace | `apps/web/src/routes/club-admin/photography/` |
+| The CMS review screens for club content | `apps/web/src/routes/cms/club-*.tsx` |
 | The public events page | `apps/web/src/routes/events.tsx` |
-| The club banner picker | `apps/web/src/components/club/cover-image-picker.tsx` |
 | The browser auth client | `apps/web/src/lib/auth-client.ts` |
 | The oRPC client and query setup | `apps/web/src/utils/orpc.ts` |
 | Server singletons and bootstrap | `apps/web/src/services.ts` |
@@ -721,6 +630,6 @@ A map for when you know what you want and need to find it.
 
 **Also worth reading**
 
-- `specs/CLUB-ARCHITECTURE/` — the short product and technical spec for the club system. Accurate, and the fastest way to understand the approval design.
-- `docs/CLUB_SOCIETIES_POSTS.md` — the deep dive on clubs, including what a sports implementation would need.
+- `specs/CLUB-ARCHITECTURE/` — the short product and technical spec for the flat club content model.
+- `docs/CLUB_SOCIETIES_POSTS.md` — the deep dive on clubs and club content submission.
 - `AGENTS.md` — the lint and code standards, which are the Ultracite preset.
