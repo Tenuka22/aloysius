@@ -12,6 +12,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
 
 const AdmissionsContent = () => {
@@ -53,12 +54,32 @@ const AdmissionsContent = () => {
 
 export const Route = createFileRoute("/admissions")({
   head: () => ({
-    meta: [
-      { title: "Admissions | St. Aloysius' College, Galle" },
+    ...pageHead({
+      description:
+        "How to apply to St. Aloysius' College, Galle - the application process, requirements, key dates, downloads and frequently asked questions.",
+      path: "/admissions",
+      title: "Admissions | St. Aloysius' College, Galle",
+    }),
+    /*
+     * FAQPage structured data (GEO): the admissions FAQ accordion's own
+     * question/answer pairs, so an AI assistant or a rich-results snippet can
+     * cite them directly rather than only the hero copy.
+     */
+    scripts: [
       {
-        name: "description",
-        content:
-          "How to apply to St. Aloysius' College, Galle - the application process, requirements, key dates, downloads and frequently asked questions.",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: ADMISSIONS_FAQS.map((faq) => ({
+            "@type": "Question",
+            name: faq.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: faq.answer,
+            },
+          })),
+        }),
+        type: "application/ld+json",
       },
     ],
   }),

@@ -12,6 +12,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
 
 /**
@@ -130,6 +131,13 @@ const HomeContent = () => {
 };
 
 export const Route = createFileRoute("/")({
+  head: () =>
+    pageHead({
+      description:
+        "Official website of St. Aloysius' College, Galle, Sri Lanka - a Catholic boys' college founded in 1862. Admissions, academics, student life, news and the Old Boys' Association.",
+      path: "/",
+      title: "St. Aloysius' College, Galle",
+    }),
   component: () => (
     <Suspense fallback={<div>Loading…</div>}>
       <HomeContent />

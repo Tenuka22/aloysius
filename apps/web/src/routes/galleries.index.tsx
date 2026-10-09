@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
 
 /**
@@ -56,16 +57,13 @@ const GalleriesIndexContent = () => {
 };
 
 export const Route = createFileRoute("/galleries/")({
-  head: () => ({
-    meta: [
-      { title: "Galleries | St. Aloysius' College, Galle" },
-      {
-        name: "description",
-        content:
-          "Published photo galleries from around the college, approved by the CMS team.",
-      },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      description:
+        "Published photo galleries from around the college, approved by the CMS team.",
+      path: "/galleries",
+      title: "Galleries | St. Aloysius' College, Galle",
+    }),
   component: () => (
     <Suspense fallback={<div>Loading…</div>}>
       <GalleriesIndexContent />

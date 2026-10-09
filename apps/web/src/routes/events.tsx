@@ -6,6 +6,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
 
 /**
@@ -84,16 +85,13 @@ const EventsContent = () => {
 };
 
 export const Route = createFileRoute("/events")({
-  head: () => ({
-    meta: [
-      { title: "Events & Calendar | St. Aloysius' College, Galle" },
-      {
-        name: "description",
-        content:
-          "Upcoming events, academic calendar, and achievements at St. Aloysius' College, Galle.",
-      },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      description:
+        "Upcoming events, academic calendar, and achievements at St. Aloysius' College, Galle.",
+      path: "/events",
+      title: "Events & Calendar | St. Aloysius' College, Galle",
+    }),
   component: () => (
     <Suspense fallback={<div>Loading…</div>}>
       <EventsContent />

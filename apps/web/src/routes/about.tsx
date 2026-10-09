@@ -17,6 +17,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
 
 const AboutContent = () => {
@@ -78,16 +79,13 @@ const AboutContent = () => {
 };
 
 export const Route = createFileRoute("/about")({
-  head: () => ({
-    meta: [
-      { title: "About | St. Aloysius' College, Galle" },
-      {
-        name: "description",
-        content:
-          "The history, mission and people of St. Aloysius' College, Galle - founders, vision and mission, motto, principal's message and college anthem.",
-      },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      description:
+        "The history, mission and people of St. Aloysius' College, Galle - founders, vision and mission, motto, principal's message and college anthem.",
+      path: "/about",
+      title: "About | St. Aloysius' College, Galle",
+    }),
   component: () => (
     <Suspense fallback={<div>Loading…</div>}>
       <AboutContent />

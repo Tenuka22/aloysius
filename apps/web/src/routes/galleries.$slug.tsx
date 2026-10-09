@@ -6,6 +6,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
 
 /**
@@ -106,6 +107,13 @@ const GalleryContent = () => {
 };
 
 export const Route = createFileRoute("/galleries/$slug")({
+  head: ({ params }) =>
+    pageHead({
+      description:
+        "A published photo gallery from St. Aloysius' College, Galle, approved by the CMS team.",
+      path: `/galleries/${params.slug}`,
+      title: "Gallery | St. Aloysius' College, Galle",
+    }),
   component: () => (
     <Suspense fallback={<div>Loading…</div>}>
       <GalleryContent />

@@ -1,0 +1,32 @@
+# St. Aloysius' College, Galle
+
+> A Catholic boys' college in Galle, Sri Lanka, founded in 1862 by Belgian
+> Jesuit missionaries under Bishop Joseph Van Reeth. Motto: Certa Viriliter
+> ("Strive Manfully").
+
+## Pages
+
+- Homepage: https://aloysiuscollege.lk/
+- About (history, founders, mission, principal's message): https://aloysiuscollege.lk/about
+- Academics (sections of study, A/L streams, departments, leadership): https://aloysiuscollege.lk/academics
+- Admissions (application process, requirements, key dates, FAQs): https://aloysiuscollege.lk/admissions
+- Student Life (clubs, galleries, events): https://aloysiuscollege.lk/students
+- News & Events: https://aloysiuscollege.lk/news
+- Events & Calendar: https://aloysiuscollege.lk/events
+- Notices: https://aloysiuscollege.lk/notices
+- Alumni / Old Boys' Association: https://aloysiuscollege.lk/alumni
+- Media (photo galleries): https://aloysiuscollege.lk/media
+- Galleries index: https://aloysiuscollege.lk/galleries
+- Contact: https://aloysiuscollege.lk/contact
+
+## Key facts
+
+- Founded: 1862, Galle, Sri Lanka
+- Type: Catholic boys' college, Primary through G.C.E. Advanced Level
+- Motto: Certa Viriliter (Strive Manfully)
+- A/L streams: Physical Science, Biological Science, Commerce, Arts & Technology
+
+## Machine-readable data
+
+- Sitemap: https://aloysiuscollege.lk/sitemap.xml
+- robots.txt: https://aloysiuscollege.lk/robots.txt

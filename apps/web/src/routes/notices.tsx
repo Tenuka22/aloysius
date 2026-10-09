@@ -5,6 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
 
 const NoticesContent = () => {
@@ -33,16 +34,13 @@ const NoticesContent = () => {
 };
 
 export const Route = createFileRoute("/notices")({
-  head: () => ({
-    meta: [
-      { title: "Notices | St. Aloysius' College, Galle" },
-      {
-        name: "description",
-        content:
-          "Official notices, circulars and announcements from the college administration.",
-      },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      description:
+        "Official notices, circulars and announcements from the college administration.",
+      path: "/notices",
+      title: "Notices | St. Aloysius' College, Galle",
+    }),
   component: () => (
     <Suspense fallback={<div>Loading…</div>}>
       <NoticesContent />

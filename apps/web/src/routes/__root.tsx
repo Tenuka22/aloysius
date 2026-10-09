@@ -135,7 +135,6 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "canonical", href: SITE_URL },
       { rel: "icon", href: "/favicon.ico", sizes: "any" },
       {
         rel: "icon",
