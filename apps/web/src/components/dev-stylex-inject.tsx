@@ -1,18 +1,17 @@
 import { useEffect } from "react";
 
-function DevStyleXInjectImpl() {
+const DevStyleXInjectImpl = () => {
   useEffect(() => {
     if (import.meta.env.DEV) {
       import("virtual:stylex:runtime");
     }
   }, []);
   return <link rel="stylesheet" href="/virtual:stylex.css" />;
-}
+};
 
-export function DevStyleXInject({ cssHref }: { cssHref: string }) {
-  return import.meta.env.DEV ? (
+export const DevStyleXInject = ({ cssHref }: { cssHref: string }) =>
+  import.meta.env.DEV ? (
     <DevStyleXInjectImpl />
   ) : (
     <link rel="stylesheet" href={cssHref} />
   );
-}

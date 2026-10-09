@@ -1,4 +1,4 @@
-import stylex from "@stylexjs/unplugin";
+import stylexVite from "@stylexjs/unplugin/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { varlockVitePlugin } from "@varlock/vite-integration";
 import viteReact from "@vitejs/plugin-react";
@@ -30,7 +30,7 @@ export default defineConfig({
   },
   plugins: [
     varlockVitePlugin({ ssrInjectMode: "auto-load" }),
-    stylex.vite({
+    stylexVite({
       useCSSLayers: true,
     }),
     tanstackStart(),

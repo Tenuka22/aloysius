@@ -97,7 +97,7 @@ type Canvas = OffscreenCanvas | HTMLCanvasElement;
  * file `.webp` when its bytes are PNG means the extension lies about the content
  * for every downstream consumer. `cropToFile` names the file from this.
  */
-const canvasToBlob = async (
+const canvasToBlob = (
   canvas: Canvas,
   type: string,
   quality: number
@@ -105,6 +105,7 @@ const canvasToBlob = async (
   if ("convertToBlob" in canvas) {
     return canvas.convertToBlob({ type, quality });
   }
+  // oxlint-disable-next-line promise/avoid-new -- wrapping the callback-based `HTMLCanvasElement.toBlob`, which has no promise-native equivalent.
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -155,14 +156,15 @@ export const readImageSize = async (file: File): Promise<ImageSize> => {
 
   const url = URL.createObjectURL(file);
   try {
+    // oxlint-disable-next-line promise/avoid-new -- wrapping the callback-based `HTMLImageElement` load/error events, which have no promise-native equivalent.
     return await new Promise<ImageSize>((resolve, reject) => {
       const image = new Image();
-      image.onload = () => {
+      image.addEventListener("load", () => {
         resolve({ width: image.naturalWidth, height: image.naturalHeight });
-      };
-      image.onerror = () => {
+      });
+      image.addEventListener("error", () => {
         reject(new Error(`"${file.name}" could not be read as an image.`));
-      };
+      });
       image.src = url;
     });
   } finally {
@@ -179,18 +181,17 @@ const decode = async (
   }
   const url = URL.createObjectURL(file);
   try {
+    // oxlint-disable-next-line promise/avoid-new -- wrapping the callback-based `HTMLImageElement` load/error events, which have no promise-native equivalent.
     return await new Promise<HTMLImageElement>((resolve, reject) => {
       const image = new Image();
-      image.onload = () => {
+      image.addEventListener("load", () => {
         resolve(image);
-      };
-      image.onerror = () => {
+      });
+      image.addEventListener("error", () => {
         reject(new Error(`"${file.name}" could not be read as an image.`));
-      };
+      });
       image.src = url;
     });
-  } catch (error) {
-    throw error;
   } finally {
     // The image has decoded by the time either callback runs, so the URL can go.
     setTimeout(() => {
@@ -251,7 +252,16 @@ export const cropToFile = async ({
     const height = Math.max(1, Math.round(target.height * scale));
 
     const canvas = createCanvas(width, height);
-    const context = canvas.getContext("2d");
+    /*
+     * `canvas.getContext("2d")` on the `OffscreenCanvas | HTMLCanvasElement`
+     * union resolves to the lowest-common overload across both DOM types,
+     * which TypeScript widens to `RenderingContext` - an umbrella type with
+     * no `drawImage`. Both real return types have it; this cast says so.
+     */
+    const context = canvas.getContext("2d") as
+      | CanvasRenderingContext2D
+      | OffscreenCanvasRenderingContext2D
+      | null;
     if (!context) {
       throw new Error(
         "This browser cannot crop images. Try Chrome, Edge, Firefox or Safari."

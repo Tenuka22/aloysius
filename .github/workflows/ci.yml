@@ -1,0 +1,86 @@
+name: CI
+
+# Lint, types and tests across every package, a migration applied from zero
+# against a throwaway database, and the production build - adapted from
+# ../school-management's workflow. That repo runs its test/migration jobs
+# against real PostgreSQL service containers; this one's database is libSQL
+# and every test and migration here runs against an embedded file/in-memory
+# database instead (`createTestDb()`, `TURSO_DATABASE_URL=file:./ci.db`), so
+# no database service container is needed at all - only object storage
+# (MinIO) would be, and nothing in the test suite talks to it over the
+# network either (`packages/storage`'s test only checks the returned shape).
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+# Placeholder values for the Varlock schema, which `bun install`'s postinstall
+# codegen and the Vite build both validate. Validation values only: nothing
+# here is a deployment secret, and the test suite configures its own
+# database/auth in-process via `createTestDb()`.
+env:
+  NODE_ENV: test
+  BETTER_AUTH_SECRET: ci-placeholder-secret-not-used-at-runtime-0000
+  BETTER_AUTH_URL: http://localhost:3000
+  TURSO_DATABASE_URL: file:./ci.db
+  CMS_USERNAME: cms
+  CMS_PASSWORD: ci-placeholder-cms-12345678
+  MINIO_ENDPOINT: localhost
+  MINIO_PORT: 9000
+  MINIO_ACCESS_KEY: minioadmin
+  MINIO_SECRET_KEY: minioadmin
+  MINIO_BUCKET: aloysius
+  MINIO_USE_SSL: false
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile
+      - name: Lint and format (ultracite)
+        run: bun run check
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile
+      - name: Migrate a fresh database from zero
+        working-directory: packages/db
+        run: bun run db:migrate
+      - name: Typecheck every package and app
+        run: bun run check-types
+      - name: Unit and integration tests
+        run: bun run test
+
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile
+      - name: Production build
+        working-directory: apps/web
+        run: bun run build

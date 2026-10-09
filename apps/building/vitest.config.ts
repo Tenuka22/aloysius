@@ -1,9 +1,9 @@
-import stylex from "@stylexjs/unplugin";
+import stylexVite from "@stylexjs/unplugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [stylex.vite(), viteReact()],
+  plugins: [stylexVite(), viteReact()],
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
