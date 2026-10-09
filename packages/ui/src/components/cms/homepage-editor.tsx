@@ -233,30 +233,6 @@ const styles = stylex.create({
     width: "1rem",
     height: "1rem",
   },
-  addWrap: {
-    padding: space["2xs"],
-  },
-  addButton: {
-    width: "100%",
-    minHeight: "2.75rem",
-    borderWidth: space.px,
-    borderStyle: "dashed",
-    borderColor: {
-      default: color.borderStrong,
-      ":hover": color.onSurface,
-    },
-    backgroundColor: {
-      default: "transparent",
-      ":hover": color.surfaceSunken,
-    },
-    color: color.onSurface,
-    fontFamily: font.body,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
-    textTransform: "uppercase",
-    cursor: "pointer",
-  },
 
   /* -------------------------------------------------------------- editor */
   editorMeta: {
@@ -786,12 +762,6 @@ export const HomepageEditor = forwardRef<
               );
             })}
           </ul>
-
-          <div {...stylex.props(styles.addWrap)}>
-            <button type="button" {...stylex.props(styles.addButton)}>
-              + Add section
-            </button>
-          </div>
         </nav>
 
         <div {...stylex.props(styles.main)}>
@@ -875,7 +845,11 @@ export const SectionsDropdown = ({
         Sections
       </button>
       {open ? (
-        <div role="menu" {...stylex.props(styles.sectionsDropdown)}>
+        <div
+          data-lenis-prevent
+          role="menu"
+          {...stylex.props(styles.sectionsDropdown)}
+        >
           {blocks.map((block, index) => {
             const isHidden = hidden[block.id] ?? false;
             return (

@@ -2,7 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 import { Crop, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { centerCrop, makeAspectCrop, ReactCrop } from "react-image-crop";
+import { makeAspectCrop, ReactCrop } from "react-image-crop";
 import type { PercentCrop } from "react-image-crop";
 
 import "react-image-crop/dist/ReactCrop.css";
@@ -239,18 +239,21 @@ export const ImageCropDialog = ({
     setBusy(true);
     setProblem(null);
     try {
-      // `centerCrop` converts the percentage selection to whole pixels at the
-      // source's natural size; `cropToFile` then resolves it against the token
-      // ratio and re-encodes. Passing percentages straight through would mean the
-      // pixel maths runs against a size the cropper never measured.
-      const pixel = centerCrop(crop, image.naturalWidth, image.naturalHeight);
+      // `naturalSize` is the source's own pixel dimensions - `cropToFile`
+      // resolves `crop`'s percentages against this to get whole pixels, then
+      // resolves that against the token ratio and re-encodes. `centerCrop`
+      // used to sit here, but it does something else entirely: it returns a
+      // *centered* crop in whatever unit it was given, not pixels. Fed `crop`
+      // (unit: "%"), it handed back a crop still in percent - so `naturalSize`
+      // was a pair of numbers like `65`/`36` standing in for a 4000px-wide
+      // photograph, and every pixel the cropper then computed was wrong.
       const cropped = await cropToFile({
         aspectRatio: spec.ratio,
         crop,
         file,
         naturalSize: {
-          width: pixel.width || image.naturalWidth,
-          height: pixel.height || image.naturalHeight,
+          width: image.naturalWidth,
+          height: image.naturalHeight,
         },
       });
       setDone(cropped);
@@ -342,7 +345,11 @@ export const ImageCropDialog = ({
             <div {...stylex.props(styles.stage)}>
               {/* eslint-disable-next-line jsx-a11y/alt-text -- the dialog's
                   heading and this summary already describe the image */}
-              <img alt="" src={doneUrl} {...stylex.props(styles.result)} />
+              <img
+                alt=""
+                src={doneUrl ?? undefined}
+                {...stylex.props(styles.result)}
+              />
             </div>
             <Notice tone="success">
               <span {...stylex.props(styles.summary)}>

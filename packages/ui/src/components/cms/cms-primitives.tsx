@@ -1199,6 +1199,7 @@ const CustomSelect = ({
         /* oxlint-disable jsx-a11y/prefer-tag-over-role -- custom dropdown, not native select */
         <div
           aria-labelledby={id}
+          data-lenis-prevent
           ref={menuRef}
           role="listbox"
           style={

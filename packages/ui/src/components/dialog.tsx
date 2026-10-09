@@ -254,7 +254,11 @@ export const Dialog = ({
         </button>
       </div>
 
-      {children ? <div {...stylex.props(styles.body)}>{children}</div> : null}
+      {children ? (
+        <div data-lenis-prevent {...stylex.props(styles.body)}>
+          {children}
+        </div>
+      ) : null}
 
       {footer ? <div {...stylex.props(styles.footer)}>{footer}</div> : null}
     </>

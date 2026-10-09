@@ -179,7 +179,12 @@ export const DataTableViewOptions = <TData extends RowData>({
       </button>
 
       {open ? (
-        <div aria-label="Columns" role="menu" {...stylex.props(styles.menu)}>
+        <div
+          aria-label="Columns"
+          data-lenis-prevent
+          role="menu"
+          {...stylex.props(styles.menu)}
+        >
           <p {...stylex.props(styles.label)}>Columns</p>
           <div {...stylex.props(styles.separator)} />
           {hideableColumns.map((column) => (

@@ -624,7 +624,9 @@ export const HistoryPopover = ({
         ) : null}
       </div>
 
-      <ul {...stylex.props(styles.list)}>{renderHistoryList(data, loading)}</ul>
+      <ul data-lenis-prevent {...stylex.props(styles.list)}>
+        {renderHistoryList(data, loading)}
+      </ul>
 
       <div {...stylex.props(styles.footer)}>
         {totalPages > 1 ? (
@@ -705,7 +707,9 @@ export const HistoryDialog = ({
         </button>
       </div>
 
-      <ul {...stylex.props(styles.list)}>{renderHistoryList(data, loading)}</ul>
+      <ul data-lenis-prevent {...stylex.props(styles.list)}>
+        {renderHistoryList(data, loading)}
+      </ul>
 
       {totalPages > 1 ? (
         <div {...stylex.props(styles.footer)}>

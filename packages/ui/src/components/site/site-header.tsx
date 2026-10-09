@@ -477,7 +477,7 @@ export const SiteHeader = ({
         ref={drawerRef}
         {...stylex.props(styles.drawer)}
       >
-        <div {...stylex.props(styles.drawerInner)}>
+        <div data-lenis-prevent {...stylex.props(styles.drawerInner)}>
           <div {...stylex.props(styles.drawerHead)}>
             <p {...stylex.props(styles.drawerTitle)}>Menu</p>
             <button
