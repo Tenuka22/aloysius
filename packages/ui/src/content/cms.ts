@@ -938,6 +938,59 @@ export const ALUMNI_BLOCKS: readonly PageBlock[] = [
 ];
 
 /**
+ * Academics page blocks. The Principal's portrait is not here - it is the
+ * global `PRINCIPAL_BLOCKS` block, read the same way every other page reads
+ * it, so there is exactly one photo and one name to keep in sync, not two.
+ */
+export const ACADEMICS_BLOCKS: readonly PageBlock[] = [
+  {
+    id: "academics-leadership",
+    name: "Section Leadership",
+    type: "Card grid",
+    status: "published",
+    summary: "Primary sectional head and secondary deputy principal",
+    fields: [
+      {
+        id: "primary-head-name",
+        label: "Primary section - Sectional Head name",
+        kind: "text",
+        hint: "Optional. Leave empty to name the office rather than a person.",
+      },
+      {
+        id: "primary-head-title",
+        label: "Primary section - Title",
+        kind: "text",
+        value: "Sectional Head, Primary",
+      },
+      {
+        id: "primary-head-photo",
+        label: "Primary section - Photo",
+        kind: "image",
+        hint: "Portrait orientation.",
+      },
+      {
+        id: "secondary-deputy-name",
+        label: "Secondary section - Deputy Principal name",
+        kind: "text",
+        hint: "Optional. Leave empty to name the office rather than a person.",
+      },
+      {
+        id: "secondary-deputy-title",
+        label: "Secondary section - Title",
+        kind: "text",
+        value: "Deputy Principal, Secondary",
+      },
+      {
+        id: "secondary-deputy-photo",
+        label: "Secondary section - Photo",
+        kind: "image",
+        hint: "Portrait orientation.",
+      },
+    ],
+  },
+];
+
+/**
  * Media page blocks. Gallery and media library configuration.
  */
 export const MEDIA_BLOCKS: readonly PageBlock[] = [

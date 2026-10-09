@@ -560,6 +560,9 @@ const editorEndpoints = (page: string) => {
 /** The global Principal's Message editor. Not a page — see `PRINCIPAL_BLOCKS`. */
 const principal = editorEndpoints("principal");
 
+/** The Academics page editor. See `ACADEMICS_BLOCKS`. */
+const academics = editorEndpoints("academics");
+
 export const cmsRouter = {
   getPrincipal: principal.get,
   getPrincipalDraft: principal.getDraft,
@@ -567,6 +570,13 @@ export const cmsRouter = {
   updatePrincipal: principal.update,
   watchPrincipal: principal.watch,
   publishPrincipal: principal.publish,
+
+  getAcademics: academics.get,
+  getAcademicsDraft: academics.getDraft,
+  getAcademicsHistory: academics.getHistory,
+  updateAcademics: academics.update,
+  watchAcademics: academics.watch,
+  publishAcademics: academics.publish,
 
   /** Fetch the latest published version for each block on the homepage. */
   getHomepage: publicProcedure.handler(async ({ context }) => {

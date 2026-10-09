@@ -207,6 +207,59 @@ export const blocksToAlumniProps = (blocks: CmsBlock[]): AlumniPageProps => ({
     : fieldValue(blocks, "alumni-links", "alumni-events-href"),
 });
 
+/* ------------------------------------------------------------- academics */
+
+export interface AcademicsLeaderProps {
+  name?: string;
+  title?: string;
+  photo?: ImageSource;
+}
+
+export interface AcademicsLeadershipProps {
+  primaryHead: AcademicsLeaderProps;
+  secondaryDeputy: AcademicsLeaderProps;
+}
+
+/**
+ * The Principal's own name/title/portrait are not read here - they come from
+ * the global Principal block (`principalContent`), the same object every
+ * other page reads, so the Academics page composes its leadership row from
+ * that plus these two section-level roles rather than storing a third copy
+ * of the Principal's photo.
+ */
+export const blocksToAcademicsLeadership = (
+  blocks: CmsBlock[]
+): AcademicsLeadershipProps => ({
+  primaryHead: {
+    name: isHidden(blocks, "academics-leadership")
+      ? undefined
+      : fieldValue(blocks, "academics-leadership", "primary-head-name"),
+    title: isHidden(blocks, "academics-leadership")
+      ? undefined
+      : fieldValue(blocks, "academics-leadership", "primary-head-title"),
+    photo: imageSource(
+      blocks,
+      "academics-leadership",
+      "primary-head-photo",
+      "Primary section head"
+    ),
+  },
+  secondaryDeputy: {
+    name: isHidden(blocks, "academics-leadership")
+      ? undefined
+      : fieldValue(blocks, "academics-leadership", "secondary-deputy-name"),
+    title: isHidden(blocks, "academics-leadership")
+      ? undefined
+      : fieldValue(blocks, "academics-leadership", "secondary-deputy-title"),
+    photo: imageSource(
+      blocks,
+      "academics-leadership",
+      "secondary-deputy-photo",
+      "Secondary section deputy principal"
+    ),
+  },
+});
+
 /* ----------------------------------------------------------------- media */
 
 export interface MediaPageProps {
