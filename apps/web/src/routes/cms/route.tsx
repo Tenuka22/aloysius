@@ -106,6 +106,12 @@ const CmsLayout = () => {
       href: "/cms/admissions",
       active: pathname.startsWith("/cms/admissions"),
     },
+    {
+      num: "16",
+      label: "Academics Editor",
+      href: "/cms/academics",
+      active: pathname.startsWith("/cms/academics"),
+    },
   ];
 
   return (

@@ -7,6 +7,8 @@ import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
 import { AcademicsHero } from "./academics-hero";
+import type { AcademicsLeader } from "./academics-leadership";
+import { AcademicsLeadership } from "./academics-leadership";
 import { AlStreams } from "./al-streams";
 import { ResultsCta } from "./results-cta";
 import { StudySections } from "./study-sections";
@@ -37,6 +39,8 @@ export interface AcademicsPageProps {
   /** Photographs for the departments section, once the CMS supplies them. */
   labImage?: ImageSource;
   libraryImage?: ImageSource;
+  /** Principal, Primary sectional head and Secondary deputy principal. */
+  leaders?: readonly AcademicsLeader[];
 }
 
 export const AcademicsPage = ({
@@ -44,6 +48,7 @@ export const AcademicsPage = ({
   extraNavItems,
   labImage,
   libraryImage,
+  leaders,
 }: AcademicsPageProps) => (
   <>
     <SkipLink targetId={MAIN_ID} />
@@ -51,6 +56,9 @@ export const AcademicsPage = ({
     <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
       <AcademicsHero />
       <StudySections />
+      {leaders && leaders.length > 0 && (
+        <AcademicsLeadership leaders={leaders} />
+      )}
       <AlStreams />
       <SubjectDepartments labImage={labImage} libraryImage={libraryImage} />
       <ResultsCta />
