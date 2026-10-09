@@ -5,7 +5,7 @@ import {
 } from "@aloysius/db/schema/club-photos";
 import { newsPost } from "@aloysius/db/schema/news-posts";
 import { achievement, event } from "@aloysius/db/schema/root-content";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, or } from "drizzle-orm";
 import * as v from "valibot";
 
 import { publicProcedure } from "../../index";
@@ -43,7 +43,12 @@ export const listApprovedGalleries = publicProcedure
       .leftJoin(newsPost, eq(gallery.linkedNewsId, newsPost.id))
       .leftJoin(event, eq(gallery.linkedEventId, event.id))
       .leftJoin(achievement, eq(gallery.linkedAchievementId, achievement.id))
-      .where(and(eq(gallery.club, input.club), eq(gallery.status, "approved")))
+      .where(
+        and(
+          or(eq(gallery.club, input.club), isNull(gallery.club)),
+          eq(gallery.status, "approved")
+        )
+      )
       .orderBy(desc(gallery.publishedAt))
       .all();
 

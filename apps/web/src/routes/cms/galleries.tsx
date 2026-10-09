@@ -191,7 +191,14 @@ const GalleryLinkPicker = ({
   };
 
   return (
-    <>
+    <span
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 6,
+        alignItems: "flex-end",
+      }}
+    >
       <Field
         kind="select"
         label="Related content"
@@ -211,9 +218,9 @@ const GalleryLinkPicker = ({
         />
       )}
       <CmsButton disabled={!canSave} onClick={handleSave} tone="quiet">
-        {linkMutation.isPending ? "Saving…" : "Save link"}
+        {linkMutation.isPending ? "Saving..." : "Save link"}
       </CmsButton>
-    </>
+    </span>
   );
 };
 
@@ -237,7 +244,14 @@ const GalleryReviewControls = ({
   );
 
   return (
-    <>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        width: "100%",
+      }}
+    >
       <Field
         kind="text"
         label="Reviewer note"
@@ -251,33 +265,35 @@ const GalleryReviewControls = ({
         newsPosts={newsPosts}
         onLinked={onDecided}
       />
-      <CmsButton
-        disabled={reviewMutation.isPending}
-        onClick={() =>
-          reviewMutation.mutate({
-            id: galleryRow.id,
-            status: "approved",
-            reviewNote: note || undefined,
-          })
-        }
-        tone="primary"
-      >
-        Approve
-      </CmsButton>
-      <CmsButton
-        disabled={reviewMutation.isPending}
-        onClick={() =>
-          reviewMutation.mutate({
-            id: galleryRow.id,
-            status: "rejected",
-            reviewNote: note || undefined,
-          })
-        }
-        tone="danger"
-      >
-        Reject
-      </CmsButton>
-    </>
+      <span style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+        <CmsButton
+          disabled={reviewMutation.isPending}
+          onClick={() =>
+            reviewMutation.mutate({
+              id: galleryRow.id,
+              status: "approved",
+              reviewNote: note || undefined,
+            })
+          }
+          tone="primary"
+        >
+          Approve
+        </CmsButton>
+        <CmsButton
+          disabled={reviewMutation.isPending}
+          onClick={() =>
+            reviewMutation.mutate({
+              id: galleryRow.id,
+              status: "rejected",
+              reviewNote: note || undefined,
+            })
+          }
+          tone="danger"
+        >
+          Reject
+        </CmsButton>
+      </span>
+    </div>
   );
 };
 

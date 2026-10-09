@@ -81,7 +81,7 @@ export const HomePage = ({
   const cms = blocks ? blocksToProps(blocks) : undefined;
   const h = cms?.hidden;
 
-  const resolvedNotice = notice ?? cms?.notice ?? DEFAULT_NOTICE;
+  const resolvedNotice = notice ?? DEFAULT_NOTICE;
   const resolvedTagline = tagline ?? cms?.heroTagline;
 
   const headerRef = useRef<HTMLDivElement>(null);
@@ -113,7 +113,7 @@ export const HomePage = ({
     <>
       <SkipLink targetId={MAIN_ID} />
       <div ref={headerRef}>
-        {!h?.notice && <NoticeBar notice={resolvedNotice} />}
+        <NoticeBar notice={resolvedNotice} />
         <SiteHeader activeHref="/" extraNavItems={extraNavItems} />
       </div>
       <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>

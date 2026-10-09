@@ -1,5 +1,6 @@
 import { HomePage } from "@aloysius/ui/components/home/home-page";
 import { principalContent } from "@aloysius/ui/content/cms-to-principal";
+import type { Notice } from "@aloysius/ui/content/home";
 import { FEATURED_STORY, NEWS_STORIES } from "@aloysius/ui/content/news";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -11,11 +12,14 @@ import { orpc } from "@/utils/orpc";
 /**
  * `/` - the public homepage.
  *
- * The CMS-authored blocks and the Principal's Message are the only live
- * queries here. There is no club-sourced announcements strip, achievements
- * panel or featured-media gallery: the flat club model has no school-wide
- * "every club's latest" query behind those sections, only per-club approved
- * photos/announcements/events/news posts - see `/photography-club` and
+ * The CMS-authored blocks and the Principal's Message are live queries here,
+ * same as always. The top notice strip used to be a single hand-typed field
+ * on the homepage's own "Notice Strip" block - it is the most-relevant real
+ * announcement now (`cms.listAnnouncements`, pinned first then newest),
+ * falling back to `DEFAULT_NOTICE` when there are none. There is still no
+ * achievements panel or featured-media gallery: the flat club model has no
+ * school-wide "every club's latest" query behind those sections, only
+ * per-club approved photos/events/galleries - see `/photography-club` and
  * `/galleries/photography` for where that club's own content actually lives.
  */
 
@@ -28,6 +32,8 @@ const HomeContent = () => {
    */
   const principalQuery = orpc.cms.getPrincipal.queryOptions();
   const { data: principal } = useSuspenseQuery(principalQuery);
+  const announcementsQuery = orpc.cms.listAnnouncements.queryOptions();
+  const { data: announcements } = useSuspenseQuery(announcementsQuery);
   const { data: session } = authClient.useSession();
 
   const extraNavItems = (() => {
@@ -45,12 +51,23 @@ const HomeContent = () => {
     return items;
   })();
 
+  const [topAnnouncement] = announcements;
+  const notice: Notice | undefined = topAnnouncement
+    ? {
+        id: topAnnouncement.id,
+        text: topAnnouncement.title,
+        href: "/notices",
+        priority: topAnnouncement.severity === "urgent" ? "high" : "standard",
+      }
+    : undefined;
+
   return (
     <HomePage
       blocks={homepage?.blocks ?? undefined}
       extraNavItems={extraNavItems}
       featuredNews={FEATURED_STORY}
       news={NEWS_STORIES}
+      notice={notice}
       principal={principalContent(principal?.blocks)}
     />
   );

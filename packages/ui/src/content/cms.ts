@@ -204,36 +204,6 @@ export const getImageRatioKey = (fieldId: string): AspectRatioKey =>
 
 export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
   {
-    id: "notice",
-    name: "Notice Strip",
-    type: "Banner",
-    status: "published",
-    summary: "Notice text, link and priority",
-    fields: [
-      {
-        id: "notice-text",
-        label: "Notice text",
-        kind: "text",
-        value: "Admissions for Grade 1 (2027) open on 1 March.",
-        wide: true,
-      },
-      {
-        id: "notice-href",
-        label: "Link target",
-        kind: "select",
-        value: "/notices",
-        options: APP_ROUTE_OPTIONS,
-      },
-      {
-        id: "notice-priority",
-        label: "Priority",
-        kind: "text",
-        value: "Standard",
-        hint: "Urgent switches the label to crimson and reads 'Urgent'.",
-      },
-    ],
-  },
-  {
     id: "hero",
     name: "Hero",
     type: "Hero",

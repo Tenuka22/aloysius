@@ -1,5 +1,5 @@
 import type { ImageSource } from "../components/primitives/media";
-import type { HeroBackground, Notice } from "./home";
+import type { HeroBackground } from "./home";
 
 /**
  * A single block returned from the CMS API.
@@ -23,13 +23,6 @@ const field = (
 
 const isHidden = (blocks: CmsBlock[], blockId: string): boolean =>
   blocks.find((block) => block.id === blockId)?.hidden ?? false;
-
-const fieldWithDefault = (
-  blocks: CmsBlock[],
-  blockId: string,
-  fieldId: string,
-  fallback: string
-): string => field(blocks, blockId, fieldId) ?? fallback;
 
 interface CmsImageField {
   id: string;
@@ -103,28 +96,6 @@ export const blocksToProps = (blocks: CmsBlock[]) => {
     isHidden(blocks, blockId) ? undefined : field(blocks, blockId, fieldId);
 
   return {
-    notice: isHidden(blocks, "notice")
-      ? undefined
-      : ({
-          id: "notice",
-          text: fieldWithDefault(
-            blocks,
-            "notice",
-            "notice-text",
-            "Admissions for the next academic year are now open."
-          ),
-          href: fieldWithDefault(blocks, "notice", "notice-href", "/notices"),
-          priority:
-            fieldWithDefault(
-              blocks,
-              "notice",
-              "notice-priority",
-              "Standard"
-            ).toLowerCase() === "urgent"
-              ? ("high" as const)
-              : ("standard" as const),
-        } satisfies Notice),
-
     heroTagline: optionalField("hero", "hero-tagline"),
     heroMotto: optionalField("hero", "hero-motto"),
     heroPlace: optionalField("hero", "hero-place"),
@@ -193,7 +164,6 @@ export const blocksToProps = (blocks: CmsBlock[]) => {
 
     // Track which sections are hidden so the preview can skip them
     hidden: {
-      notice: isHidden(blocks, "notice"),
       hero: isHidden(blocks, "hero"),
       heritage: isHidden(blocks, "heritage"),
       academics: isHidden(blocks, "academics"),
