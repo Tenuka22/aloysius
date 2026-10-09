@@ -559,7 +559,9 @@ export const Shell = ({
       </a>
 
       {/* Desktop sidebar */}
-      <aside {...stylex.props(styles.sidebar)}>{sidebarBody}</aside>
+      <aside data-lenis-prevent {...stylex.props(styles.sidebar)}>
+        {sidebarBody}
+      </aside>
 
       {/* Mobile drawer */}
       <dialog
@@ -583,7 +585,9 @@ export const Shell = ({
               <X aria-hidden="true" {...stylex.props(styles.icon)} />
             </button>
           </div>
-          <div {...stylex.props(styles.drawerBody)}>{sidebarBody}</div>
+          <div data-lenis-prevent {...stylex.props(styles.drawerBody)}>
+            {sidebarBody}
+          </div>
         </div>
       </dialog>
 
