@@ -991,6 +991,78 @@ export const ACADEMICS_BLOCKS: readonly PageBlock[] = [
 ];
 
 /**
+ * Admissions page blocks. The application process, requirements, key dates,
+ * downloads and FAQs are real shipped copy (`content/admissions.ts`), not
+ * editable here - only the hero, the priority notice banner and the closing
+ * contact note change often enough to need a non-technical editor.
+ */
+export const ADMISSIONS_BLOCKS: readonly PageBlock[] = [
+  {
+    id: "admissions-hero",
+    name: "Page Header",
+    type: "Hero",
+    status: "published",
+    summary: "Eyebrow, heading and intro",
+    fields: [
+      {
+        id: "admissions-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: "Admissions",
+      },
+      {
+        id: "admissions-heading",
+        label: "Heading",
+        kind: "text",
+        value: "Become an Aloysian",
+      },
+      {
+        id: "admissions-tagline",
+        label: "Tagline",
+        kind: "textarea",
+        value:
+          "Everything a parent needs to know about joining St. Aloysius' College - process, requirements and key dates.",
+        wide: true,
+      },
+    ],
+  },
+  {
+    id: "admissions-notice",
+    name: "Priority Notice",
+    type: "Banner",
+    status: "published",
+    summary: "The red banner below the hero",
+    fields: [
+      {
+        id: "admissions-notice-text",
+        label: "Notice text",
+        kind: "text",
+        value: "Admissions are open for the next academic year.",
+        wide: true,
+        hint: "Clearing this hides the banner.",
+      },
+    ],
+  },
+  {
+    id: "admissions-contact",
+    name: "Contact CTA",
+    type: "Banner",
+    status: "published",
+    summary: "The closing 'Still have questions?' note",
+    fields: [
+      {
+        id: "admissions-contact-note",
+        label: "Note",
+        kind: "text",
+        value:
+          "The College office is happy to help with any question not answered here.",
+        wide: true,
+      },
+    ],
+  },
+];
+
+/**
  * Media page blocks. Gallery and media library configuration.
  */
 export const MEDIA_BLOCKS: readonly PageBlock[] = [

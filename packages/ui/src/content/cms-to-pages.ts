@@ -260,6 +260,36 @@ export const blocksToAcademicsLeadership = (
   },
 });
 
+/* ------------------------------------------------------------ admissions */
+
+export interface AdmissionsPageProps {
+  eyebrow?: string;
+  heading?: string;
+  tagline?: string;
+  noticeText?: string;
+  contactNote?: string;
+}
+
+export const blocksToAdmissionsProps = (
+  blocks: CmsBlock[]
+): AdmissionsPageProps => ({
+  eyebrow: isHidden(blocks, "admissions-hero")
+    ? undefined
+    : fieldValue(blocks, "admissions-hero", "admissions-eyebrow"),
+  heading: isHidden(blocks, "admissions-hero")
+    ? undefined
+    : fieldValue(blocks, "admissions-hero", "admissions-heading"),
+  tagline: isHidden(blocks, "admissions-hero")
+    ? undefined
+    : fieldValue(blocks, "admissions-hero", "admissions-tagline"),
+  noticeText: isHidden(blocks, "admissions-notice")
+    ? undefined
+    : fieldValue(blocks, "admissions-notice", "admissions-notice-text"),
+  contactNote: isHidden(blocks, "admissions-contact")
+    ? undefined
+    : fieldValue(blocks, "admissions-contact", "admissions-contact-note"),
+});
+
 /* ----------------------------------------------------------------- media */
 
 export interface MediaPageProps {

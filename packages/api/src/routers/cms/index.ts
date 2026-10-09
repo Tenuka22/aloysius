@@ -563,6 +563,9 @@ const principal = editorEndpoints("principal");
 /** The Academics page editor. See `ACADEMICS_BLOCKS`. */
 const academics = editorEndpoints("academics");
 
+/** The Admissions page editor. See `ADMISSIONS_BLOCKS`. */
+const admissions = editorEndpoints("admissions");
+
 export const cmsRouter = {
   getPrincipal: principal.get,
   getPrincipalDraft: principal.getDraft,
@@ -577,6 +580,13 @@ export const cmsRouter = {
   updateAcademics: academics.update,
   watchAcademics: academics.watch,
   publishAcademics: academics.publish,
+
+  getAdmissions: admissions.get,
+  getAdmissionsDraft: admissions.getDraft,
+  getAdmissionsHistory: admissions.getHistory,
+  updateAdmissions: admissions.update,
+  watchAdmissions: admissions.watch,
+  publishAdmissions: admissions.publish,
 
   /** Fetch the latest published version for each block on the homepage. */
   getHomepage: publicProcedure.handler(async ({ context }) => {

@@ -248,11 +248,10 @@ export const COLLEGE_LOCATION = "Galle, Sri Lanka";
 export const FOUNDED_YEAR = 1862;
 
 /**
- * Admissions is a separate application on its own subdomain, not a route in
- * this site. Every "Admissions" link points here, so it is a cross-origin
- * navigation - do not pass it to `<Link>`, which only handles in-app routes.
+ * Every "Admissions" link points here - a real in-app route
+ * (`apps/web/src/routes/admissions.tsx`), not a separate subdomain.
  */
-export const ADMISSIONS_URL = "https://admissions.aloysiuscollege.lk";
+export const ADMISSIONS_URL = "/admissions";
 
 export const formatNewsDate = (iso?: string): string => {
   if (!iso) {
