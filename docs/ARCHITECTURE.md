@@ -271,7 +271,7 @@ There is no club registry table, no club profile, no cover banner, and no member
 
 A club submits exactly one content type: photo (`club_photo`), with its own submit/list-my/withdraw/review/list-pending/list-approved set of endpoints in `packages/api/src/routers/club/`. Announcement, event and news post used to be club-submittable alongside it; they are CMS-direct content now (`packages/api/src/routers/cms/{announcements,events,news-posts}.ts`), outside the club model entirely. There is no gallery concept, no image-role system, no gallery-link graph, and no per-club profile screen. A photo submission is a single row (file, caption, alt text, optional off-site album URL, optional link to a related news post/event/achievement); there is no cover/banner/trending distinction and no five-item homepage cap.
 
-**Approved photos are public.** `listApprovedPhotos` is a `publicProcedure` with no per-viewer check: a row only exists to find once a reviewer has approved it, so the approval _is_ the access control. The public gallery for a club lives at `/galleries/:slug`, and the club's own page at `/photography-club`, both static routes, not derived from a registry. Announcements and events on those same pages now come from `cms.listAnnouncements`/`cms.listEvents`, which need no such gate: every row that exists is already CMS-authored and live.
+**Approved photos are public.** `listApprovedPhotos` is a `publicProcedure` with no per-viewer check: a row only exists to find once a reviewer has approved it, so the approval _is_ the access control. The public gallery for a club lives at `/galleries/:slug`, indexed at `/galleries` - there is no separate hand-typed club page anymore, a club's content is its galleries. Announcements and events on those same pages now come from `cms.listAnnouncements`/`cms.listEvents`, which need no such gate: every row that exists is already CMS-authored and live.
 
 **Sports do not exist in this system.** Not as a table, not as a schema, not as an API, not as an editable field. There are hardcoded strings in a component that no route currently mounts, and a jump link on the students page pointing at a section that does not render.
 
@@ -499,7 +499,7 @@ Ordered roughly by how likely they are to bite. Entries marked **fixed** were fo
 
 **Sports, houses and prefects do not render.** There is no sports data model at all — no table, no schema, no endpoint, no editable field. The components that render them are used only by their own tests, because a second, CMS-era students page component is what the route actually mounts. The jump links on the students page still point at all three sections. The same duplication exists for the contact and news pages: eighteen production-unreachable files across three page families.
 
-**The media page never queries club content.** It renders content from the CMS block editor only. `/galleries/:slug` (one club's approved photos) and `/photography-club` (the club's own page) are real, separate routes, but `/media` calls no `club.listApproved*` procedure, so there is no browsable index of a club's media from the media page itself.
+**The media page never queries club content.** It renders content from the CMS block editor only. `/galleries/:slug` (one gallery) and `/galleries` (the index of every approved one) are real, separate routes, but `/media` calls no `club.listApproved*` procedure, so there is no browsable index of a club's media from the media page itself.
 
 **Three Tailwind classes in a StyleX codebase. — fixed** Three divs used `className="mt-4"` in files that have no Tailwind, so they had no margin at all. The package already had the right answer — a `FieldStack` component whose comment explains that it exists _because_ `className` is how Tailwind-shaped habits get into a StyleX codebase. The three call sites now use it.
 
@@ -617,7 +617,7 @@ A map for when you know what you want and need to find it.
 | --- | --- |
 | Routes, and which guard protects each | `apps/web/src/routes/` |
 | A club's public photo gallery | `apps/web/src/routes/galleries.$slug.tsx` |
-| A club's own public page | `apps/web/src/routes/photography-club.tsx` |
+| The public index of every gallery | `apps/web/src/routes/galleries.index.tsx` |
 | The club admin workspace | `apps/web/src/routes/club-admin/photography/` |
 | The CMS review screens for club content | `apps/web/src/routes/cms/club-*.tsx` |
 | The public events page | `apps/web/src/routes/events.tsx` |

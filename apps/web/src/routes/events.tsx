@@ -1,8 +1,6 @@
-import type {
-  EventPageAchievement,
-  EventPageEvent,
-} from "@aloysius/ui/components/pages/events-page";
+import type { EventPageEvent } from "@aloysius/ui/components/pages/events-page";
 import { EventsPage } from "@aloysius/ui/components/pages/events-page";
+import { formatNewsDate } from "@aloysius/ui/content/home";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, useState } from "react";
@@ -13,21 +11,20 @@ import { orpc } from "@/utils/orpc";
 /**
  * `/events` - the public list of the Photography Club's events.
  *
- * There is no school-wide events query to merge in: the flat club model has
- * one seat (`photography`) and no achievements table behind it, so this page
- * is narrower than it once was - a club's own approved events, soonest
- * first, each with no linked galleries (the flat model has no gallery-link
- * concept, only the club's single approved-photo stream at
- * `/galleries/photography`).
+ * Events are CMS-direct content now (`cms.listEvents`), not club-scoped, so
+ * this is every upcoming event on the site, soonest first. Achievements
+ * (`cms.listAchievements`) are read-only, school-wide content with no club
+ * of their own either - every one of them shows here.
  */
 
 const CLUB = "photography" as const;
 const CLUB_NAME = "Photography Club" as const;
 
-const NO_ACHIEVEMENTS: readonly EventPageAchievement[] = [];
-
 const EventsContent = () => {
   const { data: events } = useSuspenseQuery(orpc.cms.listEvents.queryOptions());
+  const { data: achievements } = useSuspenseQuery(
+    orpc.cms.listAchievements.queryOptions()
+  );
   const { data: session } = authClient.useSession();
 
   const extraNavItems = (() => {
@@ -70,7 +67,16 @@ const EventsContent = () => {
 
   return (
     <EventsPage
-      achievements={NO_ACHIEVEMENTS}
+      achievements={achievements.map((achievement) => ({
+        id: achievement.id,
+        title: achievement.title,
+        detail: achievement.detail,
+        category: achievement.category,
+        achievedOn:
+          formatNewsDate(achievement.publishedAt ?? undefined) || null,
+        clubName: null,
+        clubSlug: null,
+      }))}
       events={pageEvents}
       extraNavItems={extraNavItems}
     />

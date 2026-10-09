@@ -17,8 +17,9 @@ import { orpc } from "@/utils/orpc";
  * not a query - there is no more club registry to list, only the one club seat
  * (`photography`) the flat model actually serves. Its approved photographs and
  * upcoming events are still live data, folded into this page's gallery strip
- * and events list; every other club on the list renders as a plain card with no
- * content behind it yet.
+ * and events list. Achievements (`cms.listAchievements`) are CMS-direct,
+ * school-wide content with no club of their own; every other club on the
+ * list renders as a plain card with no content behind it yet.
  */
 
 const CLUB = "photography" as const;
@@ -30,6 +31,9 @@ const StudentsContent = () => {
     orpc.club.listApprovedGalleries.queryOptions({ input: { club: CLUB } })
   );
   const { data: events } = useSuspenseQuery(orpc.cms.listEvents.queryOptions());
+  const { data: achievements } = useSuspenseQuery(
+    orpc.cms.listAchievements.queryOptions()
+  );
   const { data: session } = authClient.useSession();
 
   const cmsProps = students?.blocks
@@ -82,7 +86,12 @@ const StudentsContent = () => {
   return (
     <StudentsPage
       {...cmsProps}
-      achievements={[]}
+      achievements={achievements.map((achievement) => ({
+        id: achievement.id,
+        category: achievement.category,
+        title: achievement.title,
+        detail: achievement.detail ?? "",
+      }))}
       clubs={CLUBS}
       events={studentEvents}
       extraNavItems={extraNavItems}

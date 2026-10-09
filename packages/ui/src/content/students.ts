@@ -90,7 +90,7 @@ export const CLUBS: readonly Club[] = [
   {
     id: "photography",
     name: "Photography Club",
-    href: "/photography-club",
+    href: "/galleries",
   },
   { id: "debating", name: "Debating Society" },
   { id: "science", name: "Science Society" },
