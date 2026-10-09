@@ -113,6 +113,7 @@
         "drizzle-orm": "1.0.0-rc.4",
         "sharp": "^0.35.4",
         "valibot": "catalog:",
+        "zod": "^4.6.5",
       },
       "devDependencies": {
         "@aloysius/config": "workspace:*",
