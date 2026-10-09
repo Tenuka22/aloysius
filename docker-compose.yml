@@ -61,12 +61,13 @@ services:
 
   minio:
     image: quay.io/minio/minio:latest
-    # No `ports:` on purpose. MinIO is reachable only as `minio:9000` from
-    # inside this network, which is the only place anything that needs it
-    # runs: the web container, through its own `/api/files/*` route. Publishing
-    # 9000 would put an object store - and the console that can delete every
-    # object in it - on the internet, to save a hop the app already makes.
-    # `docker compose exec minio mc ...` is the way in when you need a shell.
+    # Published on request: API on 4001, console (can delete every object in
+    # the bucket) on 4002. The `web` container still reaches it internally as
+    # `minio:9000` - these host ports are for `docker compose exec`-free
+    # access from outside the network, nothing in this compose file uses them.
+    ports:
+      - "${MINIO_API_PORT:-4001}:9000"
+      - "${MINIO_CONSOLE_PORT:-4002}:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}

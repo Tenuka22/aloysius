@@ -8,10 +8,10 @@
 | --- | --- | --- | --- |
 | `web` | Built from `apps/web/Dockerfile` | `${WEB_PORT:-4000}` | Main web application (TanStack Start) |
 | `turso-db` | `ghcr.io/tursodatabase/libsql-server:latest` | `${LIBSQL_PORT:-8080}` | SQLite-compatible database (libSQL) |
-| `minio` | `quay.io/minio/minio:latest` | `9000` (API), `9001` (console) | S3-compatible object storage |
-| `building` | Built from `apps/building/Dockerfile` | `${BUILDING_PORT:-4002}` | The "coming soon" placeholder on the apex domain — see below |
+| `minio` | `quay.io/minio/minio:latest` | `${MINIO_API_PORT:-4001}` (API), `${MINIO_CONSOLE_PORT:-4002}` (console) | S3-compatible object storage |
+| `building` | Built from `apps/building/Dockerfile` | `${BUILDING_PORT:-4002}` | The "coming soon" placeholder on the apex domain - see below |
 
-Containers bind even ports and dev servers odd ones, so a local dev server and a running stack never fight over a port: the site is 4001 in development and 4000 in the container; the placeholder is 4003 and 4002.
+Containers bind even ports and dev servers odd ones, so a local dev server and a running stack never fight over a port: the site is 4001 in development and 4000 in the container; the placeholder is 4003 and 4002. MinIO's published ports break this rule on purpose: its API (4001) reuses the site's dev-server number and its console (4002) reuses the placeholder's container number. MinIO has no dev-server equivalent in this scheme and local development still reaches it through `docker-compose.dev.yml`'s own 9000/9001, not these - but running `bun run dev` (site or placeholder) alongside a local `docker compose up` of the production stack will collide on 4001 or 4002.
 
 `building` is a standalone static app with **no dependency on any other package in this repo**. It duplicates the crest and hardcodes the three brand colours so it can be built and deployed independently. It exists for a non-obvious reason: a separate admissions codebase shares saved-application cookies across `aloysiuscollege.lk` and `admissions.aloysiuscollege.lk` by rewriting them on every page view, and once the admissions portal no longer occupies the apex host, something has to keep doing that or a visitor's cookie stays scoped to the wrong host. The placeholder does exactly that and nothing else.
 
