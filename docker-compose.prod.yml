@@ -1,0 +1,99 @@
+name: aloysius
+
+# Deploys the images already published to this repo's GitLab Container
+# Registry project (registry.gitlab.com/tenuka22/aloysius), rather than
+# building from this checkout. .github/workflows/ci.yml's `publish` job
+# pushes them there on every `v*` tag. Use this with a platform that only
+# accepts compose YAML with no build context attached (Plesk's "Add Stack
+# -> Editor", a bare Docker host, etc). `docker-compose.yml` (no `.prod`)
+# is for local development: it builds both images from this repo.
+#
+# Pulling requires a login on the deploy host first, since the registry is
+# private by default:
+#   docker login registry.gitlab.com -u <GITLAB_REGISTRY_USER> -p <GITLAB_REGISTRY_TOKEN>
+#
+# Required: substitute every `REPLACE_ME` below before deploying, and set
+# `IMAGE_TAG` to the tag you actually pushed (e.g. `v0.0.1`). Both images are
+# built and published together from the same release, so they share one tag.
+#
+# `SITE_URL` is the deployment's own fact about *this* school's public
+# address and cannot be read from the repo. It defaults to empty on purpose:
+# a stack that forgets it has no site URL, which is a visible deployment
+# mistake rather than a wrong one. `BETTER_AUTH_URL` must match it exactly -
+# `trustedOrigins` is derived from this value.
+
+services:
+  web:
+    image: registry.gitlab.com/tenuka22/aloysius/aloysius-web:${IMAGE_TAG:-latest}
+    ports:
+      - "${WEB_PORT:-4000}:${WEB_PORT:-4000}"
+    environment:
+      PORT: ${WEB_PORT:-4000}
+      NODE_ENV: production
+      BETTER_AUTH_URL: ${SITE_URL:-}
+      BETTER_AUTH_SECRET: REPLACE_ME_32_CHAR_SECRET
+      TURSO_DATABASE_URL: http://turso-db:8080
+      TURSO_AUTH_TOKEN: ${TURSO_AUTH_TOKEN:-}
+      CMS_USERNAME: cms
+      CMS_PASSWORD: REPLACE_ME_CMS_PASSWORD
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_ACCESS_KEY: REPLACE_ME_MINIO_ACCESS_KEY
+      MINIO_SECRET_KEY: REPLACE_ME_MINIO_SECRET_KEY
+      MINIO_BUCKET: aloysius
+      MINIO_USE_SSL: "false"
+    depends_on:
+      turso-db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+
+  turso-db:
+    image: ghcr.io/tursodatabase/libsql-server:latest
+    environment:
+      SQLD_NODE: primary
+    volumes:
+      - aloysius_turso_data:/var/lib/sqld
+    healthcheck:
+      # The sqld image ships no curl/wget - just bash and coreutils - so this
+      # checks the HTTP port accepts TCP connections via bash's /dev/tcp.
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/127.0.0.1/8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: quay.io/minio/minio:latest
+    # Published on request: API on 4001, console (can delete every object in
+    # the bucket) on 4002 - same ports as docker-compose.yml, including its
+    # collision with `building`'s 4002 if both are started with defaults.
+    # The `web` container still reaches it internally as `minio:9000`.
+    ports:
+      - "${MINIO_API_PORT:-4001}:9000"
+      - "${MINIO_CONSOLE_PORT:-4002}:9001"
+    environment:
+      MINIO_ROOT_USER: REPLACE_ME_MINIO_ACCESS_KEY
+      MINIO_ROOT_PASSWORD: REPLACE_ME_MINIO_SECRET_KEY
+    volumes:
+      - aloysius_minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  building:
+    image: registry.gitlab.com/tenuka22/aloysius/aloysius-building:${IMAGE_TAG:-latest}
+    ports:
+      - "${BUILDING_PORT:-4002}:${BUILDING_PORT:-4002}"
+    environment:
+      PORT: ${BUILDING_PORT:-4002}
+    restart: unless-stopped
+
+volumes:
+  aloysius_turso_data:
+  aloysius_minio_data:

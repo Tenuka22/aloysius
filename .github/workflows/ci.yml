@@ -28,11 +28,18 @@ name: CI
 # school-management's does not have one: it would run on every push with
 # `contents: write` and push bot commits to any branch, master included.
 # Run `bun run fix` locally; CI only reports.
+#
+# A fifth job, `publish`, also has no equivalent there: school-management
+# publishes its image to Docker Hub by hand. This repo's images are pushed
+# to a GitLab Container Registry project instead, over a deploy token held
+# in GitHub secrets - see the job for why.
 
 on:
   push:
     branches:
       - "**"
+    tags:
+      - "v*"
   pull_request:
     branches:
       - master
@@ -131,5 +138,50 @@ jobs:
           context: .
           file: apps/building/Dockerfile
           push: false
+          cache-from: type=gha,scope=building
+          cache-to: type=gha,mode=max,scope=building
+
+  # Publishes the images docker-compose.prod.yml deploys. Gated on a version
+  # tag (v*) rather than every push to master, same way a release is cut
+  # elsewhere: it builds the two Dockerfiles once more (buildx cache from
+  # the `docker` job above makes this cheap) and pushes to this repo's
+  # GitLab Container Registry project (there is no GitLab CI here - the
+  # registry just happens to live on GitLab) using a deploy token stored as
+  # the `GITLAB_REGISTRY_USER`/`GITLAB_REGISTRY_TOKEN` repo secrets.
+  publish:
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    needs: [lint, database, build, docker]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to the GitLab Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.gitlab.com
+          username: ${{ secrets.GITLAB_REGISTRY_USER }}
+          password: ${{ secrets.GITLAB_REGISTRY_TOKEN }}
+      - name: Push the web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: |
+            registry.gitlab.com/tenuka22/aloysius/aloysius-web:${{ github.ref_name }}
+            registry.gitlab.com/tenuka22/aloysius/aloysius-web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Push the placeholder (building) image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/building/Dockerfile
+          push: true
+          tags: |
+            registry.gitlab.com/tenuka22/aloysius/aloysius-building:${{ github.ref_name }}
+            registry.gitlab.com/tenuka22/aloysius/aloysius-building:latest
           cache-from: type=gha,scope=building
           cache-to: type=gha,mode=max,scope=building
