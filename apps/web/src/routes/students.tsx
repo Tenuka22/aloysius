@@ -26,8 +26,8 @@ const CLUB = "photography" as const;
 const StudentsContent = () => {
   const studentsQuery = orpc.cms.getStudents.queryOptions();
   const { data: students } = useSuspenseQuery(studentsQuery);
-  const { data: photos } = useSuspenseQuery(
-    orpc.club.listApprovedPhotos.queryOptions({ input: { club: CLUB } })
+  const { data: galleries } = useSuspenseQuery(
+    orpc.club.listApprovedGalleries.queryOptions({ input: { club: CLUB } })
   );
   const { data: events } = useSuspenseQuery(orpc.cms.listEvents.queryOptions());
   const { data: session } = authClient.useSession();
@@ -36,14 +36,16 @@ const StudentsContent = () => {
     ? blocksToStudentsProps(students.blocks)
     : {};
 
-  const galleryItems: GalleryItem[] = photos.map((photo) => ({
-    id: photo.id,
-    image: photo.imageUrl
-      ? { src: photo.imageUrl, alt: photo.altText }
-      : undefined,
-    label: photo.altText || photo.caption,
-    preferredRatio: 1.5,
-  }));
+  const galleryItems: GalleryItem[] = galleries.flatMap((gallery) =>
+    gallery.photos.map((photo) => ({
+      id: photo.id,
+      image: photo.imageUrl
+        ? { src: photo.imageUrl, alt: photo.altText }
+        : undefined,
+      label: photo.altText || photo.caption,
+      preferredRatio: 1.5,
+    }))
+  );
 
   // Read once per mount, not on every render - a `useState` lazy
   // initializer is the one place calling `Date.now()` is safe.

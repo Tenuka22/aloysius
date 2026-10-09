@@ -10,6 +10,7 @@ import {
 import type { PillTone } from "@aloysius/ui/components/cms/cms-primitives";
 import type { QueuedImage } from "@aloysius/ui/components/cms/file-uploader";
 import {
+  FileUploader,
   FileBatchUploader,
   MAX_IMAGES_PER_BATCH,
 } from "@aloysius/ui/components/cms/file-uploader";
@@ -20,14 +21,13 @@ import {
 import { FormDialog } from "@aloysius/ui/components/dialog";
 import {
   useMutation,
-  useQuery,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { resolveFileUrls, uploadImageFile } from "@/components/club/upload";
+import { uploadImageFile } from "@/components/club/upload";
 import { client, orpc } from "@/utils/orpc";
 
 const CLUB = "photography" as const;
@@ -51,7 +51,7 @@ interface ImageMeta {
 
 const NO_META: ImageMeta = { caption: "", altText: "" };
 
-const AddPhotosDialog = ({
+const AddGalleryDialog = ({
   onClose,
   onSubmitted,
   open,
@@ -60,16 +60,26 @@ const AddPhotosDialog = ({
   onClose: () => void;
   onSubmitted: () => void;
 }) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [albumUrl, setAlbumUrl] = useState("");
+  const [coverImageId, setCoverImageId] = useState<string | null>(null);
+  const [coverImagePreviewUrl, setCoverImagePreviewUrl] = useState<
+    string | null
+  >(null);
   const [images, setImages] = useState<QueuedImage[]>([]);
   const [meta, setMeta] = useState<ImageMeta[]>([]);
-  const [albumUrl, setAlbumUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const reset = () => {
+    setTitle("");
+    setDescription("");
+    setAlbumUrl("");
+    setCoverImageId(null);
+    setCoverImagePreviewUrl(null);
     setImages([]);
     setMeta([]);
-    setAlbumUrl("");
     setError(null);
   };
 
@@ -89,6 +99,7 @@ const AddPhotosDialog = ({
   };
 
   const canSubmit =
+    title.trim().length > 0 &&
     images.length > 0 &&
     meta.every((entry) => entry.caption.trim() && entry.altText.trim()) &&
     (albumUrl === "" || /^https?:\/\//u.test(albumUrl)) &&
@@ -101,37 +112,38 @@ const AddPhotosDialog = ({
     setBusy(true);
     setError(null);
 
-    const outcomes = await Promise.allSettled(
-      images.map(async (image, index) => {
-        const fileId = await uploadImageFile(image.file);
-        await client.club.submitPhoto({
-          club: CLUB,
-          fileId,
+    try {
+      const photos = await Promise.all(
+        images.map(async (image, index) => ({
+          fileId: await uploadImageFile(image.file),
           caption: meta[index]?.caption.trim() ?? "",
           altText: meta[index]?.altText.trim() ?? "",
-          albumUrl: albumUrl.trim() || undefined,
-        });
-      })
-    );
-
-    setBusy(false);
-    const failed = outcomes.filter((outcome) => outcome.status === "rejected");
-    if (failed.length > 0) {
-      setError(
-        `${images.length - failed.length} of ${images.length} submitted. ${failed.length} failed — try again for those.`
+        }))
       );
-      return;
-    }
 
-    reset();
-    onSubmitted();
-    onClose();
+      await client.club.createGallery({
+        club: CLUB,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        albumUrl: albumUrl.trim() || undefined,
+        coverImageId: coverImageId ?? undefined,
+        photos,
+      });
+
+      setBusy(false);
+      reset();
+      onSubmitted();
+      onClose();
+    } catch {
+      setBusy(false);
+      setError("Could not submit the gallery — try again.");
+    }
   };
 
   return (
     <FormDialog
       busy={busy}
-      description={`Up to ${MAX_IMAGES_PER_BATCH} photos at a time, each cropped square. Every photo is reviewed before it appears on the public gallery.`}
+      description={`Up to ${MAX_IMAGES_PER_BATCH} photos per gallery, each cropped square. Every gallery is reviewed before it appears on the public gallery.`}
       error={error}
       onClose={() => {
         reset();
@@ -143,8 +155,35 @@ const AddPhotosDialog = ({
       open={open}
       submitDisabled={!canSubmit}
       submitLabel="Submit for review"
-      title="Add photos"
+      title="Add gallery"
     >
+      <Field kind="text" label="Title" onChange={setTitle} value={title} />
+      <Field
+        hint="Optional."
+        kind="text"
+        label="Description"
+        onChange={setDescription}
+        value={description}
+      />
+      <Field
+        hint="Optional - a link to the full-resolution set (Google Photos, Flickr, etc.)."
+        kind="url"
+        label="Album link"
+        onChange={setAlbumUrl}
+        value={albumUrl}
+      />
+      <FileUploader
+        clearable
+        label="Cover image (optional)"
+        onChange={(next) => {
+          setCoverImageId(next);
+          setCoverImagePreviewUrl(null);
+        }}
+        onUpload={uploadImageFile}
+        previewUrl={coverImagePreviewUrl}
+        ratioKey="galleryThumb"
+        value={coverImageId}
+      />
       <FileBatchUploader
         images={images}
         hint=""
@@ -169,31 +208,19 @@ const AddPhotosDialog = ({
           />
         </Panel>
       ))}
-      <Field
-        hint="Optional — a link to the full-resolution set (Google Photos, Flickr, etc.), shown with every photo in this batch."
-        kind="url"
-        label="Album link"
-        onChange={setAlbumUrl}
-        value={albumUrl}
-      />
     </FormDialog>
   );
 };
 
-const MyPhotos = ({ onAdd }: { onAdd: () => void }) => {
+const MyGalleries = ({ onAdd }: { onAdd: () => void }) => {
   const queryClient = useQueryClient();
-  const myPhotosQuery = orpc.club.listMyPhotos.queryOptions();
-  const { data: photos } = useSuspenseQuery(myPhotosQuery);
-  const fileIds = photos.map((photo) => photo.fileId);
-  const { data: fileUrls = {} } = useQuery({
-    queryKey: ["club-photo-file-urls", fileIds],
-    queryFn: () => resolveFileUrls(fileIds),
-  });
+  const myGalleriesQuery = orpc.club.listMyGalleries.queryOptions();
+  const { data: galleries } = useSuspenseQuery(myGalleriesQuery);
 
   const withdrawMutation = useMutation(
-    orpc.club.withdrawPhoto.mutationOptions({
+    orpc.club.withdrawGallery.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries(myPhotosQuery);
+        queryClient.invalidateQueries(myGalleriesQuery);
       },
     })
   );
@@ -203,25 +230,27 @@ const MyPhotos = ({ onAdd }: { onAdd: () => void }) => {
       <PanelHead
         action={
           <CmsButton onClick={onAdd} tone="primary">
-            Add photos
+            Add gallery
           </CmsButton>
         }
-        title="Your submissions"
+        title="Your galleries"
       />
-      {photos.length === 0 ? (
-        <p>No submissions yet.</p>
+      {galleries.length === 0 ? (
+        <p>No galleries yet.</p>
       ) : (
-        <RecordList label="Your photo submissions">
-          {photos.map((photo) => (
+        <RecordList label="Your gallery submissions">
+          {galleries.map((gallery) => (
             <RecordRow
               actions={
                 <>
-                  <Pill tone={STATUS_TONE[photo.status] ?? "neutral"}>
-                    {STATUS_LABEL[photo.status] ?? photo.status}
+                  <Pill tone={STATUS_TONE[gallery.status] ?? "neutral"}>
+                    {STATUS_LABEL[gallery.status] ?? gallery.status}
                   </Pill>
-                  {photo.status === "pending" && (
+                  {gallery.status === "pending" && (
                     <CmsButton
-                      onClick={() => withdrawMutation.mutate({ id: photo.id })}
+                      onClick={() =>
+                        withdrawMutation.mutate({ id: gallery.id })
+                      }
                       tone="danger"
                     >
                       Withdraw
@@ -229,10 +258,10 @@ const MyPhotos = ({ onAdd }: { onAdd: () => void }) => {
                   )}
                 </>
               }
-              key={photo.id}
+              key={gallery.id}
               meta={[
-                photo.albumUrl && "Album link attached",
-                photo.reviewNote && `Reviewer note: ${photo.reviewNote}`,
+                `${gallery.photoCount} photo${gallery.photoCount === 1 ? "" : "s"}`,
+                gallery.reviewNote && `Reviewer note: ${gallery.reviewNote}`,
               ]
                 .filter(Boolean)
                 .join(" · ")}
@@ -240,14 +269,16 @@ const MyPhotos = ({ onAdd }: { onAdd: () => void }) => {
                 <span
                   style={{ display: "flex", alignItems: "center", gap: 12 }}
                 >
-                  <img
-                    alt={photo.altText}
-                    height={40}
-                    src={fileUrls[photo.fileId]}
-                    style={{ borderRadius: 4, objectFit: "cover" }}
-                    width={40}
-                  />
-                  {photo.caption}
+                  {gallery.coverUrl && (
+                    <img
+                      alt=""
+                      height={40}
+                      src={gallery.coverUrl}
+                      style={{ borderRadius: 4, objectFit: "cover" }}
+                      width={40}
+                    />
+                  )}
+                  {gallery.title}
                 </span>
               }
             />
@@ -258,9 +289,9 @@ const MyPhotos = ({ onAdd }: { onAdd: () => void }) => {
   );
 };
 
-const PhotosContent = () => {
+const GalleriesContent = () => {
   const queryClient = useQueryClient();
-  const myPhotosQuery = orpc.club.listMyPhotos.queryOptions();
+  const myGalleriesQuery = orpc.club.listMyGalleries.queryOptions();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
@@ -268,18 +299,18 @@ const PhotosContent = () => {
       <ScreenHead
         eyebrow="Photography Club"
         heading="Gallery submissions"
-        note="Every photo is reviewed by the CMS team before it appears on the public gallery."
+        note="Every gallery is reviewed by the CMS team before it appears on the public gallery."
       />
-      <MyPhotos onAdd={() => setDialogOpen(true)} />
-      <AddPhotosDialog
+      <MyGalleries onAdd={() => setDialogOpen(true)} />
+      <AddGalleryDialog
         onClose={() => setDialogOpen(false)}
-        onSubmitted={() => queryClient.invalidateQueries(myPhotosQuery)}
+        onSubmitted={() => queryClient.invalidateQueries(myGalleriesQuery)}
         open={dialogOpen}
       />
     </ScreenWrap>
   );
 };
 
-export const Route = createFileRoute("/club-admin/photography/photos")({
-  component: PhotosContent,
+export const Route = createFileRoute("/club-admin/photography/galleries")({
+  component: GalleriesContent,
 });

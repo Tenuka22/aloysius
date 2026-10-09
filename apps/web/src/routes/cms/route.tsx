@@ -78,9 +78,9 @@ const CmsLayout = () => {
     },
     {
       num: "11",
-      label: "Club Photo Review",
-      href: "/cms/club-photos",
-      active: pathname.startsWith("/cms/club-photos"),
+      label: "Galleries",
+      href: "/cms/galleries",
+      active: pathname.startsWith("/cms/galleries"),
     },
     {
       num: "12",

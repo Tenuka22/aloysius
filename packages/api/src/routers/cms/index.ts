@@ -14,6 +14,12 @@ import {
 } from "./announcements";
 import { createEvent, deleteEvent, listEvents, updateEvent } from "./events";
 import {
+  createGallery as createGalleryCms,
+  deleteGallery as deleteGalleryCms,
+  listGalleries,
+  updateGallery as updateGalleryCms,
+} from "./galleries";
+import {
   createNewsPost,
   deleteNewsPost,
   listNewsPosts,
@@ -1201,4 +1207,9 @@ export const cmsRouter = {
   deleteNewsPost,
 
   listAchievements,
+
+  listGalleries,
+  createGallery: createGalleryCms,
+  updateGallery: updateGalleryCms,
+  deleteGallery: deleteGalleryCms,
 };

@@ -17,15 +17,16 @@ import { orpc } from "@/utils/orpc";
  *
  * A *static* route, hand-typed into the file tree, for the same reason the
  * admin side is: a club's page exists because someone wrote it, not because a
- * URL parameter was guessed. The content is live approved data - photos,
- * events and announcements all come from the flat club router's
- * `listApproved*` procedures, which only ever return rows a CMS reviewer has
- * approved, so the page cannot preview work still in the queue.
+ * URL parameter was guessed. The content is live approved data - galleries,
+ * events and announcements all come from the club router's `listApproved*`
+ * procedures, which only ever return rows a CMS reviewer has approved, so the
+ * page cannot preview work still in the queue.
  *
- * There is no `achievement` concept left in the flat model and no separate
- * `gallery` entity either - a club has exactly one gallery, its own stream of
- * approved photos, so this page links to it as a single card pointing at
- * `/galleries/photography` rather than listing several.
+ * There is no `achievement` concept left in the flat model. There *is* a real
+ * `gallery` entity, though, and a club can have any number of approved ones -
+ * each gets its own card here, linking to its own `/galleries/<slug>`
+ * address, rather than the old single synthetic card that aggregated every
+ * approved photo into one fake gallery.
  */
 
 const CLUB = "photography" as const;
@@ -34,8 +35,8 @@ const CLUB_NAME = "Photography Club" as const;
 const NO_ACHIEVEMENTS: readonly ClubPageAchievement[] = [];
 
 const PhotographyClubContent = () => {
-  const { data: photos } = useSuspenseQuery(
-    orpc.club.listApprovedPhotos.queryOptions({ input: { club: CLUB } })
+  const { data: galleries } = useSuspenseQuery(
+    orpc.club.listApprovedGalleries.queryOptions({ input: { club: CLUB } })
   );
   const { data: events } = useSuspenseQuery(orpc.cms.listEvents.queryOptions());
   const { data: announcements } = useSuspenseQuery(
@@ -58,31 +59,23 @@ const PhotographyClubContent = () => {
     return items;
   })();
 
-  const albumUrl = photos.find((photo) => photo.albumUrl)?.albumUrl ?? null;
-  const linkedTitles = [
-    ...new Set(
-      photos.flatMap((photo) =>
-        photo.linkedContent ? [photo.linkedContent.title] : []
-      )
-    ),
-  ];
-  const galleries: ClubPageGallery[] =
-    photos.length === 0
-      ? []
-      : [
-          {
-            albumLabel: albumUrl ? "View the full album" : null,
-            albumUrl,
-            id: CLUB,
-            slug: CLUB,
-            summary: `${photos.length} approved photograph${photos.length === 1 ? "" : "s"}.${
-              linkedTitles.length > 0
-                ? ` Related: ${linkedTitles.join(", ")}.`
-                : ""
-            }`,
-            title: `${CLUB_NAME} Gallery`,
-          },
-        ];
+  const pageGalleries: ClubPageGallery[] = galleries.map((gallery) => ({
+    albumLabel: gallery.albumUrl ? "View the full album" : null,
+    albumUrl: gallery.albumUrl,
+    coverImageUrl: gallery.coverImageUrl ?? gallery.photos[0]?.imageUrl ?? null,
+    id: gallery.id,
+    slug: gallery.slug,
+    summary: gallery.description,
+    title: gallery.title,
+  }));
+
+  const coverImageUrl =
+    galleries.find(
+      (gallery) => gallery.coverImageUrl || gallery.photos.length > 0
+    )?.coverImageUrl ??
+    galleries.find((gallery) => gallery.photos.length > 0)?.photos[0]
+      ?.imageUrl ??
+    null;
 
   // Read once per mount, not on every render - a `useState` lazy
   // initializer is the one place calling `Date.now()` is safe.
@@ -120,12 +113,12 @@ const PhotographyClubContent = () => {
       activeHref="/photography-club"
       announcements={pageAnnouncements}
       backgroundImageUrl={null}
-      coverImageUrl={photos[0]?.imageUrl ?? null}
+      coverImageUrl={coverImageUrl}
       description="The college's photographers, curating and submitting the school's photographs for the public gallery."
       events={pageEvents}
       extraNavItems={extraNavItems}
       eyebrow="Clubs & Societies"
-      galleries={galleries}
+      galleries={pageGalleries}
       name={CLUB_NAME}
     />
   );

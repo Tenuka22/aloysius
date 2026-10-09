@@ -32,6 +32,7 @@ export interface ClubPageGallery {
   summary: string | null;
   albumUrl: string | null;
   albumLabel: string | null;
+  coverImageUrl: string | null;
 }
 
 export interface ClubPageEvent {
@@ -273,6 +274,16 @@ export const ClubPage = ({
                     href={`/galleries/${gallery.slug}`}
                     {...stylex.props(styles.cardLink)}
                   >
+                    {gallery.coverImageUrl ? (
+                      <Media
+                        placeholder={gallery.title}
+                        ratio="4:3"
+                        source={{
+                          src: gallery.coverImageUrl,
+                          alt: `${gallery.title} cover photograph`,
+                        }}
+                      />
+                    ) : null}
                     <h3 {...stylex.props(styles.cardTitle)}>{gallery.title}</h3>
                     {gallery.summary ? (
                       <p {...stylex.props(styles.cardMeta)}>

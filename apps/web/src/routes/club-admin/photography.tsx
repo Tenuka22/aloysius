@@ -26,21 +26,21 @@ import { client } from "@/utils/orpc";
  * this club's own administrator.
  *
  * One section: submit photos straight into the review queue (`@aloysius/api`'s
- * `club` router - `submitPhoto` and its `listMyPhotos`/`withdrawPhoto`
+ * `club` router - `createGallery` and its `listMyGalleries`/`withdrawGallery`
  * counterparts). Announcements, events and news posts are no longer
  * club-submitted content - they're created directly by the CMS
  * (`cms.createAnnouncement`/`createEvent`/`createNewsPost`), so this
  * club-admin workspace has nothing left to do for them. There is no
  * combined "my submissions" queue and no club-profile editor here any
- * more - photos own their own screen and their own queue, the same shape
- * the CMS review side (`cms/club-photos`) already reads.
+ * more - galleries own their own screen and their own queue, the same
+ * shape the CMS review side (`cms/galleries`) already reads.
  */
 const CLUB_ADMIN_USERNAME = "photography-admin";
 
 const BASE = "/club-admin/photography";
 
 const BASE_NAV_ITEMS = [
-  { num: "01", label: "Photos", href: `${BASE}/photos` },
+  { num: "01", label: "Galleries", href: `${BASE}/galleries` },
 ] as const;
 
 const PhotographyClubLayout = () => {

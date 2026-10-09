@@ -1,0 +1,1 @@
+ALTER TABLE `gallery` ADD `cover_image_id` text REFERENCES files(id) ON DELETE SET NULL;
