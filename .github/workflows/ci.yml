@@ -1,14 +1,29 @@
 name: CI
 
-# Lint, types and tests across every package, a migration applied from zero
-# against a throwaway database, and the production build - adapted from
-# ../school-management's workflow. That repo runs its test/migration jobs
-# against real PostgreSQL service containers; this one's database is libSQL
-# and every test and migration here runs against an embedded file/in-memory
-# database instead (`createTestDb()`, `TURSO_DATABASE_URL=file:./ci.db`), so
-# no database service container is needed at all - only object storage
-# (MinIO) would be, and nothing in the test suite talks to it over the
-# network either (`packages/storage`'s test only checks the returned shape).
+# Mirrors ../school-management/.github/workflows/ci.yml: lint, a database job
+# (migrate from zero, typecheck, test) and the production build, run on
+# every push and PR into master. Same job names and shape; the database
+# itself differs because this repo's is libSQL, not PostgreSQL:
+#
+# - `services.postgres` there becomes `services.turso-db` here - same
+#   pattern (a real server, migrated from zero, not an embedded file), using
+#   the same image and healthcheck `docker-compose.dev.yml` already runs.
+# - There is no MinIO service container: GitHub Actions service containers
+#   cannot override a container's command, and MinIO's image needs
+#   `server /data --console-address ":9001"` to start - it has no plain
+#   default CMD that works. Not needed either: every test file was checked,
+#   and none of them talk to object storage over the network
+#   (packages/storage's test only checks the returned shape).
+# - There is no `db:verify-migrations`/`db:check-drift` pair -
+#   school-management's own schema-snapshot-drift tooling is specific to its
+#   Drizzle+PostgreSQL setup and has no equivalent here yet. Migrating a
+#   fresh `turso-db` from zero (this workflow's "Migrate" step) is the part
+#   of that gate this repo already has.
+#
+# There is deliberately no auto-fix job, for the same reason
+# school-management's does not have one: it would run on every push with
+# `contents: write` and push bot commits to any branch, master included.
+# Run `bun run fix` locally; CI only reports.
 
 on:
   push:
@@ -23,13 +38,12 @@ permissions:
 
 # Placeholder values for the Varlock schema, which `bun install`'s postinstall
 # codegen and the Vite build both validate. Validation values only: nothing
-# here is a deployment secret, and the test suite configures its own
-# database/auth in-process via `createTestDb()`.
+# here is a deployment secret.
 env:
   NODE_ENV: test
   BETTER_AUTH_SECRET: ci-placeholder-secret-not-used-at-runtime-0000
   BETTER_AUTH_URL: http://localhost:3000
-  TURSO_DATABASE_URL: file:./ci.db
+  TURSO_DATABASE_URL: http://localhost:8080
   CMS_USERNAME: cms
   CMS_PASSWORD: ci-placeholder-cms-12345678
   MINIO_ENDPOINT: localhost
@@ -55,15 +69,24 @@ jobs:
       - name: Lint and format (ultracite)
         run: bun run check
 
-  test:
+  database:
     runs-on: ubuntu-latest
+    services:
+      turso-db:
+        image: ghcr.io/tursodatabase/libsql-server:latest
+        env:
+          SQLD_NODE: primary
+        ports:
+          - 8080:8080
+        options: >-
+          --health-cmd "bash -c 'echo > /dev/tcp/127.0.0.1/8080'" --health-interval 5s --health-timeout 3s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.0
       - run: bun install --frozen-lockfile
-      - name: Migrate a fresh database from zero
+      - name: Migrate an empty database from zero
         working-directory: packages/db
         run: bun run db:migrate
       - name: Typecheck every package and app
@@ -81,6 +104,6 @@ jobs:
         with:
           bun-version: 1.4.0
       - run: bun install --frozen-lockfile
-      - name: Production build
+      - name: Production build and web typecheck
         working-directory: apps/web
-        run: bun run build
+        run: bun run check-types
