@@ -3,7 +3,11 @@ name: CI
 # Mirrors ../school-management/.github/workflows/ci.yml: lint, a database job
 # (migrate from zero, typecheck, test) and the production build, run on
 # every push and PR into master. Same job names and shape; the database
-# itself differs because this repo's is libSQL, not PostgreSQL:
+# itself differs because this repo's is libSQL, not PostgreSQL. A fourth
+# job, `docker`, has no equivalent there: it builds both of this repo's two
+# Dockerfiles (apps/web, apps/building) with `push: false` - a build-only
+# smoke test, proving the images GitHub Actions deploys from actually build,
+# without publishing anywhere.
 #
 # - `services.postgres` there becomes `services.turso-db` here - same
 #   pattern (a real server, migrated from zero, not an embedded file), using
@@ -107,3 +111,25 @@ jobs:
       - name: Production build and web typecheck
         working-directory: apps/web
         run: bun run check-types
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Build the placeholder (building) image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/building/Dockerfile
+          push: false
+          cache-from: type=gha,scope=building
+          cache-to: type=gha,mode=max,scope=building
