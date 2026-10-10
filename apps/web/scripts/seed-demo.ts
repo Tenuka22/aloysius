@@ -20,6 +20,7 @@
  * or see HANDOVER.md).
  */
 
+import { createClubCredential } from "@aloysius/auth";
 import { announcement } from "@aloysius/db/schema/announcements";
 import { user } from "@aloysius/db/schema/auth";
 import { clubPhoto, gallery } from "@aloysius/db/schema/club-photos";
@@ -28,24 +29,55 @@ import { newsPost } from "@aloysius/db/schema/news-posts";
 import { achievement, event } from "@aloysius/db/schema/root-content";
 import { eq } from "drizzle-orm";
 
-import { getDb, getStorage } from "../src/services";
+import { auth, getDb, getStorage } from "../src/services";
 
 const db = getDb();
 const storage = getStorage();
 
+/**
+ * The club seat this seeder needs as the submitter on club-proposed galleries.
+ * Created on demand by `requireUserId` below.
+ */
+const CLUB_SEAT_USERNAME = "photography-admin";
+const CLUB_SEAT_PASSWORD = "photography-seat-dev-password";
+
+/**
+ * Resolve a seat's user id, provisioning the club seat if it does not exist yet.
+ *
+ * `photography-admin` is the one seat nothing else creates: `createClubCredential`
+ * is exported from @aloysius/auth but has no caller in the application (the
+ * /admin screen only resets passwords for seats that already exist), so there is
+ * no UI path that produces it. The seeder needs it as the submitter on the
+ * club-proposed galleries, so it creates it rather than failing.
+ *
+ * `cms` is different - it is seeded by `ensureServerBootstrap` on every server
+ * start, so it is always present and a missing one really is a problem.
+ */
 const requireUserId = async (username: string): Promise<string> => {
-  const row = await db
+  const existing = await db
     .select({ id: user.id })
     .from(user)
     .where(eq(user.username, username))
     .limit(1)
     .get();
-  if (!row) {
-    throw new Error(
-      `No seeded "${username}" account - sign in as it once (or see HANDOVER.md) before seeding.`
-    );
+  if (existing) {
+    return existing.id;
   }
-  return row.id;
+
+  if (username === CLUB_SEAT_USERNAME) {
+    const created = await createClubCredential(auth, {
+      username: CLUB_SEAT_USERNAME,
+      password: CLUB_SEAT_PASSWORD,
+      name: "Photography Club Administrator",
+      role: "club-admin",
+    });
+    console.log(`Created the missing "${username}" seat.`);
+    return created.id;
+  }
+
+  throw new Error(
+    `No seeded "${username}" account - start the server once (it seeds this seat on boot) and try again.`
+  );
 };
 
 /** A real photograph from picsum.photos' seeded endpoint, stable across
