@@ -8,6 +8,8 @@ import { SiteFooter } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
 
 const MAIN_ID = "main-content";
+/** Module-level so the default is referentially stable across renders. */
+const NO_STORIES: readonly NewsPageStory[] = [];
 
 const styles = stylex.create({
   main: {
@@ -60,6 +62,58 @@ const styles = stylex.create({
     maxWidth: space.measure,
     marginInline: "auto",
   },
+  emptyBody: {
+    margin: 0,
+    fontSize: font.sizeSm,
+    lineHeight: font.leadingRelaxed,
+    color: color.onSurfaceMuted,
+    textWrap: "pretty",
+  },
+  storyList: {
+    display: "flex",
+    flexDirection: "column",
+    margin: 0,
+    padding: 0,
+    listStyle: "none",
+  },
+  storyItem: {
+    paddingBlock: space.md,
+    borderBottomWidth: space.px,
+    borderBottomStyle: "solid",
+    borderBottomColor: color.border,
+  },
+  storyCategory: {
+    margin: 0,
+    fontSize: font.size2xs,
+    fontWeight: font.weightBold,
+    letterSpacing: font.trackingWide,
+    textTransform: "uppercase",
+    color: color.accentOnSurface,
+  },
+  storyTitle: {
+    margin: 0,
+    marginBlockStart: space["2xs"],
+    fontFamily: font.display,
+    fontSize: font.sizeLg,
+    fontWeight: font.weightSemibold,
+    lineHeight: font.leadingTight,
+    color: color.onSurface,
+  },
+  storySummary: {
+    margin: 0,
+    marginBlockStart: space.xs,
+    maxWidth: space.measure,
+    fontSize: font.sizeSm,
+    lineHeight: font.leadingRelaxed,
+    color: color.onSurfaceMuted,
+    textWrap: "pretty",
+  },
+  storyDate: {
+    margin: 0,
+    marginBlockStart: space.xs,
+    fontSize: font.sizeXs,
+    color: color.onSurfaceMuted,
+  },
 });
 
 export interface NewsPageProps {
@@ -68,8 +122,21 @@ export interface NewsPageProps {
   tagline?: string;
   heroImage?: ImageSource;
   feedHeading?: string;
-  feedCount?: number;
+  feedCount?: never;
+  /** Unused. It only printed "Showing N items per page" in placeholder text. */
+  /** Published news posts from `cms.listNewsPosts`. */
+  stories?: readonly NewsPageStory[];
   extraNavItems?: readonly NavItem[];
+}
+
+export interface NewsPageStory {
+  id: string;
+  title: string;
+  summary: string | null;
+  body: string;
+  category: string | null;
+  publishedAt: string | null;
+  coverImageUrl: string | null;
 }
 
 export const NewsPage = ({
@@ -78,7 +145,7 @@ export const NewsPage = ({
   tagline,
   heroImage,
   feedHeading,
-  feedCount,
+  stories = NO_STORIES,
   extraNavItems,
 }: NewsPageProps) => (
   <>
@@ -97,14 +164,48 @@ export const NewsPage = ({
           />
         )}
       </section>
+      {/*
+       * The archive. This rendered "News content will be displayed here once
+       * published" unconditionally, regardless of how many published posts
+       * existed - the route never passed them in, so the page had no way to
+       * show them. It now lists the real posts, and says so plainly when there
+       * are none rather than claiming content is pending.
+       */}
       <section {...stylex.props(styles.content)}>
         {feedHeading && (
           <h2 {...stylex.props(styles.heading)}>{feedHeading}</h2>
         )}
-        <p>
-          News content will be displayed here once published.
-          {feedCount ? ` Showing ${feedCount} items per page.` : ""}
-        </p>
+        {stories.length === 0 ? (
+          <p {...stylex.props(styles.emptyBody)}>
+            There are no stories published yet. The latest from the College will
+            appear here as soon as the office publishes it.
+          </p>
+        ) : (
+          <ul {...stylex.props(styles.storyList)}>
+            {stories.map((story) => (
+              <li key={story.id} {...stylex.props(styles.storyItem)}>
+                {story.category && (
+                  <p {...stylex.props(styles.storyCategory)}>
+                    {story.category}
+                  </p>
+                )}
+                <h3 {...stylex.props(styles.storyTitle)}>{story.title}</h3>
+                {story.summary && (
+                  <p {...stylex.props(styles.storySummary)}>{story.summary}</p>
+                )}
+                {story.publishedAt && (
+                  <p {...stylex.props(styles.storyDate)}>
+                    {new Date(story.publishedAt).toLocaleDateString("en-LK", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </main>
     <SiteFooter />

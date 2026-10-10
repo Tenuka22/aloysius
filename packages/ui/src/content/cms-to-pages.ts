@@ -1,5 +1,29 @@
 import type { ImageSource } from "../components/primitives/media";
+import {
+  ALUMNI_ABOUT_BODY,
+  ALUMNI_ABOUT_CAPTION,
+  ALUMNI_HERO_EYEBROW,
+  ALUMNI_HERO_INTRO,
+  ALUMNI_HERO_TITLE,
+} from "./alumni";
 import type { CmsBlock } from "./cms-to-home";
+import {
+  CONTACT_DEFAULT_ADDRESS,
+  CONTACT_HERO_INTRO,
+  CONTACT_HERO_TITLE,
+} from "./contact";
+import {
+  MEDIA_HERO_EYEBROW,
+  MEDIA_HERO_INTRO,
+  MEDIA_HERO_TITLE,
+} from "./media";
+import { NEWS_ARCHIVE_HEADING, NEWS_HERO_INTRO, NEWS_HERO_TITLE } from "./news";
+import {
+  NOTICES_HERO_EYEBROW,
+  NOTICES_HERO_INTRO,
+  NOTICES_HERO_TITLE,
+} from "./notices";
+import { CLUBS_HEADING, CLUBS_INTRO, STUDENTS_HERO_TITLE } from "./students";
 
 const fieldValue = (
   blocks: CmsBlock[],
@@ -9,15 +33,33 @@ const fieldValue = (
   blocks.find((b) => b.id === blockId)?.fields.find((f) => f.id === fieldId)
     ?.value;
 
-const fieldWithDefault = (
+/**
+ * The CMS value for a field, or the page's own static content when there isn't
+ * one.
+ *
+ * This is the whole reason `blocksTo*Props` can be called with an empty array.
+ * Before it existed, an unpublished page produced `undefined` for every field,
+ * which rendered as a heading, a subheading, and then a bare "content will be
+ * displayed here once published" - the page had content in `content/<page>.ts`
+ * the whole time and simply never looked at it.
+ *
+ * A field present-but-blank still falls back, because an editor who clears a
+ * field in the CMS means "use the default", not "render nothing". Only an
+ * explicitly hidden block (`isHidden`) suppresses the fallback - that is a
+ * deliberate editorial decision to remove the section.
+ */
+const isHidden = (blocks: CmsBlock[], blockId: string): boolean =>
+  blocks.find((b) => b.id === blockId)?.hidden ?? false;
+
+const fieldOrDefault = (
   blocks: CmsBlock[],
   blockId: string,
   fieldId: string,
   fallback: string
-): string => fieldValue(blocks, blockId, fieldId) ?? fallback;
-
-const isHidden = (blocks: CmsBlock[], blockId: string): boolean =>
-  blocks.find((b) => b.id === blockId)?.hidden ?? false;
+): string | undefined =>
+  isHidden(blocks, blockId)
+    ? undefined
+    : fieldValue(blocks, blockId, fieldId) || fallback;
 
 const imageSource = (
   blocks: CmsBlock[],
@@ -50,31 +92,34 @@ export interface NewsPageProps {
   tagline?: string;
   heroImage?: ImageSource;
   feedHeading?: string;
-  feedCount?: number;
 }
 
 export const blocksToNewsProps = (blocks: CmsBlock[]): NewsPageProps => ({
-  eyebrow: isHidden(blocks, "news-header")
-    ? undefined
-    : fieldValue(blocks, "news-header", "news-eyebrow"),
-  heading: isHidden(blocks, "news-header")
-    ? undefined
-    : fieldValue(blocks, "news-header", "news-heading"),
-  tagline: isHidden(blocks, "news-header")
-    ? undefined
-    : fieldValue(blocks, "news-header", "news-tagline"),
+  eyebrow: fieldOrDefault(blocks, "news-header", "news-eyebrow", ""),
+  heading: fieldOrDefault(
+    blocks,
+    "news-header",
+    "news-heading",
+    NEWS_HERO_TITLE
+  ),
+  tagline: fieldOrDefault(
+    blocks,
+    "news-header",
+    "news-tagline",
+    NEWS_HERO_INTRO
+  ),
   heroImage: imageSource(
     blocks,
     "news-header",
     "news-hero-image",
     "Latest news and events at St. Aloysius' College"
   ),
-  feedHeading: isHidden(blocks, "news-feed")
-    ? undefined
-    : fieldValue(blocks, "news-feed", "news-feed-heading"),
-  feedCount: isHidden(blocks, "news-feed")
-    ? undefined
-    : Number(fieldWithDefault(blocks, "news-feed", "news-feed-count", "9")),
+  feedHeading: fieldOrDefault(
+    blocks,
+    "news-feed",
+    "news-feed-heading",
+    NEWS_ARCHIVE_HEADING
+  ),
 });
 
 /* --------------------------------------------------------------- notices */
@@ -84,33 +129,33 @@ export interface NoticesPageProps {
   heading?: string;
   tagline?: string;
   heroImage?: ImageSource;
-  pinUrgent?: boolean;
 }
 
 export const blocksToNoticesProps = (blocks: CmsBlock[]): NoticesPageProps => ({
-  eyebrow: isHidden(blocks, "notices-header")
-    ? undefined
-    : fieldValue(blocks, "notices-header", "notices-eyebrow"),
-  heading: isHidden(blocks, "notices-header")
-    ? undefined
-    : fieldValue(blocks, "notices-header", "notices-heading"),
-  tagline: isHidden(blocks, "notices-header")
-    ? undefined
-    : fieldValue(blocks, "notices-header", "notices-tagline"),
+  eyebrow: fieldOrDefault(
+    blocks,
+    "notices-header",
+    "notices-eyebrow",
+    NOTICES_HERO_EYEBROW
+  ),
+  heading: fieldOrDefault(
+    blocks,
+    "notices-header",
+    "notices-heading",
+    NOTICES_HERO_TITLE
+  ),
+  tagline: fieldOrDefault(
+    blocks,
+    "notices-header",
+    "notices-tagline",
+    NOTICES_HERO_INTRO
+  ),
   heroImage: imageSource(
     blocks,
     "notices-header",
     "notices-hero-image",
     "College notices and announcements"
   ),
-  pinUrgent: isHidden(blocks, "notices-config")
-    ? undefined
-    : fieldWithDefault(
-        blocks,
-        "notices-config",
-        "notices-show-pinned",
-        "yes"
-      ) === "yes",
 });
 
 /* --------------------------------------------------------------- contact */
@@ -129,36 +174,39 @@ export interface ContactPageProps {
 }
 
 export const blocksToContactProps = (blocks: CmsBlock[]): ContactPageProps => ({
-  eyebrow: isHidden(blocks, "contact-header")
-    ? undefined
-    : fieldValue(blocks, "contact-header", "contact-eyebrow"),
-  heading: isHidden(blocks, "contact-header")
-    ? undefined
-    : fieldValue(blocks, "contact-header", "contact-heading"),
-  tagline: isHidden(blocks, "contact-header")
-    ? undefined
-    : fieldValue(blocks, "contact-header", "contact-tagline"),
-  address: isHidden(blocks, "contact-info")
-    ? undefined
-    : fieldValue(blocks, "contact-info", "contact-address"),
-  telephone: isHidden(blocks, "contact-info")
-    ? undefined
-    : fieldValue(blocks, "contact-info", "contact-telephone"),
-  email: isHidden(blocks, "contact-info")
-    ? undefined
-    : fieldValue(blocks, "contact-info", "contact-email"),
-  facebookUrl: isHidden(blocks, "contact-info")
-    ? undefined
-    : fieldValue(blocks, "contact-info", "contact-facebook"),
-  instagramUrl: isHidden(blocks, "contact-info")
-    ? undefined
-    : fieldValue(blocks, "contact-info", "contact-instagram"),
-  youtubeUrl: isHidden(blocks, "contact-info")
-    ? undefined
-    : fieldValue(blocks, "contact-info", "contact-youtube"),
-  mapUrl: isHidden(blocks, "contact-map")
-    ? undefined
-    : fieldValue(blocks, "contact-map", "contact-map-url"),
+  eyebrow: fieldOrDefault(blocks, "contact-header", "contact-eyebrow", ""),
+  heading: fieldOrDefault(
+    blocks,
+    "contact-header",
+    "contact-heading",
+    CONTACT_HERO_TITLE
+  ),
+  tagline: fieldOrDefault(
+    blocks,
+    "contact-header",
+    "contact-tagline",
+    CONTACT_HERO_INTRO
+  ),
+  address: fieldOrDefault(
+    blocks,
+    "contact-info",
+    "contact-address",
+    CONTACT_DEFAULT_ADDRESS
+  ),
+  /*
+   * Telephone, email and the social links deliberately fall back to "" and not
+   * to a real value. `content/contact.ts` records that the college's published
+   * details are not in this repository, and `ContactDetails` omits a detail it
+   * has not been given rather than rendering an empty row. An empty string here
+   * is what lets that omission happen; inventing a plausible number would put a
+   * wrong phone number on a live site.
+   */
+  telephone: fieldOrDefault(blocks, "contact-info", "contact-telephone", ""),
+  email: fieldOrDefault(blocks, "contact-info", "contact-email", ""),
+  facebookUrl: fieldOrDefault(blocks, "contact-info", "contact-facebook", ""),
+  instagramUrl: fieldOrDefault(blocks, "contact-info", "contact-instagram", ""),
+  youtubeUrl: fieldOrDefault(blocks, "contact-info", "contact-youtube", ""),
+  mapUrl: fieldOrDefault(blocks, "contact-map", "contact-map-url", ""),
 });
 
 /* ---------------------------------------------------------------- alumni */
@@ -175,36 +223,44 @@ export interface AlumniPageProps {
 }
 
 export const blocksToAlumniProps = (blocks: CmsBlock[]): AlumniPageProps => ({
-  eyebrow: isHidden(blocks, "alumni-header")
-    ? undefined
-    : fieldValue(blocks, "alumni-header", "alumni-eyebrow"),
-  heading: isHidden(blocks, "alumni-header")
-    ? undefined
-    : fieldValue(blocks, "alumni-header", "alumni-heading"),
-  tagline: isHidden(blocks, "alumni-header")
-    ? undefined
-    : fieldValue(blocks, "alumni-header", "alumni-tagline"),
+  eyebrow: fieldOrDefault(
+    blocks,
+    "alumni-header",
+    "alumni-eyebrow",
+    ALUMNI_HERO_EYEBROW
+  ),
+  heading: fieldOrDefault(
+    blocks,
+    "alumni-header",
+    "alumni-heading",
+    ALUMNI_HERO_TITLE
+  ),
+  tagline: fieldOrDefault(
+    blocks,
+    "alumni-header",
+    "alumni-tagline",
+    ALUMNI_HERO_INTRO
+  ),
   heroImage: imageSource(
     blocks,
     "alumni-header",
     "alumni-hero-image",
     "St. Aloysius' College alumni"
   ),
-  body: isHidden(blocks, "alumni-about")
-    ? undefined
-    : fieldValue(blocks, "alumni-about", "alumni-body"),
+  body: fieldOrDefault(
+    blocks,
+    "alumni-about",
+    "alumni-body",
+    ALUMNI_ABOUT_BODY
+  ),
   image: imageSource(
     blocks,
     "alumni-about",
     "alumni-image",
-    "Old Boys' Association event"
+    ALUMNI_ABOUT_CAPTION
   ),
-  obaHref: isHidden(blocks, "alumni-links")
-    ? undefined
-    : fieldValue(blocks, "alumni-links", "alumni-oba-href"),
-  eventsHref: isHidden(blocks, "alumni-links")
-    ? undefined
-    : fieldValue(blocks, "alumni-links", "alumni-events-href"),
+  obaHref: fieldOrDefault(blocks, "alumni-links", "alumni-oba-href", ""),
+  eventsHref: fieldOrDefault(blocks, "alumni-links", "alumni-events-href", ""),
 });
 
 /* ------------------------------------------------------------- academics */
@@ -297,30 +353,33 @@ export interface MediaPageProps {
   heading?: string;
   tagline?: string;
   heroImage?: ImageSource;
-  galleryCount?: number;
 }
 
 export const blocksToMediaProps = (blocks: CmsBlock[]): MediaPageProps => ({
-  eyebrow: isHidden(blocks, "media-header")
-    ? undefined
-    : fieldValue(blocks, "media-header", "media-eyebrow"),
-  heading: isHidden(blocks, "media-header")
-    ? undefined
-    : fieldValue(blocks, "media-header", "media-heading"),
-  tagline: isHidden(blocks, "media-header")
-    ? undefined
-    : fieldValue(blocks, "media-header", "media-tagline"),
+  eyebrow: fieldOrDefault(
+    blocks,
+    "media-header",
+    "media-eyebrow",
+    MEDIA_HERO_EYEBROW
+  ),
+  heading: fieldOrDefault(
+    blocks,
+    "media-header",
+    "media-heading",
+    MEDIA_HERO_TITLE
+  ),
+  tagline: fieldOrDefault(
+    blocks,
+    "media-header",
+    "media-tagline",
+    MEDIA_HERO_INTRO
+  ),
   heroImage: imageSource(
     blocks,
     "media-header",
     "media-hero-image",
     "Photographs and videos from St. Aloysius' College"
   ),
-  galleryCount: isHidden(blocks, "media-gallery")
-    ? undefined
-    : Number(
-        fieldWithDefault(blocks, "media-gallery", "media-gallery-count", "12")
-      ),
 });
 
 /* -------------------------------------------------------------- students */
@@ -336,22 +395,29 @@ export interface StudentsPageProps {
 export const blocksToStudentsProps = (
   blocks: CmsBlock[]
 ): StudentsPageProps => ({
-  eyebrow: isHidden(blocks, "students-header")
-    ? undefined
-    : fieldValue(blocks, "students-header", "students-eyebrow"),
-  heading: isHidden(blocks, "students-header")
-    ? undefined
-    : fieldValue(blocks, "students-header", "students-heading"),
-  tagline: isHidden(blocks, "students-header")
-    ? undefined
-    : fieldValue(blocks, "students-header", "students-tagline"),
+  eyebrow: fieldOrDefault(blocks, "students-header", "students-eyebrow", ""),
+  heading: fieldOrDefault(
+    blocks,
+    "students-header",
+    "students-heading",
+    STUDENTS_HERO_TITLE
+  ),
+  tagline: fieldOrDefault(
+    blocks,
+    "students-header",
+    "students-tagline",
+    CLUBS_INTRO
+  ),
   heroImage: imageSource(
     blocks,
     "students-header",
     "students-hero-image",
     "Students taking part in college life"
   ),
-  activitiesHeading: isHidden(blocks, "students-activities")
-    ? undefined
-    : fieldValue(blocks, "students-activities", "students-activities-heading"),
+  activitiesHeading: fieldOrDefault(
+    blocks,
+    "students-activities",
+    "students-activities-heading",
+    CLUBS_HEADING
+  ),
 });

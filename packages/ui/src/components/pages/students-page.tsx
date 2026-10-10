@@ -73,7 +73,6 @@ export interface StudentsPageProps {
   heading?: string;
   tagline?: string;
   heroImage?: ImageSource;
-  activitiesHeading?: string;
   extraNavItems?: readonly NavItem[];
   achievements?: readonly Achievement[];
   galleryItems?: readonly GalleryItem[];
@@ -88,12 +87,17 @@ export interface StudentEvent {
   location?: string | null;
 }
 
+/*
+ * No body section and no `activitiesHeading` prop. Both existed only to hold
+ * the "content will be displayed here once published" placeholder -
+ * `ClubsSocieties` has always rendered its own heading from `CLUBS_HEADING` (see
+ * components/students/clubs-societies.tsx), so the prop labelled nothing.
+ */
 export const StudentsPage = ({
   eyebrow,
   heading = "Student Life",
   tagline,
   heroImage,
-  activitiesHeading,
   extraNavItems,
   achievements = NO_ACHIEVEMENTS,
   galleryItems,
@@ -116,12 +120,12 @@ export const StudentsPage = ({
           />
         )}
       </section>
-      <section {...stylex.props(styles.content)}>
-        {activitiesHeading && (
-          <h2 {...stylex.props(styles.heading)}>{activitiesHeading}</h2>
-        )}
-        <p>Student life content will be displayed here once published.</p>
-      </section>
+      {/*
+       * No body section of its own. The page used to render "Student life
+       * content will be displayed here once published" here, but the clubs,
+       * sports and houses below are always populated from content/students.ts -
+       * this section only ever existed to hold the placeholder.
+       */}
       {events.length > 0 && (
         <section
           {...stylex.props(styles.content)}

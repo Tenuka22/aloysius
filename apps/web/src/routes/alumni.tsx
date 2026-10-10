@@ -13,7 +13,8 @@ const AlumniContent = () => {
   const { data: alumni } = useSuspenseQuery(alumniQuery);
   const { data: session } = authClient.useSession();
 
-  const cmsProps = alumni?.blocks ? blocksToAlumniProps(alumni.blocks) : {};
+  /* Always call the mapper so an unpublished page falls back to content/alumni.ts. */
+  const cmsProps = blocksToAlumniProps(alumni?.blocks ?? []);
 
   const extraNavItems = (() => {
     if (!session?.user) {

@@ -37,9 +37,15 @@ const StudentsContent = () => {
   );
   const { data: session } = authClient.useSession();
 
-  const cmsProps = students?.blocks
-    ? blocksToStudentsProps(students.blocks)
-    : {};
+  /*
+   * Always call the mapper, passing an empty array when nothing is published.
+   * The old `students?.blocks ? ... : {}` skipped it entirely and handed the
+   * page an empty object, so the page's own static content (the clubs heading
+   * and intro) was never consulted and it rendered a bare "content will be
+   * displayed here once published" line instead. The mapper is what falls back
+   * to `content/students.ts`; not calling it is what produced the placeholder.
+   */
+  const cmsProps = blocksToStudentsProps(students?.blocks ?? []);
 
   const galleryItems: GalleryItem[] = galleries.flatMap((gallery) =>
     gallery.photos.map((photo) => ({

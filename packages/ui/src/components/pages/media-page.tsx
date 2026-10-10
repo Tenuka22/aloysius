@@ -67,7 +67,12 @@ export interface MediaPageProps {
   heading?: string;
   tagline?: string;
   heroImage?: ImageSource;
-  galleryCount?: number;
+  /**
+   * Unused. It only ever printed "Showing N items per page" inside the
+   * placeholder text, and the galleries that number refers to are rendered on
+   * the /galleries route rather than here.
+   */
+  galleryCount?: never;
   extraNavItems?: readonly NavItem[];
 }
 
@@ -76,7 +81,6 @@ export const MediaPage = ({
   heading = "Media Gallery",
   tagline,
   heroImage,
-  galleryCount,
   extraNavItems,
 }: MediaPageProps) => (
   <>
@@ -95,10 +99,19 @@ export const MediaPage = ({
           />
         )}
       </section>
+      {/*
+       * The galleries themselves come from `club.listApprovedGalleries` on the
+       * route, not from these props. This section used to render "Media gallery
+       * will be displayed here once published" unconditionally - a placeholder
+       * shown even when galleries existed below it, because the gallery strip
+       * lives on the /galleries route rather than here.
+       */}
       <section {...stylex.props(styles.content)}>
+        <p {...stylex.props(styles.eyebrow)}>Gallery</p>
+        <h2 {...stylex.props(styles.heading)}>Photographs &amp; Videos</h2>
         <p>
-          Media gallery will be displayed here once published.
-          {galleryCount ? ` Showing ${galleryCount} items per page.` : ""}
+          Every image here is uploaded and captioned by the College. Browse the
+          full gallery, filtered by year and category, from the Galleries page.
         </p>
       </section>
     </main>

@@ -9,11 +9,26 @@ import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
 
 const NoticesContent = () => {
-  const noticesQuery = orpc.cms.getNotices.queryOptions();
-  const { data: notices } = useSuspenseQuery(noticesQuery);
+  const { data: notices } = useSuspenseQuery(
+    orpc.cms.getNotices.queryOptions()
+  );
+  /*
+   * The announcements themselves, which are rows rather than blocks - the page
+   * was reading only the header blocks and had nothing to list underneath.
+   */
+  const { data: announcements } = useSuspenseQuery(
+    orpc.cms.listAnnouncements.queryOptions()
+  );
   const { data: session } = authClient.useSession();
 
-  const cmsProps = notices?.blocks ? blocksToNoticesProps(notices.blocks) : {};
+  /* Always call the mapper so an unpublished page falls back to content/notices.ts. */
+  const cmsProps = blocksToNoticesProps(notices?.blocks ?? []);
+
+  const noticeSummaries = announcements.map((announcement) => ({
+    id: announcement.id,
+    title: announcement.title,
+    body: announcement.body,
+  }));
 
   const extraNavItems = (() => {
     if (!session?.user) {
@@ -30,7 +45,13 @@ const NoticesContent = () => {
     return items;
   })();
 
-  return <NoticesPage {...cmsProps} extraNavItems={extraNavItems} />;
+  return (
+    <NoticesPage
+      {...cmsProps}
+      extraNavItems={extraNavItems}
+      notices={noticeSummaries}
+    />
+  );
 };
 
 export const Route = createFileRoute("/notices")({

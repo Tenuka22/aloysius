@@ -13,7 +13,8 @@ const ContactContent = () => {
   const { data: contact } = useSuspenseQuery(contactQuery);
   const { data: session } = authClient.useSession();
 
-  const cmsProps = contact?.blocks ? blocksToContactProps(contact.blocks) : {};
+  /* Always call the mapper so an unpublished page falls back to content/contact.ts. */
+  const cmsProps = blocksToContactProps(contact?.blocks ?? []);
 
   const extraNavItems = (() => {
     if (!session?.user) {

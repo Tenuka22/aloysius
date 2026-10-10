@@ -9,7 +9,8 @@
     "start": "node .output/server/index.mjs",
     "check-types": "tsc -b ../../packages/api && vite build && tsc --noEmit",
     "test": "vitest run",
-    "env:generate": "varlock codegen"
+    "env:generate": "varlock codegen",
+    "seed:demo": "varlock run -- bun run scripts/seed-demo.ts"
   },
   "dependencies": {
     "@aloysius/api": "workspace:*",

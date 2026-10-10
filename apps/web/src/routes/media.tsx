@@ -13,7 +13,8 @@ const MediaContent = () => {
   const { data: media } = useSuspenseQuery(mediaQuery);
   const { data: session } = authClient.useSession();
 
-  const cmsProps = media?.blocks ? blocksToMediaProps(media.blocks) : {};
+  /* Always call the mapper so an unpublished page falls back to content/media.ts. */
+  const cmsProps = blocksToMediaProps(media?.blocks ?? []);
 
   const extraNavItems = (() => {
     if (!session?.user) {
