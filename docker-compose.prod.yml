@@ -65,7 +65,7 @@ services:
     restart: unless-stopped
 
   minio:
-    image: quay.io/minio/minio:latest
+    image: pgsty/silo:latest
     # Published on request: API on 4001, console (can delete every object in
     # the bucket) on 4002 - same ports as docker-compose.yml, including its
     # collision with `building`'s 4002 if both are started with defaults.

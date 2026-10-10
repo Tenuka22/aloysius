@@ -60,7 +60,7 @@ services:
     restart: unless-stopped
 
   minio:
-    image: quay.io/minio/minio:latest
+    image: pgsty/silo:latest
     # Published on request: API on 4001, console (can delete every object in
     # the bucket) on 4002. The `web` container still reaches it internally as
     # `minio:9000` - these host ports are for `docker compose exec`-free
