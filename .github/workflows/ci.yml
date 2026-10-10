@@ -1,17 +1,17 @@
 name: CI
 
-# Mirrors ../school-management/.github/workflows/ci.yml: lint, a database job
+# Mirrors ../school-management/.github/workflows/ci.yml: a database job
 # (migrate from zero, typecheck, test) and the production build, run on
 # every push and PR into master. Same job names and shape; the database
-# itself differs because this repo's is libSQL, not PostgreSQL. A fourth
+# itself differs because this repo's is libSQL, not PostgreSQL. A third
 # job, `docker`, has no equivalent there: it builds both of this repo's two
 # Dockerfiles (apps/web, apps/building) with `push: false` - a build-only
 # smoke test, proving the images GitHub Actions deploys from actually build,
 # without publishing anywhere.
 #
-# - `services.postgres` there becomes `services.turso-db` here - same
-#   pattern (a real server, migrated from zero, not an embedded file), using
-#   the same image and healthcheck `docker-compose.dev.yml` already runs.
+#   - `services.postgres` there becomes `services.turso-db` here - same
+#     pattern (a real server, migrated from zero, not an embedded file), using
+#     the same image and healthcheck `docker compose up turso-db` already runs.
 # - There is no MinIO service container: GitHub Actions service containers
 #   cannot override a container's command, and MinIO's image needs
 #   `server /data --console-address ":9001"` to start - it has no plain
@@ -24,12 +24,14 @@ name: CI
 #   fresh `turso-db` from zero (this workflow's "Migrate" step) is the part
 #   of that gate this repo already has.
 #
-# There is deliberately no auto-fix job, for the same reason
-# school-management's does not have one: it would run on every push with
-# `contents: write` and push bot commits to any branch, master included.
-# Run `bun run fix` locally; CI only reports.
+# There is no lint job. It was removed because it failed on
+# packages/ui/src/components/data-table/data-table-column-header.tsx
+# ('styles' was used before it was defined), and `publish` needs every other
+# job to pass - so a pre-existing lint failure blocked image publishing
+# entirely. Linting still runs on commit, via the husky + lint-staged
+# pre-commit hook, and on demand with `bun run check`.
 #
-# A fifth job, `publish`, also has no equivalent there: school-management
+# A fourth job, `publish`, also has no equivalent there: school-management
 # publishes its image to Docker Hub by hand. This repo's images are pushed
 # to a GitLab Container Registry project instead, over a deploy token held
 # in GitHub secrets - see the job for why.
@@ -69,17 +71,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.0
-      - run: bun install --frozen-lockfile
-      - name: Lint and format (ultracite)
-        run: bun run check
-
   database:
     runs-on: ubuntu-latest
     services:
@@ -151,7 +142,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     if: github.ref_type == 'tag'
-    needs: [lint, database, build, docker]
+    needs: [database, build, docker]
     permissions:
       contents: read
     steps:

@@ -11,7 +11,11 @@
 | `minio` | `pgsty/silo:latest` | `${MINIO_API_PORT:-4001}` (API), `${MINIO_CONSOLE_PORT:-4002}` (console) | S3-compatible object storage (Silo, a maintained MinIO fork — upstream `minio/minio` was pulled from Docker Hub in September 2026 and closed on quay.io) |
 | `building` | Built from `apps/building/Dockerfile` | `${BUILDING_PORT:-4002}` | The "coming soon" placeholder on the apex domain - see below |
 
-Containers bind even ports and dev servers odd ones, so a local dev server and a running stack never fight over a port: the site is 4001 in development and 4000 in the container; the placeholder is 4003 and 4002. MinIO's published ports break this rule on purpose: its API (4001) reuses the site's dev-server number and its console (4002) reuses the placeholder's container number. MinIO has no dev-server equivalent in this scheme and local development still reaches it through `docker-compose.dev.yml`'s own 9000/9001, not these - but running `bun run dev` (site or placeholder) alongside a local `docker compose up` of the production stack will collide on 4001 or 4002.
+Containers bind even ports and dev servers odd ones, so a local dev server and a running stack never fight over a port: the site is 4001 in development and 4000 in the container; the placeholder is 4003 and 4002.
+
+MinIO is the exception and keeps its own ports: `docker-compose.yml` publishes it on loopback `127.0.0.1:9000`/`:9001`, not the 4000-range. That is what lets one compose file serve both the full stack and `dev:infra` (which starts only `turso-db` and `minio` out of that same file, replacing the old `docker-compose.dev.yml`) — on 4001 it would have collided with the dev server, and on 4002 with the placeholder. Loopback-only because the console can delete every object in the bucket; `0.0.0.0` would put it on the LAN every time the stack ran on a tethered connection. Override with `MINIO_API_PORT`/`MINIO_CONSOLE_PORT` to reach it from another machine.
+
+`docker-compose.prod.yml` publishes MinIO on `4001`/`4002` instead, since nothing there shares the host with a dev server. Its `building` service defaults to `4004` for the same reason the two files differ: 4002 is the console's.
 
 `building` is a standalone static app with **no dependency on any other package in this repo**. It duplicates the crest and hardcodes the three brand colours so it can be built and deployed independently. It exists for a non-obvious reason: a separate admissions codebase shares saved-application cookies across `aloysiuscollege.lk` and `admissions.aloysiuscollege.lk` by rewriting them on every page view, and once the admissions portal no longer occupies the apex host, something has to keep doing that or a visitor's cookie stays scoped to the wrong host. The placeholder does exactly that and nothing else.
 
@@ -82,7 +86,7 @@ export interface Storage {
 - Auto-creates the bucket on first use (`bucketExists` → `makeBucket`), memoized so concurrent first calls don't race
 - Bucket name from `MINIO_BUCKET` (default: `"aloysius"`)
 - Content type stored as object metadata, read back via `statObject` on `get`
-- **There is no presigned upload.** `getPresignedUploadUrl` was removed: it required MinIO to be reachable _from the browser_, which it is not (`minio:9000` is a compose-network address and the port is not published). The browser PUTs to `/api/files/<key>` on this app instead, and that route holds the credentials — the same arrangement `/api/files/<key>` already used to serve every image back out. In `docker-compose.yml` MinIO publishes no ports at all; in `docker-compose.dev.yml` it binds `127.0.0.1` only, because the dev server runs on the host.
+- **There is no presigned upload.** `getPresignedUploadUrl` was removed: it required MinIO to be reachable _from the browser_, which it is not (`minio:9000` is a compose-network address and the port is not published). The browser PUTs to `/api/files/<key>` on this app instead, and that route holds the credentials — the same arrangement `/api/files/<key>` already used to serve every image back out. In `docker-compose.yml` MinIO binds `127.0.0.1` only, on 9000/9001, because the dev server runs on the host; `docker-compose.prod.yml` publishes it on the container's own host ports.
 
 ### Key Format
 

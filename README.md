@@ -67,7 +67,7 @@ One coupling worth knowing: `BETTER_AUTH_URL` must match the port the dev server
 
 ## Deployment
 
-Four services in `docker-compose.yml`: the site, the database, object storage, and the placeholder app. The dev compose file starts just the two backing services.
+Four services in `docker-compose.yml`: the site, the database, object storage, and the placeholder app. `bun run dev:infra` starts just the two backing ones (`turso-db` and `minio`) out of the same file.
 
 ```bash
 bun run docker:build    # build images

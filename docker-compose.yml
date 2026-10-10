@@ -61,13 +61,22 @@ services:
 
   minio:
     image: pgsty/silo:latest
-    # Published on request: API on 4001, console (can delete every object in
-    # the bucket) on 4002. The `web` container still reaches it internally as
-    # `minio:9000` - these host ports are for `docker compose exec`-free
-    # access from outside the network, nothing in this compose file uses them.
+    # Published on the loopback only, on MinIO's own ports 9000/9001.
+    #
+    # These are NOT the even 4000-range numbers the app services use, and that
+    # is deliberate on two counts: 4001 is the dev server's port (so a running
+    # `bun run dev` and this stack can coexist), and 4002 is `building`'s. The
+    # old dev compose file existed solely to dodge that collision; keeping these
+    # on 9000/9001 lets one file serve both the full stack and `dev:infra`.
+    #
+    # Loopback because the console can delete every object in the bucket -
+    # `0.0.0.0` would put it on the LAN every time this ran on a tethered
+    # connection. Override with MINIO_API_PORT/MINIO_CONSOLE_PORT if you need
+    # to reach it from another machine. The `web` container always reaches it
+    # internally as `minio:9000`, regardless of these.
     ports:
-      - "${MINIO_API_PORT:-4001}:9000"
-      - "${MINIO_CONSOLE_PORT:-4002}:9001"
+      - "127.0.0.1:${MINIO_API_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
