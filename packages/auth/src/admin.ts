@@ -251,3 +251,24 @@ export const ensureCmsUser = (database: Database, env: AuthConfig) =>
     name: "CMS Editor",
     role: "cms",
   });
+
+/**
+ * Bootstraps (or re-secures) the site administrator account — the only role
+ * that may act on any account, including other admins (see `isPrivilegedRole`).
+ *
+ * The `admin` role has always existed in `permissions.ts` and Better Auth's
+ * admin plugin, but nothing ever provisioned a holder for it, so it was
+ * unreachable in practice: every seeded seat was `cms` or `club-admin`. This
+ * closes that gap.
+ *
+ * Separate from `CMS_USERNAME` deliberately. Sharing one username would mean
+ * one password to rotate and one account to compromise for both capabilities,
+ * and the shared bootstrap would keep flipping the row back to `cms`.
+ */
+export const ensureAdminUser = (database: Database, env: AuthConfig) =>
+  ensureCredentialUser(database, {
+    username: env.ADMIN_USERNAME,
+    password: env.ADMIN_PASSWORD,
+    name: "Site Administrator",
+    role: "admin",
+  });

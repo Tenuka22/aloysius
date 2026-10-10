@@ -30,6 +30,7 @@ export { isValidUsername, USERNAME_PATTERN } from "./username";
 export { PASSPHRASE_ENTROPY_BITS, generatePassphrase } from "./passphrase";
 export {
   createClubCredential,
+  ensureAdminUser,
   ensureCmsUser,
   rotateClubCredentialPassword,
 } from "./admin";
@@ -37,6 +38,8 @@ export {
 export interface AuthConfig {
   BETTER_AUTH_URL: string;
   BETTER_AUTH_SECRET: string;
+  ADMIN_USERNAME: string;
+  ADMIN_PASSWORD: string;
   CMS_USERNAME: string;
   CMS_PASSWORD: string;
 }

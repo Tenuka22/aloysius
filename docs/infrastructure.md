@@ -154,7 +154,7 @@ export default defineConfig({
 | `MINIO_BUCKET` | `string(min 1)` | `aloysius` | public | S3 bucket name |
 | `MINIO_USE_SSL` | `boolean` | `false` | public | Use HTTPS for MinIO |
 
-There is no `ADMIN_EMAIL` or `ADMIN_PASSWORD`. An earlier version of this table listed both; neither has existed for some time. There is one editor account and it is `cms`, not a site admin.
+There is no `ADMIN_EMAIL`. Two credential seats are seeded on server start, both driven by the same `ensureCredentialUser` helper: `ADMIN_USERNAME`/`ADMIN_PASSWORD` for the site administrator (role `admin`, the only role that may act on any account), and `CMS_USERNAME`/`CMS_PASSWORD` for the editor (role `cms`, homepage content only). They are separate accounts deliberately — one username would mean one password to rotate and one compromise for both capabilities.
 
 ## Environment variables
 

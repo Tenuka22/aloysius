@@ -1,7 +1,14 @@
+import { user } from "@aloysius/db/schema/auth";
 import { createTestDb } from "@aloysius/db/testing";
+import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { createClubCredential, rotateClubCredentialPassword } from "./admin";
+import {
+  createClubCredential,
+  ensureAdminUser,
+  ensureCmsUser,
+  rotateClubCredentialPassword,
+} from "./admin";
 import { createAuth } from "./index";
 
 /**
@@ -21,6 +28,8 @@ import { createAuth } from "./index";
  */
 
 const ENV = {
+  ADMIN_PASSWORD: "site-administrator-password",
+  ADMIN_USERNAME: "admin",
   BETTER_AUTH_SECRET: "test-secret-not-used-for-anything-real-0123456789",
   BETTER_AUTH_URL: "http://localhost:4001",
   CMS_PASSWORD: "cms-editor-password",
@@ -39,6 +48,85 @@ const authFor = async () => {
   const db = await createTestDb();
   return { auth: createAuth(ENV, db), db };
 };
+
+describe("seeded seats", () => {
+  /**
+   * The `admin` role existed in `permissions.ts` and in Better Auth's plugin
+   * with nothing ever provisioning a holder, so it was unreachable. These guard
+   * the fix: the seat is created, the credentials are accepted by the real
+   * sign-in endpoint, and it really carries the `admin` role rather than
+   * something adjacent that merely looks privileged.
+   */
+  it("seeds an admin that signs in and holds the admin role", async () => {
+    const { auth, db } = await authFor();
+    await ensureAdminUser(db, ENV);
+
+    const session = await auth.api.signInUsername({
+      body: {
+        password: ENV.ADMIN_PASSWORD,
+        username: ENV.ADMIN_USERNAME,
+      },
+    });
+
+    expect(session.token).toBeTruthy();
+
+    const [row] = await db
+      .select({ role: user.role })
+      .from(user)
+      .where(eq(user.username, ENV.ADMIN_USERNAME));
+
+    expect(row?.role).toBe("admin");
+  });
+
+  it("rejects a wrong admin password", async () => {
+    const { auth, db } = await authFor();
+    await ensureAdminUser(db, ENV);
+
+    await expect(
+      auth.api.signInUsername({
+        body: {
+          password: "not-the-password",
+          username: ENV.ADMIN_USERNAME,
+        },
+      })
+    ).rejects.toThrow(/password|credential|username|invalid/iu);
+  });
+
+  /**
+   * The bootstrap re-seeds on every boot, so a hand-edit that demotes the admin
+   * would otherwise persist. This asserts the role is reasserted.
+   */
+  it("reasserts the admin role on a later run", async () => {
+    const { db } = await authFor();
+    await ensureAdminUser(db, ENV);
+
+    await db
+      .update(user)
+      .set({ role: "user" })
+      .where(eq(user.username, ENV.ADMIN_USERNAME));
+
+    await ensureAdminUser(db, ENV);
+
+    const [row] = await db
+      .select({ role: user.role })
+      .from(user)
+      .where(eq(user.username, ENV.ADMIN_USERNAME));
+
+    expect(row?.role).toBe("admin");
+  });
+
+  it("seeds the CMS editor as cms, not admin", async () => {
+    const { db } = await authFor();
+    await ensureCmsUser(db, ENV);
+
+    const [row] = await db
+      .select({ role: user.role })
+      .from(user)
+      .where(eq(user.username, ENV.CMS_USERNAME));
+
+    expect(row?.role).toBe("cms");
+  });
+});
 
 describe("club administrator credentials", () => {
   it("signs in with the credentials it was created with", async () => {
