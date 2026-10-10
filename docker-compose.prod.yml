@@ -23,8 +23,26 @@ name: aloysius
 # `trustedOrigins` is derived from this value.
 
 services:
+  migrate:
+    # One-shot: applies pending Drizzle migrations and exits. `web` waits for
+    # this to complete successfully, so a release never starts against the wrong
+    # schema. Running it on every `up` is safe - drizzle records each applied
+    # file, so an up-to-date database is a no-op.
+    image: registry.gitlab.com/tenuka22/aloysius/aloysius-web:${IMAGE_TAG:-latest}
+    command: ["node", "packages/db/scripts/migrate-deploy.mjs"]
+    working_dir: /app
+    environment:
+      NODE_ENV: production
+      TURSO_DATABASE_URL: http://turso-db:8080
+      TURSO_AUTH_TOKEN: ${TURSO_AUTH_TOKEN:-}
+    depends_on:
+      turso-db:
+        condition: service_healthy
+    restart: "no"
+
   web:
     image: registry.gitlab.com/tenuka22/aloysius/aloysius-web:${IMAGE_TAG:-latest}
+    init: true
     ports:
       - "${WEB_PORT:-4000}:${WEB_PORT:-4000}"
     environment:
@@ -43,10 +61,24 @@ services:
       MINIO_BUCKET: aloysius
       MINIO_USE_SSL: "false"
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       turso-db:
         condition: service_healthy
       minio:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:${WEB_PORT:-4000}/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     restart: unless-stopped
 
   turso-db:
@@ -67,9 +99,12 @@ services:
   minio:
     image: pgsty/silo:latest
     # Published on request: API on 4001, console (can delete every object in
-    # the bucket) on 4002 - same ports as docker-compose.yml, including its
-    # collision with `building`'s 4002 if both are started with defaults.
-    # The `web` container still reaches it internally as `minio:9000`.
+    # the bucket) on 4002. The `web` container still reaches it internally as
+    # `minio:9000`.
+    #
+    # `building` deliberately does NOT default to 4002 here: that port belongs
+    # to the MinIO console, and two services defaulting to the same host port
+    # means the stack cannot start until someone overrides one of them.
     ports:
       - "${MINIO_API_PORT:-4001}:9000"
       - "${MINIO_CONSOLE_PORT:-4002}:9001"
@@ -88,10 +123,25 @@ services:
 
   building:
     image: registry.gitlab.com/tenuka22/aloysius/aloysius-building:${IMAGE_TAG:-latest}
+    # 4004, not 4002: 4002 is the MinIO console's default above. Override with
+    # BUILDING_PORT if you want a different one. The image's own PORT/EXPOSE
+    # defaults are 4002, which is why PORT is set explicitly below.
     ports:
-      - "${BUILDING_PORT:-4002}:${BUILDING_PORT:-4002}"
+      - "${BUILDING_PORT:-4004}:${BUILDING_PORT:-4004}"
     environment:
-      PORT: ${BUILDING_PORT:-4002}
+      PORT: ${BUILDING_PORT:-4004}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "fetch('http://localhost:${BUILDING_PORT:-4004}/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     restart: unless-stopped
 
 volumes:
