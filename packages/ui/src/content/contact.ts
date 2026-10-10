@@ -2,12 +2,19 @@
  * Content for the Contact page.
  *
  * Same rule as `content/about.ts` and `content/academics.ts`: every string here
- * is real copy, never a `[CMS: ...]` marker. The mock carried four of those
- * markers (address, telephone, email, office hours) because the college's
- * published details are not in this repository - so those four are modelled as
- * optional props on `ContactDetails` instead. A detail the CMS has not supplied
- * is omitted from the list entirely rather than rendered as an empty row or a
- * placeholder string.
+ * is real copy, never a `[CMS: ...]` marker.
+ *
+ * The mock carried four `[CMS: ...]` markers (address, telephone, email, office
+ * hours) because the college's published details were not in this repository,
+ * and they were modelled as optional props so an unsupplied detail is omitted
+ * from the list rather than rendered as an empty row. The street address,
+ * telephone and email are now filled in (see the sourcing notes on each) and
+ * fall back to these constants; office hours remain CMS-supplied, because no
+ * published source states them and a wrong one would misdirect a visitor.
+ *
+ * Every value here is still overridable in the CMS, and should be: these are
+ * defaults, not a claim that the college's details never change. Confirm them
+ * with the College office before relying on them.
  */
 
 export const CONTACT_HERO_TITLE = "Contact the College";
@@ -16,13 +23,36 @@ export const CONTACT_HERO_INTRO =
 
 export const CONTACT_DETAILS_EYEBROW = "Visit & Write";
 export const CONTACT_DETAILS_HEADING = "College Office";
+
 /**
- * The one address fact that is safe to ship as a default: it is the college's
- * name and city, which the site states on every page already. Street, postcode,
- * telephone and email come from the CMS.
+ * The main college building, Templers' Road, Kaluwella, Galle 80000.
+ *
+ * The street and postcode are corroborated by the English and Sinhala listings
+ * on lankainformation.lk and by Wikipedia's infobox for the college; Kaluwella
+ * is the locality both listings give alongside Templers' Road.
  */
 export const CONTACT_DEFAULT_ADDRESS =
-  "St. Aloysius' College, Galle, Sri Lanka";
+  "St. Aloysius' College, Templers' Road, Kaluwella, Galle 80000, Sri Lanka";
+
+/**
+ * +94 91 223 4657, written in the local format a visitor in Galle would read.
+ *
+ * Corroborated by four independent sources, which agree exactly: the English
+ * and Sinhala lankainformation.lk listings (+94 912 234 657), a scraped
+ * directory record for aloysiuscollege.lk (+94 91 223 4657), and a third-party
+ * business listing (+94 91 223 4657).
+ *
+ * Two sources disagree and are not used: one directory lists 091 494 1798, and
+ * the Galle District Secretariat's school list shows 091-2234590 - which is the
+ * same number that list gives for Secirat Heart Convent on the line directly
+ * above, so it reads as a copy-paste error rather than the college's number.
+ *
+ * Worth confirming with the office before a print run.
+ */
+export const CONTACT_DEFAULT_TELEPHONE = "+94 91 223 4657";
+
+/** Supplied by the site owner; the college's own domain, so it is unambiguous. */
+export const CONTACT_DEFAULT_EMAIL = "info@aloysiuscollege.lk";
 
 export const CONTACT_MAP_PLACEHOLDER = "Location map — Galle";
 export const CONTACT_MAP_LINK_LABEL = "View on map";

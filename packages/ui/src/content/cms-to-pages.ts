@@ -9,6 +9,8 @@ import {
 import type { CmsBlock } from "./cms-to-home";
 import {
   CONTACT_DEFAULT_ADDRESS,
+  CONTACT_DEFAULT_EMAIL,
+  CONTACT_DEFAULT_TELEPHONE,
   CONTACT_HERO_INTRO,
   CONTACT_HERO_TITLE,
 } from "./contact";
@@ -194,15 +196,24 @@ export const blocksToContactProps = (blocks: CmsBlock[]): ContactPageProps => ({
     CONTACT_DEFAULT_ADDRESS
   ),
   /*
-   * Telephone, email and the social links deliberately fall back to "" and not
-   * to a real value. `content/contact.ts` records that the college's published
-   * details are not in this repository, and `ContactDetails` omits a detail it
-   * has not been given rather than rendering an empty row. An empty string here
-   * is what lets that omission happen; inventing a plausible number would put a
-   * wrong phone number on a live site.
+   * The address, telephone and email now fall back to published defaults rather
+   * than to "" - see the sourcing notes on each constant in content/contact.ts.
+   * All three remain overridable in the CMS. The social links and map URL still
+   * fall back to "", because no public source states them and inventing a
+   * Facebook page for the college is not something a guess should do.
    */
-  telephone: fieldOrDefault(blocks, "contact-info", "contact-telephone", ""),
-  email: fieldOrDefault(blocks, "contact-info", "contact-email", ""),
+  telephone: fieldOrDefault(
+    blocks,
+    "contact-info",
+    "contact-telephone",
+    CONTACT_DEFAULT_TELEPHONE
+  ),
+  email: fieldOrDefault(
+    blocks,
+    "contact-info",
+    "contact-email",
+    CONTACT_DEFAULT_EMAIL
+  ),
   facebookUrl: fieldOrDefault(blocks, "contact-info", "contact-facebook", ""),
   instagramUrl: fieldOrDefault(blocks, "contact-info", "contact-instagram", ""),
   youtubeUrl: fieldOrDefault(blocks, "contact-info", "contact-youtube", ""),
