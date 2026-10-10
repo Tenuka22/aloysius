@@ -17,13 +17,20 @@ import { resolveFileUrls } from "../files/file-urls";
  * `where` clause is the entire publish gate: a gallery reaches here if and
  * only if `status = 'approved'`, which only `reviewGallery.ts` ever sets.
  *
+ * `club` is optional. Omitting it means "every approved gallery, whichever club
+ * created it", which is what the `/media` page wants - it is the site's general
+ * gallery and has no club of its own. Passing it keeps the narrower meaning: that
+ * club's galleries, plus the club-less ones. Either way a club-less gallery is
+ * included, because a CMS-authored gallery belongs to nobody and used to be
+ * invisible to a per-club query that asked for something else.
+ *
  * `linkedContent` carries the title of whatever the gallery was linked to -
  * the news post, event or achievement it relates to - or `null` for the
- * ordinary case. The public page falls back to a plain gallery card when it
- * is `null`.
+ * ordinary case. The public page falls back to a plain gallery card when it is
+ * `null`.
  */
 export const listApprovedGalleries = publicProcedure
-  .input(v.object({ club: clubSlugSchema }))
+  .input(v.object({ club: v.optional(clubSlugSchema) }))
   .handler(async ({ input, context }) => {
     const galleries = await context.db
       .select({
@@ -44,10 +51,12 @@ export const listApprovedGalleries = publicProcedure
       .leftJoin(event, eq(gallery.linkedEventId, event.id))
       .leftJoin(achievement, eq(gallery.linkedAchievementId, achievement.id))
       .where(
-        and(
-          or(eq(gallery.club, input.club), isNull(gallery.club)),
-          eq(gallery.status, "approved")
-        )
+        input.club
+          ? and(
+              or(eq(gallery.club, input.club), isNull(gallery.club)),
+              eq(gallery.status, "approved")
+            )
+          : eq(gallery.status, "approved")
       )
       .orderBy(desc(gallery.publishedAt))
       .all();

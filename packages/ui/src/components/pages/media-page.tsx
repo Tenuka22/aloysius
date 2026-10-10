@@ -8,6 +8,8 @@ import { SiteFooter } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
 
 const MAIN_ID = "main-content";
+/** Module-level so the default is referentially stable across renders. */
+const NO_GALLERIES: readonly MediaGalleryTile[] = [];
 
 const styles = stylex.create({
   main: {
@@ -60,6 +62,44 @@ const styles = stylex.create({
     maxWidth: space.measure,
     marginInline: "auto",
   },
+  emptyBody: {
+    margin: 0,
+    fontSize: font.sizeSm,
+    lineHeight: font.leadingRelaxed,
+    color: color.onSurfaceMuted,
+    textWrap: "pretty",
+  },
+  galleryList: {
+    display: "grid",
+    gridTemplateColumns: {
+      default: "1fr",
+      "@media (min-width: 40rem)": "repeat(2, 1fr)",
+      "@media (min-width: 64rem)": "repeat(3, 1fr)",
+    },
+    gap: space.lg,
+    margin: 0,
+    padding: 0,
+    listStyle: "none",
+  },
+  galleryItem: {
+    minWidth: 0,
+  },
+  galleryLink: {
+    display: "block",
+    color: "inherit",
+    textDecoration: "none",
+  },
+  galleryMedia: {
+    marginBlockEnd: space.sm,
+  },
+  galleryTitle: {
+    display: "block",
+    fontFamily: font.display,
+    fontSize: font.sizeLg,
+    fontWeight: font.weightSemibold,
+    lineHeight: font.leadingTight,
+    color: color.onSurface,
+  },
 });
 
 export interface MediaPageProps {
@@ -68,12 +108,18 @@ export interface MediaPageProps {
   tagline?: string;
   heroImage?: ImageSource;
   /**
-   * Unused. It only ever printed "Showing N items per page" inside the
-   * placeholder text, and the galleries that number refers to are rendered on
-   * the /galleries route rather than here.
+   * One tile per approved gallery. The page used to render a hero and two lines
+   * of copy with no images at all, because the route never asked for a gallery.
    */
-  galleryCount?: never;
+  galleries?: readonly MediaGalleryTile[];
   extraNavItems?: readonly NavItem[];
+}
+
+export interface MediaGalleryTile {
+  id: string;
+  title: string;
+  href: string;
+  image: ImageSource;
 }
 
 export const MediaPage = ({
@@ -81,6 +127,7 @@ export const MediaPage = ({
   heading = "Media Gallery",
   tagline,
   heroImage,
+  galleries = NO_GALLERIES,
   extraNavItems,
 }: MediaPageProps) => (
   <>
@@ -100,19 +147,40 @@ export const MediaPage = ({
         )}
       </section>
       {/*
-       * The galleries themselves come from `club.listApprovedGalleries` on the
-       * route, not from these props. This section used to render "Media gallery
-       * will be displayed here once published" unconditionally - a placeholder
-       * shown even when galleries existed below it, because the gallery strip
-       * lives on the /galleries route rather than here.
+       * The gallery grid. This page rendered a hero and two lines of copy with
+       * no images at all: it used to print "Media gallery will be displayed here
+       * once published", and when that placeholder was replaced the section
+       * simply went empty, because nothing on the route had ever asked for a
+       * gallery. `galleries` comes from `club.listApprovedGalleries`, so what is
+       * shown is whatever a CMS reviewer has approved - never stock imagery.
        */}
       <section {...stylex.props(styles.content)}>
         <p {...stylex.props(styles.eyebrow)}>Gallery</p>
         <h2 {...stylex.props(styles.heading)}>Photographs &amp; Videos</h2>
-        <p>
-          Every image here is uploaded and captioned by the College. Browse the
-          full gallery, filtered by year and category, from the Galleries page.
-        </p>
+        {galleries.length === 0 ? (
+          <p {...stylex.props(styles.emptyBody)}>
+            No galleries have been published yet. Approved galleries appear here
+            as soon as the CMS team reviews them.
+          </p>
+        ) : (
+          <ul {...stylex.props(styles.galleryList)}>
+            {galleries.map((gallery) => (
+              <li key={gallery.id} {...stylex.props(styles.galleryItem)}>
+                <a href={gallery.href} {...stylex.props(styles.galleryLink)}>
+                  <Media
+                    placeholder=""
+                    ratio="4:3"
+                    source={gallery.image}
+                    style={styles.galleryMedia}
+                  />
+                  <span {...stylex.props(styles.galleryTitle)}>
+                    {gallery.title}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </main>
     <SiteFooter />

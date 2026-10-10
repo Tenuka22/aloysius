@@ -7,17 +7,24 @@
  * Destructive, on purpose, and scoped on purpose: it clears every row in
  * `gallery`, `club_photo`, `announcement`, `event`, `news_post` and
  * `achievement` before inserting its own, so re-running it gives a clean,
- * predictable demo state instead of accumulating duplicates. It does not
- * touch `user`, `session`, `files`, or any CMS page-block content - running
- * it never signs anyone out or disturbs the Homepage/About/etc. editors.
+ * predictable demo state instead of accumulating duplicates. It never touches
+ * `user` or `session`, so it never signs anyone out and never disturbs the
+ * Homepage/About/etc. editors.
+ *
+ * It does delete the `files` rows **it uploaded itself** - the images behind the
+ * content being cleared. Leaving those behind leaked badly: every run uploaded
+ * ~35 images, and because the old rows were never removed, re-running twice
+ * left 70 files and 35 unreferenced objects in the bucket for the 35 content
+ * rows that survived. Only objects this script created are touched, tracked by
+ * the `demo/` key prefix, so a photo a person uploaded through the app is never
+ * at risk.
  *
  * Run from `apps/web`:
- *   bun x varlock run -- bun run scripts/seed-demo.ts
+ *   bun run seed:demo
  *
- * Requires the `cms` and `photography-admin` seats to already exist
- * (ensureServerBootstrap seeds `cms` on server start; `photography-admin` is
- * created by whichever flow first provisions the club seat - sign in once,
- * or see HANDOVER.md).
+ * Needs the `cms` seat, which `ensureServerBootstrap` creates on server start -
+ * so start the dev server once first. The `photography-admin` club seat is
+ * created here on demand; see `requireUserId`.
  */
 
 import { createClubCredential } from "@aloysius/auth";
@@ -27,7 +34,7 @@ import { clubPhoto, gallery } from "@aloysius/db/schema/club-photos";
 import { files } from "@aloysius/db/schema/files";
 import { newsPost } from "@aloysius/db/schema/news-posts";
 import { achievement, event } from "@aloysius/db/schema/root-content";
-import { eq } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 
 import { auth, getDb, getStorage } from "../src/services";
 
@@ -80,6 +87,13 @@ const requireUserId = async (username: string): Promise<string> => {
   );
 };
 
+/**
+ * Every object this script uploads carries this prefix, which is what makes it
+ * safe to delete them again on the next run. Real uploads use the `admin/`
+ * prefix and are never touched.
+ */
+const SEED_KEY_PREFIX = "demo/";
+
 /** A real photograph from picsum.photos' seeded endpoint, stable across
  * runs (the same `seedName` always returns the same image), stored through
  * the same storage layer `/api/files` uses. */
@@ -99,7 +113,7 @@ const uploadSeedImage = async (
   }
   const buffer = Buffer.from(await response.arrayBuffer());
   const id = crypto.randomUUID();
-  const key = `admin/${id}.jpg`;
+  const key = `${SEED_KEY_PREFIX}${id}.jpg`;
 
   await storage.put(key, buffer, "image/jpeg");
   await db.insert(files).values({
@@ -112,6 +126,42 @@ const uploadSeedImage = async (
   });
 
   return id;
+};
+
+/**
+ * Delete the images previous runs of this script uploaded, both the `files` rows
+ * and the objects behind them.
+ *
+ * Scoped to `SEED_KEY_PREFIX` on purpose. A blanket "delete all files" would
+ * destroy anything a person uploaded through the app, and a row-only delete
+ * would leave the objects in the bucket - which is the leak this replaces.
+ *
+ * `storage.remove` failures are tolerated on purpose: the content rows are
+ * going regardless, and a bucket that is unreachable must not stop the reseed.
+ */
+const deletePreviouslySeededImages = async () => {
+  const orphans = await db
+    .select({ id: files.id, key: files.key })
+    .from(files)
+    .where(like(files.key, `${SEED_KEY_PREFIX}%`))
+    .all();
+
+  // Independent per object, so they run concurrently rather than one at a time.
+  // Failures are tolerated per object: the content rows go regardless, and an
+  // unreachable bucket must not stop the reseed.
+  await Promise.all(
+    orphans.map((orphan) =>
+      storage.remove(orphan.key).catch(() => {
+        // Object already gone, or the bucket is down. The row still goes.
+      })
+    )
+  );
+
+  await db
+    .delete(files)
+    .where(like(files.key, `${SEED_KEY_PREFIX}%`))
+    .run();
+  return orphans.length;
 };
 
 const slugify = (title: string, id: string) =>
@@ -424,6 +474,29 @@ const seedGallery = async (plan: GalleryPlan, cmsUserId: string) => {
   );
 };
 
+/**
+ * Resolve a seed key to its row id, or fail loudly.
+ *
+ * The gallery plans below reference events and achievements by their seed key.
+ * A missed lookup used to fall back to `null`, which produced a gallery whose
+ * `linkedKind` said "event" while `linkedEventId` was null - a link to nothing,
+ * with no error anywhere. The seeder's whole job is to be predictable, so a
+ * missing reference should stop it rather than quietly ship a broken row.
+ */
+const linkedId = (
+  ids: Record<string, string>,
+  key: string,
+  kind: string
+): string => {
+  const id = ids[key];
+  if (!id) {
+    throw new Error(
+      `No seeded ${kind} with key "${key}" - it was not created, so the gallery linking to it would dangle.`
+    );
+  }
+  return id;
+};
+
 const seedGalleriesForDemo = async (
   cmsUserId: string,
   clubUserId: string,
@@ -442,7 +515,7 @@ const seedGalleriesForDemo = async (
       creatorId: cmsUserId,
       status: "approved",
       linkedKind: "event",
-      linkedId: eventIds["event-chess"] ?? null,
+      linkedId: linkedId(eventIds, "event-chess", "event"),
     },
     {
       title: "National Choir Festival",
@@ -455,7 +528,7 @@ const seedGalleriesForDemo = async (
       creatorId: cmsUserId,
       status: "approved",
       linkedKind: "achievement",
-      linkedId: achievementIds["achievement-choir"] ?? null,
+      linkedId: linkedId(achievementIds, "achievement-choir", "achievement"),
     },
     {
       title: "Inter-House Athletics Meet",
@@ -467,7 +540,7 @@ const seedGalleriesForDemo = async (
       creatorId: clubUserId,
       status: "approved",
       linkedKind: "event",
-      linkedId: eventIds["event-athletics"] ?? null,
+      linkedId: linkedId(eventIds, "event-athletics", "event"),
     },
     {
       title: "Science Exhibition 2026",
@@ -487,7 +560,7 @@ const seedGalleriesForDemo = async (
 
 const main = async () => {
   const cmsUserId = await requireUserId("cms");
-  const clubUserId = await requireUserId("photography-admin");
+  const clubUserId = await requireUserId(CLUB_SEAT_USERNAME);
 
   console.log("Clearing existing seeded content...");
   await db.delete(clubPhoto).run();
@@ -496,6 +569,11 @@ const main = async () => {
   await db.delete(event).run();
   await db.delete(newsPost).run();
   await db.delete(achievement).run();
+
+  const removedImages = await deletePreviouslySeededImages();
+  if (removedImages > 0) {
+    console.log(`Removed ${removedImages} images from a previous run.`);
+  }
 
   console.log("Seeding achievements...");
   const achievementIds = await seedAchievements(cmsUserId);
@@ -520,5 +598,12 @@ const main = async () => {
   );
 };
 
+/*
+ * `main()` is awaited, not fire-and-forget with a `process.exit(0)` after it.
+ * The old ending exited the process unconditionally, which did two bad things:
+ * it reported success even when a step had failed, and it could terminate the
+ * runtime before the last MinIO uploads had flushed - leaving content rows whose
+ * images never landed. A rejected `main()` now exits non-zero on its own, so a
+ * failed seed is visible instead of silent.
+ */
 await main();
-process.exit(0);
