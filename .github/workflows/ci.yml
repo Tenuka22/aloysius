@@ -161,8 +161,8 @@ jobs:
           file: apps/web/Dockerfile
           push: true
           tags: |
-            registry.gitlab.com/tenuka22/aloysius/aloysius-web:${{ github.ref_name }}
-            registry.gitlab.com/tenuka22/aloysius/aloysius-web:latest
+            registry.gitlab.com/tenuka22/aloysius-web/aloysius-web:${{ github.ref_name }}
+            registry.gitlab.com/tenuka22/aloysius-web/aloysius-web:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Push the placeholder (building) image
@@ -172,7 +172,7 @@ jobs:
           file: apps/building/Dockerfile
           push: true
           tags: |
-            registry.gitlab.com/tenuka22/aloysius/aloysius-building:${{ github.ref_name }}
-            registry.gitlab.com/tenuka22/aloysius/aloysius-building:latest
+            registry.gitlab.com/tenuka22/aloysius-web/aloysius-building:${{ github.ref_name }}
+            registry.gitlab.com/tenuka22/aloysius-web/aloysius-building:latest
           cache-from: type=gha,scope=building
           cache-to: type=gha,mode=max,scope=building
