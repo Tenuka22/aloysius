@@ -18,4 +18,9 @@ EXPOSE 4000
 
 # SSR chunks require workspace dependencies at runtime
 WORKDIR /app/apps/web
-CMD ["node", "--run", "start"]
+# Migrate, then serve. A failed migration stops the container instead of
+# starting a release against the wrong schema - the same arrangement
+# ../school-management uses. `migrate-deploy.mjs` uses the drizzle migrator
+# directly rather than drizzle-kit, which is a devDependency and is not
+# guaranteed to be present in this runtime image.
+CMD ["sh", "-c", "node /app/packages/db/scripts/migrate-deploy.mjs && exec node --run start"]

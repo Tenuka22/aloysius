@@ -18,6 +18,14 @@ name: aloysius
 # `IMAGE_TAG` to the tag you actually pushed (e.g. `v0.0.1`). Both images are
 # built and published together from the same release, so they share one tag.
 #
+# Migrations are NOT a compose service here. `apps/web/Dockerfile`'s CMD applies
+# pending Drizzle migrations and then execs the server, so a release cannot start
+# against the wrong schema and there is no second service to keep in step with
+# the image. Same arrangement as ../school-management. Running it on every start
+# is safe: drizzle records each applied file, so an up-to-date database is a
+# no-op. `web` must still wait for `turso-db` to be healthy, since the migrate
+# step runs before anything can retry the connection.
+#
 # `SITE_URL` is the deployment's own fact about *this* school's public
 # address and cannot be read from the repo. It defaults to empty on purpose:
 # a stack that forgets it has no site URL, which is a visible deployment
@@ -25,23 +33,6 @@ name: aloysius
 # `trustedOrigins` is derived from this value.
 
 services:
-  migrate:
-    # One-shot: applies pending Drizzle migrations and exits. `web` waits for
-    # this to complete successfully, so a release never starts against the wrong
-    # schema. Running it on every `up` is safe - drizzle records each applied
-    # file, so an up-to-date database is a no-op.
-    image: registry.gitlab.com/tenuka22/aloysius-web/aloysius-web:${IMAGE_TAG:-latest}
-    command: ["node", "packages/db/scripts/migrate-deploy.mjs"]
-    working_dir: /app
-    environment:
-      NODE_ENV: production
-      TURSO_DATABASE_URL: http://turso-db:8080
-      TURSO_AUTH_TOKEN: ${TURSO_AUTH_TOKEN:-}
-    depends_on:
-      turso-db:
-        condition: service_healthy
-    restart: "no"
-
   web:
     image: registry.gitlab.com/tenuka22/aloysius-web/aloysius-web:${IMAGE_TAG:-latest}
     init: true
@@ -63,8 +54,6 @@ services:
       MINIO_BUCKET: aloysius
       MINIO_USE_SSL: "false"
     depends_on:
-      migrate:
-        condition: service_completed_successfully
       turso-db:
         condition: service_healthy
       minio:
