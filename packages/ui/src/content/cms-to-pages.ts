@@ -3,6 +3,8 @@ import {
   ALUMNI_ABOUT_BODY,
   ALUMNI_ABOUT_CAPTION,
   ALUMNI_ABOUT_HEADING,
+  ALUMNI_BRANCHES_HEADING,
+  ALUMNI_BRANCHES_INTRO,
   ALUMNI_EVENTS_LABEL,
   ALUMNI_HERO_INTRO,
   ALUMNI_HERO_TITLE,
@@ -10,6 +12,7 @@ import {
   ALUMNI_LINKS_HEADING,
   ALUMNI_OBA_HREF,
   ALUMNI_OBA_LABEL,
+  ALUMNI_OFFER_HEADING,
 } from "./alumni";
 import type { CmsBlock } from "./cms-to-home";
 import {
@@ -287,6 +290,9 @@ export interface AlumniPageProps {
   body?: string;
   image?: ImageSource;
   imageCaption?: string;
+  offerHeading?: string;
+  branchesHeading?: string;
+  branchesIntro?: string;
   linksHeading?: string;
   linksBody?: string;
   obaHref?: string;
@@ -337,6 +343,24 @@ export const blocksToAlumniProps = (blocks: CmsBlock[]): AlumniPageProps => ({
     "alumni-about",
     "alumni-image-caption",
     ALUMNI_ABOUT_CAPTION
+  ),
+  offerHeading: fieldOrDefault(
+    blocks,
+    "alumni-offer",
+    "alumni-offer-heading",
+    ALUMNI_OFFER_HEADING
+  ),
+  branchesHeading: fieldOrDefault(
+    blocks,
+    "alumni-branches",
+    "alumni-branches-heading",
+    ALUMNI_BRANCHES_HEADING
+  ),
+  branchesIntro: fieldOrDefault(
+    blocks,
+    "alumni-branches",
+    "alumni-branches-intro",
+    ALUMNI_BRANCHES_INTRO
   ),
   linksHeading: fieldOrDefault(
     blocks,

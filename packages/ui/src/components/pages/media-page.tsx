@@ -1,6 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 
 import type { NavItem } from "../../content/home";
+import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
 import { Container, SkipLink } from "../primitives/layout";
 import { Media } from "../primitives/media";
@@ -83,36 +84,90 @@ const styles = stylex.create({
     color: color.onSurfaceMuted,
     textWrap: "pretty",
   },
+  /*
+   * Every gallery cover is cropped to a 1:1 square at upload time
+   * (`ratioKey="galleryThumb"`), so there is no real per-photo aspect ratio to
+   * lay out a true Pinterest masonry from - every source image is the same
+   * shape. The mosaic rhythm instead comes from deliberate tile spans, the
+   * same technique the Students sports bento uses: a repeating 6-tile pattern
+   * (feature, tall, wide, three plain) rather than a uniform grid of
+   * identical cards. The pattern repeats by `index % 6`, so it holds for any
+   * gallery count and never depends on which galleries happen to exist.
+   */
   galleryList: {
     display: "grid",
-    gridTemplateColumns: {
-      default: "1fr",
-      "@media (min-width: 40rem)": "repeat(2, 1fr)",
-      "@media (min-width: 64rem)": "repeat(3, 1fr)",
-    },
-    gap: space.lg,
     margin: 0,
+    marginBlockStart: space["2xl"],
     padding: 0,
     listStyle: "none",
+    gap: space.lg,
+    gridTemplateColumns: {
+      default: "minmax(0, 1fr)",
+      [bp.mdToXl]: "repeat(2, minmax(0, 1fr))",
+      [bp.xl]: "repeat(4, minmax(0, 1fr))",
+    },
+    gridAutoRows: {
+      default: "auto",
+      [bp.xl]: "minmax(9rem, auto)",
+    },
   },
   galleryItem: {
+    position: "relative",
+    display: "flex",
     minWidth: 0,
+    overflow: "hidden",
+    minBlockSize: {
+      default: "14rem",
+      [bp.xl]: "auto",
+    },
+  },
+  /** Every 6th tile (feature): a 2x2 block, the mosaic's anchor. */
+  spanFeature: {
+    gridColumn: { default: "auto", [bp.xl]: "span 2" },
+    gridRow: { default: "auto", [bp.xl]: "span 2" },
+  },
+  /** The tile after a feature: a tall 1x2 portrait block. */
+  spanTall: {
+    gridRow: { default: "auto", [bp.xl]: "span 2" },
+  },
+  /** The last tile of each cycle: a wide 2x1 banner block. */
+  spanWide: {
+    gridColumn: { default: "auto", [bp.xl]: "span 2" },
   },
   galleryLink: {
     display: "block",
+    position: "relative",
+    inlineSize: "100%",
+    blockSize: "100%",
     color: "inherit",
     textDecoration: "none",
   },
   galleryMedia: {
-    marginBlockEnd: space.sm,
+    blockSize: "100%",
+  },
+  /*
+   * The caption sits on a scrim over the photograph rather than below it:
+   * a mosaic tile's box is the shape the layout gives it, not a fixed ratio
+   * the title's own line-height could reliably sit under.
+   */
+  galleryScrim: {
+    position: "absolute",
+    insetInline: 0,
+    insetBlockEnd: 0,
+    paddingBlock: space.md,
+    paddingInline: space.md,
+    backgroundImage:
+      "linear-gradient(to top, rgba(1, 52, 5, 0.75), rgba(1, 52, 5, 0))",
   },
   galleryTitle: {
     display: "block",
+    margin: 0,
     fontFamily: font.display,
-    fontSize: font.sizeLg,
+    fontSize: font.sizeMd,
     fontWeight: font.weightSemibold,
-    lineHeight: font.leadingTight,
-    color: color.onSurface,
+    lineHeight: font.leadingSnug,
+    color: color.onInverse,
+    textWrap: "balance",
   },
 });
 
@@ -134,6 +189,23 @@ export interface MediaGalleryTile {
   href: string;
   image: ImageSource;
 }
+
+/** `index % 6` picks a span for each tile; see `galleryList`'s comment. */
+const MOSAIC_PATTERN = [
+  "feature",
+  "plain",
+  "tall",
+  "plain",
+  "plain",
+  "wide",
+] as const;
+
+const MOSAIC_SPAN_STYLES = {
+  feature: styles.spanFeature,
+  plain: undefined,
+  tall: styles.spanTall,
+  wide: styles.spanWide,
+} as const;
 
 export const MediaPage = ({
   heading = "Media Gallery",
@@ -180,21 +252,37 @@ export const MediaPage = ({
             </p>
           ) : (
             <ul {...stylex.props(styles.galleryList)}>
-              {galleries.map((gallery) => (
-                <li key={gallery.id} {...stylex.props(styles.galleryItem)}>
-                  <a href={gallery.href} {...stylex.props(styles.galleryLink)}>
-                    <Media
-                      placeholder=""
-                      ratio="4:3"
-                      source={gallery.image}
-                      style={styles.galleryMedia}
-                    />
-                    <span {...stylex.props(styles.galleryTitle)}>
-                      {gallery.title}
-                    </span>
-                  </a>
-                </li>
-              ))}
+              {galleries.map((gallery, index) => {
+                const span =
+                  MOSAIC_PATTERN[index % MOSAIC_PATTERN.length] ?? "plain";
+                return (
+                  <li
+                    key={gallery.id}
+                    {...stylex.props(
+                      styles.galleryItem,
+                      MOSAIC_SPAN_STYLES[span]
+                    )}
+                  >
+                    <a
+                      href={gallery.href}
+                      {...stylex.props(styles.galleryLink)}
+                    >
+                      <Media
+                        fill
+                        placeholder=""
+                        source={gallery.image}
+                        style={styles.galleryMedia}
+                        zoom
+                      />
+                      <div {...stylex.props(styles.galleryScrim)}>
+                        <span {...stylex.props(styles.galleryTitle)}>
+                          {gallery.title}
+                        </span>
+                      </div>
+                    </a>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Container>

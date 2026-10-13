@@ -14,7 +14,12 @@
  */
 
 import type { AspectRatioKey } from "../tokens/aspect-ratios";
-import { ALUMNI_OBA_HREF } from "./alumni";
+import {
+  ALUMNI_BRANCHES_HEADING,
+  ALUMNI_BRANCHES_INTRO,
+  ALUMNI_OBA_HREF,
+  ALUMNI_OFFER_HEADING,
+} from "./alumni";
 import { CONTACT_DEFAULT_TELEPHONE } from "./contact";
 import { ADMISSIONS_URL } from "./home";
 import {
@@ -950,6 +955,43 @@ export const ALUMNI_BLOCKS: readonly PageBlock[] = [
         kind: "text",
         value: "Old Boys' Association event",
         hint: "Also used as the photograph's alt text.",
+      },
+    ],
+  },
+  {
+    id: "alumni-offer",
+    name: "What the Association Does",
+    type: "Card grid",
+    status: "published",
+    summary: "Section heading above the Association's fixed list of activities",
+    fields: [
+      {
+        id: "alumni-offer-heading",
+        label: "Section heading",
+        kind: "text",
+        value: ALUMNI_OFFER_HEADING,
+      },
+    ],
+  },
+  {
+    id: "alumni-branches",
+    name: "Branches",
+    type: "Text + media",
+    status: "published",
+    summary: "Heading and intro above the Association's three branches",
+    fields: [
+      {
+        id: "alumni-branches-heading",
+        label: "Section heading",
+        kind: "text",
+        value: ALUMNI_BRANCHES_HEADING,
+      },
+      {
+        id: "alumni-branches-intro",
+        label: "Intro copy",
+        kind: "textarea",
+        value: ALUMNI_BRANCHES_INTRO,
+        wide: true,
       },
     ],
   },

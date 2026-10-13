@@ -35,6 +35,8 @@ const AlumniContent = () => {
     <AlumniPage
       aboutHeading={cmsProps.aboutHeading}
       body={cmsProps.body}
+      branchesHeading={cmsProps.branchesHeading}
+      branchesIntro={cmsProps.branchesIntro}
       eventsHref={cmsProps.eventsHref}
       eventsLabel={cmsProps.eventsLabel}
       extraNavItems={extraNavItems}
@@ -46,6 +48,7 @@ const AlumniContent = () => {
       linksHeading={cmsProps.linksHeading}
       obaHref={cmsProps.obaHref}
       obaLabel={cmsProps.obaLabel}
+      offerHeading={cmsProps.offerHeading}
       tagline={cmsProps.tagline}
     />
   );

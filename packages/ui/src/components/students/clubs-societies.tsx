@@ -20,9 +20,15 @@ import { Reveal } from "../primitives/reveal";
 
 const styles = stylex.create({
   /*
-   * The hairline rules between cells are drawn by a 1px grid gap over the
-   * container's gold background rather than per-cell borders - that way the
-   * lines never double up where two cells meet, at any column count.
+   * Hairlines are drawn per cell as a right/bottom border, with the
+   * container's own 1px border closing the frame.
+   * Drawing the gap as a *container* background (the mock's trick) paints
+   * every unoccupied track too - with `auto-fit` and an item count that
+   * doesn't divide evenly into a row, the trailing row's empty tracks still
+   * have grid area and still show that background, which reads as a giant
+   * stray colour block after the last card. Per-cell shadows only draw where
+   * a cell actually exists, so a sparse last row stays exactly as wide as its
+   * cards and nothing more.
    *
    * `auto-fit` + `minmax` rather than the mock's hard `repeat(4, 1fr)`, which
    * gives each of these eight cells ~56px at 320px. `min(100%, 15rem)` is what
@@ -35,14 +41,19 @@ const styles = stylex.create({
     marginBlockStart: space["2xl"],
     padding: 0,
     gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 15rem), 1fr))",
-    gap: space.px,
-    backgroundColor: color.borderAccent,
+    gap: 0,
     borderWidth: space.px,
     borderStyle: "solid",
     borderColor: color.borderAccent,
   },
   cell: {
     blockSize: "100%",
+    borderInlineEndWidth: space.px,
+    borderInlineEndStyle: "solid",
+    borderInlineEndColor: color.borderAccent,
+    borderBlockEndWidth: space.px,
+    borderBlockEndStyle: "solid",
+    borderBlockEndColor: color.borderAccent,
   },
   card: {
     display: "flex",

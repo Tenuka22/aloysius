@@ -182,6 +182,11 @@ const styles = stylex.create({
   },
   category: {
     color: color.accentOnSurface,
+    textTransform: "capitalize",
+  },
+  categoryInverse: {
+    color: color.accentOnInverse,
+    textTransform: "capitalize",
   },
   emptyBody: {
     margin: 0,
@@ -237,7 +242,13 @@ const StoryMeta = ({
   onInverse?: boolean;
 }) => (
   <p {...stylex.props(onInverse ? styles.leadMeta : styles.meta)}>
-    {category ? <span>{category}</span> : null}
+    {category ? (
+      <span
+        {...stylex.props(onInverse ? styles.categoryInverse : styles.category)}
+      >
+        {category}
+      </span>
+    ) : null}
     {publishedAt ? (
       <time dateTime={publishedAt}>{formatDate(publishedAt)}</time>
     ) : null}
