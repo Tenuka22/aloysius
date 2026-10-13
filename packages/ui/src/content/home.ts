@@ -111,6 +111,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { id: "students", label: "Students", href: "/students" },
   { id: "events", label: "Events", href: "/events" },
   { id: "news", label: "News", href: "/news" },
+  { id: "notices", label: "Notices", href: "/notices" },
   { id: "alumni", label: "Alumni", href: "/alumni" },
   { id: "media", label: "Media", href: "/media" },
   { id: "contact", label: "Contact", href: "/contact" },

@@ -102,6 +102,7 @@ export const Alumni = ({
 
         <Reveal delay={1} direction="up">
           <Media
+            inverse
             placeholder="Archival group photograph"
             ratio="4:5"
             source={photo}

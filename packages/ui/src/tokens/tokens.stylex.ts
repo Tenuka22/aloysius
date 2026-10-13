@@ -72,9 +72,18 @@ export const color = stylex.defineVars({
   focusRing: palette.crimson,
   focusRingInverse: palette.goldLight,
 
-  /** Neutral placeholder shown while real photography is pending. */
+  /**
+   * Neutral placeholder shown while real photography is pending. `placeholder`
+   * is a dark-green wash that only reads correctly on the light `surface` -
+   * on a `surfaceInverse` section the same wash nearly matches its own
+   * background (detector-measured 1:1 contrast). `*OnInverse` mirrors it in
+   * cream so the box and its caption stay legible there too.
+   */
   placeholder: "rgba(1, 52, 5, 0.06)",
   placeholderInk: "rgba(1, 52, 5, 0.45)",
+  placeholderOnInverse: "rgba(255, 248, 231, 0.1)",
+  /** Same alpha as `onInverseMuted` - already verified to clear 4.5:1 on `surfaceInverse`. */
+  placeholderInkOnInverse: "rgba(255, 248, 231, 0.82)",
 });
 
 /**

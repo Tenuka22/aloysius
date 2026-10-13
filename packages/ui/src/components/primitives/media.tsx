@@ -60,6 +60,18 @@ const styles = stylex.create({
     borderStyle: "dashed",
     borderColor: color.border,
   },
+  placeholderInverse: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    height: "100%",
+    padding: space.sm,
+    backgroundImage: `repeating-linear-gradient(135deg, ${color.placeholderOnInverse} 0 10px, transparent 10px 20px)`,
+    borderWidth: space.px,
+    borderStyle: "dashed",
+    borderColor: color.borderInverse,
+  },
   /**
    * Used where a placeholder sits behind other content (the hero background):
    * the hatching and caption would show through the scrim.
@@ -68,6 +80,11 @@ const styles = stylex.create({
     width: "100%",
     height: "100%",
     backgroundColor: color.placeholder,
+  },
+  placeholderBareInverse: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: color.placeholderOnInverse,
   },
   placeholderText: {
     margin: 0,
@@ -78,6 +95,16 @@ const styles = stylex.create({
     textAlign: "center",
     textTransform: "uppercase",
     color: color.placeholderInk,
+  },
+  placeholderTextInverse: {
+    margin: 0,
+    maxWidth: "24ch",
+    fontSize: font.sizeXs,
+    fontWeight: font.weightSemibold,
+    letterSpacing: font.trackingWide,
+    textAlign: "center",
+    textTransform: "uppercase",
+    color: color.placeholderInkOnInverse,
   },
 });
 
@@ -163,9 +190,6 @@ const getImageProps = (
   width: source.width,
 });
 
-const getPlaceholderProps = (placeholder: string) =>
-  placeholder ? styles.placeholder : styles.placeholderBare;
-
 export const Media = ({
   source,
   placeholder,
@@ -173,6 +197,7 @@ export const Media = ({
   fill = false,
   zoom = false,
   priority = false,
+  inverse = false,
   style,
   aspectRatio,
 }: {
@@ -188,6 +213,8 @@ export const Media = ({
   fill?: boolean;
   zoom?: boolean;
   priority?: boolean;
+  /** Set inside a `tone="inverse"`/`"inverseGradient"` `Section` - the cream wash and ink read on the deep-green surface where the default dark-on-dark wash does not. */
+  inverse?: boolean;
   style?: stylex.StyleXStyles;
   /** Overrides the preset ratio when an image carries its own dimensions. */
   aspectRatio?: number;
@@ -199,6 +226,19 @@ export const Media = ({
     aspectRatio ?? (typeof ratio === "number" ? ratio : undefined)
   );
   const hasAspectRatio = resolvedAspectRatio !== undefined;
+
+  let placeholderStyle:
+    | typeof styles.placeholder
+    | typeof styles.placeholderInverse
+    | typeof styles.placeholderBare
+    | typeof styles.placeholderBareInverse = styles.placeholderBare;
+  if (inverse) {
+    placeholderStyle = placeholder
+      ? styles.placeholderInverse
+      : styles.placeholderBareInverse;
+  } else if (placeholder) {
+    placeholderStyle = styles.placeholder;
+  }
 
   return (
     <div
@@ -212,12 +252,15 @@ export const Media = ({
           {...stylex.props(styles.image, zoom && styles.zoom)}
         />
       ) : (
-        <div
-          aria-hidden="true"
-          {...stylex.props(getPlaceholderProps(placeholder))}
-        >
+        <div aria-hidden="true" {...stylex.props(placeholderStyle)}>
           {placeholder ? (
-            <p {...stylex.props(styles.placeholderText)}>{placeholder}</p>
+            <p
+              {...stylex.props(
+                inverse ? styles.placeholderTextInverse : styles.placeholderText
+              )}
+            >
+              {placeholder}
+            </p>
           ) : null}
         </div>
       )}
