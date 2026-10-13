@@ -32,6 +32,21 @@ export default defineConfig({
     varlockVitePlugin({ ssrInjectMode: "auto-load" }),
     stylexVite({
       useCSSLayers: true,
+      /*
+       * The default `cssInjectionTarget` matches the literal filename
+       * `index.css`/`style.css`, but production builds hash CSS asset
+       * filenames (`index-B47xgNIX.css`) and Rollup's `fileName` includes
+       * the `assets/` directory prefix, so the default never matches and
+       * falls back to Rollup's first CSS asset in bundle order - whichever
+       * route chunk that happens to be (observed: the CMS-only
+       * homepage-editor chunk, never loaded on public pages). That
+       * silently shipped a production build with zero StyleX CSS on every
+       * public route. `appCss` in __root.tsx is `index.css?url`, whose
+       * emitted asset is always named `assets/index-<hash>.css`, so match
+       * that basename prefix explicitly.
+       */
+      cssInjectionTarget: (fileName) =>
+        /(?<dir>^|\/)index[-.][^/]*\.css$/u.test(fileName),
     }),
     tanstackStart(),
     nitro({ preset: "node-server" }),
