@@ -178,18 +178,30 @@ export const ButtonLink = ({
   </a>
 );
 
-/** "Explore Our History →" - the underlined tertiary link in the design. */
+/**
+ * "Explore Our History →" - the underlined tertiary link in the design.
+ *
+ * `external` is for a link that leaves the site: it opens in a new tab and
+ * carries `rel="noopener noreferrer"`, so the destination cannot reach back
+ * through `window.opener`. A link that leaves the site without it is both a
+ * tabnabbing risk and a dead end for a visitor who opened it expecting to come
+ * back to the gallery they were reading.
+ */
 export const ArrowLink = ({
   children,
   href,
   inverse = false,
+  external = false,
 }: {
   children: ReactNode;
   href: string;
   inverse?: boolean;
+  external?: boolean;
 }) => (
   <a
     href={href}
+    rel={external ? "noopener noreferrer" : undefined}
+    target={external ? "_blank" : undefined}
     {...stylex.props(styles.quietLink, inverse && styles.quietLinkInverse)}
   >
     {children}

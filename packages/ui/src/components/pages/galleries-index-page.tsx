@@ -3,6 +3,7 @@ import * as stylex from "@stylexjs/stylex";
 import type { NavItem } from "../../content/home";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
+import { Container, Section, SkipLink } from "../primitives/layout";
 import { Media } from "../primitives/media";
 import { SiteFooter } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
@@ -40,44 +41,40 @@ const styles = stylex.create({
       ":focus": "none",
     },
   },
+  /*
+   * A compact left-aligned masthead, matching the gallery detail page and the
+   * news archive. It was a centred block at `4xl`, which on an index of
+   * photographs meant the title was the loudest thing on the page when the
+   * photographs were supposed to be.
+   */
   header: {
-    paddingBlockStart: space["3xl"],
-    paddingBlockEnd: space.lg,
-    paddingInline: space.md,
+    paddingBlock: space["2xl"],
+    paddingInline: space.gutter,
     backgroundColor: color.surface,
-    textAlign: "center",
-  },
-  eyebrow: {
-    margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWidest,
-    textTransform: "uppercase",
-    color: color.accentOnSurface,
   },
   heading: {
     margin: 0,
-    marginBlockStart: space.sm,
     fontFamily: font.display,
-    fontSize: font.size4xl,
+    fontSize: font.size3xl,
     fontWeight: font.weightSemibold,
     lineHeight: font.leadingTight,
+    letterSpacing: font.trackingTight,
     color: color.onSurface,
     textWrap: "balance",
   },
   tagline: {
     margin: 0,
-    marginBlockStart: space.sm,
-    maxWidth: space.measure,
-    marginInline: "auto",
+    marginBlockStart: space["2xs"],
+    maxInlineSize: space.measure,
     fontSize: font.sizeLg,
-    lineHeight: font.leadingNormal,
+    lineHeight: font.leadingRelaxed,
     color: color.onSurfaceMuted,
     textWrap: "pretty",
   },
-  content: {
-    paddingBlock: space.xl,
-    paddingInline: space.md,
+  empty: {
+    margin: 0,
+    fontSize: font.sizeSm,
+    color: color.onSurfaceMuted,
   },
   grid: {
     display: "grid",
@@ -118,11 +115,6 @@ const styles = stylex.create({
     textTransform: "uppercase",
     color: color.accentOnSurface,
   },
-  empty: {
-    margin: 0,
-    fontSize: font.sizeSm,
-    color: color.onSurfaceMuted,
-  },
 });
 
 export const GalleriesIndexPage = ({
@@ -130,56 +122,65 @@ export const GalleriesIndexPage = ({
   extraNavItems,
 }: GalleriesIndexPageProps) => (
   <>
+    <SkipLink targetId={MAIN_ID} />
     <SiteHeader activeHref="/galleries" extraNavItems={extraNavItems} />
     <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
       <header {...stylex.props(styles.header)}>
-        <p {...stylex.props(styles.eyebrow)}>Photography</p>
-        <h1 {...stylex.props(styles.heading)}>Galleries</h1>
-        <p {...stylex.props(styles.tagline)}>
-          Photographs from around the college, published once a CMS reviewer has
-          approved them.
-        </p>
+        <Container width="wide">
+          <h1 {...stylex.props(styles.heading)}>Galleries</h1>
+          <p {...stylex.props(styles.tagline)}>
+            Photographs from around the college, published once a CMS reviewer
+            has approved them.
+          </p>
+        </Container>
       </header>
 
-      <section {...stylex.props(styles.content)}>
-        {galleries.length === 0 ? (
-          <p {...stylex.props(styles.empty)}>
-            No galleries have been published yet.
-          </p>
-        ) : (
-          <ul {...stylex.props(styles.grid)}>
-            {galleries.map((gallery) => (
-              <li key={gallery.id}>
-                <a
-                  href={`/galleries/${gallery.slug}`}
-                  {...stylex.props(styles.card)}
-                >
-                  <Media
-                    placeholder={gallery.title}
-                    ratio="4:3"
-                    source={
-                      gallery.coverImageUrl
-                        ? { src: gallery.coverImageUrl, alt: gallery.title }
-                        : undefined
-                    }
-                    zoom
-                  />
-                  <h2 {...stylex.props(styles.cardTitle)}>{gallery.title}</h2>
-                  {gallery.description ? (
-                    <p {...stylex.props(styles.cardDescription)}>
-                      {gallery.description}
+      {/*
+        `width="wide"`. This grid of photographs used to sit inside the same
+        60ch reading measure as the prose pages, which held each cover image to
+        roughly 240px on a laptop regardless of how wide the window was.
+      */}
+      <Section tone="surface">
+        <Container width="wide">
+          {galleries.length === 0 ? (
+            <p {...stylex.props(styles.empty)}>
+              No galleries have been published yet.
+            </p>
+          ) : (
+            <ul {...stylex.props(styles.grid)}>
+              {galleries.map((gallery) => (
+                <li key={gallery.id}>
+                  <a
+                    href={`/galleries/${gallery.slug}`}
+                    {...stylex.props(styles.card)}
+                  >
+                    <Media
+                      placeholder={gallery.title}
+                      ratio="4:3"
+                      source={
+                        gallery.coverImageUrl
+                          ? { src: gallery.coverImageUrl, alt: gallery.title }
+                          : undefined
+                      }
+                      zoom
+                    />
+                    <h2 {...stylex.props(styles.cardTitle)}>{gallery.title}</h2>
+                    {gallery.description ? (
+                      <p {...stylex.props(styles.cardDescription)}>
+                        {gallery.description}
+                      </p>
+                    ) : null}
+                    <p {...stylex.props(styles.cardCount)}>
+                      {gallery.photoCount}{" "}
+                      {gallery.photoCount === 1 ? "photo" : "photos"}
                     </p>
-                  ) : null}
-                  <p {...stylex.props(styles.cardCount)}>
-                    {gallery.photoCount}{" "}
-                    {gallery.photoCount === 1 ? "photo" : "photos"}
-                  </p>
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Container>
+      </Section>
     </main>
     <SiteFooter />
   </>

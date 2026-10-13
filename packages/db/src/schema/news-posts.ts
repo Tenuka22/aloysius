@@ -17,7 +17,7 @@ import * as v from "valibot";
 import { user } from "./auth";
 import { brand } from "./brand";
 import type { Brand } from "./brand";
-import { CLUBS, clubSlugSchema } from "./clubs";
+import { clubSlugSchema } from "./clubs";
 import { fileIdSchema, files } from "./files";
 
 /** `column in ('a', 'b')` for a CHECK. Values are code constants, never input. */
@@ -85,10 +85,6 @@ export const newsPost = sqliteTable(
     index("news_post_club_status_idx").on(table.club, table.status),
     index("news_post_published_idx").on(table.publishedAt),
     index("news_post_submitted_by_idx").on(table.submittedById),
-    check(
-      "news_post_club_check",
-      sql`${table.club} is null or ${sqlInList(table.club, CLUBS)}`
-    ),
     check(
       "news_post_status_check",
       sqlInList(table.status, NEWS_POST_STATUSES)

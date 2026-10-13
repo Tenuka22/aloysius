@@ -2,6 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 
 import type { NavItem } from "../../content/home";
 import { color, font, space } from "../../tokens/tokens.stylex";
+import { Container, SkipLink } from "../primitives/layout";
 import { Media } from "../primitives/media";
 import type { ImageSource } from "../primitives/media";
 import { SiteFooter } from "../site/site-footer";
@@ -19,37 +20,32 @@ const styles = stylex.create({
       ":focus": "none",
     },
   },
+  /*
+   * A compact left-aligned masthead. It was a centred `4xl` block with an eyebrow
+   * above it, so on a page whose subject is photographs and video the title was
+   * the loudest thing on the screen.
+   */
   hero: {
-    paddingBlockStart: space["3xl"],
-    paddingBlockEnd: space.xl,
-    paddingInline: space.md,
+    paddingBlock: space["2xl"],
+    paddingInline: space.gutter,
     backgroundColor: color.surface,
-    textAlign: "center",
-  },
-  eyebrow: {
-    margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWidest,
-    textTransform: "uppercase",
-    color: color.accentOnSurface,
   },
   heading: {
     margin: 0,
-    marginBlockStart: space.sm,
     fontFamily: font.display,
-    fontSize: font.size4xl,
+    fontSize: font.size3xl,
     fontWeight: font.weightSemibold,
     lineHeight: font.leadingTight,
+    letterSpacing: font.trackingTight,
     color: color.onSurface,
+    textWrap: "balance",
   },
   tagline: {
     margin: 0,
-    marginBlockStart: space.sm,
-    maxWidth: space.measure,
-    marginInline: "auto",
+    marginBlockStart: space["2xs"],
+    maxInlineSize: space.measure,
     fontSize: font.sizeLg,
-    lineHeight: font.leadingNormal,
+    lineHeight: font.leadingRelaxed,
     color: color.onSurfaceMuted,
     textWrap: "pretty",
   },
@@ -58,9 +54,27 @@ const styles = stylex.create({
   },
   content: {
     paddingBlock: space.xl,
-    paddingInline: space.md,
-    maxWidth: space.measure,
-    marginInline: "auto",
+    paddingInline: space.gutter,
+  },
+  /* The section heading below the masthead. Two steps under the `h1`, which is
+   * what makes the hierarchy readable rather than two headings at one size. */
+  sectionHeading: {
+    margin: 0,
+    fontFamily: font.display,
+    fontSize: font.size2xl,
+    fontWeight: font.weightSemibold,
+    lineHeight: font.leadingSnug,
+    color: color.onSurface,
+    textWrap: "balance",
+  },
+  sectionIntro: {
+    margin: 0,
+    marginBlockStart: space["2xs"],
+    maxInlineSize: space.measure,
+    fontSize: font.sizeMd,
+    lineHeight: font.leadingRelaxed,
+    color: color.onSurfaceMuted,
+    textWrap: "pretty",
   },
   emptyBody: {
     margin: 0,
@@ -103,7 +117,6 @@ const styles = stylex.create({
 });
 
 export interface MediaPageProps {
-  eyebrow?: string;
   heading?: string;
   tagline?: string;
   heroImage?: ImageSource;
@@ -123,7 +136,6 @@ export interface MediaGalleryTile {
 }
 
 export const MediaPage = ({
-  eyebrow,
   heading = "Media Gallery",
   tagline,
   heroImage,
@@ -131,20 +143,22 @@ export const MediaPage = ({
   extraNavItems,
 }: MediaPageProps) => (
   <>
+    <SkipLink targetId={MAIN_ID} />
     <SiteHeader activeHref="/media" extraNavItems={extraNavItems} />
     <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
       <section {...stylex.props(styles.hero)}>
-        {eyebrow && <p {...stylex.props(styles.eyebrow)}>{eyebrow}</p>}
-        <h1 {...stylex.props(styles.heading)}>{heading}</h1>
-        {tagline && <p {...stylex.props(styles.tagline)}>{tagline}</p>}
-        {heroImage && (
-          <Media
-            placeholder=""
-            ratio="16:9"
-            source={heroImage}
-            style={styles.heroMedia}
-          />
-        )}
+        <Container>
+          <h1 {...stylex.props(styles.heading)}>{heading}</h1>
+          {tagline && <p {...stylex.props(styles.tagline)}>{tagline}</p>}
+          {heroImage && (
+            <Media
+              placeholder=""
+              ratio="16:9"
+              source={heroImage}
+              style={styles.heroMedia}
+            />
+          )}
+        </Container>
       </section>
       {/*
        * The gallery grid. This page rendered a hero and two lines of copy with
@@ -155,32 +169,35 @@ export const MediaPage = ({
        * shown is whatever a CMS reviewer has approved - never stock imagery.
        */}
       <section {...stylex.props(styles.content)}>
-        <p {...stylex.props(styles.eyebrow)}>Gallery</p>
-        <h2 {...stylex.props(styles.heading)}>Photographs &amp; Videos</h2>
-        {galleries.length === 0 ? (
-          <p {...stylex.props(styles.emptyBody)}>
-            No galleries have been published yet. Approved galleries appear here
-            as soon as the CMS team reviews them.
-          </p>
-        ) : (
-          <ul {...stylex.props(styles.galleryList)}>
-            {galleries.map((gallery) => (
-              <li key={gallery.id} {...stylex.props(styles.galleryItem)}>
-                <a href={gallery.href} {...stylex.props(styles.galleryLink)}>
-                  <Media
-                    placeholder=""
-                    ratio="4:3"
-                    source={gallery.image}
-                    style={styles.galleryMedia}
-                  />
-                  <span {...stylex.props(styles.galleryTitle)}>
-                    {gallery.title}
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
+        <Container width="wide">
+          <h2 {...stylex.props(styles.sectionHeading)}>
+            Photographs &amp; Videos
+          </h2>
+          {galleries.length === 0 ? (
+            <p {...stylex.props(styles.emptyBody)}>
+              No galleries have been published yet. Approved galleries appear
+              here as soon as the CMS team reviews them.
+            </p>
+          ) : (
+            <ul {...stylex.props(styles.galleryList)}>
+              {galleries.map((gallery) => (
+                <li key={gallery.id} {...stylex.props(styles.galleryItem)}>
+                  <a href={gallery.href} {...stylex.props(styles.galleryLink)}>
+                    <Media
+                      placeholder=""
+                      ratio="4:3"
+                      source={gallery.image}
+                      style={styles.galleryMedia}
+                    />
+                    <span {...stylex.props(styles.galleryTitle)}>
+                      {gallery.title}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Container>
       </section>
     </main>
     <SiteFooter />

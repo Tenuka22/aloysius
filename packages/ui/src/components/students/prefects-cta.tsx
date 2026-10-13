@@ -59,15 +59,26 @@ const styles = stylex.create({
  * default is **no button at all**: an honest section of copy beats a dead
  * control that teaches the visitor something is there when it is not.
  */
-export const PrefectsCta = ({ href }: { href?: string }) => (
+export const PrefectsCta = ({
+  href,
+  heading = PREFECTS_HEADING,
+  body = PREFECTS_BODY,
+  ctaLabel = PREFECTS_CTA_LABEL,
+}: {
+  href?: string;
+  /** CMS-resolved copy; falls back to the page's own constants. */
+  heading?: string;
+  body?: string;
+  ctaLabel?: string;
+}) => (
   <Section id="prefects" labelledBy="prefects-title" tone="inverse">
     <Container>
       <div {...stylex.props(styles.bar)}>
         <div {...stylex.props(styles.copy)}>
           <h2 id="prefects-title" {...stylex.props(styles.heading)}>
-            {PREFECTS_HEADING}
+            {heading}
           </h2>
-          <p {...stylex.props(styles.body)}>{PREFECTS_BODY}</p>
+          <p {...stylex.props(styles.body)}>{body}</p>
         </div>
         {href ? (
           /*
@@ -76,7 +87,7 @@ export const PrefectsCta = ({ href }: { href?: string }) => (
             if the element carrying it *is* the item that wrapped onto it.
           */
           <ButtonLink fluid href={href} style={styles.action}>
-            {PREFECTS_CTA_LABEL}
+            {ctaLabel}
           </ButtonLink>
         ) : null}
       </div>

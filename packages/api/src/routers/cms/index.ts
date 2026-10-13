@@ -12,6 +12,8 @@ import {
   listAnnouncements,
   updateAnnouncement,
 } from "./announcements";
+import { createClub, deleteClub, listClubs, updateClub } from "./clubs";
+import { dashboardStats } from "./dashboard";
 import { createEvent, deleteEvent, listEvents, updateEvent } from "./events";
 import {
   createGallery as createGalleryCms,
@@ -482,7 +484,7 @@ const toSnapshotBlocks = (blocks: InputBlock[]): SnapshotBlock[] =>
  *
  * Every row-level operation above is already page-agnostic; this is the
  * procedure layer that wraps them. The eight existing page screens predate it
- * and still spell their six endpoints out one by one — this factory exists so
+ * and still spell their six endpoints out one by one â€” this factory exists so
  * a *new* screen does not add a ninth copy. Porting the existing eight onto it
  * is a mechanical follow-up, deliberately kept out of a change that also
  * introduces the global block.
@@ -557,14 +559,11 @@ const editorEndpoints = (page: string) => {
   };
 };
 
-/** The global Principal's Message editor. Not a page — see `PRINCIPAL_BLOCKS`. */
+/** The global Principal's Message editor. Not a page â€” see `PRINCIPAL_BLOCKS`. */
 const principal = editorEndpoints("principal");
 
 /** The Academics page editor. See `ACADEMICS_BLOCKS`. */
 const academics = editorEndpoints("academics");
-
-/** The Admissions page editor. See `ADMISSIONS_BLOCKS`. */
-const admissions = editorEndpoints("admissions");
 
 export const cmsRouter = {
   getPrincipal: principal.get,
@@ -581,13 +580,6 @@ export const cmsRouter = {
   watchAcademics: academics.watch,
   publishAcademics: academics.publish,
 
-  getAdmissions: admissions.get,
-  getAdmissionsDraft: admissions.getDraft,
-  getAdmissionsHistory: admissions.getHistory,
-  updateAdmissions: admissions.update,
-  watchAdmissions: admissions.watch,
-  publishAdmissions: admissions.publish,
-
   /** Fetch the latest published version for each block on the homepage. */
   getHomepage: publicProcedure.handler(async ({ context }) => {
     const blocks = await fetchPublishedBlocks(context.db, "homepage");
@@ -602,7 +594,7 @@ export const cmsRouter = {
 
   /**
    * Fetch all blocks for a page at the time of a specific version.
-   * The versionId points to a contentVersion row — we use it to find the page,
+   * The versionId points to a contentVersion row â€” we use it to find the page,
    * then load the snapshot state of every block for that page at that point.
    * Page-agnostic: works for any page's version id.
    */
@@ -1227,6 +1219,18 @@ export const cmsRouter = {
   deleteNewsPost,
 
   listAchievements,
+
+  // The dashboard's own counts. Every figure on that screen is a `count()`
+  // against the table it describes - see `dashboard.ts` for why it used to be
+  // three hardcoded numbers and three invented queue entries.
+  dashboardStats,
+
+  // Clubs are data, not a constant: a CMS editor adds one, and the seeded
+  // `photography` seat is the one the delete guard protects.
+  listClubs,
+  createClub,
+  updateClub,
+  deleteClub,
 
   listGalleries,
   createGallery: createGalleryCms,

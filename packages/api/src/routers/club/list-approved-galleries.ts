@@ -1,8 +1,5 @@
-import {
-  clubPhoto,
-  clubSlugSchema,
-  gallery,
-} from "@aloysius/db/schema/club-photos";
+import { clubPhoto, gallery } from "@aloysius/db/schema/club-photos";
+import { club, clubSlugSchema } from "@aloysius/db/schema/clubs";
 import { newsPost } from "@aloysius/db/schema/news-posts";
 import { achievement, event } from "@aloysius/db/schema/root-content";
 import { and, asc, desc, eq, inArray, isNull, or } from "drizzle-orm";
@@ -36,17 +33,23 @@ export const listApprovedGalleries = publicProcedure
       .select({
         id: gallery.id,
         slug: gallery.slug,
+        club: gallery.club,
+        clubName: club.name,
         title: gallery.title,
         description: gallery.description,
         albumUrl: gallery.albumUrl,
         coverImageId: gallery.coverImageId,
         publishedAt: gallery.publishedAt,
         linkedKind: gallery.linkedKind,
+        linkedNewsId: gallery.linkedNewsId,
+        linkedEventId: gallery.linkedEventId,
+        linkedAchievementId: gallery.linkedAchievementId,
         linkedNewsTitle: newsPost.title,
         linkedEventTitle: event.title,
         linkedAchievementTitle: achievement.title,
       })
       .from(gallery)
+      .leftJoin(club, eq(gallery.club, club.slug))
       .leftJoin(newsPost, eq(gallery.linkedNewsId, newsPost.id))
       .leftJoin(event, eq(gallery.linkedEventId, event.id))
       .leftJoin(achievement, eq(gallery.linkedAchievementId, achievement.id))
@@ -98,6 +101,9 @@ export const listApprovedGalleries = publicProcedure
     return galleries.map(
       ({
         linkedKind,
+        linkedNewsId,
+        linkedEventId,
+        linkedAchievementId,
         linkedNewsTitle,
         linkedEventTitle,
         linkedAchievementTitle,
@@ -106,6 +112,15 @@ export const listApprovedGalleries = publicProcedure
       }) => {
         const linkedTitle =
           linkedNewsTitle ?? linkedEventTitle ?? linkedAchievementTitle ?? null;
+        /*
+         * The linked record's **id** travels with its title. Without it the
+         * gallery page could only ever render the link as greyed-out text,
+         * because there was no way to build a URL to the thing it was linked
+         * to - so a CMS reviewer setting "Related content" got no link on the
+         * public page at all.
+         */
+        const linkedId =
+          linkedNewsId ?? linkedEventId ?? linkedAchievementId ?? null;
 
         return {
           ...row,
@@ -113,7 +128,7 @@ export const listApprovedGalleries = publicProcedure
           coverImageUrl: coverImageId ? (urls.get(coverImageId) ?? null) : null,
           linkedContent:
             linkedKind && linkedTitle
-              ? { kind: linkedKind, title: linkedTitle }
+              ? { kind: linkedKind, id: linkedId, title: linkedTitle }
               : null,
           photos: (photosByGallery.get(row.id) ?? []).map((photo) => ({
             id: photo.id,

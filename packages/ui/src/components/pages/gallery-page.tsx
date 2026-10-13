@@ -3,9 +3,12 @@ import * as stylex from "@stylexjs/stylex";
 import type { NavItem } from "../../content/home";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
+import { ArrowLink } from "../primitives/button";
+import { Container, Section, SkipLink } from "../primitives/layout";
 import { Media } from "../primitives/media";
 import type { ImageSource } from "../primitives/media";
 import { SiteFooter } from "../site/site-footer";
+import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
 
 /**
@@ -46,6 +49,13 @@ export interface GalleryPageItem {
   alt: string;
   caption: string | null;
   imageUrl: string | null;
+  /**
+   * The photograph's own width / height. Each tile reserves its true box rather
+   * than a shared one, so a portrait and a landscape sit side by side at the
+   * same width without either being cropped - which is what makes the masonry
+   * read as a wall of photographs rather than a wall of squares.
+   */
+  aspectRatio?: number;
 }
 
 export interface GalleryPageLink {
@@ -65,6 +75,7 @@ export interface GalleryPageProps {
   links?: readonly GalleryPageLink[];
   /** Detail lines shown under the title, e.g. "Shot on 14 March, Colombo". */
   details?: readonly { label: string; value: string }[];
+  contact?: FooterContact;
   extraNavItems?: readonly NavItem[];
 }
 
@@ -76,49 +87,43 @@ const styles = stylex.create({
       ":focus": "none",
     },
   },
+  /*
+   * A compact left-aligned masthead. It was a centred block at `4xl` with an
+   * eyebrow above it; on a page whose entire subject is the photographs, the
+   * title was competing with the first image instead of introducing it.
+   */
   header: {
-    paddingBlockStart: space["3xl"],
-    paddingBlockEnd: space.lg,
-    paddingInline: space.md,
+    paddingBlock: space["2xl"],
+    paddingInline: space.gutter,
     backgroundColor: color.surface,
-    textAlign: "center",
   },
-  eyebrow: {
+  title: {
     margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWidest,
-    textTransform: "uppercase",
-    color: color.accentOnSurface,
-  },
-  heading: {
-    margin: 0,
-    marginBlockStart: space.sm,
+    maxInlineSize: "18ch",
     fontFamily: font.display,
-    fontSize: font.size4xl,
+    fontSize: font.size3xl,
     fontWeight: font.weightSemibold,
     lineHeight: font.leadingTight,
+    letterSpacing: font.trackingTight,
     color: color.onSurface,
     textWrap: "balance",
   },
   tagline: {
     margin: 0,
-    marginBlockStart: space.sm,
-    maxWidth: space.measure,
-    marginInline: "auto",
+    marginBlockStart: space["2xs"],
+    maxInlineSize: space.measure,
     fontSize: font.sizeLg,
-    lineHeight: font.leadingNormal,
+    lineHeight: font.leadingRelaxed,
     color: color.onSurfaceMuted,
     textWrap: "pretty",
   },
   details: {
     display: "flex",
     flexWrap: "wrap",
-    justifyContent: "center",
     rowGap: space["2xs"],
     columnGap: space.md,
     margin: 0,
-    marginBlockStart: space.sm,
+    marginBlockStart: space.md,
     padding: 0,
     listStyle: "none",
     fontSize: font.sizeSm,
@@ -139,16 +144,22 @@ const styles = stylex.create({
    * it: no measurement pass, so every tile's box is reserved by its own
    * aspect-ratio before first paint and CLS stays at 0. Source order is
    * untouched, so the accessibility tree and tab order remain the authored order.
+   *
+   * Up to four columns from `xl`, not three: at the old `measure` cap (60ch)
+   * three columns gave each photograph roughly 190px. On the wide container this
+   * now sits in, three columns gave each tile 300px and a fourth fits without
+   * the grid dropping below a readable size on a laptop.
    */
   grid: {
     margin: 0,
     padding: 0,
     listStyle: "none",
-    columnGap: space["2xs"],
+    columnGap: space.sm,
     columnCount: {
       default: 1,
-      [bp.md]: 2,
-      [bp.xl]: 3,
+      [bp.sm]: 2,
+      [bp.lg]: 3,
+      [bp.xxl]: 4,
     },
   },
   tile: {
@@ -165,15 +176,23 @@ const styles = stylex.create({
     lineHeight: font.leadingNormal,
     color: color.onSurfaceMuted,
   },
+  /*
+   * The album panel, on the raised ground rather than `surface`.
+   *
+   * It sat on `color.surface` inside a page that is already `surface`, so the
+   * panel was invisible except for its 1px border - it read as a stray rule
+   * across the page rather than as something to click.
+   */
   album: {
-    display: "block",
-    marginBlockStart: space.lg,
-    padding: space.md,
-    backgroundColor: color.surface,
+    display: "grid",
+    gap: space["3xs"],
+    justifyItems: "start",
+    marginBlockEnd: space["2xl"],
+    padding: space.lg,
+    backgroundColor: color.surfaceRaised,
     borderWidth: space.px,
     borderStyle: "solid",
     borderColor: color.border,
-    textAlign: "center",
   },
   albumLabel: {
     display: "block",
@@ -237,108 +256,141 @@ export const GalleryPage = ({
   albumLabel,
   links = NO_LINKS,
   details = NO_DETAILS,
+  contact,
   extraNavItems,
-}: GalleryPageProps) => (
-  <>
-    <SiteHeader activeHref="/media" extraNavItems={extraNavItems} />
-    <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
-      <header {...stylex.props(styles.header)}>
-        <p {...stylex.props(styles.eyebrow)}>
-          {clubName ? `${clubName} · ` : ""}
-          {kind} gallery
-        </p>
-        <h1 {...stylex.props(styles.heading)}>{title}</h1>
-        {summary ? <p {...stylex.props(styles.tagline)}>{summary}</p> : null}
-        {details.length > 0 ? (
-          <ul {...stylex.props(styles.details)}>
-            {details.map((detail) => (
-              <li key={detail.label}>
-                <span {...stylex.props(styles.detailTerm)}>
-                  {detail.label}:{" "}
-                </span>
-                {detail.value}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </header>
+}: GalleryPageProps) => {
+  /*
+   * The club and the kind folded into the detail line rather than sitting above
+   * the title as an eyebrow. Both are facts about the gallery, not a kicker -
+   * and an eyebrow above an `h1` is the one thing the house style bans outright.
+   */
+  const meta: { label: string; value: string }[] = [
+    ...(clubName ? [{ label: "Club", value: clubName }] : []),
+    { label: "Type", value: `${kind} gallery` },
+    { label: "Photographs", value: String(items.length) },
+    ...details,
+  ];
 
-      <section {...stylex.props(styles.content)}>
-        {/*
-         * The album link sits above the images rather than below them. A club's
-         * best photographs are frequently the ones it could not upload, so this is
-         * the first thing a visitor who cares about the photography should reach -
-         * and putting it last would mean scrolling past twenty images they cannot
-         * use to find it.
-         */}
-        {albumUrl ? (
-          <div {...stylex.props(styles.album)}>
-            <a
-              href={albumUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-              {...stylex.props(styles.albumLabel)}
-            >
-              {albumLabel || "See the full album"}
-            </a>
-            <p {...stylex.props(styles.albumNote)}>
-              More photographs of this, hosted by {clubName ?? "the club"} off
-              this site.
-            </p>
-          </div>
-        ) : null}
-
-        {items.length === 0 ? (
-          <p {...stylex.props(styles.empty)}>
-            No images have been published in this gallery yet.
-          </p>
-        ) : (
-          <ul {...stylex.props(styles.grid)}>
-            {items.map((item) => (
-              <li key={item.id} {...stylex.props(styles.tile)}>
-                <Media
-                  placeholder={item.caption || item.alt}
-                  ratio="1:1"
-                  source={
-                    item.imageUrl
-                      ? ({ src: item.imageUrl, alt: item.alt } as ImageSource)
-                      : undefined
-                  }
-                  zoom
-                />
-                {item.caption ? (
-                  <p {...stylex.props(styles.caption)}>{item.caption}</p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {links.length > 0 ? (
-          <div {...stylex.props(styles.related)}>
-            <h2 {...stylex.props(styles.relatedHeading)}>What this is of</h2>
-            <ul {...stylex.props(styles.relatedList)}>
-              {links.map((link) =>
-                link.href && link.targetTitle ? (
-                  <li key={`${link.targetLabel}-${link.href}`}>
-                    <a href={link.href} {...stylex.props(styles.relatedLink)}>
-                      {link.targetTitle}
-                    </a>
-                  </li>
-                ) : (
-                  <li key={`${link.targetLabel}-${link.targetTitle ?? "gone"}`}>
-                    <span {...stylex.props(styles.empty)}>
-                      {link.targetTitle ??
-                        `A ${link.targetLabel} (no longer listed)`}
-                    </span>
-                  </li>
-                )
-              )}
+  return (
+    <>
+      <SkipLink targetId={MAIN_ID} />
+      <SiteHeader activeHref="/media" extraNavItems={extraNavItems} />
+      <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
+        <header {...stylex.props(styles.header)}>
+          <Container width="wide">
+            <h1 {...stylex.props(styles.title)}>{title}</h1>
+            {summary ? (
+              <p {...stylex.props(styles.tagline)}>{summary}</p>
+            ) : null}
+            <ul {...stylex.props(styles.details)}>
+              {meta.map((detail) => (
+                <li key={detail.label}>
+                  <span {...stylex.props(styles.detailTerm)}>
+                    {detail.label}:{" "}
+                  </span>
+                  {detail.value}
+                </li>
+              ))}
             </ul>
-          </div>
-        ) : null}
-      </section>
-    </main>
-    <SiteFooter />
-  </>
-);
+          </Container>
+        </header>
+
+        {/*
+          `width="wide"`, not the `measure` cap this page used to sit inside.
+          A reading measure of 60ch is right for prose and badly wrong for a
+          photographic masonry - it held each tile to about 190px across three
+          columns, which is smaller than a phone screen for every photograph on
+          the page at once.
+        */}
+        <Section tone="surface">
+          <Container width="wide">
+            {/*
+              The album link sits above the images rather than below them. A
+              club's best photographs are frequently the ones it could not
+              upload, so this is the first thing a visitor who cares about the
+              photography should reach - and putting it last would mean scrolling
+              past twenty images they cannot use to find it.
+            */}
+            {albumUrl ? (
+              <div {...stylex.props(styles.album)}>
+                <ArrowLink href={albumUrl} external>
+                  {albumLabel || "See the full album"}
+                </ArrowLink>
+                <p {...stylex.props(styles.albumNote)}>
+                  More photographs of this, hosted by {clubName ?? "the club"}{" "}
+                  off this site.
+                </p>
+              </div>
+            ) : null}
+
+            {items.length === 0 ? (
+              <p {...stylex.props(styles.empty)}>
+                No images have been published in this gallery yet.
+              </p>
+            ) : (
+              <ul {...stylex.props(styles.grid)}>
+                {items.map((item) => (
+                  <li key={item.id} {...stylex.props(styles.tile)}>
+                    <Media
+                      placeholder={item.caption || item.alt}
+                      /*
+                       * The photograph's own ratio where it is known, `3:2`
+                       * where it is not. Either way the box is reserved before
+                       * first paint, so nothing shifts as the grid fills.
+                       */
+                      ratio={item.aspectRatio ?? 1.5}
+                      source={
+                        item.imageUrl
+                          ? ({
+                              src: item.imageUrl,
+                              alt: item.alt,
+                            } as ImageSource)
+                          : undefined
+                      }
+                      zoom
+                    />
+                    {item.caption ? (
+                      <p {...stylex.props(styles.caption)}>{item.caption}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {links.length > 0 ? (
+              <div {...stylex.props(styles.related)}>
+                <h2 {...stylex.props(styles.relatedHeading)}>
+                  What this is of
+                </h2>
+                <ul {...stylex.props(styles.relatedList)}>
+                  {links.map((link) =>
+                    link.href && link.targetTitle ? (
+                      <li key={`${link.targetLabel}-${link.href}`}>
+                        <a
+                          href={link.href}
+                          {...stylex.props(styles.relatedLink)}
+                        >
+                          {link.targetTitle}
+                        </a>
+                      </li>
+                    ) : (
+                      <li
+                        key={`${link.targetLabel}-${link.targetTitle ?? "gone"}`}
+                      >
+                        <span {...stylex.props(styles.empty)}>
+                          {link.targetTitle ??
+                            `A ${link.targetLabel} (no longer listed)`}
+                        </span>
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            ) : null}
+          </Container>
+        </Section>
+      </main>
+      <SiteFooter contact={contact} />
+    </>
+  );
+};

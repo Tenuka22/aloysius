@@ -38,6 +38,40 @@ const submit = () => {
   fireEvent.click(screen.getByRole("button", { name: /send message/iu }));
 };
 
+/**
+ * `window.location.href` is assigned to navigate the browser, which jsdom
+ * cannot do, so it is stubbed and asserted on instead. The point of the
+ * assertion is that the message is *composed and handed off* - the page
+ * never claims it sent anything itself.
+ */
+const stubLocationHref = () => {
+  const assign = vi.fn<(value: string) => void>();
+  const original = window.location;
+  Object.defineProperty(window, "location", {
+    configurable: true,
+    value: {
+      ...original,
+      get href() {
+        return original.href;
+      },
+      set href(value: string) {
+        assign(value);
+      },
+    },
+    writable: true,
+  });
+  return {
+    assign,
+    restore: () => {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: original,
+        writable: true,
+      });
+    },
+  };
+};
+
 describe(ContactPage, () => {
   it("exposes a main landmark the skip link can reach", () => {
     render(<ContactPage />);
@@ -216,17 +250,94 @@ describe(ContactForm, () => {
     );
   });
 
-  it("never claims success when no endpoint is wired up", async () => {
-    render(<ContactForm />);
+  it("composes a mailto URL addressed to the College office when no endpoint is wired up", async () => {
+    const { assign, restore } = stubLocationHref();
 
-    fill();
-    submit();
+    try {
+      render(<ContactForm />);
 
-    await waitFor(() =>
+      fill();
+      submit();
+
+      await waitFor(() => expect(assign.mock.calls.length).toBeGreaterThan(0));
+
+      const mailto = assign.mock.calls[0]?.[0] as string;
+      expect(mailto.startsWith("mailto:info@aloysiuscollege.lk?")).toBeTruthy();
+      const params = new URLSearchParams(mailto.split("?")[1]);
+      expect(params.get("subject")).toBe(VALID_ENQUIRY.subject);
+    } finally {
+      restore();
+    }
+  });
+
+  it("carries the typed fields in the composed mailto body", async () => {
+    const { assign, restore } = stubLocationHref();
+
+    try {
+      render(<ContactForm />);
+
+      fill();
+      submit();
+
+      await waitFor(() => expect(assign.mock.calls.length).toBeGreaterThan(0));
+
+      const mailto = assign.mock.calls[0]?.[0] as string;
+      const params = new URLSearchParams(mailto.split("?")[1]);
+      expect(params.get("body")).toContain(VALID_ENQUIRY.name);
+      expect(params.get("body")).toContain(VALID_ENQUIRY.email);
+      expect(params.get("body")).toContain(VALID_ENQUIRY.message);
+    } finally {
+      restore();
+    }
+  });
+
+  it("says the email app was opened, not that the message was sent, and keeps it in the field", async () => {
+    const { assign, restore } = stubLocationHref();
+
+    try {
+      render(<ContactForm />);
+
+      fill();
+      submit();
+
+      await waitFor(() => expect(assign.mock.calls.length).toBeGreaterThan(0));
+
+      // It says the app was opened, never that the message was sent.
       expect(screen.getByRole("status")).toHaveTextContent(
-        /not connected yet/iu
-      )
-    );
-    expect(screen.getByRole("status")).not.toHaveTextContent(/thank you/iu);
+        /email app should now be open/iu
+      );
+      expect(screen.getByRole("status")).not.toHaveTextContent(/thank you/iu);
+
+      // The typed message survives, so it can still be sent by hand.
+      expect(screen.getByLabelText(/full name/iu)).toHaveValue(
+        VALID_ENQUIRY.name
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  it("refuses an over-long message rather than silently truncating it", async () => {
+    const { assign, restore } = stubLocationHref();
+
+    try {
+      render(<ContactForm />);
+
+      fill();
+      // The message field allows 4,000 characters; a `mailto:` URL past about
+      // 1,800 is where mail clients start dropping body text.
+      const message = screen.getByLabelText(/message/iu);
+      fireEvent.change(message, { target: { value: "x".repeat(4000) } });
+      submit();
+
+      await waitFor(() =>
+        expect(screen.getByRole("status")).toHaveTextContent(
+          /too long to hand off/iu
+        )
+      );
+      expect(assign).not.toHaveBeenCalled();
+    } finally {
+      restore();
+    }
   });
 });

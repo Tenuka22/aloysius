@@ -23,6 +23,17 @@ import { VisuallyHidden } from "../primitives/layout";
  * `currentColor` so they inherit the link colour, and take the same props a
  * lucide icon did, so the call site below is unchanged.
  */
+/**
+ * Whether a nav destination leaves the site.
+ *
+ * The footer's Admissions link points at the college's admissions subdomain, so
+ * it opens in a new tab and carries `rel="noopener noreferrer"` - without which
+ * that destination can reach back through `window.opener`. Checked per link
+ * rather than flagged on the one entry, so an in-app destination is never given
+ * a target it does not need.
+ */
+const EXTERNAL_LINK = /^https?:\/\//u;
+
 interface BrandMarkProps {
   /**
    * Declared because the call site passes it explicitly, and the marks are
@@ -324,7 +335,18 @@ export const SiteFooter = ({
             <ul {...stylex.props(styles.list)}>
               {COLLEGE_LINKS.map((item) => (
                 <li key={item.id}>
-                  <a href={item.href} {...stylex.props(styles.link)}>
+                  <a
+                    href={item.href}
+                    rel={
+                      EXTERNAL_LINK.test(item.href)
+                        ? "noopener noreferrer"
+                        : undefined
+                    }
+                    target={
+                      EXTERNAL_LINK.test(item.href) ? "_blank" : undefined
+                    }
+                    {...stylex.props(styles.link)}
+                  >
                     {item.label}
                   </a>
                 </li>
@@ -339,7 +361,18 @@ export const SiteFooter = ({
             <ul {...stylex.props(styles.list)}>
               {COMMUNITY_LINKS.map((item) => (
                 <li key={item.id}>
-                  <a href={item.href} {...stylex.props(styles.link)}>
+                  <a
+                    href={item.href}
+                    rel={
+                      EXTERNAL_LINK.test(item.href)
+                        ? "noopener noreferrer"
+                        : undefined
+                    }
+                    target={
+                      EXTERNAL_LINK.test(item.href) ? "_blank" : undefined
+                    }
+                    {...stylex.props(styles.link)}
+                  >
                     {item.label}
                   </a>
                 </li>

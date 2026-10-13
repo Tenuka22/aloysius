@@ -2,9 +2,14 @@ import type { ImageSource } from "../components/primitives/media";
 import {
   ALUMNI_ABOUT_BODY,
   ALUMNI_ABOUT_CAPTION,
-  ALUMNI_HERO_EYEBROW,
+  ALUMNI_ABOUT_HEADING,
+  ALUMNI_EVENTS_LABEL,
   ALUMNI_HERO_INTRO,
   ALUMNI_HERO_TITLE,
+  ALUMNI_LINKS_BODY,
+  ALUMNI_LINKS_HEADING,
+  ALUMNI_OBA_HREF,
+  ALUMNI_OBA_LABEL,
 } from "./alumni";
 import type { CmsBlock } from "./cms-to-home";
 import {
@@ -13,6 +18,8 @@ import {
   CONTACT_DEFAULT_TELEPHONE,
   CONTACT_HERO_INTRO,
   CONTACT_HERO_TITLE,
+  CONTACT_MAP_EMBED_URL,
+  CONTACT_MAP_URL,
 } from "./contact";
 import {
   MEDIA_HERO_EYEBROW,
@@ -25,7 +32,22 @@ import {
   NOTICES_HERO_INTRO,
   NOTICES_HERO_TITLE,
 } from "./notices";
-import { CLUBS_HEADING, CLUBS_INTRO, STUDENTS_HERO_TITLE } from "./students";
+import {
+  CLUBS_EYEBROW,
+  CLUBS_HEADING,
+  CLUBS_INTRO,
+  HOUSES_EYEBROW,
+  HOUSES_HEADING,
+  HOUSES_INTRO,
+  MORE_SPORTS,
+  PREFECTS_BODY,
+  PREFECTS_CTA_LABEL,
+  PREFECTS_HEADING,
+  SPORTS_EYEBROW,
+  SPORTS_HEADING,
+  STUDENTS_HERO_INTRO,
+  STUDENTS_HERO_TITLE,
+} from "./students";
 
 const fieldValue = (
   blocks: CmsBlock[],
@@ -163,20 +185,20 @@ export const blocksToNoticesProps = (blocks: CmsBlock[]): NoticesPageProps => ({
 /* --------------------------------------------------------------- contact */
 
 export interface ContactPageProps {
-  eyebrow?: string;
   heading?: string;
   tagline?: string;
   address?: string;
   telephone?: string;
   email?: string;
+  officeHours?: string;
   facebookUrl?: string;
   instagramUrl?: string;
   youtubeUrl?: string;
   mapUrl?: string;
+  mapEmbedUrl?: string;
 }
 
 export const blocksToContactProps = (blocks: CmsBlock[]): ContactPageProps => ({
-  eyebrow: fieldOrDefault(blocks, "contact-header", "contact-eyebrow", ""),
   heading: fieldOrDefault(
     blocks,
     "contact-header",
@@ -217,29 +239,63 @@ export const blocksToContactProps = (blocks: CmsBlock[]): ContactPageProps => ({
   facebookUrl: fieldOrDefault(blocks, "contact-info", "contact-facebook", ""),
   instagramUrl: fieldOrDefault(blocks, "contact-info", "contact-instagram", ""),
   youtubeUrl: fieldOrDefault(blocks, "contact-info", "contact-youtube", ""),
-  mapUrl: fieldOrDefault(blocks, "contact-map", "contact-map-url", ""),
+  /*
+   * Both map fields now carry real defaults rather than `""`. The embed is an
+   * OpenStreetMap iframe over Kaluwella, Galle and the link is that map at full
+   * size - so an unpublished contact page shows a working map and a working
+   * "View on map" rather than a placeholder box and a badge that does nothing.
+   * Both stay overridable in the CMS.
+   */
+  mapUrl: fieldOrDefault(
+    blocks,
+    "contact-map",
+    "contact-map-url",
+    CONTACT_MAP_URL
+  ),
+  /*
+   * The embedded map. Defaults to the OpenStreetMap embed for Kaluwella, Galle
+   * - no API key, no account - with the coordinates CMS-overridable for the day
+   * the College supplies its exact position.
+   */
+  mapEmbedUrl: fieldOrDefault(
+    blocks,
+    "contact-map",
+    "contact-map-embed",
+    CONTACT_MAP_EMBED_URL
+  ),
+  /*
+   * Office hours stay optional and unfilled. No published source states them,
+   * and a wrong set of hours misdirects exactly the visitor who most needs
+   * accurate ones - so the details list omits the row until the College office
+   * supplies it.
+   */
+  officeHours: fieldOrDefault(
+    blocks,
+    "contact-info",
+    "contact-office-hours",
+    ""
+  ),
 });
 
 /* ---------------------------------------------------------------- alumni */
 
 export interface AlumniPageProps {
-  eyebrow?: string;
   heading?: string;
   tagline?: string;
   heroImage?: ImageSource;
+  aboutHeading?: string;
   body?: string;
   image?: ImageSource;
+  imageCaption?: string;
+  linksHeading?: string;
+  linksBody?: string;
   obaHref?: string;
   eventsHref?: string;
+  obaLabel?: string;
+  eventsLabel?: string;
 }
 
 export const blocksToAlumniProps = (blocks: CmsBlock[]): AlumniPageProps => ({
-  eyebrow: fieldOrDefault(
-    blocks,
-    "alumni-header",
-    "alumni-eyebrow",
-    ALUMNI_HERO_EYEBROW
-  ),
   heading: fieldOrDefault(
     blocks,
     "alumni-header",
@@ -258,6 +314,12 @@ export const blocksToAlumniProps = (blocks: CmsBlock[]): AlumniPageProps => ({
     "alumni-hero-image",
     "St. Aloysius' College alumni"
   ),
+  aboutHeading: fieldOrDefault(
+    blocks,
+    "alumni-about",
+    "alumni-about-heading",
+    ALUMNI_ABOUT_HEADING
+  ),
   body: fieldOrDefault(
     blocks,
     "alumni-about",
@@ -270,8 +332,54 @@ export const blocksToAlumniProps = (blocks: CmsBlock[]): AlumniPageProps => ({
     "alumni-image",
     ALUMNI_ABOUT_CAPTION
   ),
-  obaHref: fieldOrDefault(blocks, "alumni-links", "alumni-oba-href", ""),
-  eventsHref: fieldOrDefault(blocks, "alumni-links", "alumni-events-href", ""),
+  imageCaption: fieldOrDefault(
+    blocks,
+    "alumni-about",
+    "alumni-image-caption",
+    ALUMNI_ABOUT_CAPTION
+  ),
+  linksHeading: fieldOrDefault(
+    blocks,
+    "alumni-links",
+    "alumni-links-heading",
+    ALUMNI_LINKS_HEADING
+  ),
+  linksBody: fieldOrDefault(
+    blocks,
+    "alumni-links",
+    "alumni-links-body",
+    ALUMNI_LINKS_BODY
+  ),
+  /*
+   * Both destinations default to a real page rather than to nothing. There was
+   * no OBA portal URL in the database, and with both fields blank the "Stay
+   * connected" band rendered no buttons at all - so the guidance copy the
+   * project had already written was hidden behind a missing field.
+   */
+  obaHref: fieldOrDefault(
+    blocks,
+    "alumni-links",
+    "alumni-oba-href",
+    ALUMNI_OBA_HREF
+  ),
+  eventsHref: fieldOrDefault(
+    blocks,
+    "alumni-links",
+    "alumni-events-href",
+    "/events"
+  ),
+  obaLabel: fieldOrDefault(
+    blocks,
+    "alumni-links",
+    "alumni-oba-label",
+    ALUMNI_OBA_LABEL
+  ),
+  eventsLabel: fieldOrDefault(
+    blocks,
+    "alumni-links",
+    "alumni-events-label",
+    ALUMNI_EVENTS_LABEL
+  ),
 });
 
 /* ------------------------------------------------------------- academics */
@@ -327,36 +435,6 @@ export const blocksToAcademicsLeadership = (
   },
 });
 
-/* ------------------------------------------------------------ admissions */
-
-export interface AdmissionsPageProps {
-  eyebrow?: string;
-  heading?: string;
-  tagline?: string;
-  noticeText?: string;
-  contactNote?: string;
-}
-
-export const blocksToAdmissionsProps = (
-  blocks: CmsBlock[]
-): AdmissionsPageProps => ({
-  eyebrow: isHidden(blocks, "admissions-hero")
-    ? undefined
-    : fieldValue(blocks, "admissions-hero", "admissions-eyebrow"),
-  heading: isHidden(blocks, "admissions-hero")
-    ? undefined
-    : fieldValue(blocks, "admissions-hero", "admissions-heading"),
-  tagline: isHidden(blocks, "admissions-hero")
-    ? undefined
-    : fieldValue(blocks, "admissions-hero", "admissions-tagline"),
-  noticeText: isHidden(blocks, "admissions-notice")
-    ? undefined
-    : fieldValue(blocks, "admissions-notice", "admissions-notice-text"),
-  contactNote: isHidden(blocks, "admissions-contact")
-    ? undefined
-    : fieldValue(blocks, "admissions-contact", "admissions-contact-note"),
-});
-
 /* ----------------------------------------------------------------- media */
 
 export interface MediaPageProps {
@@ -395,40 +473,222 @@ export const blocksToMediaProps = (blocks: CmsBlock[]): MediaPageProps => ({
 
 /* -------------------------------------------------------------- students */
 
+/**
+ * A field with no default.
+ *
+ * `fieldOrDefault` treats a blank as "use the page's copy", which is right for
+ * headings but wrong for facts the college has not published: a house name and
+ * a prefects destination are either true or absent. Blank means absent here,
+ * so the page falls back to the colour name and renders no button rather than
+ * inventing one.
+ */
+const optionalField = (
+  blocks: CmsBlock[],
+  blockId: string,
+  fieldId: string
+): string | undefined => {
+  if (isHidden(blocks, blockId)) {
+    return undefined;
+  }
+  const value = fieldValue(blocks, blockId, fieldId)?.trim();
+  return value || undefined;
+};
+
+/**
+ * A comma-separated CMS field as a list, falling back to the page's own list.
+ * Returns `undefined` - rather than an empty list - when the block is hidden,
+ * so the caller can tell "not published" from "published as empty".
+ */
+const listField = (
+  blocks: CmsBlock[],
+  blockId: string,
+  fieldId: string,
+  fallback: readonly string[]
+): readonly string[] | undefined => {
+  if (isHidden(blocks, blockId)) {
+    return undefined;
+  }
+  const value = fieldValue(blocks, blockId, fieldId);
+  if (!value?.trim()) {
+    return fallback;
+  }
+  const items = value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  // Every entry cleared is a deliberate "drop the panel", not a request for
+  // the default list back.
+  return items.length > 0 ? items : [];
+};
+
+/** The students section headings, resolved across every sport tile at once. */
+const STUDENT_SPORT_IMAGE_FIELDS: readonly [string, string][] = [
+  ["cricket", "students-sports-cricket"],
+  ["rugby", "students-sports-rugby"],
+  ["athletics", "students-sports-athletics"],
+];
+
+const STUDENT_HOUSE_NAME_FIELDS: readonly [string, string][] = [
+  ["crimson", "students-house-crimson"],
+  ["gold", "students-house-gold"],
+  ["green", "students-house-green"],
+  ["blue", "students-house-blue"],
+];
+
 export interface StudentsPageProps {
   eyebrow?: string;
   heading?: string;
   tagline?: string;
   heroImage?: ImageSource;
+  activitiesEyebrow?: string;
   activitiesHeading?: string;
+  activitiesIntro?: string;
+  sportsEyebrow?: string;
+  sportsHeading?: string;
+  /** Keyed by `SportTile.id`, matching `content/students.ts`. */
+  sportImages?: Record<string, ImageSource>;
+  moreSports?: readonly string[];
+  housesEyebrow?: string;
+  housesHeading?: string;
+  housesIntro?: string;
+  /** Keyed by `House.id`; absent for a house the college has not named. */
+  houseNames?: Record<string, string>;
+  prefectsHeading?: string;
+  prefectsBody?: string;
+  prefectsCtaLabel?: string;
+  prefectsHref?: string;
 }
 
 export const blocksToStudentsProps = (
   blocks: CmsBlock[]
-): StudentsPageProps => ({
-  eyebrow: fieldOrDefault(blocks, "students-header", "students-eyebrow", ""),
-  heading: fieldOrDefault(
-    blocks,
-    "students-header",
-    "students-heading",
-    STUDENTS_HERO_TITLE
-  ),
-  tagline: fieldOrDefault(
-    blocks,
-    "students-header",
-    "students-tagline",
-    CLUBS_INTRO
-  ),
-  heroImage: imageSource(
-    blocks,
-    "students-header",
-    "students-hero-image",
-    "Students taking part in college life"
-  ),
-  activitiesHeading: fieldOrDefault(
-    blocks,
-    "students-activities",
-    "students-activities-heading",
-    CLUBS_HEADING
-  ),
-});
+): StudentsPageProps => {
+  const sportImages: Record<string, ImageSource> = {};
+  for (const [tileId, fieldId] of STUDENT_SPORT_IMAGE_FIELDS) {
+    const source = imageSource(
+      blocks,
+      "students-sports",
+      fieldId,
+      `A college ${tileId} photograph`
+    );
+    if (source) {
+      sportImages[tileId] = source;
+    }
+  }
+
+  const houseNames: Record<string, string> = {};
+  for (const [houseId, fieldId] of STUDENT_HOUSE_NAME_FIELDS) {
+    const name = optionalField(blocks, "students-houses", fieldId);
+    if (name) {
+      houseNames[houseId] = name;
+    }
+  }
+
+  return {
+    eyebrow: fieldOrDefault(blocks, "students-header", "students-eyebrow", ""),
+    heading: fieldOrDefault(
+      blocks,
+      "students-header",
+      "students-heading",
+      STUDENTS_HERO_TITLE
+    ),
+    /*
+     * Was `CLUBS_INTRO`, which made the hero intro and the clubs section intro
+     * render the same paragraph twice on one page. The hero has its own line.
+     */
+    tagline: fieldOrDefault(
+      blocks,
+      "students-header",
+      "students-tagline",
+      STUDENTS_HERO_INTRO
+    ),
+    heroImage: imageSource(
+      blocks,
+      "students-header",
+      "students-hero-image",
+      "Students taking part in college life"
+    ),
+
+    sportsEyebrow: fieldOrDefault(
+      blocks,
+      "students-sports",
+      "students-sports-eyebrow",
+      SPORTS_EYEBROW
+    ),
+    sportsHeading: fieldOrDefault(
+      blocks,
+      "students-sports",
+      "students-sports-heading",
+      SPORTS_HEADING
+    ),
+    sportImages,
+    moreSports: listField(
+      blocks,
+      "students-sports",
+      "students-more-sports",
+      MORE_SPORTS
+    ),
+
+    activitiesEyebrow: fieldOrDefault(
+      blocks,
+      "students-activities",
+      "students-activities-eyebrow",
+      CLUBS_EYEBROW
+    ),
+    activitiesHeading: fieldOrDefault(
+      blocks,
+      "students-activities",
+      "students-activities-heading",
+      CLUBS_HEADING
+    ),
+    activitiesIntro: fieldOrDefault(
+      blocks,
+      "students-activities",
+      "students-activities-intro",
+      CLUBS_INTRO
+    ),
+
+    housesEyebrow: fieldOrDefault(
+      blocks,
+      "students-houses",
+      "students-houses-eyebrow",
+      HOUSES_EYEBROW
+    ),
+    housesHeading: fieldOrDefault(
+      blocks,
+      "students-houses",
+      "students-houses-heading",
+      HOUSES_HEADING
+    ),
+    housesIntro: fieldOrDefault(
+      blocks,
+      "students-houses",
+      "students-houses-intro",
+      HOUSES_INTRO
+    ),
+    houseNames,
+
+    prefectsHeading: fieldOrDefault(
+      blocks,
+      "students-prefects",
+      "students-prefects-heading",
+      PREFECTS_HEADING
+    ),
+    prefectsBody: fieldOrDefault(
+      blocks,
+      "students-prefects",
+      "students-prefects-body",
+      PREFECTS_BODY
+    ),
+    prefectsCtaLabel: fieldOrDefault(
+      blocks,
+      "students-prefects",
+      "students-prefects-cta-label",
+      PREFECTS_CTA_LABEL
+    ),
+    prefectsHref: optionalField(
+      blocks,
+      "students-prefects",
+      "students-prefects-cta-href"
+    ),
+  };
+};

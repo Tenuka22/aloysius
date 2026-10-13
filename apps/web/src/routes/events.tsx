@@ -1,5 +1,10 @@
-import type { EventPageEvent } from "@aloysius/ui/components/pages/events-page";
-import { EventsPage } from "@aloysius/ui/components/pages/events-page";
+import type {
+  AgendaAchievement,
+  AgendaEvent,
+  LeadEvent,
+  RecentEvent,
+} from "@aloysius/ui/components/events/events-page";
+import { EventsPage } from "@aloysius/ui/components/events/events-page";
 import { formatNewsDate } from "@aloysius/ui/content/home";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -10,16 +15,18 @@ import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
 
 /**
- * `/events` - the public list of the Photography Club's events.
+ * `/events` - the college's public diary.
  *
- * Events are CMS-direct content now (`cms.listEvents`), not club-scoped, so
- * this is every upcoming event on the site, soonest first. Achievements
- * (`cms.listAchievements`) are read-only, school-wide content with no club
- * of their own either - every one of them shows here.
+ * Events are CMS-direct content (`cms.listEvents`), not club-scoped, so this is
+ * every upcoming event on the site, soonest first. Achievements
+ * (`cms.listAchievements`) are read-only, school-wide content with no club of
+ * their own either - every one of them shows here.
+ *
+ * The route used to stamp `Photography Club` onto every entry. Events carry
+ * `club: null` unless someone attributes them, so that was a label on every
+ * event on the site that happened to be false; the page now shows the club only
+ * where the record actually has one.
  */
-
-const CLUB = "photography" as const;
-const CLUB_NAME = "Photography Club" as const;
 
 const EventsContent = () => {
   const { data: events } = useSuspenseQuery(orpc.cms.listEvents.queryOptions());
@@ -47,39 +54,82 @@ const EventsContent = () => {
   // initializer is the one place calling `Date.now()` is safe.
   const [now, setNow] = useState(() => Date.now());
   void setNow;
-  const pageEvents: EventPageEvent[] = [];
-  for (const event of events) {
-    if (new Date(event.startsAt).getTime() < now) {
+
+  const upcoming: AgendaEvent[] = [];
+  const past: RecentEvent[] = [];
+  for (const item of events) {
+    const startsAt = new Date(item.startsAt).getTime();
+    const shared = {
+      galleries: item.galleries,
+      id: item.id,
+      startsAt: item.startsAt,
+      title: item.title,
+    };
+
+    if (startsAt < now) {
+      // The most recent first, so the newest past event is the one a returning
+      // visitor is most likely looking for.
+      past.push({
+        ...shared,
+        coverImageUrl: item.coverImageUrl,
+        location: item.location,
+      });
       continue;
     }
-    pageEvents.push({
-      clubName: CLUB_NAME,
-      clubSlug: CLUB,
-      coverImageUrl: event.coverImageUrl,
-      description: event.description,
-      endsAt: event.endsAt,
-      galleries: [],
-      id: event.id,
-      location: event.location,
-      startsAt: event.startsAt,
-      title: event.title,
+
+    upcoming.push({
+      ...shared,
+      clubName: item.clubName,
+      coverImageUrl: item.coverImageUrl,
+      description: item.description,
+      endsAt: item.endsAt,
+      location: item.location,
     });
   }
+  past.sort((a, b) => b.startsAt.localeCompare(a.startsAt));
+
+  /*
+   * The lead is the soonest upcoming event, lifted out of the agenda rather
+   * than duplicated in it - the same event appearing twice on one page reads as
+   * two events.
+   */
+  const [soonest, ...laterEvents] = upcoming;
+  const lead: LeadEvent | undefined = soonest
+    ? {
+        clubName: soonest.clubName,
+        coverImageUrl: soonest.coverImageUrl,
+        description: soonest.description,
+        galleries: soonest.galleries,
+        id: soonest.id,
+        location: soonest.location,
+        // Calendar days, not a raw millisecond difference: "in 9 days" is the
+        // answer a visitor wants, and truncating to whole days also stops the
+        // count ticking over at an arbitrary hour.
+        daysAway: Math.max(
+          0,
+          Math.round(
+            (new Date(soonest.startsAt).getTime() - now) / (24 * 60 * 60 * 1000)
+          )
+        ),
+        startsAt: soonest.startsAt,
+        title: soonest.title,
+      }
+    : undefined;
 
   return (
     <EventsPage
-      achievements={achievements.map((achievement) => ({
+      achievements={achievements.map((achievement): AgendaAchievement => ({
         id: achievement.id,
         title: achievement.title,
         detail: achievement.detail,
         category: achievement.category,
         achievedOn:
           formatNewsDate(achievement.publishedAt ?? undefined) || null,
-        clubName: null,
-        clubSlug: null,
       }))}
-      events={pageEvents}
+      events={laterEvents}
       extraNavItems={extraNavItems}
+      lead={lead}
+      recent={past.slice(0, 3)}
     />
   );
 };

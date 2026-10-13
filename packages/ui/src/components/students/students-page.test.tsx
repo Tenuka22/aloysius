@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { ClubsSocieties } from "./clubs-societies";
 import { HouseSystem } from "./house-system";
 import { PrefectsCta } from "./prefects-cta";
+import { StudentEvents } from "./student-events";
 import { StudentsPage } from "./students-page";
 
 describe(StudentsPage, () => {
@@ -80,6 +81,155 @@ describe(StudentsPage, () => {
     for (const name of ["Swimming", "Football", "Chess"]) {
       expect(within(sports as HTMLElement).getByText(name)).toBeInTheDocument();
     }
+  });
+
+  it("orders the sections as the page's reading path", () => {
+    const { container } = render(<StudentsPage />);
+
+    // The jump links promise sports, clubs, houses and prefects in that order;
+    // the DOM has to agree or keyboard order and the visual order diverge.
+    const main = container.querySelector("main");
+    const ids = [...(main?.querySelectorAll("section[id]") ?? [])].map(
+      (section) => `#${section.id}`
+    );
+
+    expect(ids).toStrictEqual(["#sports", "#clubs", "#houses", "#prefects"]);
+  });
+
+  it("takes the hero and clubs heading from the CMS when it supplies one", () => {
+    render(
+      <StudentsPage
+        activitiesHeading="Clubs, Teams & Societies"
+        heading="Life Outside the Classroom"
+      />
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Life Outside the Classroom",
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Clubs, Teams & Societies",
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("renames a house only where the CMS actually published one", () => {
+    render(<StudentsPage houseNames={{ gold: "Loyola House" }} />);
+
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Loyola House" })
+    ).toBeInTheDocument();
+    // The published name carries its colour as a sub-label; the unnamed houses
+    // are still announced by the colour name alone, with nothing invented.
+    expect(screen.getByText("Gold")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Crimson" })
+    ).toBeInTheDocument();
+  });
+
+  it("drops the overflow panel when the CMS clears the list", () => {
+    render(<StudentsPage moreSports={[]} />);
+
+    // "More sports" is the panel's only heading, so it standing or falling is
+    // the whole assertion.
+    expect(
+      screen.queryByRole("heading", { level: 3, name: "More sports" })
+    ).toBeNull();
+  });
+
+  it("uses the CMS prefects copy and destination", () => {
+    render(
+      <StudentsPage
+        prefectsBody="The Guild keeps the college's daily order."
+        prefectsCtaLabel="Meet the senior prefects"
+        prefectsHeading="Student Leadership"
+        prefectsHref="/contact"
+      />
+    );
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Student Leadership" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Meet the senior prefects" })
+    ).toHaveAttribute("href", "/contact");
+  });
+
+  it("renders no diary section until the college publishes an event", () => {
+    const { rerender } = render(<StudentsPage events={[]} />);
+
+    // An empty "Coming Up" heading with nothing beneath it teaches the visitor
+    // the college has nothing scheduled, which is a claim, not a fact.
+    expect(screen.queryByRole("heading", { name: "Coming Up" })).toBeNull();
+
+    rerender(
+      <StudentsPage
+        events={[
+          {
+            id: "e1",
+            startsAt: "2026-03-12T09:00:00.000Z",
+            title: "Inter-house athletics",
+            location: "College ground",
+          },
+        ]}
+      />
+    );
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Coming Up" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Inter-house athletics" })
+    ).toBeInTheDocument();
+  });
+});
+
+describe(StudentEvents, () => {
+  it("dates each entry with a machine-readable timestamp", () => {
+    render(
+      <StudentEvents
+        events={[
+          {
+            id: "e1",
+            startsAt: "2026-03-12T09:00:00.000Z",
+            title: "Sports day",
+          },
+        ]}
+      />
+    );
+
+    // The visible date is presentational; the `dateTime` attribute is what a
+    // screen reader reads out, so it has to survive the formatting.
+    const time = screen.getByText(/12 March 2026/u);
+    expect(time.tagName).toBe("TIME");
+    expect(time).toHaveAttribute("dateTime", "2026-03-12T09:00:00.000Z");
+  });
+
+  it("shows a location only when the event supplies one", () => {
+    render(
+      <StudentEvents
+        events={[
+          { id: "e1", startsAt: "2026-03-12T09:00:00.000Z", title: "Assembly" },
+          {
+            id: "e2",
+            startsAt: "2026-03-14T09:00:00.000Z",
+            location: "Chapel",
+            title: "Vespers",
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText(/Chapel/u)).toBeInTheDocument();
+    // No stray separator left behind on the entry that has no location.
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Assembly" })
+    ).toBeInTheDocument();
   });
 });
 

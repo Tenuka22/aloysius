@@ -14,7 +14,7 @@ import * as v from "valibot";
 import { user } from "./auth";
 import { brand } from "./brand";
 import type { Brand } from "./brand";
-import { CLUBS, clubSlugSchema } from "./clubs";
+import { clubSlugSchema } from "./clubs";
 import { files } from "./files";
 
 export type PersonId = Brand<string, "PersonId">;
@@ -95,10 +95,6 @@ export const event = sqliteTable(
   (table) => [
     index("event_published_starts_idx").on(table.publishedAt, table.startsAt),
     index("event_club_status_idx").on(table.club, table.status),
-    check(
-      "event_club_check",
-      sql`${table.club} is null or ${sqlInList(table.club, CLUBS)}`
-    ),
     check("event_status_check", sqlInList(table.status, EVENT_STATUSES)),
     check(
       "event_review_fields_paired",

@@ -1,7 +1,8 @@
 import { clubPhoto, gallery } from "@aloysius/db/schema/club-photos";
-import { clubSlugSchema } from "@aloysius/db/schema/clubs";
+import { club, clubSlugSchema } from "@aloysius/db/schema/clubs";
 import { fileIdSchema } from "@aloysius/db/schema/files";
 import { ORPCError } from "@orpc/server";
+import { eq } from "drizzle-orm";
 import * as v from "valibot";
 
 import { requireClubPermission } from "../../index";
@@ -48,6 +49,25 @@ export const createGallery = requireClubPermission("submit")
     })
   )
   .handler(async ({ input, context }) => {
+    /*
+     * The `club in ('photography')` CHECK constraint is gone - the club list is
+     * data now - so nothing below this point would stop a gallery being
+     * attributed to a slug that does not exist. That would leave a row joining
+     * to nothing, invisible on the public page and undeletable from the CMS.
+     */
+    const clubExists = await context.db
+      .select({ id: club.id })
+      .from(club)
+      .where(eq(club.slug, input.club))
+      .limit(1)
+      .get();
+
+    if (!clubExists) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: `There is no club with the slug "${input.club}"`,
+      });
+    }
+
     const id = crypto.randomUUID();
 
     const record = await context.db

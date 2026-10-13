@@ -1,9 +1,13 @@
 import * as stylex from "@stylexjs/stylex";
 
-import { DASHBOARD_TILES, HEALTH_ROWS, PENDING_ITEMS } from "../../content/cms";
+import type {
+  HealthRow,
+  PendingItem,
+  Tile as DashboardTile,
+} from "../../content/cms";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
-import { CmsButton, Panel, PanelHead } from "./cms-primitives";
+import { Panel, PanelHead } from "./cms-primitives";
 
 const styles = stylex.create({
   /*
@@ -140,10 +144,28 @@ const HEALTH_TONE = {
   muted: styles.healthMuted,
 } as const;
 
-export const Dashboard = () => (
+/**
+ * The dashboard's tiles, queue and health rows, all supplied by
+ * `orpc.cms.dashboardStats`.
+ *
+ * Every figure is a `count()` against the table it describes. This screen used
+ * to import three constant arrays - "News posts 24", "Media items 112",
+ * "Pending 3", plus three invented queue entries with invented titles - so the
+ * numbers could not be wrong and the pending list named events and notices
+ * that had never existed.
+ */
+export const Dashboard = ({
+  tiles,
+  pendingItems,
+  health,
+}: {
+  tiles: readonly DashboardTile[];
+  pendingItems: readonly PendingItem[];
+  health: readonly HealthRow[];
+}) => (
   <>
     <div {...stylex.props(styles.tiles)}>
-      {DASHBOARD_TILES.map((tile) => (
+      {tiles.map((tile) => (
         <div key={tile.id} {...stylex.props(styles.tile, TILE_TONE[tile.tone])}>
           <p {...stylex.props(styles.tileLabel)}>{tile.label}</p>
           <p {...stylex.props(styles.tileValue)}>{tile.value}</p>
@@ -158,14 +180,22 @@ export const Dashboard = () => (
           note="Submitted by contributors and waiting on an editor."
           title="Pending approval"
         />
-        {PENDING_ITEMS.length === 0 ? (
+        {pendingItems.length === 0 ? (
           <p {...stylex.props(styles.empty)}>Nothing is waiting for review.</p>
         ) : (
-          PENDING_ITEMS.map((item) => (
-            <div key={item.id} {...stylex.props(styles.pendingRow)}>
+          pendingItems.map((item) => (
+            <div
+              key={`${item.type}-${item.id}`}
+              {...stylex.props(styles.pendingRow)}
+            >
               <span {...stylex.props(styles.pendingType)}>{item.type}</span>
               <p {...stylex.props(styles.pendingTitle)}>{item.title}</p>
-              <CmsButton tone="quiet">Review</CmsButton>
+              {/*
+                No button. These rows are real pending records now, and the
+                review action belongs on the screen that can actually perform it
+                - `/cms/galleries` - rather than here, where the button could do
+                nothing but look actionable.
+              */}
             </div>
           ))
         )}
@@ -173,7 +203,7 @@ export const Dashboard = () => (
 
       <Panel tone="inverse">
         <PanelHead inverse title="Site health" />
-        {HEALTH_ROWS.map((row) => (
+        {health.map((row) => (
           <div key={row.id} {...stylex.props(styles.healthRow)}>
             <p {...stylex.props(styles.healthLabel)}>{row.label}</p>
             <p {...stylex.props(styles.healthStatus, HEALTH_TONE[row.tone])}>

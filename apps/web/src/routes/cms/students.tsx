@@ -128,7 +128,7 @@ const StudentsContent = () => {
         }
         eyebrow="Pages / Students"
         heading="Students Editor"
-        note="Edit the Student Life page header and activities section."
+        note="Page header, sports mosaic and photographs, societies, the house roster and the prefects call to action."
       />
       <HomepageEditor
         blocks={STUDENTS_BLOCKS}

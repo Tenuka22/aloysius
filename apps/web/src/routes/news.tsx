@@ -8,13 +8,23 @@ import { authClient } from "@/lib/auth-client";
 import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
 
+/**
+ * `/news` - the public archive of published news posts.
+ *
+ * The stories themselves are rows (`cms.listNewsPosts`), not CMS blocks, so they
+ * are a second query rather than part of `blocksToNewsProps`. An earlier version
+ * of this route read only the header blocks and left the archive to a hardcoded
+ * placeholder, which meant every story the CMS held was invisible on the public
+ * page.
+ *
+ * `eyebrow` is resolved by the mapper and deliberately not passed through: the
+ * page has no eyebrow above its `h1`. `body` is not passed either - the page
+ * shows a summary and a photograph, and there is no `/news/:slug` route on which
+ * the full text could be read.
+ */
+
 const NewsContent = () => {
   const { data: news } = useSuspenseQuery(orpc.cms.getNews.queryOptions());
-  /*
-   * The stories themselves, which are rows rather than blocks. The route read
-   * only the header blocks and left the archive to a hardcoded placeholder, so
-   * every story the CMS holds was invisible on the public page.
-   */
   const { data: posts } = useSuspenseQuery(
     orpc.cms.listNewsPosts.queryOptions()
   );
@@ -27,7 +37,6 @@ const NewsContent = () => {
     id: post.id,
     title: post.title,
     summary: post.summary,
-    body: post.body,
     category: post.category,
     publishedAt: post.publishedAt,
     coverImageUrl: post.coverImageUrl,
@@ -49,7 +58,14 @@ const NewsContent = () => {
   })();
 
   return (
-    <NewsPage {...cmsProps} extraNavItems={extraNavItems} stories={stories} />
+    <NewsPage
+      feedHeading={cmsProps.feedHeading}
+      heading={cmsProps.heading}
+      extraNavItems={extraNavItems}
+      heroImage={cmsProps.heroImage}
+      stories={stories}
+      tagline={cmsProps.tagline}
+    />
   );
 };
 

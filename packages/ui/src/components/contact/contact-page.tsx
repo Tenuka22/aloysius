@@ -52,7 +52,10 @@ const styles = stylex.create({
 export interface ContactPageProps
   extends ContactDetailsProps, ContactFormProps {
   contact?: FooterContact;
-  extraNavItems?: readonly NavItem[];
+  /** CMS `contact-header` copy; falls back to the page's own constants. */
+  heading?: string;
+  tagline?: string;
+  extraNavItems?: NavItem[];
 }
 
 export const ContactPage = ({
@@ -60,29 +63,39 @@ export const ContactPage = ({
   contact,
   email,
   extraNavItems,
+  heading,
   mapImage,
   mapUrl,
+  mapEmbedUrl,
   officeHours,
   onSubmit,
+  tagline,
   telephone,
 }: ContactPageProps) => (
   <>
     <SkipLink targetId={MAIN_ID} />
     <SiteHeader activeHref="/contact" extraNavItems={extraNavItems} />
     <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
-      <ContactHero />
+      {/*
+        `heading` and `tagline` are the CMS `contact-header` block. They were
+        resolved by the route and then dropped, because `ContactHero` was
+        rendered with no props at all - so an editor who changed them saw no
+        change on the page.
+      */}
+      <ContactHero intro={tagline} title={heading} />
       <Section id="contact-details" tone="surface">
         <Container>
           <div {...stylex.props(styles.layout)}>
             <ContactDetails
               address={address}
               email={email}
+              mapEmbedUrl={mapEmbedUrl}
               mapImage={mapImage}
               mapUrl={mapUrl}
               officeHours={officeHours}
               telephone={telephone}
             />
-            <ContactForm onSubmit={onSubmit} />
+            <ContactForm mailTo={email} onSubmit={onSubmit} />
           </div>
         </Container>
       </Section>

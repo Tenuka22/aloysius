@@ -13,7 +13,7 @@ import * as v from "valibot";
 import { user } from "./auth";
 import { brand } from "./brand";
 import type { Brand } from "./brand";
-import { CLUBS, clubSlugSchema } from "./clubs";
+import { clubSlugSchema } from "./clubs";
 import { files } from "./files";
 
 /** `column in ('a', 'b')` for a CHECK. Values are code constants, never input. */
@@ -125,6 +125,7 @@ export const announcement = sqliteTable(
 
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      // oxlint-disable-next-line no-inline-comments -- `@__PURE__` is a build-tool annotation and must stay inline before the call
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
@@ -137,10 +138,6 @@ export const announcement = sqliteTable(
     check(
       "announcement_window_ordered",
       sql`${table.expiresAt} is null or ${table.effectiveFrom} is null or ${table.expiresAt} > ${table.effectiveFrom}`
-    ),
-    check(
-      "announcement_club_check",
-      sql`${table.club} is null or ${sqlInList(table.club, CLUBS)}`
     ),
     check(
       "announcement_status_check",

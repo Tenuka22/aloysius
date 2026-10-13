@@ -99,16 +99,23 @@ const SWATCH_STYLES = {
 
 export const HouseSystem = ({
   houses = HOUSES,
+  eyebrow = HOUSES_EYEBROW,
+  heading = HOUSES_HEADING,
+  intro = HOUSES_INTRO,
 }: {
   houses?: readonly House[];
+  /** CMS-resolved section copy; falls back to the page's own constants. */
+  eyebrow?: string;
+  heading?: string;
+  intro?: string;
 }) => (
   <Section id="houses" labelledBy="houses-title" tone="raised">
     <Container>
-      <Eyebrow>{HOUSES_EYEBROW}</Eyebrow>
+      <Eyebrow>{eyebrow}</Eyebrow>
       <Heading id="houses-title" level={2} style={styles.heading}>
-        {HOUSES_HEADING}
+        {heading}
       </Heading>
-      <Lead>{HOUSES_INTRO}</Lead>
+      <Lead>{intro}</Lead>
 
       <ul {...stylex.props(styles.grid)}>
         {houses.map((house) => (

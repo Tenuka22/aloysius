@@ -3,8 +3,9 @@
  *
  * Every screen below is driven by these types rather than by inline JSX, so the
  * oRPC routers can replace the seed values without a component changing shape.
- * Nothing here is fetched: the backend is being built separately, and the whole
- * admin runs on local state until it lands.
+ * Nothing here is fetched: the backend owns the saved state, and anything a
+ * screen reads at runtime comes from an oRPC procedure rather than from a
+ * constant in this file.
  *
  * Where the design comp printed a literal `[CMS: date]` marker, the field is
  * optional here instead. A component that has no value renders an em dash, not
@@ -13,11 +14,29 @@
  */
 
 import type { AspectRatioKey } from "../tokens/aspect-ratios";
+import { ALUMNI_OBA_HREF } from "./alumni";
+import { CONTACT_DEFAULT_TELEPHONE } from "./contact";
+import { ADMISSIONS_URL } from "./home";
 import {
   PRINCIPAL_BLOCK_ID,
   PRINCIPAL_DEFAULTS,
   PRINCIPAL_FIELD,
 } from "./principal";
+import {
+  HOUSES_HEADING,
+  HOUSES_INTRO,
+  MORE_SPORTS,
+  PREFECTS_BODY,
+  PREFECTS_CTA_LABEL,
+  PREFECTS_HEADING,
+  SPORTS_EYEBROW,
+  SPORTS_HEADING,
+  STUDENTS_HERO_INTRO,
+  STUDENTS_HERO_TITLE,
+  CLUBS_EYEBROW,
+  CLUBS_HEADING,
+  CLUBS_INTRO,
+} from "./students";
 
 export type ScreenId =
   | "dashboard"
@@ -25,7 +44,6 @@ export type ScreenId =
   | "principal"
   | "news"
   | "gallery"
-  | "admissions"
   | "academics"
   | "alumni"
   | "notices"
@@ -67,7 +85,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     kind: "list",
     count: 112,
   },
-  { id: "admissions", num: "06", label: "Admissions", kind: "list" },
   { id: "academics", num: "07", label: "Academics", kind: "list" },
   { id: "alumni", num: "08", label: "Alumni", kind: "list" },
   { id: "notices", num: "09", label: "Notices", kind: "list", count: 3 },
@@ -122,7 +139,7 @@ export const APP_ROUTE_OPTIONS: readonly LinkOption[] = [
   { label: "Home", value: "/" },
   { label: "About", value: "/about" },
   { label: "Academics", value: "/academics" },
-  { label: "Admissions", value: "/admissions" },
+  { label: "Admissions", value: ADMISSIONS_URL },
   { label: "Alumni", value: "/alumni" },
   { label: "News & Events", value: "/news" },
   { label: "Notices", value: "/notices" },
@@ -169,7 +186,7 @@ export interface PageBlock {
  * needs the key, because the key is what carries the ratio, the name shown in
  * the crop dialog and the minimum-width warning together. Returning
  * `aspectRatios[key]` here would hand the uploader one third of that and leave
- * it looking the other two up separately — which is how a hint ends up
+ * it looking the other two up separately Ã¢â‚¬â€ which is how a hint ends up
  * describing a different ratio from the one being enforced.
  *
  * `newsCard` is the fallback because a field id added to the CMS without a line
@@ -196,6 +213,9 @@ const IMAGE_RATIO_KEYS: Partial<Record<string, AspectRatioKey>> = {
   "notices-hero-image": "hero",
   "media-hero-image": "hero",
   "students-hero-image": "hero",
+  "students-sports-cricket": "mosaicTile",
+  "students-sports-rugby": "mosaicTile",
+  "students-sports-athletics": "mosaicTile",
   "alumni-hero-image": "hero",
 };
 
@@ -220,14 +240,14 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
         id: "hero-place",
         label: "Sub-label",
         kind: "text",
-        value: "Galle • Sri Lanka",
+        value: "Galle Ã¢â‚¬Â¢ Sri Lanka",
       },
       {
         id: "hero-title",
         label: "Heading",
         kind: "readonly",
         value: "St. Aloysius' College",
-        hint: "The college name is fixed site-wide. Change it in Settings → Global.",
+        hint: "The college name is fixed site-wide. Change it in Settings Ã¢â€ â€™ Global.",
         wide: true,
       },
       {
@@ -324,7 +344,7 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
         id: "academics-note",
         label: "Departments",
         kind: "readonly",
-        value: "Managed as a list — 4 entries",
+        value: "Managed as a list Ã¢â‚¬â€ 4 entries",
         hint: "Edit individual departments from the Academics screen.",
         wide: true,
       },
@@ -412,7 +432,7 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
         id: "gallery-auto",
         label: "Source",
         kind: "readonly",
-        value: "Media library — most recent 6",
+        value: "Media library Ã¢â‚¬â€ most recent 6",
         wide: true,
       },
     ],
@@ -428,7 +448,7 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
         id: "footer-global",
         label: "Managed in",
         kind: "readonly",
-        value: "Settings → Global",
+        value: "Settings Ã¢â€ â€™ Global",
         hint: "Editing the footer here would change every page on the site.",
         wide: true,
       },
@@ -445,7 +465,7 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
  * The site's one global block.
  *
  * The Principal's message and portrait are the same person on every page, so
- * they are not part of any page's registry — they get their own editor screen
+ * they are not part of any page's registry Ã¢â‚¬â€ they get their own editor screen
  * at `/cms/principal` and every page reads the result. Keeping a copy of this
  * block inside `HOMEPAGE_BLOCKS` (as it used to be) is what produced two
  * editable versions of the same sentence and two duplicate components.
@@ -459,7 +479,7 @@ export const PRINCIPAL_BLOCKS: readonly PageBlock[] = [
     name: "Principal's Message",
     type: "Global",
     status: "global",
-    summary: "Message, attribution and portrait — shown on every page",
+    summary: "Message, attribution and portrait Ã¢â‚¬â€ shown on every page",
     fields: [
       {
         id: PRINCIPAL_FIELD.eyebrow,
@@ -480,7 +500,7 @@ export const PRINCIPAL_BLOCKS: readonly PageBlock[] = [
         kind: "textarea",
         value: PRINCIPAL_DEFAULTS.quote,
         wide: true,
-        hint: "One or two sentences. This is what the homepage sets in large type — keep it short enough to read at a glance.",
+        hint: "One or two sentences. This is what the homepage sets in large type Ã¢â‚¬â€ keep it short enough to read at a glance.",
       },
       {
         id: PRINCIPAL_FIELD.body,
@@ -577,25 +597,25 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
       },
       {
         id: "history-1-image",
-        label: "1895 — Founding of the College",
+        label: "1895 Ã¢â‚¬â€ Founding of the College",
         kind: "image",
         hint: "Clearing this restores the default archival photo.",
       },
       {
         id: "history-2-image",
-        label: "1920s — Early Growth",
+        label: "1920s Ã¢â‚¬â€ Early Growth",
         kind: "image",
         hint: "Clearing this restores the default archival photo.",
       },
       {
         id: "history-3-image",
-        label: "1971 — A Century of Excellence",
+        label: "1971 Ã¢â‚¬â€ A Century of Excellence",
         kind: "image",
         hint: "Clearing this restores the default archival photo.",
       },
       {
         id: "history-4-image",
-        label: "Today — The Modern College",
+        label: "Today Ã¢â‚¬â€ The Modern College",
         kind: "image",
         hint: "Clearing this restores the default archival photo.",
       },
@@ -804,7 +824,19 @@ export const CONTACT_BLOCKS: readonly PageBlock[] = [
         id: "contact-telephone",
         label: "Telephone",
         kind: "text",
-        value: "+94 91 222 2571",
+        value: CONTACT_DEFAULT_TELEPHONE,
+      },
+      {
+        /*
+         * Deliberately empty. No published source states the college's office
+         * hours, and a wrong set of hours misdirects the visitor most likely to
+         * depend on them. Left blank the details list omits the row entirely.
+         */
+        id: "contact-office-hours",
+        label: "Office hours",
+        kind: "textarea",
+        hint: "Leave empty and the office hours are not shown at all.",
+        wide: true,
       },
       {
         id: "contact-email",
@@ -863,12 +895,6 @@ export const ALUMNI_BLOCKS: readonly PageBlock[] = [
     summary: "Page title, tagline and hero image",
     fields: [
       {
-        id: "alumni-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: "Old Boys' Association",
-      },
-      {
         id: "alumni-heading",
         label: "Heading",
         kind: "text",
@@ -899,6 +925,12 @@ export const ALUMNI_BLOCKS: readonly PageBlock[] = [
     summary: "Body copy and image for the alumni section",
     fields: [
       {
+        id: "alumni-about-heading",
+        label: "Section heading",
+        kind: "text",
+        value: "A Bond That Outlasts School",
+      },
+      {
         id: "alumni-body",
         label: "Body copy",
         kind: "textarea",
@@ -910,28 +942,63 @@ export const ALUMNI_BLOCKS: readonly PageBlock[] = [
         id: "alumni-image",
         label: "Featured image",
         kind: "image",
-        hint: "Landscape or square orientation.",
+        hint: "Landscape or portrait orientation.",
+      },
+      {
+        id: "alumni-image-caption",
+        label: "Image caption",
+        kind: "text",
+        value: "Old Boys' Association event",
+        hint: "Also used as the photograph's alt text.",
       },
     ],
   },
   {
     id: "alumni-links",
-    name: "Quick Links",
+    name: "Stay Connected",
     type: "Card grid",
     status: "published",
-    summary: "Links to OBA branches and events",
+    summary: "How an old boy gets back in touch",
     fields: [
+      {
+        id: "alumni-links-heading",
+        label: "Section heading",
+        kind: "text",
+        value: "Stay Connected",
+      },
+      {
+        id: "alumni-links-body",
+        label: "Body copy",
+        kind: "textarea",
+        value:
+          "Members can update their details with the branch secretary, or contact the College office to re-establish an address on the register.",
+        wide: true,
+      },
+      {
+        id: "alumni-oba-label",
+        label: "OBA button label",
+        kind: "text",
+        value: "Visit the OBA",
+      },
       {
         id: "alumni-oba-href",
         label: "OBA portal link",
         kind: "text",
-        hint: "URL to the OBA member portal or registration.",
+        value: ALUMNI_OBA_HREF,
+        hint: "Leave empty and the button does not appear.",
+      },
+      {
+        id: "alumni-events-label",
+        label: "Events button label",
+        kind: "text",
+        value: "Alumni events",
       },
       {
         id: "alumni-events-href",
         label: "Events link",
         kind: "text",
-        hint: "URL to upcoming alumni events.",
+        value: "/events",
+        hint: "Leave empty and the button does not appear.",
       },
     ],
   },
@@ -985,78 +1052,6 @@ export const ACADEMICS_BLOCKS: readonly PageBlock[] = [
         label: "Secondary section - Photo",
         kind: "image",
         hint: "Portrait orientation.",
-      },
-    ],
-  },
-];
-
-/**
- * Admissions page blocks. The application process, requirements, key dates,
- * downloads and FAQs are real shipped copy (`content/admissions.ts`), not
- * editable here - only the hero, the priority notice banner and the closing
- * contact note change often enough to need a non-technical editor.
- */
-export const ADMISSIONS_BLOCKS: readonly PageBlock[] = [
-  {
-    id: "admissions-hero",
-    name: "Page Header",
-    type: "Hero",
-    status: "published",
-    summary: "Eyebrow, heading and intro",
-    fields: [
-      {
-        id: "admissions-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: "Admissions",
-      },
-      {
-        id: "admissions-heading",
-        label: "Heading",
-        kind: "text",
-        value: "Become an Aloysian",
-      },
-      {
-        id: "admissions-tagline",
-        label: "Tagline",
-        kind: "textarea",
-        value:
-          "Everything a parent needs to know about joining St. Aloysius' College - process, requirements and key dates.",
-        wide: true,
-      },
-    ],
-  },
-  {
-    id: "admissions-notice",
-    name: "Priority Notice",
-    type: "Banner",
-    status: "published",
-    summary: "The red banner below the hero",
-    fields: [
-      {
-        id: "admissions-notice-text",
-        label: "Notice text",
-        kind: "text",
-        value: "Admissions are open for the next academic year.",
-        wide: true,
-        hint: "Clearing this hides the banner.",
-      },
-    ],
-  },
-  {
-    id: "admissions-contact",
-    name: "Contact CTA",
-    type: "Banner",
-    status: "published",
-    summary: "The closing 'Still have questions?' note",
-    fields: [
-      {
-        id: "admissions-contact-note",
-        label: "Note",
-        kind: "text",
-        value:
-          "The College office is happy to help with any question not answered here.",
-        wide: true,
       },
     ],
   },
@@ -1122,6 +1117,17 @@ export const MEDIA_BLOCKS: readonly PageBlock[] = [
 
 /**
  * Student Life page blocks. Student activities, clubs and campus life.
+ *
+ * One block per section the page actually renders, seeded from
+ * `content/students.ts` rather than from literals: a seed that disagrees with
+ * the page's own default is how an editor ends up looking at "Clubs &
+ * Activities" while a visitor sees "Beyond the Classroom", and saving without
+ * touching anything then overwrites the page's copy.
+ *
+ * The four house names and the prefects destination are seeded **empty**. The
+ * college has not published them, and an empty field is the honest control -
+ * the page falls back to the colour name and renders no button, rather than
+ * four invented house names and a link to nowhere.
  */
 export const STUDENTS_BLOCKS: readonly PageBlock[] = [
   {
@@ -1141,14 +1147,13 @@ export const STUDENTS_BLOCKS: readonly PageBlock[] = [
         id: "students-heading",
         label: "Heading",
         kind: "text",
-        value: "Student Life",
+        value: STUDENTS_HERO_TITLE,
       },
       {
         id: "students-tagline",
         label: "Tagline",
         kind: "textarea",
-        value:
-          "Discover the vibrant community, clubs and activities that make St. Aloysius' College a place to grow.",
+        value: STUDENTS_HERO_INTRO,
         wide: true,
       },
       {
@@ -1161,17 +1166,161 @@ export const STUDENTS_BLOCKS: readonly PageBlock[] = [
     ],
   },
   {
-    id: "students-activities",
-    name: "Activities",
+    id: "students-sports",
+    name: "Sports",
     type: "Mosaic",
     status: "published",
-    summary: "Student clubs, sports and activities grid",
+    summary: "The sports mosaic, its photographs and the overflow list",
     fields: [
+      {
+        id: "students-sports-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: SPORTS_EYEBROW,
+      },
+      {
+        id: "students-sports-heading",
+        label: "Heading",
+        kind: "text",
+        value: SPORTS_HEADING,
+      },
+      {
+        id: "students-sports-cricket",
+        label: "Cricket photograph",
+        kind: "image",
+      },
+      {
+        id: "students-sports-rugby",
+        label: "Rugby photograph",
+        kind: "image",
+      },
+      {
+        id: "students-sports-athletics",
+        label: "Athletics photograph",
+        kind: "image",
+      },
+      {
+        id: "students-more-sports",
+        label: "More sports",
+        kind: "textarea",
+        value: MORE_SPORTS.join(", "),
+        hint: "Comma-separated. Leave empty to drop the overflow panel.",
+        wide: true,
+      },
+    ],
+  },
+  {
+    id: "students-activities",
+    name: "Clubs & Societies",
+    type: "Card grid",
+    status: "published",
+    summary: "The society grid's heading and intro",
+    fields: [
+      {
+        id: "students-activities-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: CLUBS_EYEBROW,
+      },
       {
         id: "students-activities-heading",
         label: "Section heading",
         kind: "text",
-        value: "Clubs & Activities",
+        value: CLUBS_HEADING,
+      },
+      {
+        id: "students-activities-intro",
+        label: "Intro",
+        kind: "textarea",
+        value: CLUBS_INTRO,
+        wide: true,
+      },
+    ],
+  },
+  {
+    id: "students-houses",
+    name: "Houses",
+    type: "Card grid",
+    status: "published",
+    summary: "The four house cards and their published names",
+    fields: [
+      {
+        id: "students-houses-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: "House system",
+      },
+      {
+        id: "students-houses-heading",
+        label: "Heading",
+        kind: "text",
+        value: HOUSES_HEADING,
+      },
+      {
+        id: "students-houses-intro",
+        label: "Intro",
+        kind: "textarea",
+        value: HOUSES_INTRO,
+        wide: true,
+      },
+      {
+        id: "students-house-crimson",
+        label: "Crimson house name",
+        kind: "text",
+        hint: "Leave empty until the college publishes the roster.",
+      },
+      {
+        id: "students-house-gold",
+        label: "Gold house name",
+        kind: "text",
+        hint: "Leave empty until the college publishes the roster.",
+      },
+      {
+        id: "students-house-green",
+        label: "Green house name",
+        kind: "text",
+        hint: "Leave empty until the college publishes the roster.",
+      },
+      {
+        id: "students-house-blue",
+        label: "Blue house name",
+        kind: "text",
+        hint: "Leave empty until the college publishes the roster.",
+      },
+    ],
+  },
+  {
+    id: "students-prefects",
+    name: "Prefects' Guild",
+    type: "Text + media",
+    status: "published",
+    summary: "The leadership call to action and where its button leads",
+    fields: [
+      {
+        id: "students-prefects-heading",
+        label: "Heading",
+        kind: "text",
+        value: PREFECTS_HEADING,
+      },
+      {
+        id: "students-prefects-body",
+        label: "Body",
+        kind: "textarea",
+        value: PREFECTS_BODY,
+        wide: true,
+      },
+      {
+        id: "students-prefects-cta-label",
+        label: "Button label",
+        kind: "text",
+        value: PREFECTS_CTA_LABEL,
+      },
+      {
+        id: "students-prefects-cta-href",
+        label: "Button destination",
+        kind: "select",
+        options: APP_ROUTE_OPTIONS,
+        hint: "The button stays hidden until a destination is chosen - there is no prefects page yet.",
       },
     ],
   },
@@ -1187,36 +1336,20 @@ export interface Tile {
   tone: "green" | "gold" | "crimson";
 }
 
-export const DASHBOARD_TILES: readonly Tile[] = [
-  {
-    id: "pages",
-    label: "Published pages",
-    value: "9",
-    sub: "Live on the website",
-    tone: "green",
-  },
-  {
-    id: "news",
-    label: "News posts",
-    value: "24",
-    sub: "Across all categories",
-    tone: "gold",
-  },
-  {
-    id: "media",
-    label: "Media items",
-    value: "112",
-    sub: "Photographs and videos",
-    tone: "green",
-  },
-  {
-    id: "pending",
-    label: "Pending",
-    value: "3",
-    sub: "Awaiting approval",
-    tone: "crimson",
-  },
-];
+/*
+ * The dashboard's three shapes.
+ *
+ * `DASHBOARD_TILES`, `PENDING_ITEMS`, `HEALTH_ROWS` and `ACTIVITY_STATS` were
+ * deleted from here. They were fixed arrays - "News posts 24", "Media items
+ * 112", "Pending 3", "Posts published 18", "Photos uploaded 240" - plus three
+ * invented queue entries naming events and notices that had never existed.
+ * Every one of them now comes from `orpc.cms.dashboardStats`, which counts the
+ * table each figure describes.
+ *
+ * A dashboard whose numbers cannot be wrong is worse than no dashboard: it tells
+ * an editor the college has published twenty-four stories when it has published
+ * three, and it names work in the queue that does not exist.
+ */
 
 export interface PendingItem {
   id: string;
@@ -1225,252 +1358,9 @@ export interface PendingItem {
   author?: string;
 }
 
-export const PENDING_ITEMS: readonly PendingItem[] = [
-  {
-    id: "p1",
-    type: "News",
-    title: "Prize giving 2026 — full report and photographs",
-  },
-  { id: "p2", type: "Event", title: "Inter-house athletics meet, 12 October" },
-  {
-    id: "p3",
-    type: "Notice",
-    title: "Grade 1 admissions — supporting documents",
-  },
-];
-
 export interface HealthRow {
   id: string;
   label: string;
   status: string;
   tone: "ok" | "warn" | "muted";
 }
-
-export const HEALTH_ROWS: readonly HealthRow[] = [
-  { id: "notice", label: "Homepage notice", status: "Active", tone: "warn" },
-  { id: "links", label: "Broken links", status: "None found", tone: "ok" },
-  {
-    id: "drafts",
-    label: "Unpublished drafts",
-    status: "3 pending",
-    tone: "warn",
-  },
-  {
-    id: "backup",
-    label: "Last backup",
-    status: "Not configured",
-    tone: "muted",
-  },
-];
-
-/* ------------------------------------------------------------------- lists */
-
-export interface Entry {
-  id: string;
-  title: string;
-  status: EntryStatus;
-  updated?: string;
-}
-
-/** Seed rows per list screen. Replaced wholesale once the routers exist. */
-export const LIST_ENTRIES: Partial<Record<ScreenId, readonly Entry[]>> = {
-  news: [
-    {
-      id: "n1",
-      title: "Advanced Level results announced for the 2025 cohort",
-      status: "published",
-      updated: "2026-09-05",
-    },
-    {
-      id: "n2",
-      title: "First XI cricket team retains the Southern Province title",
-      status: "published",
-      updated: "2026-08-28",
-    },
-    {
-      id: "n3",
-      title: "Annual prize giving held in the college main hall",
-      status: "draft",
-      updated: "2026-09-11",
-    },
-    {
-      id: "n4",
-      title: "Circular: term dates and school calendar",
-      status: "scheduled",
-      updated: "2026-09-12",
-    },
-  ],
-  notices: [
-    {
-      id: "t1",
-      title: "Grade 1 admissions open 1 March",
-      status: "published",
-      updated: "2026-09-01",
-    },
-    {
-      id: "t2",
-      title: "School closed for Poya day",
-      status: "draft",
-      updated: "2026-09-08",
-    },
-    {
-      id: "t3",
-      title: "Sports meet rescheduled",
-      status: "scheduled",
-      updated: "2026-09-10",
-    },
-  ],
-};
-
-export const EMPTY_ENTRIES: readonly Entry[] = [];
-
-/* ----------------------------------------------------------------- profile */
-
-export interface Permission {
-  id: string;
-  area: string;
-  description: string;
-  /** `true` = granted. The level shown is derived, not stored twice. */
-  granted: boolean;
-  /** Areas an Editor can never be granted from this screen. */
-  adminOnly?: boolean;
-}
-
-export const PERMISSIONS: readonly Permission[] = [
-  {
-    id: "pages",
-    area: "Pages",
-    description: "Edit standing pages — About, Academics, Contact.",
-    granted: true,
-  },
-  {
-    id: "news",
-    area: "News & Events",
-    description: "Create, edit and publish news posts and calendar events.",
-    granted: true,
-  },
-  {
-    id: "gallery",
-    area: "Gallery & Media",
-    description: "Upload photographs, albums and video links.",
-    granted: true,
-  },
-  {
-    id: "admissions",
-    area: "Admissions",
-    description: "Update forms, deadlines and admission notices.",
-    granted: false,
-  },
-  {
-    id: "alumni",
-    area: "Alumni",
-    description: "Manage OBA branches and distinguished Aloysians.",
-    granted: false,
-  },
-  {
-    id: "users",
-    area: "Users & Roles",
-    description: "Invite staff accounts and assign permissions.",
-    granted: false,
-    adminOnly: true,
-  },
-];
-
-export interface ActivityEntry {
-  id: string;
-  verb: "Published" | "Edited" | "Uploaded" | "Drafted" | "Deleted";
-  item: string;
-  at?: string;
-}
-
-export const RECENT_ACTIVITY: readonly ActivityEntry[] = [
-  {
-    id: "a1",
-    verb: "Published",
-    item: "Advanced Level results announced",
-    at: "2026-09-05",
-  },
-  {
-    id: "a2",
-    verb: "Edited",
-    item: "Admissions page — key dates",
-    at: "2026-09-04",
-  },
-  {
-    id: "a3",
-    verb: "Uploaded",
-    item: "Prize giving album — 24 photographs",
-    at: "2026-09-02",
-  },
-  {
-    id: "a4",
-    verb: "Drafted",
-    item: "Prize giving announcement",
-    at: "2026-08-30",
-  },
-  {
-    id: "a5",
-    verb: "Deleted",
-    item: "Expired notice — sports meet",
-    at: "2026-08-27",
-  },
-];
-
-export interface Revision {
-  id: string;
-  label: "Published" | "Edited";
-  note: string;
-  at?: string;
-}
-
-export const REVISIONS: readonly Revision[] = [
-  {
-    id: "r1",
-    label: "Published",
-    note: "Hero background image replaced",
-    at: "2026-09-02",
-  },
-  {
-    id: "r2",
-    label: "Edited",
-    note: "Notice strip text updated",
-    at: "2026-08-30",
-  },
-  {
-    id: "r3",
-    label: "Edited",
-    note: "Academics statistics updated",
-    at: "2026-08-24",
-  },
-  {
-    id: "r4",
-    label: "Published",
-    note: "Student life mosaic reordered",
-    at: "2026-08-14",
-  },
-];
-
-export const ACTIVITY_STATS = [
-  { id: "s1", label: "Posts published", value: "18" },
-  { id: "s2", label: "Photos uploaded", value: "240" },
-  { id: "s3", label: "Pending drafts", value: "2" },
-] as const;
-
-/**
- * Dates are formatted for the visitor's locale rather than hard-coded to one
- * format, and an absent date renders an em dash instead of an empty cell.
- */
-export const formatCmsDate = (iso?: string) => {
-  if (!iso) {
-    return "—";
-  }
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) {
-    return "—";
-  }
-  return parsed.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-};

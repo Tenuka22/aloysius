@@ -102,15 +102,15 @@ const CmsLayout = () => {
     },
     {
       num: "15",
-      label: "Admissions Editor",
-      href: "/cms/admissions",
-      active: pathname.startsWith("/cms/admissions"),
-    },
-    {
-      num: "16",
       label: "Academics Editor",
       href: "/cms/academics",
       active: pathname.startsWith("/cms/academics"),
+    },
+    {
+      num: "16",
+      label: "Clubs",
+      href: "/cms/clubs",
+      active: pathname.startsWith("/cms/clubs"),
     },
   ];
 

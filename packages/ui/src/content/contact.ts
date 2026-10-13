@@ -57,6 +57,33 @@ export const CONTACT_DEFAULT_EMAIL = "info@aloysiuscollege.lk";
 export const CONTACT_MAP_PLACEHOLDER = "Location map — Galle";
 export const CONTACT_MAP_LINK_LABEL = "View on map";
 
+/**
+ * The office's real map, embedded from OpenStreetMap.
+ *
+ * OpenStreetMap rather than Google Maps because its embed endpoint needs no API
+ * key and no account, which matters for a self-hosted deployment whose owner
+ * should not have to provision a billing-enabled Google Cloud project to show
+ * an address on a map.
+ *
+ * **The coordinates are approximate.** They centre on Kaluwella, Galle — the
+ * locality both published listings give alongside Templers' Road — at roughly
+ * 6.0536 N, 80.2210 E. That is good enough to land a visitor in the right part
+ * of town and no more. The pin is not the college gate, so the map is paired
+ * with the street address above it and with `CONTACT_MAP_LINK_LABEL`, and it is
+ * CMS-overridable through `contact-map-embed` for the day the college supplies
+ * its exact position.
+ */
+export const CONTACT_MAP_EMBED_URL =
+  "https://www.openstreetmap.org/export/embed.html?bbox=80.2140%2C6.0480%2C80.2280%2C6.0590&layer=mapnik&marker=6.0536%2C80.2210";
+
+/** The plain link, for "View on map" - OpenStreetMap's own page for the pin. */
+export const CONTACT_MAP_URL =
+  "https://www.openstreetmap.org/?mlat=6.0536&mlon=80.2210#map=17/6.0536/80.2210";
+
+/** Accessible name for the embedded map, which carries no visible text. */
+export const CONTACT_MAP_TITLE =
+  "Map of Kaluwella, Galle, showing the College office";
+
 export const CONTACT_FORM_EYEBROW = "Enquiries";
 export const CONTACT_FORM_HEADING = "Send a Message";
 export const CONTACT_FORM_INTRO =
@@ -83,6 +110,40 @@ export const CONTACT_FORM_FAILURE =
  */
 export const CONTACT_FORM_NO_ENDPOINT =
   "This form is not connected yet, so your message was not sent. Please use the telephone number or email address listed for the College office.";
+
+/**
+ * What happens when there is no enquiry endpoint.
+ *
+ * The form opens the visitor's own mail client with the message already
+ * addressed to the College office and the subject and body filled in. Nothing
+ * is sent by this website - the visitor sees and sends it themselves, which is
+ * why the status says the email app is "open" rather than "sent".
+ *
+ * The recipient is a constant rather than something the form supplies, so a
+ * visitor cannot retarget the enquiry at an address of their choosing.
+ */
+export const CONTACT_FORM_MAILTO_SUBJECT = "Enquiry for St. Aloysius' College";
+export const CONTACT_FORM_MAILTO_HANDOFF =
+  "Your email app should now be open with this message addressed to the College office. Review it and press send — nothing has been sent yet.";
+
+/**
+ * `mailto:` is a URL, and browsers and mail clients truncate a very long one.
+ *
+ * Chrome and Safari both start dropping body text around 2,000 characters once
+ * the whole URL is counted; the message field allows 4,000. Rather than silently
+ * losing the second half of an enquiry, anything over the limit is refused with
+ * a message telling the visitor what to do instead — which keeps the address
+ * and telephone they need one click away.
+ */
+export const CONTACT_FORM_MAILTO_MAX_LENGTH = 1800;
+export const CONTACT_FORM_MAILTO_TOO_LONG =
+  "Your message is too long to hand off to your email app in one piece. Please shorten it, or email it directly using the address above.";
+
+/** Labels for the composed body, so the office can tell the fields apart. */
+export const CONTACT_MAIL_BODY_NAME = "Name";
+export const CONTACT_MAIL_BODY_EMAIL = "Email";
+export const CONTACT_MAIL_BODY_SUBJECT = "Subject";
+export const CONTACT_MAIL_BODY_MESSAGE = "Message";
 
 export interface ContactField {
   id: "name" | "email" | "subject" | "message";

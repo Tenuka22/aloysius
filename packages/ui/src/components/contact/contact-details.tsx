@@ -8,6 +8,7 @@ import {
   CONTACT_DETAILS_HEADING,
   CONTACT_MAP_LINK_LABEL,
   CONTACT_MAP_PLACEHOLDER,
+  CONTACT_MAP_TITLE,
 } from "../../content/contact";
 import { bp } from "../../tokens/breakpoints.stylex";
 import {
@@ -145,6 +146,12 @@ const styles = stylex.create({
     borderRadius: radius.md,
     overflow: "hidden",
   },
+  mapEmbed: {
+    display: "block",
+    inlineSize: "100%",
+    blockSize: "100%",
+    borderWidth: 0,
+  },
   mapBadge: {
     margin: 0,
     position: "absolute",
@@ -175,9 +182,18 @@ export interface ContactDetailsProps {
   telephone?: string;
   email?: string;
   officeHours?: string;
-  /** External map link. Without it the map renders as a static placeholder. */
+  /**
+   * External map link - "View on map" opens the full-size map. Without it the
+   * badge renders as static text that deliberately does not look clickable.
+   */
   mapUrl?: string;
   mapImage?: ImageSource;
+  /**
+   * An embedded map (OpenStreetMap's iframe endpoint). Rendered in place of the
+   * static image slot; without one the slot falls back to the branded
+   * placeholder, so the block is never a broken frame.
+   */
+  mapEmbedUrl?: string;
 }
 
 interface Detail {
@@ -204,6 +220,7 @@ export const ContactDetails = ({
   officeHours,
   mapUrl,
   mapImage,
+  mapEmbedUrl,
 }: ContactDetailsProps) => {
   const details: Detail[] = [
     { id: "address", label: "Address", value: address, Icon: MapPin },
@@ -264,11 +281,29 @@ export const ContactDetails = ({
       </dl>
 
       <div {...stylex.props(styles.map)}>
-        <Media
-          placeholder={CONTACT_MAP_PLACEHOLDER}
-          ratio="3:2"
-          source={mapImage}
-        />
+        {/*
+          A real embedded map when one is configured, the branded placeholder
+          when it is not. The iframe is `loading="lazy"` and carries a
+          `title`, because an untitled iframe is announced only as "frame" and a
+          map is the one thing on this page a screen-reader user cannot infer
+          from its surroundings.
+        */}
+        {mapEmbedUrl ? (
+          <iframe
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            sandbox="allow-scripts allow-popups"
+            src={mapEmbedUrl}
+            title={CONTACT_MAP_TITLE}
+            {...stylex.props(styles.mapEmbed)}
+          />
+        ) : (
+          <Media
+            placeholder={CONTACT_MAP_PLACEHOLDER}
+            ratio="3:2"
+            source={mapImage}
+          />
+        )}
         {mapUrl ? (
           <a
             href={mapUrl}

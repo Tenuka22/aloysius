@@ -31,7 +31,24 @@ const AlumniContent = () => {
     return items;
   })();
 
-  return <AlumniPage {...cmsProps} extraNavItems={extraNavItems} />;
+  return (
+    <AlumniPage
+      aboutHeading={cmsProps.aboutHeading}
+      body={cmsProps.body}
+      eventsHref={cmsProps.eventsHref}
+      eventsLabel={cmsProps.eventsLabel}
+      extraNavItems={extraNavItems}
+      heading={cmsProps.heading}
+      heroImage={cmsProps.heroImage}
+      image={cmsProps.image}
+      imageCaption={cmsProps.imageCaption}
+      linksBody={cmsProps.linksBody}
+      linksHeading={cmsProps.linksHeading}
+      obaHref={cmsProps.obaHref}
+      obaLabel={cmsProps.obaLabel}
+      tagline={cmsProps.tagline}
+    />
+  );
 };
 
 export const Route = createFileRoute("/alumni")({

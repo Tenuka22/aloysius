@@ -131,16 +131,21 @@ export const SportsGrid = ({
   tiles = SPORT_TILES,
   moreSports = MORE_SPORTS,
   images,
+  eyebrow = SPORTS_EYEBROW,
+  heading = SPORTS_HEADING,
 }: {
   tiles?: readonly SportTile[];
   moreSports?: readonly string[];
   images?: SportImages;
+  /** CMS-resolved section copy; falls back to the page's own constants. */
+  eyebrow?: string;
+  heading?: string;
 }) => (
   <Section id="sports" labelledBy="sports-title" tone="surface">
     <Container>
-      <Eyebrow>{SPORTS_EYEBROW}</Eyebrow>
+      <Eyebrow>{eyebrow}</Eyebrow>
       <Heading id="sports-title" level={2}>
-        {SPORTS_HEADING}
+        {heading}
       </Heading>
 
       <Reveal direction="up">

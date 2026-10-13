@@ -1,7 +1,9 @@
+import { clubPhoto, gallery } from "@aloysius/db/schema/club-photos";
+import { club } from "@aloysius/db/schema/clubs";
 import { fileIdSchema } from "@aloysius/db/schema/files";
 import { event, eventIdSchema } from "@aloysius/db/schema/root-content";
 import { ORPCError } from "@orpc/server";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import * as v from "valibot";
 
 import { cmsProcedure, publicProcedure } from "../../index";
@@ -27,11 +29,25 @@ const slugify = (title: string, id: string) =>
  * Every event, soonest-first. One query backs both the public events page
  * (which filters out ones that have already finished) and the CMS management
  * screen (which needs the past ones too, to edit or delete them).
+ *
+ * `clubName` is joined from the club table rather than derived on the client.
+ * It was missing until now, and the events page filled the gap by stamping
+ * "Photography Club" onto every entry - which was simply false, because events
+ * carry `club: null` unless someone attributes them.
+ *
+ * `galleries` joins the approved galleries linked to each event through
+ * `gallery.linkedEventId`. A CMS reviewer setting a gallery's "Related content"
+ * to an event had no way to see that it had done anything, because this query
+ * never returned the link - the control was write-only. Only `approved`
+ * galleries are joined, the same gate `listApprovedGalleries` applies, so
+ * linking a pending gallery to an event does not publish it.
  */
 export const listEvents = publicProcedure.handler(async ({ context }) => {
   const rows = await context.db
     .select({
       id: event.id,
+      club: event.club,
+      clubName: club.name,
       title: event.title,
       description: event.description,
       location: event.location,
@@ -40,13 +56,87 @@ export const listEvents = publicProcedure.handler(async ({ context }) => {
       coverImageId: event.coverImageId,
     })
     .from(event)
+    .leftJoin(club, eq(event.club, club.slug))
     .orderBy(asc(event.startsAt))
     .all();
 
-  const urls = await resolveFileUrls(
-    context.db,
-    rows.flatMap((row) => (row.coverImageId ? [row.coverImageId] : []))
-  );
+  const eventIds = rows.map((row) => row.id);
+
+  const linkedGalleries =
+    eventIds.length === 0
+      ? []
+      : await context.db
+          .select({
+            id: gallery.id,
+            slug: gallery.slug,
+            title: gallery.title,
+            albumUrl: gallery.albumUrl,
+            coverImageId: gallery.coverImageId,
+            eventId: gallery.linkedEventId,
+          })
+          .from(gallery)
+          .where(
+            and(
+              inArray(gallery.linkedEventId, eventIds),
+              eq(gallery.status, "approved")
+            )
+          )
+          .orderBy(desc(gallery.publishedAt))
+          .all();
+
+  /*
+   * A gallery's cover, or failing that its first photograph - the fallback the
+   * schema's own comment promises wherever a gallery is shown. `asc` on
+   * `submittedAt` plus first-wins below means "first" means first, not last.
+   */
+  const galleryPhotos =
+    linkedGalleries.length === 0
+      ? []
+      : await context.db
+          .select({
+            galleryId: clubPhoto.galleryId,
+            fileId: clubPhoto.fileId,
+          })
+          .from(clubPhoto)
+          .where(
+            inArray(
+              clubPhoto.galleryId,
+              linkedGalleries.map((row) => row.id)
+            )
+          )
+          .orderBy(asc(clubPhoto.submittedAt))
+          .all();
+
+  const firstPhotoByGallery = new Map<string, string>();
+  for (const photo of galleryPhotos) {
+    if (!firstPhotoByGallery.has(photo.galleryId)) {
+      firstPhotoByGallery.set(photo.galleryId, photo.fileId);
+    }
+  }
+
+  const galleryCoverId = (linked: (typeof linkedGalleries)[number]) =>
+    linked.coverImageId ?? firstPhotoByGallery.get(linked.id) ?? null;
+
+  const urls = await resolveFileUrls(context.db, [
+    ...rows.flatMap((row) => (row.coverImageId ? [row.coverImageId] : [])),
+    ...linkedGalleries.flatMap((linked) => {
+      const fileId = galleryCoverId(linked);
+      return fileId ? [fileId] : [];
+    }),
+  ]);
+
+  const galleriesByEvent = new Map<string, typeof linkedGalleries>();
+  for (const linked of linkedGalleries) {
+    if (!linked.eventId) {
+      continue;
+    }
+    const existing = galleriesByEvent.get(linked.eventId);
+    if (existing) {
+      existing.push(linked);
+    } else {
+      galleriesByEvent.set(linked.eventId, [linked]);
+    }
+  }
 
   return rows.map((row) => ({
     ...row,
@@ -55,6 +145,16 @@ export const listEvents = publicProcedure.handler(async ({ context }) => {
       : null,
     startsAt: row.startsAt.toISOString(),
     endsAt: row.endsAt?.toISOString() ?? null,
+    galleries: (galleriesByEvent.get(row.id) ?? []).map((linked) => {
+      const fileId = galleryCoverId(linked);
+      return {
+        id: linked.id,
+        slug: linked.slug,
+        title: linked.title,
+        albumUrl: linked.albumUrl,
+        coverImageUrl: fileId ? (urls.get(fileId) ?? null) : null,
+      };
+    }),
   }));
 });
 

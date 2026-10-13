@@ -21,6 +21,20 @@ import {
 
 const SCROLL_THRESHOLD_PX = 24;
 
+/**
+ * Whether a link leaves the site.
+ *
+ * The Admissions call to action now points at the college's own admissions
+ * subdomain. A link that leaves should open in a new tab and carry
+ * `rel="noopener noreferrer"`, so the destination cannot reach back through
+ * `window.opener` and the visitor keeps the page they came from.
+ *
+ * Deliberately checked at render rather than hard-coded on one link, so an
+ * in-app destination passed in by a caller is not given a `target="_blank"` it
+ * does not need.
+ */
+const isExternalHref = (href: string): boolean => /^https?:\/\//u.test(href);
+
 const styles = stylex.create({
   header: {
     position: "sticky",
@@ -429,7 +443,12 @@ export const SiteHeader = ({
             })}
           </nav>
 
-          <a href={admissionsHref} {...stylex.props(styles.cta)}>
+          <a
+            href={admissionsHref}
+            rel="noopener noreferrer"
+            target={isExternalHref(admissionsHref) ? "_blank" : undefined}
+            {...stylex.props(styles.cta)}
+          >
             Admissions
           </a>
 
@@ -511,7 +530,12 @@ export const SiteHeader = ({
           </nav>
 
           <div {...stylex.props(styles.drawerFooter)}>
-            <a href={admissionsHref} {...stylex.props(styles.drawerCta)}>
+            <a
+              href={admissionsHref}
+              rel="noopener noreferrer"
+              target={isExternalHref(admissionsHref) ? "_blank" : undefined}
+              {...stylex.props(styles.drawerCta)}
+            >
               Admissions
             </a>
             <p {...stylex.props(styles.drawerMotto)}>{MOTTO}</p>

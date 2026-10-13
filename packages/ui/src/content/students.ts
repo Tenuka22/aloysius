@@ -134,6 +134,17 @@ export const HOUSES_HEADING = "The College Houses";
 export const HOUSES_INTRO =
   "Every student joins one of four houses on the day he enrols and competes for it until the day he leaves - on the track, in the pool, on the debating floor and at the inter-house athletics meet.";
 
+/**
+ * Upcoming events. Real copy rather than a marker, but no dates are named
+ * here - the entries themselves come from the CMS `events` collection, so the
+ * section renders only when the college has published at least one.
+ */
+export const EVENTS_EYEBROW = "Diary";
+export const EVENTS_HEADING = "Coming Up";
+export const EVENTS_INTRO =
+  "Assemblies, competitions, expeditions and the events our clubs run. Photographs of each are published as galleries.";
+export const EVENTS_ALL_LABEL = "Full diary";
+
 export const PREFECTS_HEADING = "Prefects' Guild & Student Leadership";
 export const PREFECTS_BODY =
   "The Guild is the senior school's own body of leadership, service and discipline. Its members keep the college's daily order and represent the student body to the staff.";

@@ -14,6 +14,7 @@ export const user = sqliteTable("user", {
     .notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    // oxlint-disable-next-line no-inline-comments -- `@__PURE__` is a build-tool annotation and must stay inline before the call
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   /*
@@ -42,6 +43,7 @@ export const session = sqliteTable(
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      // oxlint-disable-next-line no-inline-comments -- `@__PURE__` is a build-tool annotation and must stay inline before the call
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
     ipAddress: text("ip_address"),
@@ -78,6 +80,7 @@ export const account = sqliteTable(
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      // oxlint-disable-next-line no-inline-comments -- `@__PURE__` is a build-tool annotation and must stay inline before the call
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
@@ -96,6 +99,7 @@ export const verification = sqliteTable(
       .notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      // oxlint-disable-next-line no-inline-comments -- `@__PURE__` is a build-tool annotation and must stay inline before the call
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },

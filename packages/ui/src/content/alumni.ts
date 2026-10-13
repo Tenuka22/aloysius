@@ -9,7 +9,12 @@
 export const ALUMNI_HERO_TITLE = "Alumni";
 export const ALUMNI_HERO_INTRO =
   "The Old Boys' Association of St. Aloysius' College connects generations of Aloysians, wherever in the world they now live.";
-export const ALUMNI_HERO_EYEBROW = "Old Boys' Association";
+
+/*
+ * `ALUMNI_HERO_EYEBROW` was removed with the eyebrow it fed: the page has no
+ * kicker above its `h1`, and leaving the constant here would invite someone to
+ * wire one back up.
+ */
 
 export const ALUMNI_ABOUT_HEADING = "A Bond That Outlasts School";
 export const ALUMNI_ABOUT_BODY =
@@ -21,3 +26,13 @@ export const ALUMNI_LINKS_BODY =
   "Members can update their details with the branch secretary, or contact the College office to re-establish an address on the register.";
 export const ALUMNI_OBA_LABEL = "Visit the OBA";
 export const ALUMNI_EVENTS_LABEL = "Alumni events";
+
+/**
+ * The Association's own site.
+ *
+ * A published destination rather than a placeholder, because a button with no
+ * destination is the one thing this page must never render: an alumnus who
+ * clicks "Visit the OBA" and lands nowhere has been told the College could not
+ * be bothered to say where the Association lives.
+ */
+export const ALUMNI_OBA_HREF = "https://sacoba.lk/";

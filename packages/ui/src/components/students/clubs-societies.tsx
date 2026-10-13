@@ -200,16 +200,27 @@ const CardInner = ({ club }: { club: Club }) => {
 
 export const ClubsSocieties = ({
   clubs = CLUBS,
+  heading = CLUBS_HEADING,
+  intro = CLUBS_INTRO,
+  eyebrow = CLUBS_EYEBROW,
 }: {
   clubs?: readonly Club[];
+  /**
+   * The CMS `students-activities` heading. It used to be resolved by the route
+   * and then dropped, because `ClubsSocieties` rendered its own heading from
+   * the constant - so an editor who changed it saw no change on the page.
+   */
+  heading?: string;
+  intro?: string;
+  eyebrow?: string;
 }) => (
   <Section id="clubs" labelledBy="clubs-title" tone="inverseGradient">
     <Container>
-      <Eyebrow inverse>{CLUBS_EYEBROW}</Eyebrow>
+      <Eyebrow inverse>{eyebrow}</Eyebrow>
       <Heading id="clubs-title" level={2} style={styles.heading}>
-        {CLUBS_HEADING}
+        {heading}
       </Heading>
-      <Lead inverse>{CLUBS_INTRO}</Lead>
+      <Lead inverse>{intro}</Lead>
 
       <ul {...stylex.props(styles.grid)}>
         {clubs.map((club) => (

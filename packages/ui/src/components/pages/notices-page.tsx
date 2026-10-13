@@ -2,6 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 
 import type { NavItem } from "../../content/home";
 import { color, font, space } from "../../tokens/tokens.stylex";
+import { SkipLink } from "../primitives/layout";
 import { Media } from "../primitives/media";
 import type { ImageSource } from "../primitives/media";
 import { SiteFooter } from "../site/site-footer";
@@ -19,37 +20,32 @@ const styles = stylex.create({
       ":focus": "none",
     },
   },
+  /*
+   * A compact left-aligned masthead, matching the other archive pages. It was a
+   * centred block at `4xl` with an eyebrow above it; a list of notices wants the
+   * list to be the loudest thing on the page.
+   */
   hero: {
-    paddingBlockStart: space["3xl"],
-    paddingBlockEnd: space.xl,
-    paddingInline: space.md,
+    paddingBlock: space["2xl"],
+    paddingInline: space.gutter,
     backgroundColor: color.surface,
-    textAlign: "center",
-  },
-  eyebrow: {
-    margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWidest,
-    textTransform: "uppercase",
-    color: color.accentOnSurface,
   },
   heading: {
     margin: 0,
-    marginBlockStart: space.sm,
     fontFamily: font.display,
-    fontSize: font.size4xl,
+    fontSize: font.size3xl,
     fontWeight: font.weightSemibold,
     lineHeight: font.leadingTight,
+    letterSpacing: font.trackingTight,
     color: color.onSurface,
+    textWrap: "balance",
   },
   tagline: {
     margin: 0,
-    marginBlockStart: space.sm,
-    maxWidth: space.measure,
-    marginInline: "auto",
+    marginBlockStart: space["2xs"],
+    maxInlineSize: space.measure,
     fontSize: font.sizeLg,
-    lineHeight: font.leadingNormal,
+    lineHeight: font.leadingRelaxed,
     color: color.onSurfaceMuted,
     textWrap: "pretty",
   },
@@ -61,6 +57,23 @@ const styles = stylex.create({
     paddingInline: space.md,
     maxWidth: space.measure,
     marginInline: "auto",
+  },
+  emptyHeading: {
+    margin: 0,
+    fontFamily: font.display,
+    fontSize: font.sizeXl,
+    fontWeight: font.weightSemibold,
+    lineHeight: font.leadingSnug,
+    color: color.onSurface,
+  },
+  emptyBody: {
+    margin: 0,
+    marginBlockStart: space["2xs"],
+    maxInlineSize: space.measure,
+    fontSize: font.sizeMd,
+    lineHeight: font.leadingRelaxed,
+    color: color.onSurfaceMuted,
+    textWrap: "pretty",
   },
   noticeList: {
     display: "flex",
@@ -93,14 +106,11 @@ const styles = stylex.create({
 });
 
 export interface NoticesPageProps {
-  eyebrow?: string;
   heading?: string;
   tagline?: string;
   heroImage?: ImageSource;
   /** The CMS announcements. Empty is a real state, not a placeholder. */
   notices?: readonly NoticeSummary[];
-  /** Unused; kept for a stale caller. Was only printed inside placeholder text. */
-  pinUrgent?: never;
   extraNavItems?: readonly NavItem[];
 }
 
@@ -111,7 +121,6 @@ export interface NoticeSummary {
 }
 
 export const NoticesPage = ({
-  eyebrow,
   heading = "Notices",
   tagline,
   heroImage,
@@ -119,10 +128,10 @@ export const NoticesPage = ({
   extraNavItems,
 }: NoticesPageProps) => (
   <>
+    <SkipLink targetId={MAIN_ID} />
     <SiteHeader activeHref="/notices" extraNavItems={extraNavItems} />
     <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
       <section {...stylex.props(styles.hero)}>
-        {eyebrow && <p {...stylex.props(styles.eyebrow)}>{eyebrow}</p>}
         <h1 {...stylex.props(styles.heading)}>{heading}</h1>
         {tagline && <p {...stylex.props(styles.tagline)}>{tagline}</p>}
         {heroImage && (
@@ -142,9 +151,8 @@ export const NoticesPage = ({
        */}
       {notices.length === 0 && (
         <section {...stylex.props(styles.content)}>
-          <p {...stylex.props(styles.eyebrow)}>Announcements</p>
-          <h2 {...stylex.props(styles.heading)}>Nothing to report</h2>
-          <p>
+          <h2 {...stylex.props(styles.emptyHeading)}>Nothing to report</h2>
+          <p {...stylex.props(styles.emptyBody)}>
             There are no notices at the moment. Anything urgent is pinned to the
             top of this page, so an empty list here means the College office has
             published nothing.

@@ -248,10 +248,15 @@ export const COLLEGE_LOCATION = "Galle, Sri Lanka";
 export const FOUNDED_YEAR = 1862;
 
 /**
- * Every "Admissions" link points here - a real in-app route
- * (`apps/web/src/routes/admissions.tsx`), not a separate subdomain.
+ * Where every "Admissions" link points.
+ *
+ * Admissions moved off this site to its own subdomain, so the header's call to
+ * action and the footer link both leave the site now. They render with
+ * `target="_blank"` and `rel="noopener noreferrer"` for that reason - see
+ * `isExternalHref` in `components/site/site-header.tsx`, which is what decides
+ * it, so the two links cannot drift apart.
  */
-export const ADMISSIONS_URL = "/admissions";
+export const ADMISSIONS_URL = "https://admissions.aloysiuscollege.lk/";
 
 export const formatNewsDate = (iso?: string): string => {
   if (!iso) {

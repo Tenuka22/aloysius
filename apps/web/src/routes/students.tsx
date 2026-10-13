@@ -1,5 +1,5 @@
-import { StudentsPage } from "@aloysius/ui/components/pages/students-page";
-import type { StudentEvent } from "@aloysius/ui/components/pages/students-page";
+import { StudentsPage } from "@aloysius/ui/components/students/students-page";
+import type { StudentEvent } from "@aloysius/ui/components/students/students-page";
 import { blocksToStudentsProps } from "@aloysius/ui/content/cms-to-pages";
 import type { GalleryItem } from "@aloysius/ui/content/home";
 import { CLUBS } from "@aloysius/ui/content/students";
@@ -92,7 +92,30 @@ const StudentsContent = () => {
 
   return (
     <StudentsPage
-      {...cmsProps}
+      /*
+       * `eyebrow` and `heroImage` are the only two fields the mapper resolves
+       * that this page does not take. The About-shaped hero carries a
+       * breadcrumb where an eyebrow would sit and a crest watermark where a
+       * photograph would, so both are dropped here rather than spread through
+       * as props nothing renders.
+       */
+      heading={cmsProps.heading}
+      tagline={cmsProps.tagline}
+      activitiesEyebrow={cmsProps.activitiesEyebrow}
+      activitiesHeading={cmsProps.activitiesHeading}
+      activitiesIntro={cmsProps.activitiesIntro}
+      housesEyebrow={cmsProps.housesEyebrow}
+      housesHeading={cmsProps.housesHeading}
+      housesIntro={cmsProps.housesIntro}
+      houseNames={cmsProps.houseNames}
+      prefectsBody={cmsProps.prefectsBody}
+      prefectsCtaLabel={cmsProps.prefectsCtaLabel}
+      prefectsHeading={cmsProps.prefectsHeading}
+      prefectsHref={cmsProps.prefectsHref}
+      sportImages={cmsProps.sportImages}
+      sportsEyebrow={cmsProps.sportsEyebrow}
+      sportsHeading={cmsProps.sportsHeading}
+      moreSports={cmsProps.moreSports}
       achievements={achievements.map((achievement) => ({
         id: achievement.id,
         category: achievement.category,

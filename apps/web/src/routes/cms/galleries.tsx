@@ -74,6 +74,8 @@ interface GalleryPhoto {
 interface GalleryRow {
   id: string;
   club: string | null;
+  /** The club's display name; absent when the row's club no longer exists. */
+  clubName: string | null;
   title: string;
   description: string | null;
   albumUrl: string | null;
@@ -708,7 +710,9 @@ const GalleryRowItem = ({
       </>
     }
     meta={[
-      galleryRow.club ? `Club: ${galleryRow.club}` : "CMS-direct",
+      galleryRow.club
+        ? `Club: ${galleryRow.clubName ?? galleryRow.club}`
+        : "CMS-direct",
       `${galleryRow.photos.length} photo${galleryRow.photos.length === 1 ? "" : "s"}`,
       galleryRow.linkedTitle && `Linked: ${galleryRow.linkedTitle}`,
       galleryRow.reviewNote && `Reviewer note: ${galleryRow.reviewNote}`,

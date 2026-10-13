@@ -31,6 +31,7 @@ import { createClubCredential } from "@aloysius/auth";
 import { announcement } from "@aloysius/db/schema/announcements";
 import { user } from "@aloysius/db/schema/auth";
 import { clubPhoto, gallery } from "@aloysius/db/schema/club-photos";
+import { club } from "@aloysius/db/schema/clubs";
 import { files } from "@aloysius/db/schema/files";
 import { newsPost } from "@aloysius/db/schema/news-posts";
 import { achievement, event } from "@aloysius/db/schema/root-content";
@@ -177,6 +178,10 @@ const daysFromNow = (days: number): Date => {
   return date;
 };
 
+/** `hours` past a given moment - an event's end, not its start. */
+const hoursAfter = (from: Date, hours: number): Date =>
+  new Date(from.getTime() + hours * 60 * 60 * 1000);
+
 /** `count` real photos from one seed prefix, uploaded in parallel. */
 const makeGalleryPhotos = async (
   seedPrefix: string,
@@ -194,6 +199,136 @@ const makeGalleryPhotos = async (
     caption: `Photo ${index + 1}`,
     altText: `${seedPrefix.replaceAll("-", " ")}, photo ${index + 1}`,
   }));
+};
+
+/**
+ * The clubs the college runs.
+ *
+ * Seeded rather than derived from a constant because the club list is data now
+ * - a CMS editor adds one through `/cms/clubs`. `photography` must exist because
+ * the `photography-admin` seat is bound to that slug, so it is seeded even
+ * though nothing in this file attributes content to it.
+ *
+ * Declared above the content rows because those rows name clubs by slug: a
+ * `const` used before its declaration is a temporal-dead-zone crash at import,
+ * and this file runs top to bottom on every seed.
+ */
+const CLUB_ROWS = [
+  {
+    slug: "photography",
+    name: "Photography Club",
+    role: "media" as const,
+    description:
+      "Runs the college's newsroom and curates the photographs published in the gallery.",
+  },
+  {
+    slug: "debating",
+    name: "Debating Society",
+    role: "society" as const,
+    description:
+      "Prepares teams for inter-school and Southern Province debate.",
+  },
+  {
+    slug: "science",
+    name: "Science Society",
+    role: "society" as const,
+    description:
+      "Supports the science exhibition and the teams that enter the Olympiad.",
+  },
+  {
+    slug: "media",
+    name: "Media Unit",
+    role: "media" as const,
+    description: "Records assemblies and publishes the school's video archive.",
+  },
+  {
+    slug: "interact",
+    name: "Interact Club",
+    role: "society" as const,
+    description:
+      "Runs the college's service projects with the wider community.",
+  },
+  {
+    slug: "scouts",
+    name: "Scouts",
+    role: "society" as const,
+    description: "Trains weekly and maintains the college's outdoor programme.",
+  },
+  {
+    slug: "cadets",
+    name: "Cadets",
+    role: "cadet_corps" as const,
+    description: "Drills and parade training for the senior school.",
+  },
+  {
+    slug: "choir",
+    name: "Choir & Eastern Band",
+    role: "band" as const,
+    description:
+      "Rehearses weekly for the school assemblies and the annual concerts.",
+  },
+  {
+    slug: "environment",
+    name: "Environmental Society",
+    role: "society" as const,
+    description:
+      "Leads the college's sustainability work and its beach clean-ups.",
+  },
+] as const;
+
+const seedClubs = async () => {
+  await Promise.all(
+    CLUB_ROWS.map((row) =>
+      // Upsert by slug: a re-run updates the seeded club's name and role
+      // rather than failing on the unique index.
+      db
+        .insert(club)
+        .values({
+          id: crypto.randomUUID(),
+          slug: row.slug,
+          name: row.name,
+          role: row.role,
+          description: row.description,
+          publishedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: club.slug,
+          set: {
+            name: row.name,
+            role: row.role,
+            description: row.description,
+            publishedAt: new Date(),
+          },
+        })
+        .run()
+    )
+  );
+  return CLUB_ROWS.length;
+};
+
+/**
+ * Fail loudly when a content row names a club that was never seeded.
+ *
+ * The `club in (...)` CHECK constraint is gone now that the club list is data,
+ * so a typo here would produce a row that joins to nothing: invisible on the
+ * public page, unattributable in the CMS, and no error anywhere. Same reasoning
+ * as `linkedId` below - this seeder's job is to be predictable.
+ */
+const requireClubSlug = async (slug: string | null, owner: string) => {
+  if (slug === null) {
+    return;
+  }
+  const exists = await db
+    .select({ id: club.id })
+    .from(club)
+    .where(eq(club.slug, slug))
+    .limit(1)
+    .get();
+  if (!exists) {
+    throw new Error(
+      `${owner} is attributed to club "${slug}", which was not seeded.`
+    );
+  }
 };
 
 const ACHIEVEMENT_ROWS = [
@@ -234,6 +369,7 @@ const ANNOUNCEMENT_ROWS = [
     audience: "all" as const,
     severity: "urgent" as const,
     isPinned: true,
+    club: null,
     seed: "ann-admissions",
   },
   {
@@ -242,6 +378,7 @@ const ANNOUNCEMENT_ROWS = [
     audience: "students" as const,
     severity: "important" as const,
     isPinned: false,
+    club: null,
     seed: "ann-exams",
   },
   {
@@ -250,6 +387,7 @@ const ANNOUNCEMENT_ROWS = [
     audience: "parents" as const,
     severity: "info" as const,
     isPinned: false,
+    club: null,
     seed: "ann-ptm",
   },
   {
@@ -258,7 +396,73 @@ const ANNOUNCEMENT_ROWS = [
     audience: "alumni" as const,
     severity: "info" as const,
     isPinned: false,
+    club: null,
     seed: "ann-reunion",
+  },
+  {
+    title: "Interact Club: coastal clean-up volunteers wanted",
+    body: "The Interact Club is running a coastal clean-up on Saturday morning. Volunteers should meet at the college gate by 7:30am.",
+    audience: "students" as const,
+    severity: "info" as const,
+    isPinned: false,
+    club: "interact" as const,
+    seed: "ann-interact",
+  },
+  {
+    title: "Scouts: badge assessment weekend",
+    body: "Badge assessment takes place across the weekend at the college grounds. Scouts should arrive in full uniform on Saturday morning.",
+    audience: "students" as const,
+    severity: "info" as const,
+    isPinned: false,
+    club: "scouts" as const,
+    seed: "ann-scouts",
+  },
+] as const;
+
+const daysAgo = (days: number): Date => {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date;
+};
+
+/**
+ * Events that have already run.
+ *
+ * The `/events` page splits on the server's "now", so without these the "Recently"
+ * band renders nothing and the page is a to-do list rather than a diary - a
+ * returning visitor has nothing to find. `linkedKind` on the gallery plans is
+ * what makes a past event's photographs actually appear beside it.
+ */
+const PAST_EVENT_ROWS = [
+  {
+    title: "Old Boys' Cricket Match",
+    description:
+      "The annual fixture against the Old Boys' XI, played over two days on the college ground.",
+    location: "College Grounds",
+    startsAt: daysAgo(21),
+    endsInHours: 6,
+    club: "photography" as const,
+    seed: "event-past-cricket",
+  },
+  {
+    title: "Inter-School Debating Finals",
+    description:
+      "The senior debate team hosted the Southern Province final against three visiting schools.",
+    location: "Assembly Hall",
+    startsAt: daysAgo(35),
+    endsInHours: 4,
+    club: "debating" as const,
+    seed: "event-past-debate",
+  },
+  {
+    title: "National Schools' Choir Festival",
+    description:
+      "The choir and Eastern Band travelled to Colombo for the National Schools' Choir Festival.",
+    location: "Colombo",
+    startsAt: daysAgo(48),
+    endsInHours: 9,
+    club: "choir" as const,
+    seed: "event-past-choir",
   },
 ] as const;
 
@@ -269,6 +473,8 @@ const EVENT_ROWS = [
       "The annual inter-house athletics meet, with track and field events for all grades.",
     location: "College Grounds",
     startsAt: daysFromNow(14),
+    endsInHours: 6,
+    club: "cadets" as const,
     seed: "event-athletics",
   },
   {
@@ -277,6 +483,8 @@ const EVENT_ROWS = [
       "Student-led science exhibition showcasing projects from Grades 6 to 13.",
     location: "Main Hall",
     startsAt: daysFromNow(28),
+    endsInHours: 8,
+    club: "science" as const,
     seed: "event-science-fair",
   },
   {
@@ -285,7 +493,39 @@ const EVENT_ROWS = [
       "The college hosts the Southern Province inter-school chess tournament.",
     location: "Library Block",
     startsAt: daysFromNow(10),
+    endsInHours: 5,
+    club: "debating" as const,
     seed: "event-chess",
+  },
+  {
+    title: "Choir & Eastern Band Autumn Concert",
+    description:
+      "The choir and Eastern Band perform a programme of sacred and folk repertoire in the main hall.",
+    location: "Main Hall",
+    startsAt: daysFromNow(40),
+    endsInHours: 3,
+    club: "choir" as const,
+    seed: "event-choir-concert",
+  },
+  {
+    title: "Coastal Clean-up",
+    description:
+      "The Environmental Society's quarterly beach clean-up. Meet at the college gate; gloves and bags provided.",
+    location: "Kahandama Beach",
+    startsAt: daysFromNow(21),
+    endsInHours: 4,
+    club: "environment" as const,
+    seed: "event-cleanup",
+  },
+  {
+    title: "Cadet Annual Parade",
+    description:
+      "The annual cadet parade in full uniform, reviewed by the Chief Guest.",
+    location: "College Grounds",
+    startsAt: daysFromNow(60),
+    endsInHours: 2,
+    club: "cadets" as const,
+    seed: "event-cadet-parade",
   },
 ] as const;
 
@@ -339,12 +579,14 @@ const seedAchievements = async (cmsUserId: string) => {
 const seedAnnouncements = (cmsUserId: string) =>
   Promise.all(
     ANNOUNCEMENT_ROWS.map(async (row) => {
+      await requireClubSlug(row.club, `Announcement "${row.title}"`);
+
       const id = crypto.randomUUID();
       const imageId = await uploadSeedImage(row.seed, 1600, 1000, cmsUserId);
       const now = new Date();
       await db.insert(announcement).values({
         id,
-        club: null,
+        club: row.club,
         slug: slugify(row.title, id),
         title: row.title,
         body: row.body,
@@ -361,10 +603,21 @@ const seedAnnouncements = (cmsUserId: string) =>
     })
   );
 
+/**
+ * Both lists in one pass.
+ *
+ * The public events page splits on the server's "now", so the past and future
+ * rows are seeded together here rather than by two seeders that could drift
+ * apart. Each row already carries its own `startsAt`, so the split happens
+ * where it happens for a reader.
+ */
 const seedEvents = async (cmsUserId: string) => {
   const ids: Record<string, string> = {};
+  const rows = [...PAST_EVENT_ROWS, ...EVENT_ROWS];
   await Promise.all(
-    EVENT_ROWS.map(async (row) => {
+    rows.map(async (row) => {
+      await requireClubSlug(row.club, `Event "${row.title}"`);
+
       const id = crypto.randomUUID();
       const coverImageId = await uploadSeedImage(
         row.seed,
@@ -375,12 +628,13 @@ const seedEvents = async (cmsUserId: string) => {
       const now = new Date();
       await db.insert(event).values({
         id,
-        club: null,
+        club: row.club,
         slug: slugify(row.title, id),
         title: row.title,
         description: row.description,
         location: row.location,
         startsAt: row.startsAt,
+        endsAt: hoursAfter(row.startsAt, row.endsInHours),
         coverImageId,
         submittedById: cmsUserId,
         status: "approved",
@@ -429,7 +683,7 @@ interface GalleryPlan {
   coverSeed: string;
   photoSeedPrefix: string;
   photoCount: number;
-  club: "photography" | null;
+  club: string | null;
   creatorId: string;
   status: "pending" | "approved";
   linkedKind?: "event" | "achievement";
@@ -437,6 +691,8 @@ interface GalleryPlan {
 }
 
 const seedGallery = async (plan: GalleryPlan, cmsUserId: string) => {
+  await requireClubSlug(plan.club, `Gallery "${plan.title}"`);
+
   const id = crypto.randomUUID();
   const now = new Date();
   const [coverImageId, photos] = await Promise.all([
@@ -524,7 +780,7 @@ const seedGalleriesForDemo = async (
       coverSeed: "gallery-choir-cover",
       photoSeedPrefix: "gallery-choir",
       photoCount: 5,
-      club: null,
+      club: "choir",
       creatorId: cmsUserId,
       status: "approved",
       linkedKind: "achievement",
@@ -553,14 +809,42 @@ const seedGalleriesForDemo = async (
       creatorId: clubUserId,
       status: "pending",
     },
+    {
+      title: "Old Boys' Cricket Match",
+      description: "Day two of the annual fixture against the Old Boys' XI.",
+      coverSeed: "gallery-past-cricket-cover",
+      photoSeedPrefix: "gallery-past-cricket",
+      photoCount: 4,
+      club: "photography",
+      creatorId: clubUserId,
+      status: "approved",
+      linkedKind: "event",
+      linkedId: linkedId(eventIds, "event-past-cricket", "event"),
+    },
+    {
+      title: "Debating Finals",
+      description: "The senior team in the Southern Province final.",
+      coverSeed: "gallery-past-debate-cover",
+      photoSeedPrefix: "gallery-past-debate",
+      photoCount: 3,
+      club: null,
+      creatorId: cmsUserId,
+      status: "approved",
+      linkedKind: "event",
+      linkedId: linkedId(eventIds, "event-past-debate", "event"),
+    },
   ];
 
   await Promise.all(plans.map((plan) => seedGallery(plan, cmsUserId)));
+  return plans.length;
 };
 
 const main = async () => {
   const cmsUserId = await requireUserId("cms");
   const clubUserId = await requireUserId(CLUB_SEAT_USERNAME);
+
+  console.log("Seeding clubs...");
+  const clubCount = await seedClubs();
 
   console.log("Clearing existing seeded content...");
   await db.delete(clubPhoto).run();
@@ -586,15 +870,23 @@ const main = async () => {
   ]);
 
   console.log("Seeding galleries...");
-  await seedGalleriesForDemo(cmsUserId, clubUserId, eventIds, achievementIds);
+  const galleryCount = await seedGalleriesForDemo(
+    cmsUserId,
+    clubUserId,
+    eventIds,
+    achievementIds
+  );
 
   console.log("Done. Seeded:");
+  console.log(`  ${clubCount} clubs`);
   console.log(`  ${ACHIEVEMENT_ROWS.length} achievements`);
   console.log(`  ${ANNOUNCEMENT_ROWS.length} announcements`);
-  console.log(`  ${EVENT_ROWS.length} events`);
+  console.log(
+    `  ${PAST_EVENT_ROWS.length + EVENT_ROWS.length} events (${PAST_EVENT_ROWS.length} past, ${EVENT_ROWS.length} upcoming)`
+  );
   console.log(`  ${NEWS_ROWS.length} news posts`);
   console.log(
-    "  4 galleries (2 CMS-direct, 1 club-submitted approved, 1 club-submitted pending)"
+    `  ${galleryCount} galleries (2 CMS-direct, 2 club-submitted - one approved, one pending review)`
   );
 };
 

@@ -26,7 +26,6 @@ import { orpc } from "@/utils/orpc";
  */
 
 const CLUB = "photography" as const;
-const CLUB_NAME = "Photography Club" as const;
 
 const NOT_FOUND_SUMMARY =
   "This gallery is not available. It may never have been published, or it may have been withdrawn.";
@@ -35,6 +34,31 @@ const LINK_LABEL: Record<"news" | "event" | "achievement", string> = {
   achievement: "Achievement",
   event: "Event",
   news: "News",
+};
+
+/**
+ * Where each kind of linked content actually lives.
+ *
+ * Events are addressed by their anchor on `/events`, which is why the id is in
+ * the path rather than the query - the agenda row it belongs to carries
+ * `id="event-<id>"`. News and achievements have no detail route of their own, so
+ * they are named in the link rather than pretended to be reachable.
+ */
+const LINK_HREF: Record<"news" | "event" | "achievement", string | null> = {
+  event: "/events#event-",
+  achievement: null,
+  news: null,
+};
+
+const linkHrefFor = (
+  kind: "news" | "event" | "achievement",
+  id: string | null
+): string | null => {
+  const base = LINK_HREF[kind];
+  if (!base || !id) {
+    return null;
+  }
+  return `${base}${id}`;
 };
 
 const GalleryContent = () => {
@@ -84,7 +108,10 @@ const GalleryContent = () => {
   const links = gallery.linkedContent
     ? [
         {
-          href: null,
+          href: linkHrefFor(
+            gallery.linkedContent.kind,
+            gallery.linkedContent.id
+          ),
           targetLabel: LINK_LABEL[gallery.linkedContent.kind],
           targetTitle: gallery.linkedContent.title,
         },
@@ -95,7 +122,7 @@ const GalleryContent = () => {
     <GalleryPage
       albumLabel={gallery.albumUrl ? "View the full album" : undefined}
       albumUrl={gallery.albumUrl}
-      clubName={CLUB_NAME}
+      clubName={gallery.clubName}
       extraNavItems={extraNavItems}
       items={items}
       kind="photo"

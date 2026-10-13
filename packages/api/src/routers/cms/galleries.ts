@@ -4,6 +4,7 @@ import {
   galleryIdSchema,
   galleryLinkKindSchema,
 } from "@aloysius/db/schema/club-photos";
+import { club } from "@aloysius/db/schema/clubs";
 import { fileIdSchema } from "@aloysius/db/schema/files";
 import { newsPost } from "@aloysius/db/schema/news-posts";
 import { achievement, event } from "@aloysius/db/schema/root-content";
@@ -62,6 +63,7 @@ export const listGalleries = cmsProcedure.handler(async ({ context }) => {
       id: gallery.id,
       slug: gallery.slug,
       club: gallery.club,
+      clubName: club.name,
       title: gallery.title,
       description: gallery.description,
       albumUrl: gallery.albumUrl,
@@ -79,6 +81,7 @@ export const listGalleries = cmsProcedure.handler(async ({ context }) => {
       linkedAchievementId: gallery.linkedAchievementId,
     })
     .from(gallery)
+    .leftJoin(club, eq(gallery.club, club.slug))
     .leftJoin(newsPost, eq(gallery.linkedNewsId, newsPost.id))
     .leftJoin(event, eq(gallery.linkedEventId, event.id))
     .leftJoin(achievement, eq(gallery.linkedAchievementId, achievement.id))

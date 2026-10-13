@@ -1,11 +1,47 @@
 import * as stylex from "@stylexjs/stylex";
 
+import {
+  ALUMNI_ABOUT_BODY,
+  ALUMNI_ABOUT_CAPTION,
+  ALUMNI_ABOUT_HEADING,
+  ALUMNI_EVENTS_LABEL,
+  ALUMNI_HERO_INTRO,
+  ALUMNI_HERO_TITLE,
+  ALUMNI_LINKS_BODY,
+  ALUMNI_LINKS_HEADING,
+  ALUMNI_OBA_LABEL,
+} from "../../content/alumni";
 import type { NavItem } from "../../content/home";
+import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
+import { ButtonLink } from "../primitives/button";
+import {
+  Container,
+  Heading,
+  Lead,
+  Section,
+  SkipLink,
+} from "../primitives/layout";
 import { Media } from "../primitives/media";
 import type { ImageSource } from "../primitives/media";
+import { Reveal } from "../primitives/reveal";
 import { SiteFooter } from "../site/site-footer";
+import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
+
+/**
+ * The Old Boys' Association page.
+ *
+ * Three bands: a compact cream masthead, the Association's own account of
+ * itself set against its photograph, and a short "how to get back in touch"
+ * close. The page used to render the masthead, one paragraph of body copy and a
+ * pair of buttons - while `content/alumni.ts` carried two further headings and
+ * three more paragraphs that nothing on the page ever read, so the page shipped
+ * with less copy than the project had already written for it.
+ *
+ * The close sits on the deep-green band rather than a cream one, so the page
+ * ends on the invitation instead of trailing off after a paragraph.
+ */
 
 const MAIN_ID = "main-content";
 
@@ -17,155 +53,242 @@ const styles = stylex.create({
       ":focus": "none",
     },
   },
-  hero: {
-    paddingBlockStart: space["3xl"],
-    paddingBlockEnd: space.xl,
-    paddingInline: space.md,
+
+  /* ---- the masthead ---- */
+  header: {
+    paddingBlock: space["2xl"],
+    paddingInline: space.gutter,
     backgroundColor: color.surface,
-    textAlign: "center",
   },
-  eyebrow: {
+  title: {
     margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWidest,
-    textTransform: "uppercase",
-    color: color.accentOnSurface,
-  },
-  heading: {
-    margin: 0,
-    marginBlockStart: space.sm,
     fontFamily: font.display,
-    fontSize: font.size4xl,
+    fontSize: font.size3xl,
     fontWeight: font.weightSemibold,
     lineHeight: font.leadingTight,
+    letterSpacing: font.trackingTight,
     color: color.onSurface,
+    textWrap: "balance",
   },
   tagline: {
     margin: 0,
-    marginBlockStart: space.sm,
-    maxWidth: space.measure,
-    marginInline: "auto",
+    marginBlockStart: space["2xs"],
+    maxInlineSize: space.measure,
     fontSize: font.sizeLg,
-    lineHeight: font.leadingNormal,
+    lineHeight: font.leadingRelaxed,
     color: color.onSurfaceMuted,
     textWrap: "pretty",
   },
   heroMedia: {
     marginBlockStart: space.lg,
   },
-  contentMedia: {
-    marginBlockStart: space.lg,
-  },
-  content: {
-    paddingBlock: space.xl,
-    paddingInline: space.md,
-    maxWidth: space.measure,
-    marginInline: "auto",
+
+  /* ---- the Association ---- */
+  /*
+   * Text and photograph side by side from `lg`, stacking below it. The copy is
+   * the point of this band, so it takes the wider track and holds its own
+   * measure rather than stretching the full width of the container.
+   */
+  about: {
+    display: "grid",
+    gap: space.xl,
+    alignItems: "start",
+    gridTemplateColumns: {
+      default: "minmax(0, 1fr)",
+      [bp.lg]: "minmax(0, 1.2fr) minmax(0, 1fr)",
+    },
+    columnGap: space["2xl"],
   },
   body: {
     margin: 0,
-    fontSize: font.sizeLg,
+    marginBlockStart: space.md,
+    maxInlineSize: "62ch",
+    fontSize: font.sizeMd,
     lineHeight: font.leadingRelaxed,
-    color: color.onSurface,
+    color: color.onSurfaceMuted,
+    textWrap: "pretty",
   },
-  quickLinks: {
+
+  /* ---- the close ---- */
+  closeHeading: {
+    color: color.onInverse,
+  },
+  closeLead: {
+    maxInlineSize: "52ch",
+  },
+  /*
+   * Two buttons, side by side from `sm` and full-width on a phone. `fluid` on
+   * each is what lets them stack cleanly rather than being squeezed to two
+   * cramped halves at 320px.
+   */
+  actions: {
     display: "flex",
     flexWrap: "wrap",
-    gap: space.sm,
-    marginBlockStart: space.lg,
+    gap: space.md,
+    marginBlockStart: space.xl,
   },
-  quickLink: {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: space.sm,
-    paddingLeft: space.md,
-    paddingRight: space.md,
-    borderRadius: space.sm,
-    backgroundColor: color.accentOnSurface,
-    color: color.surface,
-    textDecoration: "none",
-    fontSize: font.sizeSm,
-    fontWeight: font.weightMedium,
-    transition: "opacity 0.2s",
+  action: {
+    /*
+     * Pushed to the leading edge rather than stretched: these are two
+     * destinations, not a form, and a full-bleed button each would read as the
+     * page's only action.
+     */
+    flex: {
+      default: "1 1 100%",
+      [bp.sm]: "0 0 auto",
+    },
   },
 });
 
 export interface AlumniPageProps {
-  eyebrow?: string;
   heading?: string;
   tagline?: string;
   heroImage?: ImageSource;
+  /** The Association's own account of itself, under `aboutHeading`. */
+  aboutHeading?: string;
   body?: string;
   image?: ImageSource;
+  /** Caption for `image`, also its alt text. */
+  imageCaption?: string;
+  linksHeading?: string;
+  linksBody?: string;
   obaHref?: string;
   eventsHref?: string;
+  obaLabel?: string;
+  eventsLabel?: string;
+  contact?: FooterContact;
   extraNavItems?: readonly NavItem[];
 }
 
 export const AlumniPage = ({
-  eyebrow,
-  heading = "Alumni",
-  tagline,
+  heading = ALUMNI_HERO_TITLE,
+  tagline = ALUMNI_HERO_INTRO,
   heroImage,
-  body,
+  aboutHeading = ALUMNI_ABOUT_HEADING,
+  body = ALUMNI_ABOUT_BODY,
   image,
+  imageCaption = ALUMNI_ABOUT_CAPTION,
+  linksHeading = ALUMNI_LINKS_HEADING,
+  linksBody = ALUMNI_LINKS_BODY,
   obaHref,
   eventsHref,
+  obaLabel = ALUMNI_OBA_LABEL,
+  eventsLabel = ALUMNI_EVENTS_LABEL,
+  contact,
   extraNavItems,
-}: AlumniPageProps) => (
-  <>
-    <SiteHeader activeHref="/alumni" extraNavItems={extraNavItems} />
-    <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
-      <section {...stylex.props(styles.hero)}>
-        {eyebrow && <p {...stylex.props(styles.eyebrow)}>{eyebrow}</p>}
-        <h1 {...stylex.props(styles.heading)}>{heading}</h1>
-        {tagline && <p {...stylex.props(styles.tagline)}>{tagline}</p>}
-        {heroImage && (
-          <Media
-            placeholder=""
-            ratio="16:9"
-            source={heroImage}
-            style={styles.heroMedia}
-          />
-        )}
-      </section>
-      <section {...stylex.props(styles.content)}>
-        {body && <p {...stylex.props(styles.body)}>{body}</p>}
-        {image && (
-          <Media
-            placeholder="Old Boys' Association"
-            ratio="3:2"
-            source={image}
-            style={styles.contentMedia}
-          />
-        )}
-        {(obaHref || eventsHref) && (
-          <div {...stylex.props(styles.quickLinks)}>
-            {obaHref && (
-              <a
-                href={obaHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                {...stylex.props(styles.quickLink)}
-              >
-                OBA Portal
-              </a>
-            )}
-            {eventsHref && (
-              <a
-                href={eventsHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                {...stylex.props(styles.quickLink)}
-              >
-                Events
-              </a>
-            )}
-          </div>
-        )}
-      </section>
-    </main>
-    <SiteFooter />
-  </>
-);
+}: AlumniPageProps) => {
+  const actions = [
+    ...(obaHref
+      ? [{ href: obaHref, label: obaLabel, external: true, key: "oba" }]
+      : []),
+    /*
+     * `/events` is the college's own diary, so the alumni-events destination is
+     * internal unless a CMS editor points it somewhere else. `external` is
+     * decided by whether the href leaves the site rather than assumed, because
+     * an external link opened in the same tab is a dead end for the visitor.
+     */
+    ...(eventsHref
+      ? [
+          {
+            href: eventsHref,
+            label: eventsLabel,
+            external: eventsHref.startsWith("http"),
+            key: "events",
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <>
+      <SkipLink targetId={MAIN_ID} />
+      <SiteHeader activeHref="/alumni" extraNavItems={extraNavItems} />
+      <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
+        <header {...stylex.props(styles.header)}>
+          <Container>
+            <h1 {...stylex.props(styles.title)}>{heading}</h1>
+            {tagline ? (
+              <p {...stylex.props(styles.tagline)}>{tagline}</p>
+            ) : null}
+            {heroImage ? (
+              <Media
+                placeholder=""
+                ratio="16:9"
+                source={heroImage}
+                style={styles.heroMedia}
+              />
+            ) : null}
+          </Container>
+        </header>
+
+        <Section id="oba" labelledBy="oba-title" tone="surface">
+          <Container>
+            <div {...stylex.props(styles.about)}>
+              <div>
+                <Heading id="oba-title" level={2}>
+                  {aboutHeading}
+                </Heading>
+                {body ? <p {...stylex.props(styles.body)}>{body}</p> : null}
+              </div>
+              {/*
+                The photograph carries its caption as its alt text, so a screen
+                reader is told what the image is of rather than being left with
+                a bare file. The visible caption is the CMS's own alt field, not
+                a second string to keep in sync.
+              */}
+              {image ? (
+                <Media
+                  placeholder={imageCaption}
+                  ratio="4:5"
+                  source={image}
+                  zoom
+                />
+              ) : null}
+            </div>
+          </Container>
+        </Section>
+
+        {/*
+          The close renders whenever there is guidance copy to show, and adds
+          buttons only for destinations that exist. Gating the whole band on
+          `actions.length` would hide "Members can update their details with
+          the branch secretary..." - copy the college has published - behind a
+          missing URL field, which is the same defect as a dead button.
+        */}
+        {linksBody || actions.length > 0 ? (
+          <Section id="connect" labelledBy="connect-title" tone="inverse">
+            <Container>
+              <Heading id="connect-title" level={2} style={styles.closeHeading}>
+                {linksHeading}
+              </Heading>
+              {linksBody ? (
+                <Lead inverse style={styles.closeLead}>
+                  {linksBody}
+                </Lead>
+              ) : null}
+              {actions.length > 0 ? (
+                <Reveal direction="up">
+                  <div {...stylex.props(styles.actions)}>
+                    {actions.map((action) => (
+                      <ButtonLink
+                        external={action.external}
+                        fluid
+                        href={action.href}
+                        key={action.key}
+                        style={styles.action}
+                        variant="solid"
+                      >
+                        {action.label}
+                      </ButtonLink>
+                    ))}
+                  </div>
+                </Reveal>
+              ) : null}
+            </Container>
+          </Section>
+        ) : null}
+      </main>
+      <SiteFooter contact={contact} />
+    </>
+  );
+};

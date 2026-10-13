@@ -11,9 +11,10 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type { Dispatch, FormEvent, RefObject, SetStateAction } from "react";
 
 import {
+  CONTACT_DEFAULT_EMAIL,
   CONTACT_EMAIL_INVALID_MESSAGE,
   CONTACT_FIELDS,
   CONTACT_FORM_COUNTER_THRESHOLD,
@@ -22,11 +23,18 @@ import {
   CONTACT_FORM_FOOTNOTE,
   CONTACT_FORM_HEADING,
   CONTACT_FORM_INTRO,
-  CONTACT_FORM_NO_ENDPOINT,
+  CONTACT_FORM_MAILTO_HANDOFF,
+  CONTACT_FORM_MAILTO_MAX_LENGTH,
+  CONTACT_FORM_MAILTO_SUBJECT,
+  CONTACT_FORM_MAILTO_TOO_LONG,
   CONTACT_FORM_REQUIRED_NOTE,
   CONTACT_FORM_SENDING_LABEL,
   CONTACT_FORM_SUBMIT_LABEL,
   CONTACT_FORM_SUCCESS,
+  CONTACT_MAIL_BODY_EMAIL,
+  CONTACT_MAIL_BODY_MESSAGE,
+  CONTACT_MAIL_BODY_NAME,
+  CONTACT_MAIL_BODY_SUBJECT,
   CONTACT_MESSAGE_MIN_LENGTH,
   CONTACT_MESSAGE_TOO_SHORT_MESSAGE,
 } from "../../content/contact";
@@ -459,7 +467,7 @@ const FIELD_ICONS: Record<ContactField["id"], LucideIcon> = {
   message: MessageSquare,
 };
 
-type Outcome = "idle" | "sending" | "sent" | "failed" | "unwired";
+type Outcome = "idle" | "sending" | "sent" | "failed" | "handedOff" | "tooLong";
 
 const EMPTY_VALUES: ContactFormValues = {
   name: "",
@@ -497,19 +505,207 @@ const validate = (values: ContactFormValues) => {
 const STATUS_BY_OUTCOME = {
   sent: { text: CONTACT_FORM_SUCCESS, tone: "success" },
   failed: { text: CONTACT_FORM_FAILURE, tone: "error" },
-  unwired: { text: CONTACT_FORM_NO_ENDPOINT, tone: "error" },
+  handedOff: { text: CONTACT_FORM_MAILTO_HANDOFF, tone: "success" },
+  tooLong: { text: CONTACT_FORM_MAILTO_TOO_LONG, tone: "error" },
 } as const;
+
+/**
+ * Compose the enquiry as a `mailto:` for the visitor's own mail client.
+ *
+ * This is what the form does when there is no enquiry endpoint. Nothing is sent
+ * by the website - the browser hands a URL to whatever mail app the visitor
+ * uses, and they press send. That is why the status says the message was
+ * *opened*, never that it was sent.
+ *
+ * The recipient is a constant, not a value taken from the form, so the enquiry
+ * cannot be retargeted by editing a hidden field.
+ */
+const composeMailto = (
+  values: ContactFormValues,
+  recipient: string
+): string => {
+  const body = [
+    `${CONTACT_MAIL_BODY_NAME}: ${values.name.trim()}`,
+    `${CONTACT_MAIL_BODY_EMAIL}: ${values.email.trim()}`,
+    `${CONTACT_MAIL_BODY_SUBJECT}: ${values.subject.trim() || CONTACT_FORM_MAILTO_SUBJECT}`,
+    "",
+    `${CONTACT_MAIL_BODY_MESSAGE}:`,
+    "",
+    values.message.trim(),
+  ].join("\n");
+
+  const params = new URLSearchParams({
+    subject: values.subject.trim() || CONTACT_FORM_MAILTO_SUBJECT,
+    body,
+  });
+
+  return `mailto:${recipient}?${params.toString()}`;
+};
 
 export interface ContactFormProps {
   /**
-   * Submits the enquiry. Omitted while no enquiry endpoint exists - the form
-   * then validates, clears nothing, and tells the user plainly that the message
-   * was not sent. It never pretends to have delivered it.
+   * Submits the enquiry through the backend. Omitted while no enquiry endpoint
+   * exists, in which case the form opens the visitor's own mail client with the
+   * message composed - it never claims to have delivered anything itself.
    */
   onSubmit?: (values: ContactFormValues) => Promise<void>;
+  /** Where the composed message is addressed. Defaults to the College office. */
+  mailTo?: string;
 }
 
-export const ContactForm = ({ onSubmit }: ContactFormProps) => {
+interface ContactFormFieldProps {
+  controls: RefObject<Map<ContactField["id"], HTMLElement>>;
+  error: string | undefined;
+  field: ContactField;
+  focused: ContactField["id"] | null;
+  formId: string;
+  setFocused: Dispatch<SetStateAction<ContactField["id"] | null>>;
+  setValues: Dispatch<SetStateAction<ContactFormValues>>;
+  value: string;
+}
+
+const ContactFormField = ({
+  controls,
+  error,
+  field,
+  focused,
+  formId,
+  setFocused,
+  setValues,
+  value,
+}: ContactFormFieldProps) => {
+  const inputId = `${formId}-${field.id}`;
+  const errorId = `${inputId}-error`;
+  const invalid = Boolean(error);
+  const Icon = FIELD_ICONS[field.id];
+  const used = value.length;
+  /*
+   * The counter only appears once the cap is actually in view, so it
+   * reads as information rather than as pressure to be brief.
+   */
+  const showCounter =
+    field.multiline && used > field.maxLength * CONTACT_FORM_COUNTER_THRESHOLD;
+
+  const hasFocus = focused === field.id;
+  // Floated once there is anything to sit above: focus or content.
+  const floated = hasFocus || value !== "";
+
+  const shared = {
+    "aria-describedby": error ? errorId : undefined,
+    "aria-invalid": error ? true : undefined,
+    autoComplete: field.autoComplete,
+    id: inputId,
+    maxLength: field.maxLength,
+    name: field.id,
+    onBlur: () => {
+      setFocused((current) => (current === field.id ? null : current));
+    },
+    onChange: (event: { target: { value: string } }) => {
+      setValues((current) => ({
+        ...current,
+        [field.id]: event.target.value,
+      }));
+    },
+    onFocus: () => {
+      setFocused(field.id);
+    },
+    /*
+     * The worked example only appears once the label has floated
+     * clear, so the two never share a line and the placeholder is
+     * never doing the label's job.
+     */
+    placeholder: hasFocus ? field.placeholder : "",
+    ref: (node: HTMLElement | null) => {
+      if (node) {
+        controls.current.set(field.id, node);
+      } else {
+        controls.current.delete(field.id);
+      }
+    },
+    required: true,
+    value,
+  } as const;
+
+  return (
+    <div key={field.id} {...stylex.props(field.wide && styles.fieldWide)}>
+      <div {...stylex.props(styles.well)}>
+        <Icon
+          aria-hidden="true"
+          size={18}
+          strokeWidth={1.75}
+          {...stylex.props(
+            styles.fieldIcon,
+            field.multiline && styles.textareaIcon,
+            hasFocus && styles.fieldIconActive,
+            invalid && styles.fieldIconInvalid
+          )}
+        />
+        {field.multiline ? (
+          <textarea
+            rows={5}
+            {...shared}
+            {...stylex.props(
+              styles.control,
+              styles.textarea,
+              invalid && styles.controlInvalid
+            )}
+          />
+        ) : (
+          <input
+            type={field.type ?? "text"}
+            {...shared}
+            {...stylex.props(styles.control, invalid && styles.controlInvalid)}
+          />
+        )}
+        {/*
+          After the control in the DOM so it paints over it, but
+          still its `<label for>` - the accessible name and
+          click-to-focus behaviour are unchanged.
+        */}
+        <label
+          htmlFor={inputId}
+          {...stylex.props(
+            styles.label,
+            field.multiline && styles.labelMultiline,
+            floated && styles.labelFloated,
+            hasFocus && styles.labelActive
+          )}
+        >
+          {field.label}
+        </label>
+      </div>
+
+      {showCounter ? (
+        <div {...stylex.props(styles.counterRow)}>
+          <span
+            // The field's error text is what needs announcing; a
+            // counter ticking on every keystroke would talk over it.
+            aria-hidden="true"
+            {...stylex.props(
+              styles.counter,
+              used === field.maxLength && styles.counterAtLimit
+            )}
+          >
+            {used} / {field.maxLength}
+          </span>
+        </div>
+      ) : null}
+
+      {error ? (
+        <p id={errorId} {...stylex.props(styles.error)}>
+          <AlertCircle
+            aria-hidden="true"
+            size={14}
+            {...stylex.props(styles.errorIcon)}
+          />
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+};
+
+export const ContactForm = ({ onSubmit, mailTo }: ContactFormProps) => {
   const formId = useId();
   /*
    * Refs rather than a `document` lookup by id: `useId()` returns values
@@ -548,7 +744,20 @@ export const ContactForm = ({ onSubmit }: ContactFormProps) => {
     }
 
     if (!onSubmit) {
-      setOutcome("unwired");
+      /*
+       * No endpoint: hand the composed message to the visitor's own mail app.
+       *
+       * Refused rather than truncated when the URL runs past what mail clients
+       * will read - a silently cut-off enquiry is worse than one the visitor
+       * knows to send by hand.
+       */
+      const mailto = composeMailto(values, mailTo ?? CONTACT_DEFAULT_EMAIL);
+      if (mailto.length > CONTACT_FORM_MAILTO_MAX_LENGTH) {
+        setOutcome("tooLong");
+        return;
+      }
+      setOutcome("handedOff");
+      window.location.href = mailto;
       return;
     }
 
@@ -598,147 +807,19 @@ export const ContactForm = ({ onSubmit }: ContactFormProps) => {
         */}
         <form noValidate onSubmit={handleSubmit}>
           <div {...stylex.props(styles.fields)}>
-            {CONTACT_FIELDS.map((field) => {
-              const inputId = `${formId}-${field.id}`;
-              const errorId = `${inputId}-error`;
-              const error = errors[field.id];
-              const invalid = Boolean(error);
-              const Icon = FIELD_ICONS[field.id];
-              const used = values[field.id].length;
-              /*
-               * The counter only appears once the cap is actually in view, so it
-               * reads as information rather than as pressure to be brief.
-               */
-              const showCounter =
-                field.multiline &&
-                used > field.maxLength * CONTACT_FORM_COUNTER_THRESHOLD;
-
-              const hasFocus = focused === field.id;
-              // Floated once there is anything to sit above: focus or content.
-              const floated = hasFocus || values[field.id] !== "";
-
-              const shared = {
-                "aria-describedby": error ? errorId : undefined,
-                "aria-invalid": error ? true : undefined,
-                autoComplete: field.autoComplete,
-                id: inputId,
-                maxLength: field.maxLength,
-                name: field.id,
-                onBlur: () => {
-                  setFocused((current) =>
-                    current === field.id ? null : current
-                  );
-                },
-                onChange: (event: { target: { value: string } }) => {
-                  setValues((current) => ({
-                    ...current,
-                    [field.id]: event.target.value,
-                  }));
-                },
-                onFocus: () => {
-                  setFocused(field.id);
-                },
-                /*
-                 * The worked example only appears once the label has floated
-                 * clear, so the two never share a line and the placeholder is
-                 * never doing the label's job.
-                 */
-                placeholder: hasFocus ? field.placeholder : "",
-                ref: (node: HTMLElement | null) => {
-                  if (node) {
-                    controls.current.set(field.id, node);
-                  } else {
-                    controls.current.delete(field.id);
-                  }
-                },
-                required: true,
-                value: values[field.id],
-              } as const;
-
-              return (
-                <div
-                  key={field.id}
-                  {...stylex.props(field.wide && styles.fieldWide)}
-                >
-                  <div {...stylex.props(styles.well)}>
-                    <Icon
-                      aria-hidden="true"
-                      size={18}
-                      strokeWidth={1.75}
-                      {...stylex.props(
-                        styles.fieldIcon,
-                        field.multiline && styles.textareaIcon,
-                        hasFocus && styles.fieldIconActive,
-                        invalid && styles.fieldIconInvalid
-                      )}
-                    />
-                    {field.multiline ? (
-                      <textarea
-                        rows={5}
-                        {...shared}
-                        {...stylex.props(
-                          styles.control,
-                          styles.textarea,
-                          invalid && styles.controlInvalid
-                        )}
-                      />
-                    ) : (
-                      <input
-                        type={field.type ?? "text"}
-                        {...shared}
-                        {...stylex.props(
-                          styles.control,
-                          invalid && styles.controlInvalid
-                        )}
-                      />
-                    )}
-                    {/*
-                      After the control in the DOM so it paints over it, but
-                      still its `<label for>` - the accessible name and
-                      click-to-focus behaviour are unchanged.
-                    */}
-                    <label
-                      htmlFor={inputId}
-                      {...stylex.props(
-                        styles.label,
-                        field.multiline && styles.labelMultiline,
-                        floated && styles.labelFloated,
-                        hasFocus && styles.labelActive
-                      )}
-                    >
-                      {field.label}
-                    </label>
-                  </div>
-
-                  {showCounter ? (
-                    <div {...stylex.props(styles.counterRow)}>
-                      <span
-                        // The field's error text is what needs announcing; a
-                        // counter ticking on every keystroke would talk over it.
-                        aria-hidden="true"
-                        {...stylex.props(
-                          styles.counter,
-                          used === field.maxLength && styles.counterAtLimit
-                        )}
-                      >
-                        {used} / {field.maxLength}
-                      </span>
-                    </div>
-                  ) : null}
-
-                  {error ? (
-                    <p id={errorId} {...stylex.props(styles.error)}>
-                      <AlertCircle
-                        aria-hidden="true"
-                        size={14}
-                        {...stylex.props(styles.errorIcon)}
-                      />
-                      {error}
-                    </p>
-                  ) : null}
-                </div>
-              );
-            })}
+            {CONTACT_FIELDS.map((field) => (
+              <ContactFormField
+                controls={controls}
+                error={errors[field.id]}
+                field={field}
+                focused={focused}
+                formId={formId}
+                key={field.id}
+                setFocused={setFocused}
+                setValues={setValues}
+                value={values[field.id]}
+              />
+            ))}
           </div>
 
           <div {...stylex.props(styles.footer)}>

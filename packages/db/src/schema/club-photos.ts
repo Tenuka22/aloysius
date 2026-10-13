@@ -17,13 +17,20 @@ import * as v from "valibot";
 import { user } from "./auth";
 import { brand } from "./brand";
 import type { Brand } from "./brand";
-import { CLUBS, clubSlugSchema } from "./clubs";
+import { clubSlugSchema } from "./clubs";
 import { fileIdSchema, files } from "./files";
 import { newsPost } from "./news-posts";
 import { achievement, event } from "./root-content";
 
-export { CLUBS, clubSlugSchema } from "./clubs";
-export type { ClubSlug } from "./clubs";
+/*
+ * Only the club *types and validators* are re-exported here, never the `club`
+ * table itself. `drizzle-kit` scans every file under `src/schema` and builds a
+ * table registry from what it finds, so a table re-exported from two modules is
+ * registered twice and generation fails with "table name is a duplicate".
+ * Import the table from `@aloysius/db/schema/clubs`, which is its own module.
+ */
+export { clubRoleSchema, clubSlugSchema } from "./clubs";
+export type { ClubRole, ClubSlug } from "./clubs";
 
 /** `column in ('a', 'b')` for a CHECK. Values are code constants, never input. */
 const sqlInList = (column: SQLWrapper, values: readonly string[]): SQL =>
@@ -142,10 +149,6 @@ export const gallery = sqliteTable(
     index("gallery_club_status_idx").on(table.club, table.status),
     index("gallery_published_idx").on(table.publishedAt),
     index("gallery_created_by_idx").on(table.createdById),
-    check(
-      "gallery_club_check",
-      sql`${table.club} is null or ${sqlInList(table.club, CLUBS)}`
-    ),
     check(
       "gallery_status_check",
       sqlInList(table.status, galleryStatusSchema.options)
