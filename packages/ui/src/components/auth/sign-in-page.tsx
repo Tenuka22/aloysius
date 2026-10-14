@@ -867,7 +867,7 @@ export interface SignInPageProps {
 }
 
 const DEFAULT_MARKS: SignInMark[] = [
-  { value: "1862", label: "FOUNDED" },
+  { value: "1895", label: "FOUNDED" },
   { value: "Galle", label: "SOUTHERN PROVINCE" },
   { value: "Certa Viriliter", label: "STRIVE MANFULLY" },
 ];

@@ -27,7 +27,7 @@ describe(AcademicsPage, () => {
     for (const name of [
       "Sections of Study",
       "A/L Streams",
-      "Subject Departments",
+      "Subjects",
       "Examination Results & Achievements",
     ]) {
       expect(

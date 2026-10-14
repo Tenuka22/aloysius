@@ -103,6 +103,13 @@ const styles = stylex.create({
   itemMeta: {
     marginBlockStart: 0,
   },
+  empty: {
+    margin: 0,
+    paddingBlock: space.xl,
+    color: color.onSurfaceSubtle,
+    fontSize: font.sizeSm,
+    textAlign: "center",
+  },
 });
 
 export const News = ({
@@ -113,65 +120,102 @@ export const News = ({
   featured?: NewsItem;
   items: readonly NewsItem[];
   allHref?: string;
-}) => (
-  <Section id="news" labelledBy="news-title" tone="raised">
-    <Container>
-      <SectionHeader
-        action={<ArrowLink href={allHref}>View all news</ArrowLink>}
-      >
-        <Eyebrow>News &amp; events</Eyebrow>
-        <Heading id="news-title" level={2}>
-          Life at the College
-        </Heading>
-      </SectionHeader>
+}) => {
+  /*
+   * Both the featured slot and the list are fed from real tables, so this
+   * section genuinely can arrive with nothing in it. The heading is left in
+   * place with a one-line placeholder rather than the section being dropped
+   * outright: the section is not what the CMS hidden toggle controls, and a
+   * heading that vanishes while its neighbours stay reads as a broken page.
+   * An empty `<ul>` with no explanation is the thing worth avoiding.
+   */
+  if (!featured && items.length === 0) {
+    return (
+      <Section id="news" labelledBy="news-title" tone="raised">
+        <Container>
+          <SectionHeader>
+            <Eyebrow>News &amp; events</Eyebrow>
+            <Heading id="news-title" level={2}>
+              Life at the College
+            </Heading>
+          </SectionHeader>
+          <p {...stylex.props(styles.empty)}>
+            No stories have been published yet. Visit the news page for the
+            latest from the College.
+          </p>
+        </Container>
+      </Section>
+    );
+  }
 
-      <div {...stylex.props(styles.grid)}>
-        {featured ? (
-          <Reveal direction="up">
-            <a href={featured.href} {...stylex.props(styles.featured)}>
-              <Media
-                placeholder="Featured story image"
-                ratio="3:2"
-                source={featured.image}
-                zoom
-              />
-              <p {...stylex.props(styles.meta)}>
-                <span {...stylex.props(styles.category)}>
-                  {featured.category}
-                </span>
-                {featured.date ? (
-                  <time dateTime={featured.date} {...stylex.props(styles.date)}>
-                    {formatNewsDate(featured.date)}
-                  </time>
-                ) : null}
-              </p>
-              <h3 {...stylex.props(styles.featuredTitle)}>{featured.title}</h3>
-            </a>
+  return (
+    <Section id="news" labelledBy="news-title" tone="raised">
+      <Container>
+        <SectionHeader
+          action={<ArrowLink href={allHref}>View all news</ArrowLink>}
+        >
+          <Eyebrow>News &amp; events</Eyebrow>
+          <Heading id="news-title" level={2}>
+            Life at the College
+          </Heading>
+        </SectionHeader>
+
+        <div {...stylex.props(styles.grid)}>
+          {featured ? (
+            <Reveal direction="up">
+              <a href={featured.href} {...stylex.props(styles.featured)}>
+                <Media
+                  placeholder="Featured story image"
+                  ratio="3:2"
+                  source={featured.image}
+                  zoom
+                />
+                <p {...stylex.props(styles.meta)}>
+                  <span {...stylex.props(styles.category)}>
+                    {featured.category}
+                  </span>
+                  {featured.date ? (
+                    <time
+                      dateTime={featured.date}
+                      {...stylex.props(styles.date)}
+                    >
+                      {formatNewsDate(featured.date)}
+                    </time>
+                  ) : null}
+                </p>
+                <h3 {...stylex.props(styles.featuredTitle)}>
+                  {featured.title}
+                </h3>
+              </a>
+            </Reveal>
+          ) : null}
+
+          <Reveal delay={1} direction="up">
+            <ul {...stylex.props(styles.list)}>
+              {items.map((item) => (
+                <li key={item.id} {...stylex.props(styles.item)}>
+                  <a href={item.href} {...stylex.props(styles.itemLink)}>
+                    <p {...stylex.props(styles.meta, styles.itemMeta)}>
+                      <span {...stylex.props(styles.category)}>
+                        {item.category}
+                      </span>
+                      {item.date ? (
+                        <time
+                          dateTime={item.date}
+                          {...stylex.props(styles.date)}
+                        >
+                          {formatNewsDate(item.date)}
+                        </time>
+                      ) : null}
+                    </p>
+                    <h3 {...stylex.props(styles.itemTitle)}>{item.title}</h3>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </Reveal>
-        ) : null}
-
-        <Reveal delay={1} direction="up">
-          <ul {...stylex.props(styles.list)}>
-            {items.map((item) => (
-              <li key={item.id} {...stylex.props(styles.item)}>
-                <a href={item.href} {...stylex.props(styles.itemLink)}>
-                  <p {...stylex.props(styles.meta, styles.itemMeta)}>
-                    <span {...stylex.props(styles.category)}>
-                      {item.category}
-                    </span>
-                    {item.date ? (
-                      <time dateTime={item.date} {...stylex.props(styles.date)}>
-                        {formatNewsDate(item.date)}
-                      </time>
-                    ) : null}
-                  </p>
-                  <h3 {...stylex.props(styles.itemTitle)}>{item.title}</h3>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-      </div>
-    </Container>
-  </Section>
-);
+        </div>
+      </Container>
+    </Section>
+  );
+};

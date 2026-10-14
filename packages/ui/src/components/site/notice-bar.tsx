@@ -86,10 +86,18 @@ const styles = stylex.create({
 /**
  * Top notice strip.
  *
+ * Renders nothing when there is no notice. The strip exists to carry a real
+ * announcement; an empty one is a coloured band above the header that a visitor
+ * reads as "nothing to see here", which is worse than no band at all.
+ *
  * The priority is conveyed by the word "Urgent"/"Notice" as well as the colour -
  * colour alone would fail WCAG 1.4.1, which the original design did.
  */
-export const NoticeBar = ({ notice }: { notice: Notice }) => {
+export const NoticeBar = ({ notice }: { notice?: Notice }) => {
+  if (!notice?.text?.trim()) {
+    return null;
+  }
+
   const isHigh = notice.priority === "high";
 
   return (

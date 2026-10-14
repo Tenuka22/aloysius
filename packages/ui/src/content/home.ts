@@ -117,13 +117,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { id: "contact", label: "Contact", href: "/contact" },
 ];
 
-export const DEFAULT_NOTICE: Notice = {
-  id: "admissions",
-  text: "Admissions for the next academic year - application details and important dates.",
-  href: "/notices",
-  priority: "standard",
-};
-
 export const DEPARTMENTS: readonly Department[] = [
   {
     id: "science",
@@ -246,7 +239,7 @@ export const MOTTO = "Certa Viriliter";
 export const MOTTO_TRANSLATION = "Strive Manfully";
 export const COLLEGE_NAME = "St. Aloysius' College";
 export const COLLEGE_LOCATION = "Galle, Sri Lanka";
-export const FOUNDED_YEAR = 1862;
+export const FOUNDED_YEAR = 1895;
 
 /**
  * Where every "Admissions" link points.

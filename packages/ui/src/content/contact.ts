@@ -58,31 +58,28 @@ export const CONTACT_MAP_PLACEHOLDER = "Location map — Galle";
 export const CONTACT_MAP_LINK_LABEL = "View on map";
 
 /**
- * The office's real map, embedded from OpenStreetMap.
+ * The office's real map, embedded from Google Maps.
  *
- * OpenStreetMap rather than Google Maps because its embed endpoint needs no API
- * key and no account, which matters for a self-hosted deployment whose owner
- * should not have to provision a billing-enabled Google Cloud project to show
- * an address on a map.
+ * The College's own Google Maps place entry, which is the link the footer and
+ * "View on map" both open. The `output=embed` form of the Maps embed endpoint
+ * needs no API key and no billing-enabled Cloud project, so it works for a
+ * self-hosted deployment.
  *
- * **The coordinates are approximate.** They centre on Kaluwella, Galle — the
- * locality both published listings give alongside Templers' Road — at roughly
- * 6.0536 N, 80.2210 E. That is good enough to land a visitor in the right part
- * of town and no more. The pin is not the college gate, so the map is paired
- * with the street address above it and with `CONTACT_MAP_LINK_LABEL`, and it is
- * CMS-overridable through `contact-map-embed` for the day the college supplies
- * its exact position.
+ * The pin is the College's registered Google Maps place at 6.0359809 N,
+ * 80.2118981 E (Kaluwella, Galle) — resolved from the place shortlink, not
+ * guessed. It is the place entry rather than the surveyed gate position, so the
+ * map stays paired with the street address above it. CMS-overridable through
+ * `contact-map-embed` for the day the College supplies an exact position.
  */
 export const CONTACT_MAP_EMBED_URL =
-  "https://www.openstreetmap.org/export/embed.html?bbox=80.2140%2C6.0480%2C80.2280%2C6.0590&layer=mapnik&marker=6.0536%2C80.2210";
+  "https://www.google.com/maps?q=6.0359809,80.2118981&z=17&hl=en&output=embed";
 
-/** The plain link, for "View on map" - OpenStreetMap's own page for the pin. */
-export const CONTACT_MAP_URL =
-  "https://www.openstreetmap.org/?mlat=6.0536&mlon=80.2210#map=17/6.0536/80.2210";
+/** The plain link, for "View on map" — the College's own Google Maps place. */
+export const CONTACT_MAP_URL = "https://maps.app.goo.gl/JKpQvaxCjGSM5L8GA";
 
 /** Accessible name for the embedded map, which carries no visible text. */
 export const CONTACT_MAP_TITLE =
-  "Map of Kaluwella, Galle, showing the College office";
+  "Google map of the College office at Templers' Road, Kaluwella, Galle";
 
 export const CONTACT_FORM_EYEBROW = "Enquiries";
 export const CONTACT_FORM_HEADING = "Send a Message";

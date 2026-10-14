@@ -133,7 +133,7 @@ export default function App() {
           alt="St. Aloysius' College Crest"
           {...stylex.props(styles.crest)}
         />
-        <p {...stylex.props(styles.established)}>Estd. 1862</p>
+        <p {...stylex.props(styles.established)}>Estd. 1895</p>
         <h1 {...stylex.props(styles.heading)}>St. Aloysius' College</h1>
         <p {...stylex.props(styles.location)}>Galle &bull; Sri Lanka</p>
         <div {...stylex.props(styles.divider)} />

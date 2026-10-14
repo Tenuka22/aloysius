@@ -243,11 +243,11 @@ export const blocksToContactProps = (blocks: CmsBlock[]): ContactPageProps => ({
   instagramUrl: fieldOrDefault(blocks, "contact-info", "contact-instagram", ""),
   youtubeUrl: fieldOrDefault(blocks, "contact-info", "contact-youtube", ""),
   /*
-   * Both map fields now carry real defaults rather than `""`. The embed is an
-   * OpenStreetMap iframe over Kaluwella, Galle and the link is that map at full
-   * size - so an unpublished contact page shows a working map and a working
-   * "View on map" rather than a placeholder box and a badge that does nothing.
-   * Both stay overridable in the CMS.
+   * Both map fields now carry real defaults rather than `""`. The embed is a
+   * Google Maps iframe on the College's registered place and the link is that
+   * same place - so an unpublished contact page shows a working map and a
+   * working "View on map" rather than a placeholder box and a badge that does
+   * nothing. Both stay overridable in the CMS.
    */
   mapUrl: fieldOrDefault(
     blocks,
@@ -256,9 +256,10 @@ export const blocksToContactProps = (blocks: CmsBlock[]): ContactPageProps => ({
     CONTACT_MAP_URL
   ),
   /*
-   * The embedded map. Defaults to the OpenStreetMap embed for Kaluwella, Galle
-   * - no API key, no account - with the coordinates CMS-overridable for the day
-   * the College supplies its exact position.
+   * The embedded map. Defaults to the Google Maps `output=embed` iframe for the
+   * College's place in Kaluwella, Galle - no API key, no account - with the
+   * coordinates CMS-overridable for the day the College supplies its exact
+   * position.
    */
   mapEmbedUrl: fieldOrDefault(
     blocks,

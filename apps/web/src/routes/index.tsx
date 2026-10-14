@@ -21,8 +21,9 @@ import { orpc } from "@/utils/orpc";
  * The CMS-authored blocks and the Principal's Message are live queries here,
  * same as always. The top notice strip used to be a single hand-typed field
  * on the homepage's own "Notice Strip" block - it is the most-relevant real
- * announcement now (`cms.listAnnouncements`, pinned first then newest),
- * falling back to `DEFAULT_NOTICE` when there are none. News, achievements
+ * announcement now (`cms.listAnnouncements`, pinned first then newest), and
+ * the strip is hidden entirely when there are none rather than falling back to a
+ * hand-typed placeholder. News, achievements
  * and the gallery strip read the same real tables the rest of the site does
  * (`cms.listNewsPosts`, `cms.listAchievements`, `club.listApprovedGalleries`)
  * rather than the hand-written placeholders this page used to ship with.
@@ -134,7 +135,7 @@ export const Route = createFileRoute("/")({
   head: () =>
     pageHead({
       description:
-        "Official website of St. Aloysius' College, Galle, Sri Lanka - a Catholic boys' college founded in 1862. Admissions, academics, student life, news and the Old Boys' Association.",
+        "Official website of St. Aloysius' College, Galle, Sri Lanka - a Catholic boys' college founded in 1895. Admissions, academics, student life, news and the Old Boys' Association.",
       path: "/",
       title: "St. Aloysius' College, Galle",
     }),

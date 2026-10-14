@@ -283,10 +283,16 @@ export const ContactDetails = ({
       <div {...stylex.props(styles.map)}>
         {/*
           A real embedded map when one is configured, the branded placeholder
-          when it is not. The iframe is `loading="lazy"` and carries a
-          `title`, because an untitled iframe is announced only as "frame" and a
+          when it is not. The iframe is `loading="lazy"` and carries a `title`,
+          because an untitled iframe is announced only as "frame" and a
           map is the one thing on this page a screen-reader user cannot infer
           from its surroundings.
+
+          `allow-same-origin` is deliberately absent: combining it with
+          `allow-scripts` hands the framed document full access to this origin,
+          which the sandbox exists to prevent. The Google Maps embed still
+          renders; the interactive control below it, which opens the full map in
+          a new tab, is the pan-and-zoom path.
         */}
         {mapEmbedUrl ? (
           <iframe

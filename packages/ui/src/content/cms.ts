@@ -314,7 +314,7 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
         id: "heritage-founded",
         label: "Founding year",
         kind: "text",
-        value: "1862",
+        value: "1895",
         hint: "The 'years of tradition' figure is calculated from this.",
       },
       { id: "heritage-image-1", label: "Archival photograph", kind: "image" },

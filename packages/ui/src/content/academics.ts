@@ -108,7 +108,7 @@ export const SUBJECT_DEPARTMENTS: readonly SubjectDepartment[] = [
 ];
 
 export const DEPARTMENTS_EYEBROW = "Departments";
-export const DEPARTMENTS_HEADING = "Subject Departments";
+export const DEPARTMENTS_HEADING = "Subjects";
 export const DEPARTMENTS_INTRO =
   "Teaching across the college is organised into nine subject departments, each led by a senior member of staff.";
 

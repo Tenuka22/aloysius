@@ -82,6 +82,13 @@ const styles = stylex.create({
       textDecoration: "underline",
     },
   },
+  empty: {
+    margin: 0,
+    paddingBlock: space.xl,
+    color: color.onSurfaceSubtle,
+    fontSize: font.sizeSm,
+    textAlign: "center",
+  },
 });
 
 export const Gallery = ({
@@ -92,6 +99,32 @@ export const Gallery = ({
   allHref?: string;
 }) => {
   const linkProps = stylex.props(styles.link);
+
+  /*
+   * The route hands over whatever the gallery tables return, which is an empty
+   * array on a site with no approved photos. An empty multi-column box reserves
+   * no height at all and just leaves a gap under the heading, so the section
+   * says something instead - the heading stays, because the section's presence
+   * is the CMS hidden toggle's decision, not this component's.
+   */
+  if (items.length === 0) {
+    return (
+      <Section labelledBy="gallery-title" tone="surface">
+        <Container>
+          <SectionHeader>
+            <Eyebrow>Media</Eyebrow>
+            <Heading id="gallery-title" level={2}>
+              Gallery
+            </Heading>
+          </SectionHeader>
+          <p {...stylex.props(styles.empty)}>
+            No photographs have been published yet. Visit the media page for
+            pictures from College life.
+          </p>
+        </Container>
+      </Section>
+    );
+  }
 
   return (
     <Section labelledBy="gallery-title" tone="surface">

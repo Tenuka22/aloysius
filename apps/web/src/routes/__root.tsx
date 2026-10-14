@@ -31,7 +31,7 @@ export interface RouterAppContext {
 const SITE_URL = "https://aloysiuscollege.lk";
 const SITE_NAME = "St. Aloysius' College, Galle";
 const SITE_DESCRIPTION =
-  "Official website of St. Aloysius' College, Galle, Sri Lanka - a Catholic boys' college founded in 1862. Admissions, academics, student life, news and the Old Boys' Association.";
+  "Official website of St. Aloysius' College, Galle, Sri Lanka - a Catholic boys' college founded in 1895. Admissions, academics, student life, news and the Old Boys' Association.";
 
 /**
  * `EducationalOrganization` structured data. Search engines use this for the
@@ -44,7 +44,7 @@ const structuredData = JSON.stringify({
   alternateName: "St. Aloysius' College, Galle",
   url: SITE_URL,
   logo: `${SITE_URL}/logo.png`,
-  foundingDate: "1862",
+  foundingDate: "1895",
   slogan: "Certa Viriliter",
   address: {
     "@type": "PostalAddress",

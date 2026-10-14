@@ -1,6 +1,6 @@
 # St. Aloysius' College, Galle
 
-> A Catholic boys' college in Galle, Sri Lanka, founded in 1862 by Belgian
+> A Catholic boys' college in Galle, Sri Lanka, founded in 1895 by Belgian
 > Jesuit missionaries under Bishop Joseph Van Reeth. Motto: Certa Viriliter
 > ("Strive Manfully").
 
@@ -21,7 +21,7 @@
 
 ## Key facts
 
-- Founded: 1862, Galle, Sri Lanka
+- Founded: 1895, Galle, Sri Lanka
 - Type: Catholic boys' college, Primary through G.C.E. Advanced Level
 - Motto: Certa Viriliter (Strive Manfully)
 - A/L streams: Physical Science, Biological Science, Commerce, Arts & Technology

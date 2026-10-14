@@ -3,7 +3,6 @@ import { useEffect, useRef } from "react";
 
 import type { CmsBlock } from "../../content/cms-to-home";
 import { blocksToProps } from "../../content/cms-to-home";
-import { DEFAULT_NOTICE } from "../../content/home";
 import type {
   Achievement,
   GalleryItem,
@@ -81,7 +80,6 @@ export const HomePage = ({
   const cms = blocks ? blocksToProps(blocks) : undefined;
   const h = cms?.hidden;
 
-  const resolvedNotice = notice ?? DEFAULT_NOTICE;
   const resolvedTagline = tagline ?? cms?.heroTagline;
 
   const headerRef = useRef<HTMLDivElement>(null);
@@ -113,7 +111,7 @@ export const HomePage = ({
     <>
       <SkipLink targetId={MAIN_ID} />
       <div ref={headerRef}>
-        <NoticeBar notice={resolvedNotice} />
+        <NoticeBar notice={notice} />
         <SiteHeader activeHref="/" extraNavItems={extraNavItems} />
       </div>
       <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
