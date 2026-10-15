@@ -1,117 +1,53 @@
 import * as stylex from "@stylexjs/stylex";
-import { Clock, Mail, MapPin, Phone } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
-import {
-  CONTACT_DEFAULT_ADDRESS,
-  CONTACT_DETAILS_EYEBROW,
-  CONTACT_DETAILS_HEADING,
-  CONTACT_MAP_LINK_LABEL,
-  CONTACT_MAP_PLACEHOLDER,
-  CONTACT_MAP_TITLE,
-} from "../../content/contact";
+import { CONTACT_DEFAULT_ADDRESS } from "../../content/contact";
 import { bp } from "../../tokens/breakpoints.stylex";
-import {
-  color,
-  font,
-  motionToken,
-  radius,
-  space,
-} from "../../tokens/tokens.stylex";
-import { Media } from "../primitives/media";
-import type { ImageSource } from "../primitives/media";
+import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
 
 const styles = stylex.create({
-  eyebrow: {
-    margin: 0,
-    marginBlockEnd: space["2xs"],
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingUltra,
-    textTransform: "uppercase",
-    color: color.accentOnSurface,
-  },
   /*
-   * A display heading, matching the form card's masthead opposite it. The two
-   * columns are a pair, and a 12px all-caps label on one side against a serif
-   * masthead on the other read as two unrelated pieces of page.
-   */
-  heading: {
-    margin: 0,
-    marginBlockEnd: space.md,
-    fontFamily: font.display,
-    fontWeight: font.weightSemibold,
-    fontSize: font.size2xl,
-    lineHeight: font.leadingSnug,
-    letterSpacing: font.trackingTight,
-    color: color.onSurface,
-    textWrap: "balance",
-  },
-
-  /*
-   * A description list, not a stack of divs: the label/value pairing is the
-   * content's actual structure, so a screen reader announces "Telephone,
-   * 091 …" rather than two unrelated lines.
+   * The channel strip that closes the hero: telephone, email, hours and
+   * address as four columns divided by a gold hairline. A description list, not
+   * a stack of divs - the label/value pairing is the content's actual
+   * structure, so a screen reader announces "Telephone, +94 91 …".
+   *
+   * `auto-fit` with a floor, rather than the mock's fixed four columns, so a
+   * detail the CMS has not supplied simply leaves three wider columns instead
+   * of an empty one.
    */
   list: {
     display: "grid",
     margin: 0,
-    /*
-     * Two columns from 40rem to 64rem. Between those widths the page is still
-     * one column, so a single-column detail list would strand a lot of empty
-     * space beside four short rows; above 64rem the form moves in alongside and
-     * the list goes back to one column.
-     */
+    marginBlockStart: space["2xl"],
     gridTemplateColumns: {
-      default: "1fr",
-      [bp.mdToXl]: "repeat(2, minmax(0, 1fr))",
+      default: "minmax(0, 1fr)",
+      [bp.md]: "repeat(auto-fit, minmax(min(100%, 11rem), 1fr))",
     },
-    columnGap: space.xl,
+    columnGap: space.lg,
+    borderBlockStartWidth: space.px,
+    borderBlockStartStyle: "solid",
+    borderBlockStartColor: "rgba(255, 178, 3, 0.25)",
   },
   row: {
-    display: "flex",
-    gap: space.sm,
-    alignItems: "flex-start",
-    paddingBlock: space.md,
-    borderBlockEndWidth: space.px,
-    borderBlockEndStyle: "solid",
-    borderBlockEndColor: color.border,
-  },
-  /**
-   * The icon sits in a tinted square rather than loose beside the text: it gives
-   * each row a fixed left edge, so four rows of different lengths still line up.
-   */
-  iconChip: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    inlineSize: "2.5rem",
-    blockSize: "2.5rem",
-    backgroundColor: color.surfaceSunken,
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.borderAccent,
-    borderRadius: radius.md,
-    color: color.accentOnSurface,
-  },
-  rowBody: {
+    paddingBlock: space.lg,
     minWidth: 0,
   },
   label: {
     margin: 0,
     fontSize: font.size2xs,
-    fontWeight: font.weightBold,
+    fontWeight: font.weightExtrabold,
     letterSpacing: font.trackingWider,
     textTransform: "uppercase",
-    color: color.onSurfaceSubtle,
+    color: color.accentOnInverse,
   },
   value: {
     margin: 0,
-    marginBlockStart: space["3xs"],
-    fontSize: font.sizeMd,
-    lineHeight: font.leadingNormal,
-    color: color.onSurface,
+    marginBlockStart: space.xs,
+    fontFamily: font.display,
+    fontSize: font.sizeXl,
+    fontWeight: font.weightSemibold,
+    lineHeight: font.leadingSnug,
+    color: color.onInverse,
     // Long email addresses must break rather than widen the grid track.
     overflowWrap: "anywhere",
   },
@@ -123,56 +59,12 @@ const styles = stylex.create({
       [bp.touch]: "2.75rem",
     },
     color: {
-      default: color.onSurface,
-      ":hover": color.accentOnSurface,
+      default: color.onInverse,
+      ":hover": color.accentOnInverse,
     },
     textDecoration: "none",
-    borderBlockEndWidth: space.px,
-    borderBlockEndStyle: "solid",
-    borderBlockEndColor: {
-      default: color.borderStrong,
-      ":hover": color.accent,
-    },
-    transitionProperty: "color, border-color",
+    transitionProperty: "color",
     transitionDuration: motionToken.fast,
-  },
-
-  map: {
-    position: "relative",
-    marginBlockStart: space.xl,
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.border,
-    borderRadius: radius.md,
-    overflow: "hidden",
-  },
-  mapEmbed: {
-    display: "block",
-    inlineSize: "100%",
-    blockSize: "100%",
-    borderWidth: 0,
-  },
-  mapBadge: {
-    margin: 0,
-    position: "absolute",
-    insetInlineStart: space.sm,
-    insetBlockEnd: space.sm,
-    display: "inline-flex",
-    alignItems: "center",
-    gap: space["2xs"],
-    minBlockSize: "2.75rem",
-    paddingInline: space.md,
-    backgroundColor: color.surfaceInverse,
-    color: color.accentOnInverse,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWider,
-    textTransform: "uppercase",
-    textDecoration: "none",
-  },
-  mapBadgeStatic: {
-    // Not a link when no map URL is configured, so it must not look clickable.
-    pointerEvents: "none",
   },
 });
 
@@ -182,25 +74,12 @@ export interface ContactDetailsProps {
   telephone?: string;
   email?: string;
   officeHours?: string;
-  /**
-   * External map link - "View on map" opens the full-size map. Without it the
-   * badge renders as static text that deliberately does not look clickable.
-   */
-  mapUrl?: string;
-  mapImage?: ImageSource;
-  /**
-   * An embedded map (OpenStreetMap's iframe endpoint). Rendered in place of the
-   * static image slot; without one the slot falls back to the branded
-   * placeholder, so the block is never a broken frame.
-   */
-  mapEmbedUrl?: string;
 }
 
 interface Detail {
   id: string;
   label: string;
   value: string;
-  Icon: LucideIcon;
   /** `tel:`/`mailto:` target, when the value is actionable. */
   href?: string;
 }
@@ -218,20 +97,14 @@ export const ContactDetails = ({
   telephone,
   email,
   officeHours,
-  mapUrl,
-  mapImage,
-  mapEmbedUrl,
 }: ContactDetailsProps) => {
-  const details: Detail[] = [
-    { id: "address", label: "Address", value: address, Icon: MapPin },
-  ];
+  const details: Detail[] = [];
   if (telephone) {
     details.push({
       id: "telephone",
       label: "Telephone",
       value: telephone,
       href: telHref(telephone),
-      Icon: Phone,
     });
   }
   if (email) {
@@ -240,94 +113,29 @@ export const ContactDetails = ({
       label: "Email",
       value: email,
       href: `mailto:${email}`,
-      Icon: Mail,
     });
   }
   if (officeHours) {
-    details.push({
-      id: "hours",
-      label: "Office hours",
-      value: officeHours,
-      Icon: Clock,
-    });
+    details.push({ id: "hours", label: "Office hours", value: officeHours });
   }
+  details.push({ id: "address", label: "Address", value: address });
 
   return (
-    <div>
-      <p {...stylex.props(styles.eyebrow)}>{CONTACT_DETAILS_EYEBROW}</p>
-      <h2 id="contact-details-title" {...stylex.props(styles.heading)}>
-        {CONTACT_DETAILS_HEADING}
-      </h2>
-      <dl {...stylex.props(styles.list)}>
-        {details.map(({ id, label, value, href, Icon }) => (
-          <div key={id} {...stylex.props(styles.row)}>
-            <span {...stylex.props(styles.iconChip)}>
-              <Icon aria-hidden="true" size={18} strokeWidth={1.75} />
-            </span>
-            <div {...stylex.props(styles.rowBody)}>
-              <dt {...stylex.props(styles.label)}>{label}</dt>
-              <dd {...stylex.props(styles.value)}>
-                {href ? (
-                  <a href={href} {...stylex.props(styles.valueLink)}>
-                    {value}
-                  </a>
-                ) : (
-                  value
-                )}
-              </dd>
-            </div>
-          </div>
-        ))}
-      </dl>
-
-      <div {...stylex.props(styles.map)}>
-        {/*
-          A real embedded map when one is configured, the branded placeholder
-          when it is not. The iframe is `loading="lazy"` and carries a `title`,
-          because an untitled iframe is announced only as "frame" and a
-          map is the one thing on this page a screen-reader user cannot infer
-          from its surroundings.
-
-          `allow-same-origin` is deliberately absent: combining it with
-          `allow-scripts` hands the framed document full access to this origin,
-          which the sandbox exists to prevent. The Google Maps embed still
-          renders; the interactive control below it, which opens the full map in
-          a new tab, is the pan-and-zoom path.
-        */}
-        {mapEmbedUrl ? (
-          <iframe
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            sandbox="allow-scripts allow-popups"
-            src={mapEmbedUrl}
-            title={CONTACT_MAP_TITLE}
-            {...stylex.props(styles.mapEmbed)}
-          />
-        ) : (
-          <Media
-            placeholder={CONTACT_MAP_PLACEHOLDER}
-            ratio="3:2"
-            source={mapImage}
-          />
-        )}
-        {mapUrl ? (
-          <a
-            href={mapUrl}
-            rel="noopener noreferrer"
-            target="_blank"
-            {...stylex.props(styles.mapBadge)}
-          >
-            {CONTACT_MAP_LINK_LABEL}
-          </a>
-        ) : (
-          <p
-            aria-hidden="true"
-            {...stylex.props(styles.mapBadge, styles.mapBadgeStatic)}
-          >
-            {CONTACT_MAP_PLACEHOLDER}
-          </p>
-        )}
-      </div>
-    </div>
+    <dl {...stylex.props(styles.list)}>
+      {details.map(({ id, label, value, href }) => (
+        <div key={id} {...stylex.props(styles.row)}>
+          <dt {...stylex.props(styles.label)}>{label}</dt>
+          <dd {...stylex.props(styles.value)}>
+            {href ? (
+              <a href={href} {...stylex.props(styles.valueLink)}>
+                {value}
+              </a>
+            ) : (
+              value
+            )}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 };

@@ -9,6 +9,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ContactDetails } from "./contact-details";
 import { ContactForm } from "./contact-form";
+import { ContactMap } from "./contact-map";
 import { ContactPage } from "./contact-page";
 
 const VALID_ENQUIRY = {
@@ -82,18 +83,19 @@ describe(ContactPage, () => {
     ).toHaveAttribute("href", "#main-content");
   });
 
-  it("has exactly one h1, and both section headings below it are h2", () => {
+  it("has exactly one h1, and the form heading below it is an h2", () => {
     render(<ContactPage />);
 
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(
-      screen.getByRole("heading", { level: 1, name: "Contact the College" })
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Visit, call or write to us.",
+      })
     ).toBeInTheDocument();
-    for (const name of ["College Office", "Send a Message"]) {
-      expect(
-        screen.getByRole("heading", { level: 2, name })
-      ).toBeInTheDocument();
-    }
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Send us a message" })
+    ).toBeInTheDocument();
   });
 
   it("marks Contact as the current page in the primary nav", () => {
@@ -132,15 +134,17 @@ describe(ContactDetails, () => {
       screen.getByRole("link", { name: "office@example.lk" })
     ).toHaveAttribute("href", "mailto:office@example.lk");
   });
+});
 
-  it("renders the map badge as a link only when a map URL is configured", () => {
-    const { rerender } = render(<ContactDetails />);
+describe(ContactMap, () => {
+  it("renders directions as a link only when a map URL is configured", () => {
+    const { rerender } = render(<ContactMap />);
     expect(
-      screen.queryByRole("link", { name: /view on map/iu })
+      screen.queryByRole("link", { name: /get directions/iu })
     ).not.toBeInTheDocument();
 
-    rerender(<ContactDetails mapUrl="https://maps.example/galle" />);
-    const link = screen.getByRole("link", { name: /view on map/iu });
+    rerender(<ContactMap mapUrl="https://maps.example/galle" />);
+    const link = screen.getByRole("link", { name: /get directions/iu });
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
@@ -166,20 +170,28 @@ describe(ContactForm, () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps the visible label and shows the example only while focused", () => {
+  it("keeps a visible label above each field alongside the example text", () => {
     render(<ContactForm />);
 
     const nameField = screen.getByLabelText(/full name/iu);
-    // The label is the accessible name at rest and while typing - the floating
-    // treatment moves it, it never replaces it with a placeholder (SC 3.3.2).
-    expect(nameField).toHaveAttribute("placeholder", "");
-
-    fireEvent.focus(nameField);
+    // The label is always the accessible name; the placeholder is only a
+    // worked example and never stands in for it (SC 3.3.2).
     expect(nameField).toHaveAttribute("placeholder", "Nimal Perera");
+    expect(screen.getByText("Full name")).toBeVisible();
+  });
 
-    fireEvent.blur(nameField);
-    expect(nameField).toHaveAttribute("placeholder", "");
-    expect(screen.getByLabelText(/full name/iu)).toBe(nameField);
+  it("prefills the subject from the topic and says where it is sent", () => {
+    render(<ContactForm />);
+
+    expect(screen.getByLabelText(/subject/iu)).toHaveValue("General enquiry");
+    fireEvent.click(screen.getByRole("button", { name: "Admissions" }));
+
+    expect(screen.getByLabelText(/subject/iu)).toHaveValue(
+      "Admissions enquiry"
+    );
+    // No department address is configured, so it still goes to the main
+    // office, and the form says so rather than naming the Admissions Office.
+    expect(screen.getByText("College Office")).toBeInTheDocument();
   });
 
   it("links each error to its field with aria-describedby", () => {
@@ -220,7 +232,7 @@ describe(ContactForm, () => {
     submit();
 
     await waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({ ...VALID_ENQUIRY })
+      expect(onSubmit).toHaveBeenCalledWith({ ...VALID_ENQUIRY, telephone: "" })
     );
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent(

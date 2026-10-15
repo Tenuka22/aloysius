@@ -17,9 +17,65 @@
  * with the College office before relying on them.
  */
 
-export const CONTACT_HERO_TITLE = "Contact the College";
+export const CONTACT_HERO_TITLE = "Visit, call or write to us.";
+/** The default title breaks here, with the second half set in gold italic. */
+export const CONTACT_HERO_TITLE_ACCENT = "or write to us.";
 export const CONTACT_HERO_INTRO =
-  "Enquiries about admissions, academic records, alumni affairs and visits are all handled by the College office.";
+  "The College office handles admissions, records, alumni affairs and general enquiries.";
+
+export const CONTACT_DEPARTMENTS_EYEBROW = "Directory";
+export const CONTACT_DEPARTMENTS_HEADING = "Reach the right office";
+export const CONTACT_DEPARTMENTS_INTRO =
+  "Writing to the correct department gets you an answer faster. If unsure, contact the main office.";
+
+export interface ContactDepartment {
+  id: string;
+  name: string;
+  description: string;
+  /** Shown as a `tel:` link. Leave unset until the office's number is known. */
+  telephone?: string;
+  /** Shown as a `mailto:` link. Leave unset until the office's address is known. */
+  email?: string;
+}
+
+/**
+ * The offices listed in the Contact directory. Add `telephone` and `email` to a
+ * row as the numbers are confirmed - a row without them still renders, as the
+ * office's name and what it handles, and nothing placeholder-shaped is shown.
+ * An empty list hides the whole section.
+ */
+export const CONTACT_DEPARTMENTS: readonly ContactDepartment[] = [
+  {
+    id: "principal",
+    name: "Principal's Office",
+    description: "Appointments and official correspondence",
+  },
+  {
+    id: "admissions",
+    name: "Admissions Office",
+    description: "Applications, interviews and enrolment",
+  },
+  {
+    id: "academic",
+    name: "Deputy Principal (Academic)",
+    description: "Examinations, results and curriculum",
+  },
+  {
+    id: "sports",
+    name: "Sports Office",
+    description: "Fixtures, trials and sports administration",
+  },
+  {
+    id: "oba",
+    name: "Old Boys' Association",
+    description: "Alumni membership and events",
+  },
+  {
+    id: "media",
+    name: "Media Unit",
+    description: "Press, photography and website",
+  },
+];
 
 export const CONTACT_DETAILS_EYEBROW = "Visit & Write";
 export const CONTACT_DETAILS_HEADING = "College Office";
@@ -55,7 +111,7 @@ export const CONTACT_DEFAULT_TELEPHONE = "+94 91 223 4657";
 export const CONTACT_DEFAULT_EMAIL = "info@aloysiuscollege.lk";
 
 export const CONTACT_MAP_PLACEHOLDER = "Location map — Galle";
-export const CONTACT_MAP_LINK_LABEL = "View on map";
+export const CONTACT_MAP_LINK_LABEL = "Get directions";
 
 /**
  * The office's real map, embedded from Google Maps.
@@ -90,7 +146,8 @@ export const CONTACT_FORM_FOOTNOTE = "Responses within school working days.";
  * One statement in place of an asterisk on every label. Asterisks are noise
  * when nothing is optional, and they have to be explained somewhere anyway.
  */
-export const CONTACT_FORM_REQUIRED_NOTE = "All fields are required.";
+export const CONTACT_FORM_REQUIRED_NOTE =
+  "All fields are required except telephone.";
 /** Shown on the message field once the reply is close to the cap. */
 export const CONTACT_FORM_COUNTER_THRESHOLD = 0.75;
 export const CONTACT_FORM_SUBMIT_LABEL = "Send message";
@@ -140,10 +197,11 @@ export const CONTACT_FORM_MAILTO_TOO_LONG =
 export const CONTACT_MAIL_BODY_NAME = "Name";
 export const CONTACT_MAIL_BODY_EMAIL = "Email";
 export const CONTACT_MAIL_BODY_SUBJECT = "Subject";
+export const CONTACT_MAIL_BODY_TELEPHONE = "Telephone";
 export const CONTACT_MAIL_BODY_MESSAGE = "Message";
 
 export interface ContactField {
-  id: "name" | "email" | "subject" | "message";
+  id: "name" | "email" | "telephone" | "subject" | "message";
   label: string;
   /**
    * Shown only while the field has focus, once the label has floated clear of
@@ -161,6 +219,8 @@ export interface ContactField {
   maxLength: number;
   /** Message shown when the field is empty on submit. */
   requiredMessage: string;
+  /** Left blank without an error; not included in "all fields are required". */
+  optional?: boolean;
 }
 
 /** 11 is the shortest a Sri Lankan number with dialling code can be written. */
@@ -184,6 +244,16 @@ export const CONTACT_FIELDS: readonly ContactField[] = [
     autoComplete: "email",
     maxLength: 254,
     requiredMessage: "Enter an email address so the office can reply.",
+  },
+  {
+    id: "telephone",
+    label: "Telephone",
+    placeholder: "07X XXX XXXX",
+    type: "text",
+    autoComplete: "tel",
+    maxLength: 40,
+    optional: true,
+    requiredMessage: "",
   },
   {
     id: "subject",
@@ -212,3 +282,63 @@ export const CONTACT_MESSAGE_TOO_SHORT_MESSAGE =
   "Please give the office a little more detail.";
 
 export type ContactFormValues = Record<ContactField["id"], string>;
+
+export const CONTACT_FORM_ENQUIRY_EYEBROW = "Enquiry";
+export const CONTACT_FORM_ENQUIRY_HEADING = "Send us a message";
+export const CONTACT_FORM_ENQUIRY_INTRO =
+  "Choose a topic, write your message and it is addressed to the right office. Replies come within school working days.";
+
+export interface ContactTopic {
+  id: string;
+  /** The chip. */
+  label: string;
+  /** Shown in "Sent to: …" when the topic's own address is used. */
+  office: string;
+  /** Prefills the subject field. */
+  subject: string;
+  /**
+   * The `CONTACT_DEPARTMENTS` row this topic routes to. The message is
+   * addressed to that department only if it has an `email`; otherwise it goes
+   * to the main College office, and the form says so.
+   */
+  departmentId?: string;
+}
+
+export const CONTACT_TOPICS: readonly ContactTopic[] = [
+  {
+    id: "general",
+    label: "General",
+    office: "College Office",
+    subject: "General enquiry",
+  },
+  {
+    id: "admissions",
+    label: "Admissions",
+    office: "Admissions Office",
+    subject: "Admissions enquiry",
+    departmentId: "admissions",
+  },
+  {
+    id: "academic",
+    label: "Academic",
+    office: "Deputy Principal (Academic)",
+    subject: "Academic enquiry",
+    departmentId: "academic",
+  },
+  {
+    id: "oba",
+    label: "Old Boys",
+    office: "Old Boys' Association",
+    subject: "OBA enquiry",
+    departmentId: "oba",
+  },
+  {
+    id: "media",
+    label: "Media",
+    office: "Media Unit",
+    subject: "Media enquiry",
+    departmentId: "media",
+  },
+];
+
+export const CONTACT_MAIN_OFFICE_NAME = "College Office";

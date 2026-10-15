@@ -1,6 +1,11 @@
 import * as stylex from "@stylexjs/stylex";
+import type { ReactNode } from "react";
 
-import { CONTACT_HERO_INTRO, CONTACT_HERO_TITLE } from "../../content/contact";
+import {
+  CONTACT_HERO_INTRO,
+  CONTACT_HERO_TITLE,
+  CONTACT_HERO_TITLE_ACCENT,
+} from "../../content/contact";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
 import { Container } from "../primitives/layout";
@@ -73,6 +78,11 @@ const styles = stylex.create({
     letterSpacing: font.trackingTight,
     textWrap: "balance",
   },
+  accent: {
+    fontStyle: "italic",
+    fontWeight: font.weightMedium,
+    color: color.accentOnInverse,
+  },
   intro: {
     margin: 0,
     marginBlockStart: space.md,
@@ -88,15 +98,20 @@ export const ContactHero = ({
   title = CONTACT_HERO_TITLE,
   intro = CONTACT_HERO_INTRO,
   crestSrc = "/logo.png",
+  children,
 }: {
   title?: string;
   intro?: string;
   crestSrc?: string;
+  /** The channel strip that closes the hero. */
+  children?: ReactNode;
 }) => (
   <section aria-labelledby="contact-hero-title" {...stylex.props(styles.hero)}>
     <img
       alt=""
       aria-hidden="true"
+      decoding="async"
+      loading="lazy"
       src={crestSrc}
       {...stylex.props(styles.watermark)}
     />
@@ -111,9 +126,19 @@ export const ContactHero = ({
           </p>
         </nav>
         <h1 id="contact-hero-title" {...stylex.props(styles.title)}>
-          {title}
+          {title === CONTACT_HERO_TITLE ? (
+            <>
+              {title.slice(0, -CONTACT_HERO_TITLE_ACCENT.length).trimEnd()}{" "}
+              <em {...stylex.props(styles.accent)}>
+                {CONTACT_HERO_TITLE_ACCENT}
+              </em>
+            </>
+          ) : (
+            title
+          )}
         </h1>
         <p {...stylex.props(styles.intro)}>{intro}</p>
+        {children}
       </div>
     </Container>
   </section>
