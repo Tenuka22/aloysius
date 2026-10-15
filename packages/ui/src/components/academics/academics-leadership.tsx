@@ -84,7 +84,9 @@ export const AcademicsLeadership = ({
                 source={leader.photo}
               />
               <p {...stylex.props(styles.role)}>{leader.role}</p>
-              <p {...stylex.props(styles.name)}>{leader.name ?? "\u2014"}</p>
+              {leader.name ? (
+                <p {...stylex.props(styles.name)}>{leader.name}</p>
+              ) : null}
               {leader.title && (
                 <p {...stylex.props(styles.title)}>{leader.title}</p>
               )}

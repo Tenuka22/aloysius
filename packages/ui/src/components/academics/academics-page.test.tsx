@@ -2,7 +2,6 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { AcademicsPage } from "./academics-page";
-import { SubjectDepartments } from "./subject-departments";
 
 describe(AcademicsPage, () => {
   it("exposes a main landmark the skip link can reach", () => {
@@ -27,7 +26,7 @@ describe(AcademicsPage, () => {
     for (const name of [
       "Sections of Study",
       "A/L Streams",
-      "Subjects",
+      "Where Aloysians learn & grow",
       "Examination Results & Achievements",
     ]) {
       expect(
@@ -79,26 +78,5 @@ describe(AcademicsPage, () => {
         within(streams as HTMLElement).getByRole("heading", { level: 3, name })
       ).toBeInTheDocument();
     }
-  });
-});
-
-describe(SubjectDepartments, () => {
-  it("renders a head of department only when the roster supplies one", () => {
-    render(
-      <SubjectDepartments
-        departments={[
-          { id: "maths", name: "Mathematics", head: "Mr. A. Perera" },
-          { id: "english", name: "English" },
-        ]}
-      />
-    );
-
-    expect(screen.getByText("Mr. A. Perera")).toBeInTheDocument();
-    // The unpublished one must degrade to an empty slot, never to a fabricated
-    // name or a filler dash.
-    const english = screen
-      .getByRole("heading", { level: 3, name: "English" })
-      .closest("li");
-    expect(english?.textContent).toBe("English");
   });
 });

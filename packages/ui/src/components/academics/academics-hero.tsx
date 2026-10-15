@@ -52,6 +52,12 @@ const styles = stylex.create({
     color: color.onInverseSubtle,
   },
   breadcrumbLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    minBlockSize: {
+      default: "1.5rem",
+      [bp.touch]: "2.75rem",
+    },
     color: {
       default: color.onInverseSubtle,
       ":hover": color.accentOnInverse,
@@ -144,6 +150,8 @@ export const AcademicsHero = ({
     <img
       alt=""
       aria-hidden="true"
+      decoding="async"
+      loading="lazy"
       src={crestSrc}
       {...stylex.props(styles.watermark)}
     />

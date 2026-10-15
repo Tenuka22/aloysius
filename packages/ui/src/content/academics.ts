@@ -1,3 +1,4 @@
+import type { ImageSource } from "../components/primitives/media";
 import type { JumpLink } from "./about";
 
 /**
@@ -16,7 +17,7 @@ export const ACADEMICS_HERO_INTRO =
 export const ACADEMICS_JUMP_LINKS: readonly JumpLink[] = [
   { label: "Sections of Study", href: "#sections" },
   { label: "A/L Streams", href: "#streams" },
-  { label: "Departments", href: "#departments" },
+  { label: "Facilities", href: "#facilities" },
   { label: "Results", href: "#results" },
 ];
 
@@ -88,32 +89,109 @@ export const AL_STREAMS: readonly Stream[] = [
   },
 ];
 
-export interface SubjectDepartment {
+export const FACILITIES_EYEBROW = "Facilities";
+export const FACILITIES_HEADING = "Where Aloysians learn & grow";
+export const FACILITIES_INTRO =
+  "Laboratories, libraries and specialist spaces supporting every stream, from the primary section to Advanced Level.";
+
+export interface Facility {
   id: string;
   name: string;
-  /** Omitted until the college publishes the roster. */
-  head?: string;
+  /** Short category label, e.g. "Science". Shown as a tag on the photograph. */
+  tag: string;
+  description: string;
+  /** Add a photograph here once one exists; until then a placeholder is shown. */
+  image?: ImageSource;
 }
 
-export const SUBJECT_DEPARTMENTS: readonly SubjectDepartment[] = [
-  { id: "mathematics", name: "Mathematics" },
-  { id: "science", name: "Science" },
-  { id: "sinhala", name: "Sinhala" },
-  { id: "english", name: "English" },
-  { id: "history-religion", name: "History & Religion" },
-  { id: "commerce", name: "Commerce" },
-  { id: "ict-technology", name: "ICT & Technology" },
-  { id: "aesthetics", name: "Aesthetics (Art & Music)" },
-  { id: "physical-education", name: "Physical Education" },
+/**
+ * The facilities shown in the Academics showcase, in display order. To add a
+ * photograph, set `image: { src: "/facilities/physics-lab.jpg", alt: "..." }`
+ * on the row; to add a facility, append a row. An empty list hides the section.
+ */
+export const FACILITIES: readonly Facility[] = [
+  {
+    id: "physics-lab",
+    name: "Physics Laboratory",
+    tag: "Science",
+    description:
+      "Practical work for O/L science and the A/L physical science stream.",
+  },
+  {
+    id: "chemistry-lab",
+    name: "Chemistry Laboratory",
+    tag: "Science",
+    description:
+      "Fume-safe benches for experiments and A/L chemistry practicals.",
+  },
+  {
+    id: "biology-lab",
+    name: "Biology Laboratory",
+    tag: "Science",
+    description:
+      "Specimens, microscopes and dissection for the biological stream.",
+  },
+  {
+    id: "ict-labs",
+    name: "ICT & Computer Labs",
+    tag: "Technology",
+    description:
+      "Networked computers for ICT, technology and digital literacy.",
+  },
+  {
+    id: "engineering-lab",
+    name: "Engineering Technology Lab",
+    tag: "Technology",
+    description: "Workshop space for the A/L engineering technology stream.",
+  },
+  {
+    id: "library",
+    name: "College Library",
+    tag: "Learning",
+    description:
+      "Reference, lending and quiet study for every section of the College.",
+  },
+  {
+    id: "primary-library",
+    name: "Primary Library",
+    tag: "Learning",
+    description: "An age-appropriate reading room for Grades 1 to 5.",
+  },
+  {
+    id: "music-art",
+    name: "Music & Art Rooms",
+    tag: "Aesthetics",
+    description:
+      "Instruments, studio space and exhibitions for aesthetic studies.",
+  },
+  {
+    id: "main-hall",
+    name: "Main Hall",
+    tag: "Community",
+    description: "Assemblies, prize-giving, concerts and examinations.",
+  },
+  {
+    id: "chapel",
+    name: "Chapel",
+    tag: "Community",
+    description: "The spiritual heart of the College's Catholic tradition.",
+  },
+  {
+    id: "sports-grounds",
+    name: "Sports Grounds",
+    tag: "Sport",
+    description: "Cricket, rugby, football and athletics on College grounds.",
+  },
+  {
+    id: "smart-classrooms",
+    name: "Smart Classrooms",
+    tag: "Technology",
+    description: "Multimedia-equipped rooms for interactive teaching.",
+  },
 ];
-
-export const DEPARTMENTS_EYEBROW = "Departments";
-export const DEPARTMENTS_HEADING = "Subjects";
-export const DEPARTMENTS_INTRO =
-  "Teaching across the college is organised into nine subject departments, each led by a senior member of staff.";
 
 export const RESULTS_HEADING = "Examination Results & Achievements";
 export const RESULTS_BODY =
   "Ordinary Level and Advanced Level performance, published year by year alongside national and provincial honours.";
 export const RESULTS_CTA_LABEL = "View results";
-export const RESULTS_CTA_HREF = "/news";
+export const RESULTS_CTA_HREF = "/results";

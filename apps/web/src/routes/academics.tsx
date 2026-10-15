@@ -13,7 +13,7 @@ import { orpc } from "@/utils/orpc";
 /**
  * `/academics` - curriculum, streams and departments.
  *
- * Sections of study, A/L streams, subject departments and results are real
+ * Sections of study, A/L streams and results are real
  * shipped copy (`content/academics.ts`), not CMS-editable yet - see
  * `cms-to-pages.ts`'s note on `ACADEMICS_BLOCKS`. The one live section is
  * leadership: the Principal (`cms.getPrincipal`, the same global block every
@@ -76,7 +76,7 @@ export const Route = createFileRoute("/academics")({
   head: () =>
     pageHead({
       description:
-        "Curriculum, streams and departments at St. Aloysius' College, Galle - primary and secondary sections, the four G.C.E. Advanced Level streams, and the college's nine subject departments.",
+        "Curriculum, streams and facilities at St. Aloysius' College, Galle - primary and secondary sections, the four G.C.E. Advanced Level streams, and the college's facilities.",
       path: "/academics",
       title: "Academics | St. Aloysius' College, Galle",
     }),

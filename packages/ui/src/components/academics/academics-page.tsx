@@ -2,7 +2,6 @@ import * as stylex from "@stylexjs/stylex";
 
 import type { NavItem } from "../../content/home";
 import { SkipLink } from "../primitives/layout";
-import type { ImageSource } from "../primitives/media";
 import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
@@ -10,9 +9,9 @@ import { AcademicsHero } from "./academics-hero";
 import type { AcademicsLeader } from "./academics-leadership";
 import { AcademicsLeadership } from "./academics-leadership";
 import { AlStreams } from "./al-streams";
+import { FacilitiesShowcase } from "./facilities-showcase";
 import { ResultsCta } from "./results-cta";
 import { StudySections } from "./study-sections";
-import { SubjectDepartments } from "./subject-departments";
 
 const MAIN_ID = "main-content";
 
@@ -36,9 +35,6 @@ const styles = stylex.create({
 export interface AcademicsPageProps {
   contact?: FooterContact;
   extraNavItems?: readonly NavItem[];
-  /** Photographs for the departments section, once the CMS supplies them. */
-  labImage?: ImageSource;
-  libraryImage?: ImageSource;
   /** Principal, Primary sectional head and Secondary deputy principal. */
   leaders?: readonly AcademicsLeader[];
 }
@@ -46,8 +42,6 @@ export interface AcademicsPageProps {
 export const AcademicsPage = ({
   contact,
   extraNavItems,
-  labImage,
-  libraryImage,
   leaders,
 }: AcademicsPageProps) => (
   <>
@@ -60,7 +54,7 @@ export const AcademicsPage = ({
         <AcademicsLeadership leaders={leaders} />
       )}
       <AlStreams />
-      <SubjectDepartments labImage={labImage} libraryImage={libraryImage} />
+      <FacilitiesShowcase />
       <ResultsCta />
     </main>
     <SiteFooter contact={contact} />
