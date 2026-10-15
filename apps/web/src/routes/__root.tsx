@@ -4,6 +4,7 @@
  */
 // oxlint-disable react/no-danger
 import { SmoothScroll } from "@aloysius/ui/components/smooth-scroll";
+import { LoadingScreen } from "@aloysius/ui/components/status/loading-screen";
 import { NotFoundPage } from "@aloysius/ui/components/status/not-found-page";
 import { ServerErrorPage } from "@aloysius/ui/components/status/server-error-page";
 import type { QueryClient } from "@tanstack/react-query";
@@ -77,12 +78,17 @@ const RootDocument = () => (
     <head>
       <HeadContent />
       <DevStyleXInject cssHref={appCss} />
+      {/* The splash is dismissed by script; without JS it would cover the page for good. */}
+      <noscript>
+        <style>{"[data-loading-screen]{display:none !important}"}</style>
+      </noscript>
       <script
         dangerouslySetInnerHTML={{ __html: structuredData }}
         type="application/ld+json"
       />
     </head>
     <body>
+      <LoadingScreen />
       <Outlet />
       <SmoothScroll />
       {/*
