@@ -41,7 +41,7 @@ const styles = stylex.create({
   },
 
   spanSports: {
-    gridColumn: { default: "auto", [bp.xl]: "span 3" },
+    gridColumn: { default: "auto", [bp.mdToXl]: "span 2", [bp.xl]: "span 3" },
     gridRow: { default: "auto", [bp.xl]: "span 3" },
   },
   spanMusic: {
@@ -50,6 +50,10 @@ const styles = stylex.create({
   },
   spanTwo: {
     gridColumn: { default: "auto", [bp.xl]: "span 2" },
+  },
+  /** Closing banner: full row in the two-column tablet grid so it is never orphaned. */
+  spanBanner: {
+    gridColumn: { default: "auto", [bp.mdToXl]: "span 2", [bp.xl]: "span 2" },
   },
   spanOne: {
     gridColumn: "auto",
@@ -221,7 +225,7 @@ export const StudentLife = ({
                 styles.tile,
                 styles.panel,
                 styles.panelGold,
-                styles.spanTwo
+                styles.spanBanner
               )}
             >
               <h3 {...stylex.props(styles.panelTitle)}>Prefects</h3>

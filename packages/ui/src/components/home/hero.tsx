@@ -91,6 +91,7 @@ const styles = stylex.create({
     fontSize: font.size4xl,
     lineHeight: font.leadingTight,
     letterSpacing: font.trackingTight,
+    textTransform: "uppercase",
     textWrap: "balance",
   },
   place: {
@@ -159,6 +160,10 @@ export const Hero = ({
   cta1?: string;
   cta2?: string;
 }) => {
+  // Two-line lockup as in the design: the last word drops to its own line.
+  const splitAt = title.lastIndexOf(" ");
+  const titleHead = splitAt > 0 ? title.slice(0, splitAt) : title;
+  const titleTail = splitAt > 0 ? title.slice(splitAt + 1) : "";
   const renderBackground = () => {
     if (background?.kind === "video") {
       return (
@@ -211,7 +216,14 @@ export const Hero = ({
       <div {...stylex.props(styles.content)}>
         <p {...stylex.props(styles.motto)}>{motto}</p>
         <h1 id="hero-title" {...stylex.props(styles.title)}>
-          {title}
+          {titleHead}
+          {titleTail ? (
+            <>
+              {" "}
+              <br />
+              {titleTail}
+            </>
+          ) : null}
         </h1>
         <p {...stylex.props(styles.place)}>{place}</p>
         <hr {...stylex.props(styles.rule)} />

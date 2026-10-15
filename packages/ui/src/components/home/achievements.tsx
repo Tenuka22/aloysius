@@ -203,7 +203,9 @@ export const Achievements = ({
             </ul>
           ) : (
             <p {...stylex.props(styles.empty)}>
-              No {active.toLowerCase()} honours have been published yet.
+              {active === ALL
+                ? "No honours have been published yet."
+                : `No ${active.toLowerCase()} honours have been published yet.`}
             </p>
           )}
         </Reveal>

@@ -81,7 +81,6 @@ const HomeContent = () => {
     ? {
         id: topAnnouncement.id,
         text: topAnnouncement.title,
-        href: "/notices",
         priority: topAnnouncement.severity === "urgent" ? "high" : "standard",
       }
     : undefined;

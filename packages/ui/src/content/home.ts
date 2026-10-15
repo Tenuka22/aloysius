@@ -21,7 +21,8 @@ export interface HeroBackground {
 export interface Notice {
   id: string;
   text: string;
-  href: string;
+  /** Where "View all notices" leads. Omitted, the link is not shown. */
+  href?: string;
   priority: "standard" | "high";
 }
 
@@ -109,9 +110,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { id: "about", label: "About", href: "/about" },
   { id: "academics", label: "Academics", href: "/academics" },
   { id: "students", label: "Students", href: "/students" },
-  { id: "events", label: "Events", href: "/events" },
   { id: "news", label: "News", href: "/news" },
-  { id: "notices", label: "Notices", href: "/notices" },
   { id: "alumni", label: "Alumni", href: "/alumni" },
   { id: "media", label: "Media", href: "/media" },
   { id: "contact", label: "Contact", href: "/contact" },
@@ -153,6 +152,66 @@ export const STATS: readonly Stat[] = [
   { id: "staff", label: "Teaching staff" },
   { id: "results", label: "O/L & A/L pass rate" },
   { id: "honours", label: "National honours" },
+];
+
+export interface ExamStat {
+  label: string;
+  /** Omitted until the results registry supplies a figure. */
+  value?: string;
+}
+
+export interface ExamCard {
+  id: string;
+  level: string;
+  /** Large gold callout over the photograph, e.g. "A/L". */
+  mark: string;
+  title: string;
+  description: string;
+  stats: readonly ExamStat[];
+  cta: string;
+  href: string;
+  /** Caption shown while the photograph is pending. */
+  photoHint: string;
+}
+
+/** The three national examinations the College reports on, in display order. */
+export const EXAM_CARDS: readonly ExamCard[] = [
+  {
+    id: "al",
+    level: "G.C.E. Advanced Level",
+    mark: "A/L",
+    title: "Top Rankers by Stream",
+    description:
+      "Island and district rankers across Physical Science, Biological Science, Commerce, Arts and Technology.",
+    stats: [{ label: "University entrants" }, { label: "3A passes" }],
+    cta: "A/L results",
+    href: "/results#al",
+    photoHint: "A/L rankers group photo",
+  },
+  {
+    id: "ol",
+    level: "G.C.E. Ordinary Level",
+    mark: "9A",
+    title: "The 9A Achievers",
+    description:
+      "Aloysians who earned distinctions in all nine subjects at the Ordinary Level.",
+    stats: [{ label: "9A achievers" }, { label: "Pass rate" }],
+    cta: "O/L results",
+    href: "/results#ol",
+    photoHint: "O/L 9A achievers photo",
+  },
+  {
+    id: "scholarship",
+    level: "Grade 5 Scholarship",
+    mark: "G5",
+    title: "Scholarship Passers",
+    description:
+      "Primary section students who passed the Grade 5 Scholarship Examination.",
+    stats: [{ label: "Passers" }, { label: "Highest mark" }],
+    cta: "Scholarship results",
+    href: "/results#scholarship",
+    photoHint: "Scholarship passers photo",
+  },
 ];
 
 export const ACHIEVEMENT_CATEGORIES: readonly string[] = [
