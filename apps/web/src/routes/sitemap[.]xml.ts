@@ -18,14 +18,13 @@ const STATIC_PATHS: readonly string[] = [
   "/",
   "/about",
   "/academics",
+  "/results",
   "/admissions",
   "/alumni",
   "/students",
   "/news",
   "/media",
   "/contact",
-  "/notices",
-  "/events",
   "/galleries",
 ];
 

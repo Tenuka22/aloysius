@@ -25,7 +25,7 @@ const styles = stylex.create({
     },
     alignItems: {
       default: "start",
-      [bp.xl]: "center",
+      [bp.xl]: "end",
     },
   },
   copy: {
@@ -118,15 +118,19 @@ export const FeaturedStory = ({ story }: { story?: NewsStory }) => {
   }
 
   const formattedDate = formatNewsDate(story.date);
+  // Without a story page there is nothing to link to: the photograph and
+  // headline render plainly and the "Read the story" action is omitted.
+  const linked = Boolean(story.href);
+  const MediaTag = linked ? "a" : "div";
 
   return (
     <Section labelledBy="featured-story-title" tone="surface">
       <Container>
         <div {...stylex.props(styles.grid)}>
-          <a
-            aria-hidden="true"
-            href={story.href}
-            tabIndex={-1}
+          <MediaTag
+            {...(linked
+              ? { "aria-hidden": true, href: story.href, tabIndex: -1 }
+              : {})}
             {...stylex.props(styles.mediaLink)}
           >
             <Media
@@ -138,7 +142,7 @@ export const FeaturedStory = ({ story }: { story?: NewsStory }) => {
               source={story.image}
               zoom
             />
-          </a>
+          </MediaTag>
 
           <div {...stylex.props(styles.copy)}>
             <p {...stylex.props(styles.meta)}>
@@ -151,25 +155,31 @@ export const FeaturedStory = ({ story }: { story?: NewsStory }) => {
             </p>
 
             <h2 id="featured-story-title" {...stylex.props(styles.title)}>
-              <a href={story.href} {...stylex.props(styles.link)}>
-                {story.title}
-              </a>
+              {linked ? (
+                <a href={story.href} {...stylex.props(styles.link)}>
+                  {story.title}
+                </a>
+              ) : (
+                story.title
+              )}
             </h2>
 
             {story.excerpt ? (
               <p {...stylex.props(styles.excerpt)}>{story.excerpt}</p>
             ) : null}
 
-            <a
-              href={story.href}
-              {...stylex.props(styles.link, styles.readMore)}
-            >
-              {FEATURED_READ_LABEL}
-              {/* SC 2.4.4: "Read the story" alone is not a destination when
+            {linked ? (
+              <a
+                href={story.href}
+                {...stylex.props(styles.link, styles.readMore)}
+              >
+                {FEATURED_READ_LABEL}
+                {/* SC 2.4.4: "Read the story" alone is not a destination when
                   read out of context in a links list. */}
-              <VisuallyHidden>: {story.title}</VisuallyHidden>
-              <span aria-hidden="true">&rarr;</span>
-            </a>
+                <VisuallyHidden>: {story.title}</VisuallyHidden>
+                <span aria-hidden="true">&rarr;</span>
+              </a>
+            ) : null}
           </div>
         </div>
       </Container>

@@ -98,24 +98,6 @@ describe(blocksToStudentsProps, () => {
     expect(result.houseNames).toStrictEqual({ gold: "Loyola House" });
   });
 
-  it("renders no prefects button until a destination is chosen", () => {
-    expect(
-      blocksToStudentsProps(
-        blocks({
-          "students-prefects": { "students-prefects-cta-href": "   " },
-        })
-      ).prefectsHref
-    ).toBeUndefined();
-
-    expect(
-      blocksToStudentsProps(
-        blocks({
-          "students-prefects": { "students-prefects-cta-href": "/contact" },
-        })
-      ).prefectsHref
-    ).toBe("/contact");
-  });
-
   it("drops a hidden block's copy rather than falling back to it", () => {
     const result = blocksToStudentsProps(
       blocks(

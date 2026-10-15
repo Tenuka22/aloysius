@@ -5,7 +5,6 @@ import {
   ALUMNI_ABOUT_HEADING,
   ALUMNI_BRANCHES_HEADING,
   ALUMNI_BRANCHES_INTRO,
-  ALUMNI_EVENTS_LABEL,
   ALUMNI_HERO_INTRO,
   ALUMNI_HERO_TITLE,
   ALUMNI_LINKS_BODY,
@@ -31,11 +30,6 @@ import {
 } from "./media";
 import { NEWS_ARCHIVE_HEADING, NEWS_HERO_INTRO, NEWS_HERO_TITLE } from "./news";
 import {
-  NOTICES_HERO_EYEBROW,
-  NOTICES_HERO_INTRO,
-  NOTICES_HERO_TITLE,
-} from "./notices";
-import {
   CLUBS_EYEBROW,
   CLUBS_HEADING,
   CLUBS_INTRO,
@@ -44,7 +38,6 @@ import {
   HOUSES_INTRO,
   MORE_SPORTS,
   PREFECTS_BODY,
-  PREFECTS_CTA_LABEL,
   PREFECTS_HEADING,
   SPORTS_EYEBROW,
   SPORTS_HEADING,
@@ -146,42 +139,6 @@ export const blocksToNewsProps = (blocks: CmsBlock[]): NewsPageProps => ({
     "news-feed",
     "news-feed-heading",
     NEWS_ARCHIVE_HEADING
-  ),
-});
-
-/* --------------------------------------------------------------- notices */
-
-export interface NoticesPageProps {
-  eyebrow?: string;
-  heading?: string;
-  tagline?: string;
-  heroImage?: ImageSource;
-}
-
-export const blocksToNoticesProps = (blocks: CmsBlock[]): NoticesPageProps => ({
-  eyebrow: fieldOrDefault(
-    blocks,
-    "notices-header",
-    "notices-eyebrow",
-    NOTICES_HERO_EYEBROW
-  ),
-  heading: fieldOrDefault(
-    blocks,
-    "notices-header",
-    "notices-heading",
-    NOTICES_HERO_TITLE
-  ),
-  tagline: fieldOrDefault(
-    blocks,
-    "notices-header",
-    "notices-tagline",
-    NOTICES_HERO_INTRO
-  ),
-  heroImage: imageSource(
-    blocks,
-    "notices-header",
-    "notices-hero-image",
-    "College notices and announcements"
   ),
 });
 
@@ -297,9 +254,7 @@ export interface AlumniPageProps {
   linksHeading?: string;
   linksBody?: string;
   obaHref?: string;
-  eventsHref?: string;
   obaLabel?: string;
-  eventsLabel?: string;
 }
 
 export const blocksToAlumniProps = (blocks: CmsBlock[]): AlumniPageProps => ({
@@ -387,23 +342,11 @@ export const blocksToAlumniProps = (blocks: CmsBlock[]): AlumniPageProps => ({
     "alumni-oba-href",
     ALUMNI_OBA_HREF
   ),
-  eventsHref: fieldOrDefault(
-    blocks,
-    "alumni-links",
-    "alumni-events-href",
-    "/events"
-  ),
   obaLabel: fieldOrDefault(
     blocks,
     "alumni-links",
     "alumni-oba-label",
     ALUMNI_OBA_LABEL
-  ),
-  eventsLabel: fieldOrDefault(
-    blocks,
-    "alumni-links",
-    "alumni-events-label",
-    ALUMNI_EVENTS_LABEL
   ),
 });
 
@@ -580,8 +523,6 @@ export interface StudentsPageProps {
   houseNames?: Record<string, string>;
   prefectsHeading?: string;
   prefectsBody?: string;
-  prefectsCtaLabel?: string;
-  prefectsHref?: string;
 }
 
 export const blocksToStudentsProps = (
@@ -703,17 +644,6 @@ export const blocksToStudentsProps = (
       "students-prefects",
       "students-prefects-body",
       PREFECTS_BODY
-    ),
-    prefectsCtaLabel: fieldOrDefault(
-      blocks,
-      "students-prefects",
-      "students-prefects-cta-label",
-      PREFECTS_CTA_LABEL
-    ),
-    prefectsHref: optionalField(
-      blocks,
-      "students-prefects",
-      "students-prefects-cta-href"
     ),
   };
 };

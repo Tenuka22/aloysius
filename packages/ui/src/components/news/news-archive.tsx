@@ -103,10 +103,29 @@ const styles = stylex.create({
   card: {
     minWidth: 0,
   },
+  /*
+   * The designer's phone layout: a compact row with a small thumbnail beside
+   * the category and headline. From 40rem it becomes the full-width card.
+   */
   cardLink: {
-    display: "block",
+    display: {
+      default: "grid",
+      [bp.md]: "block",
+    },
+    gridTemplateColumns: {
+      default: "5.125rem minmax(0, 1fr)",
+      [bp.md]: "none",
+    },
+    columnGap: space.sm,
+    alignItems: "center",
     textDecoration: "none",
     color: "inherit",
+  },
+  thumb: {
+    gridRow: {
+      default: "span 2",
+      [bp.md]: "auto",
+    },
   },
   meta: {
     display: "flex",
@@ -114,7 +133,14 @@ const styles = stylex.create({
     gap: space["2xs"],
     alignItems: "center",
     margin: 0,
-    marginBlock: space.sm,
+    marginBlockStart: {
+      default: 0,
+      [bp.md]: space.sm,
+    },
+    marginBlockEnd: {
+      default: space["3xs"],
+      [bp.md]: space.sm,
+    },
     fontSize: font.size2xs,
     fontWeight: font.weightBold,
     letterSpacing: font.trackingWider,
@@ -132,7 +158,10 @@ const styles = stylex.create({
     margin: 0,
     fontFamily: font.display,
     fontWeight: font.weightSemibold,
-    fontSize: font.sizeXl,
+    fontSize: {
+      default: font.sizeMd,
+      [bp.md]: font.sizeXl,
+    },
     lineHeight: font.leadingSnug,
     textWrap: "pretty",
     color: {
@@ -237,7 +266,7 @@ const styles = stylex.create({
   },
 });
 
-type Filter = typeof ALL_CATEGORIES | NewsCategory;
+export type Filter = typeof ALL_CATEGORIES | NewsCategory;
 
 const FIRST_PAGE = 1;
 
@@ -247,6 +276,14 @@ const NO_STORIES: readonly NewsStory[] = [];
 export interface NewsArchiveProps {
   stories?: readonly NewsStory[];
   pageSize?: number;
+  /**
+   * Controls the category from outside - the News page keeps the chips in its
+   * hero, as in the design, and passes the choice down. When omitted the archive
+   * is self-contained and renders its own chips above the grid. A parent that
+   * controls the filter should also pass `key={filter}`, so the page number
+   * resets when the category changes.
+   */
+  filter?: Filter;
 }
 
 /**
@@ -259,8 +296,11 @@ export interface NewsArchiveProps {
 export const NewsArchive = ({
   stories = NO_STORIES,
   pageSize = NEWS_PAGE_SIZE,
+  filter: controlledFilter,
 }: NewsArchiveProps) => {
-  const [filter, setFilter] = useState<Filter>(ALL_CATEGORIES);
+  const controlled = controlledFilter !== undefined;
+  const [localFilter, setLocalFilter] = useState<Filter>(ALL_CATEGORIES);
+  const filter = controlledFilter ?? localFilter;
   const [page, setPage] = useState(FIRST_PAGE);
   const resultsRef = useRef<HTMLDivElement>(null);
   const headingId = useId();
@@ -288,7 +328,7 @@ export const NewsArchive = ({
   );
 
   const selectFilter = (next: Filter) => {
-    setFilter(next);
+    setLocalFilter(next);
     setPage(FIRST_PAGE);
   };
 
@@ -308,11 +348,15 @@ export const NewsArchive = ({
   return (
     <Section id="stories" labelledBy={headingId} tone="raised">
       <Container>
-        <Heading id={headingId} level={2} style={styles.heading}>
+        <Heading
+          id={headingId}
+          level={2}
+          style={controlled ? styles.srOnly : styles.heading}
+        >
           {NEWS_ARCHIVE_HEADING}
         </Heading>
 
-        {categories.length > 0 ? (
+        {!controlled && categories.length > 0 ? (
           /* A real <fieldset>/<legend> rather than role="group": the
              native element carries the grouping semantics, and the legend is
              the group's accessible name without an aria-label. */
@@ -355,13 +399,20 @@ export const NewsArchive = ({
             <ul {...stylex.props(styles.grid)}>
               {visible.map((story) => {
                 const formattedDate = formatNewsDate(story.date);
+                // No `/news/:slug` page exists yet, so a story without an
+                // `href` is a plain card rather than a link to nowhere.
+                const CardTag = story.href ? "a" : "div";
                 return (
                   <li key={story.id} {...stylex.props(styles.card)}>
-                    <a href={story.href} {...stylex.props(styles.cardLink)}>
+                    <CardTag
+                      href={story.href || undefined}
+                      {...stylex.props(styles.cardLink)}
+                    >
                       <Media
                         placeholder={`${story.category} story photograph`}
                         ratio="3:2"
                         source={story.image}
+                        style={styles.thumb}
                         zoom
                       />
                       <p {...stylex.props(styles.meta)}>
@@ -380,7 +431,7 @@ export const NewsArchive = ({
                       {/* A heading, not the mock's styled div - this is the
                           only structure below the h2 across the whole grid. */}
                       <h3 {...stylex.props(styles.cardTitle)}>{story.title}</h3>
-                    </a>
+                    </CardTag>
                   </li>
                 );
               })}
