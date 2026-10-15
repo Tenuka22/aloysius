@@ -56,10 +56,8 @@ export interface StudentsPageProps {
   sportsHeading?: string;
   /** Empty means "drop the overflow panel", not "show the default list". */
   moreSports?: readonly string[];
-  prefectsHref?: string;
   prefectsHeading?: string;
   prefectsBody?: string;
-  prefectsCtaLabel?: string;
   clubs?: readonly Club[];
   activitiesEyebrow?: string;
   activitiesHeading?: string;
@@ -124,10 +122,8 @@ export const StudentsPage = ({
   sportsEyebrow,
   sportsHeading,
   moreSports,
-  prefectsHref,
   prefectsHeading,
   prefectsBody,
-  prefectsCtaLabel,
   clubs,
   activitiesEyebrow,
   activitiesHeading,
@@ -168,12 +164,7 @@ export const StudentsPage = ({
       {galleryItems && galleryItems.length > 0 && (
         <Gallery items={galleryItems} />
       )}
-      <PrefectsCta
-        body={prefectsBody}
-        ctaLabel={prefectsCtaLabel}
-        heading={prefectsHeading}
-        href={prefectsHref}
-      />
+      <PrefectsCta body={prefectsBody} heading={prefectsHeading} />
     </main>
     <SiteFooter contact={contact} />
   </>

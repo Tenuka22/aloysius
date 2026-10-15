@@ -33,22 +33,10 @@ const AlumniContent = () => {
 
   return (
     <AlumniPage
-      aboutHeading={cmsProps.aboutHeading}
-      body={cmsProps.body}
-      branchesHeading={cmsProps.branchesHeading}
-      branchesIntro={cmsProps.branchesIntro}
-      eventsHref={cmsProps.eventsHref}
-      eventsLabel={cmsProps.eventsLabel}
       extraNavItems={extraNavItems}
       heading={cmsProps.heading}
-      heroImage={cmsProps.heroImage}
-      image={cmsProps.image}
-      imageCaption={cmsProps.imageCaption}
-      linksBody={cmsProps.linksBody}
-      linksHeading={cmsProps.linksHeading}
       obaHref={cmsProps.obaHref}
       obaLabel={cmsProps.obaLabel}
-      offerHeading={cmsProps.offerHeading}
       tagline={cmsProps.tagline}
     />
   );

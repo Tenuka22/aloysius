@@ -148,4 +148,3 @@ export const EVENTS_ALL_LABEL = "Full diary";
 export const PREFECTS_HEADING = "Prefects' Guild & Student Leadership";
 export const PREFECTS_BODY =
   "The Guild is the senior school's own body of leadership, service and discipline. Its members keep the college's daily order and represent the student body to the staff.";
-export const PREFECTS_CTA_LABEL = "Meet the prefects";

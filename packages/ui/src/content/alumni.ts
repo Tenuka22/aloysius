@@ -1,3 +1,5 @@
+import type { ImageSource } from "../components/primitives/media";
+
 /**
  * Static content for the `/alumni` page.
  *
@@ -6,7 +8,8 @@
  * `contact.ts` and `students.ts` play for their pages.
  */
 
-export const ALUMNI_HERO_TITLE = "Alumni";
+/** The default title breaks after the comma, as in the design. */
+export const ALUMNI_HERO_TITLE = "Once an Aloysian, Always an Aloysian";
 export const ALUMNI_HERO_INTRO =
   "The Old Boys' Association of St. Aloysius' College connects generations of Aloysians, wherever in the world they now live.";
 
@@ -75,7 +78,6 @@ export const ALUMNI_LINKS_HEADING = "Stay Connected";
 export const ALUMNI_LINKS_BODY =
   "Members can update their details with the branch secretary, or contact the College office to re-establish an address on the register.";
 export const ALUMNI_OBA_LABEL = "Visit the OBA";
-export const ALUMNI_EVENTS_LABEL = "Alumni events";
 
 /**
  * The Association's own site.
@@ -86,3 +88,49 @@ export const ALUMNI_EVENTS_LABEL = "Alumni events";
  * be bothered to say where the Association lives.
  */
 export const ALUMNI_OBA_HREF = "https://sacoba.lk/";
+
+export const ALUMNI_BRANCHES_EYEBROW = "The Association";
+export const ALUMNI_BRANCHES_TITLE = "OBA Branches Worldwide";
+
+export interface AlumniBranch {
+  id: string;
+  name: string;
+  /** Contact or president, shown under the name. Omitted until supplied. */
+  contact?: string;
+  /** Adds a "Branch Details" link. Omitted until the branch has a page. */
+  href?: string;
+}
+
+/**
+ * The branch cards. Add `contact` and `href` to a row as the details are
+ * confirmed - a card without them still renders as just the branch name. An
+ * empty list hides the section.
+ */
+export const ALUMNI_BRANCH_CARDS: readonly AlumniBranch[] = [
+  { id: "galle", name: "Galle (Main Branch)" },
+  { id: "colombo", name: "Colombo Branch" },
+  { id: "overseas", name: "Overseas Branches" },
+];
+
+export const ALUMNI_NOTABLES_EYEBROW = "Hall of Fame";
+export const ALUMNI_NOTABLES_TITLE = "Distinguished Aloysians";
+export const ALUMNI_NOTABLES_LABEL = "Distinguished Aloysians";
+
+export interface DistinguishedAloysian {
+  id: string;
+  /** Left unset until the person is confirmed; the portrait slot still shows. */
+  name?: string;
+  field: string;
+  image?: ImageSource;
+}
+
+/**
+ * The Hall of Fame. Set `name` and `image: { src, alt }` on a row to fill it in,
+ * or append rows. An empty list hides the section.
+ */
+export const ALUMNI_NOTABLES: readonly DistinguishedAloysian[] = [
+  { id: "public-service", field: "Public Service" },
+  { id: "academia", field: "Academia" },
+  { id: "sport", field: "Sport" },
+  { id: "arts-culture", field: "Arts & Culture" },
+];

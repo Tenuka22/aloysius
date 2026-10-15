@@ -142,22 +142,18 @@ describe(StudentsPage, () => {
     ).toBeNull();
   });
 
-  it("uses the CMS prefects copy and destination", () => {
+  it("uses the CMS prefects copy", () => {
     render(
       <StudentsPage
         prefectsBody="The Guild keeps the college's daily order."
-        prefectsCtaLabel="Meet the senior prefects"
         prefectsHeading="Student Leadership"
-        prefectsHref="/contact"
       />
     );
 
     expect(
       screen.getByRole("heading", { level: 2, name: "Student Leadership" })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Meet the senior prefects" })
-    ).toHaveAttribute("href", "/contact");
+    expect(screen.queryByRole("link", { name: /meet the/iu })).toBeNull();
   });
 
   it("renders no diary section until the college publishes an event", () => {
@@ -297,16 +293,10 @@ describe(HouseSystem, () => {
 });
 
 describe(PrefectsCta, () => {
-  it("renders no call to action until a real destination exists", () => {
-    const { rerender } = render(<PrefectsCta />);
+  it("renders the leadership copy with no call to action", () => {
+    render(<PrefectsCta />);
 
-    // The mock's `href="#"` is a button that navigates nowhere; shipping none
-    // is the honest alternative.
+    expect(screen.getByRole("heading", { level: 2 })).toBeInTheDocument();
     expect(screen.queryByRole("link")).toBeNull();
-
-    rerender(<PrefectsCta href="/prefects" />);
-    expect(
-      screen.getByRole("link", { name: "Meet the prefects" })
-    ).toHaveAttribute("href", "/prefects");
   });
 });

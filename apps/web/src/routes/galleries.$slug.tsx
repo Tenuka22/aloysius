@@ -39,13 +39,11 @@ const LINK_LABEL: Record<"news" | "event" | "achievement", string> = {
 /**
  * Where each kind of linked content actually lives.
  *
- * Events are addressed by their anchor on `/events`, which is why the id is in
- * the path rather than the query - the agenda row it belongs to carries
- * `id="event-<id>"`. News and achievements have no detail route of their own, so
- * they are named in the link rather than pretended to be reachable.
+ * Events, news and achievements have no detail route of their own, so they are
+ * named in the link rather than pretended to be reachable.
  */
 const LINK_HREF: Record<"news" | "event" | "achievement", string | null> = {
-  event: "/events#event-",
+  event: null,
   achievement: null,
   news: null,
 };

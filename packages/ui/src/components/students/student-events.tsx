@@ -1,13 +1,11 @@
 import * as stylex from "@stylexjs/stylex";
 
 import {
-  EVENTS_ALL_LABEL,
   EVENTS_EYEBROW,
   EVENTS_HEADING,
   EVENTS_INTRO,
 } from "../../content/students";
 import { color, font, space } from "../../tokens/tokens.stylex";
-import { ArrowLink } from "../primitives/button";
 import {
   Container,
   Eyebrow,
@@ -114,10 +112,8 @@ const formatMonth = (date: Date) =>
  */
 export const StudentEvents = ({
   events,
-  allHref = "/events",
 }: {
   events: readonly StudentEvent[];
-  allHref?: string;
 }) => {
   if (events.length === 0) {
     return null;
@@ -126,9 +122,7 @@ export const StudentEvents = ({
   return (
     <Section id="events" labelledBy="events-title" tone="surface">
       <Container>
-        <SectionHeader
-          action={<ArrowLink href={allHref}>{EVENTS_ALL_LABEL}</ArrowLink>}
-        >
+        <SectionHeader>
           <Eyebrow>{EVENTS_EYEBROW}</Eyebrow>
           <Heading id="events-title" level={2}>
             {EVENTS_HEADING}

@@ -64,6 +64,10 @@ const styles = stylex.create({
   spanThird: {
     gridColumn: { default: "auto", [bp.xl]: "span 2" },
   },
+  /** The "more sports" panel closes the mosaic as a full-width row, never an orphan cell. */
+  spanFull: {
+    gridColumn: { default: "auto", [bp.mdToXl]: "span 2", [bp.xl]: "span 6" },
+  },
 
   photo: {
     position: "absolute",
@@ -168,7 +172,7 @@ export const SportsGrid = ({
 
           {moreSports.length > 0 ? (
             <li
-              {...stylex.props(styles.tile, styles.morePanel, styles.spanThird)}
+              {...stylex.props(styles.tile, styles.morePanel, styles.spanFull)}
             >
               <h3 {...stylex.props(styles.moreTitle)}>{MORE_SPORTS_TITLE}</h3>
               <ul {...stylex.props(styles.moreList)}>

@@ -109,9 +109,7 @@ const StudentsContent = () => {
       housesIntro={cmsProps.housesIntro}
       houseNames={cmsProps.houseNames}
       prefectsBody={cmsProps.prefectsBody}
-      prefectsCtaLabel={cmsProps.prefectsCtaLabel}
       prefectsHeading={cmsProps.prefectsHeading}
-      prefectsHref={cmsProps.prefectsHref}
       sportImages={cmsProps.sportImages}
       sportsEyebrow={cmsProps.sportsEyebrow}
       sportsHeading={cmsProps.sportsHeading}
