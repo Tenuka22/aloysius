@@ -51,14 +51,10 @@ const imageOrDefault = (
 };
 
 export interface AboutTextContent {
-  foundersEyebrow?: string;
-  foundersHeading?: string;
   historyHeading?: string;
 }
 
 export interface AboutImages {
-  founder1Image: ImageSource;
-  founder2Image: ImageSource;
   history1Image: ImageSource;
   history2Image: ImageSource;
   history3Image: ImageSource;
@@ -75,17 +71,9 @@ export interface AboutImages {
 export const blocksToAboutText = (
   blocks: CmsBlock[],
   defaults: {
-    foundersEyebrow: string;
-    foundersHeading: string;
     historyHeading: string;
   }
 ): AboutTextContent => ({
-  foundersEyebrow:
-    fieldValue(blocks, "founders", "founders-eyebrow") ??
-    defaults.foundersEyebrow,
-  foundersHeading:
-    fieldValue(blocks, "founders", "founders-heading") ??
-    defaults.foundersHeading,
   historyHeading:
     fieldValue(blocks, "history", "history-heading") ?? defaults.historyHeading,
 });
@@ -98,8 +86,6 @@ export const blocksToAboutText = (
 export const blocksToAboutImages = (
   blocks: CmsBlock[],
   defaults: {
-    founder1: ImageSource;
-    founder2: ImageSource;
     history1: ImageSource;
     history2: ImageSource;
     history3: ImageSource;
@@ -108,18 +94,6 @@ export const blocksToAboutImages = (
     anthemSinhala: ImageSource;
   }
 ): AboutImages => ({
-  founder1Image: imageOrDefault(
-    blocks,
-    "founders",
-    "founder1-image",
-    defaults.founder1
-  ),
-  founder2Image: imageOrDefault(
-    blocks,
-    "founders",
-    "founder2-image",
-    defaults.founder2
-  ),
   history1Image: imageOrDefault(
     blocks,
     "history",

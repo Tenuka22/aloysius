@@ -32,7 +32,6 @@ import {
   HOUSES_INTRO,
   MORE_SPORTS,
   PREFECTS_BODY,
-  PREFECTS_CTA_LABEL,
   PREFECTS_HEADING,
   SPORTS_EYEBROW,
   SPORTS_HEADING,
@@ -147,7 +146,6 @@ export const APP_ROUTE_OPTIONS: readonly LinkOption[] = [
   { label: "Admissions", value: ADMISSIONS_URL },
   { label: "Alumni", value: "/alumni" },
   { label: "News & Events", value: "/news" },
-  { label: "Notices", value: "/notices" },
   { label: "Media", value: "/media" },
   { label: "Students", value: "/students" },
   { label: "Contact", value: "/contact" },
@@ -206,8 +204,6 @@ const IMAGE_RATIO_KEYS: Partial<Record<string, AspectRatioKey>> = {
   "life-sports": "mosaicTile",
   "life-music": "mosaicTile",
   "alumni-image": "alumniPhoto",
-  "founder1-image": "principalPortrait",
-  "founder2-image": "principalPortrait",
   "history-1-image": "heritagePhoto",
   "history-2-image": "heritagePhoto",
   "history-3-image": "heritagePhoto",
@@ -552,40 +548,6 @@ export const PRINCIPAL_BLOCKS: readonly PageBlock[] = [
 ];
 
 export const ABOUT_BLOCKS: readonly PageBlock[] = [
-  {
-    id: "founders",
-    name: "Founders",
-    type: "Text + media",
-    status: "published",
-    summary: "Headings and portraits for the two founder cards",
-    fields: [
-      {
-        id: "founders-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: "Our foundations",
-      },
-      {
-        id: "founders-heading",
-        label: "Heading",
-        kind: "text",
-        value: "Built on Faith & Tradition",
-        wide: true,
-      },
-      {
-        id: "founder1-image",
-        label: "Bishop Joseph Van Reeth portrait",
-        kind: "image",
-        hint: "Portrait orientation. Clearing this restores the default archival photo.",
-      },
-      {
-        id: "founder2-image",
-        label: "St. Aloysius Gonzaga portrait",
-        kind: "image",
-        hint: "Portrait orientation. Clearing this restores the default archival photo.",
-      },
-    ],
-  },
   {
     id: "history",
     name: "History Timeline",
@@ -1029,19 +991,6 @@ export const ALUMNI_BLOCKS: readonly PageBlock[] = [
         value: ALUMNI_OBA_HREF,
         hint: "Leave empty and the button does not appear.",
       },
-      {
-        id: "alumni-events-label",
-        label: "Events button label",
-        kind: "text",
-        value: "Alumni events",
-      },
-      {
-        id: "alumni-events-href",
-        label: "Events link",
-        kind: "text",
-        value: "/events",
-        hint: "Leave empty and the button does not appear.",
-      },
     ],
   },
 ];
@@ -1336,7 +1285,7 @@ export const STUDENTS_BLOCKS: readonly PageBlock[] = [
     name: "Prefects' Guild",
     type: "Text + media",
     status: "published",
-    summary: "The leadership call to action and where its button leads",
+    summary: "The student-leadership banner copy",
     fields: [
       {
         id: "students-prefects-heading",
@@ -1350,19 +1299,6 @@ export const STUDENTS_BLOCKS: readonly PageBlock[] = [
         kind: "textarea",
         value: PREFECTS_BODY,
         wide: true,
-      },
-      {
-        id: "students-prefects-cta-label",
-        label: "Button label",
-        kind: "text",
-        value: PREFECTS_CTA_LABEL,
-      },
-      {
-        id: "students-prefects-cta-href",
-        label: "Button destination",
-        kind: "select",
-        options: APP_ROUTE_OPTIONS,
-        hint: "The button stays hidden until a destination is chosen - there is no prefects page yet.",
       },
     ],
   },

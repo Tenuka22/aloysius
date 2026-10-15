@@ -1,8 +1,5 @@
 import { AboutPage } from "@aloysius/ui/components/about/about-page";
 import {
-  FOUNDERS,
-  FOUNDERS_EYEBROW,
-  FOUNDERS_HEADING,
   HISTORY_HEADING,
   TIMELINE,
   ANTHEM_IMAGE,
@@ -34,8 +31,6 @@ const AboutContent = () => {
 
   const images = about?.blocks
     ? blocksToAboutImages(about.blocks, {
-        founder1: FOUNDERS[0].image ?? { src: "", alt: FOUNDERS[0].name },
-        founder2: FOUNDERS[1].image ?? { src: "", alt: FOUNDERS[1].name },
         history1: TIMELINE[0].image ?? { src: "", alt: TIMELINE[0].title },
         history2: TIMELINE[1].image ?? { src: "", alt: TIMELINE[1].title },
         history3: TIMELINE[2].image ?? { src: "", alt: TIMELINE[2].title },
@@ -47,8 +42,6 @@ const AboutContent = () => {
 
   const text = about?.blocks
     ? blocksToAboutText(about.blocks, {
-        foundersEyebrow: FOUNDERS_EYEBROW,
-        foundersHeading: FOUNDERS_HEADING,
         historyHeading: HISTORY_HEADING,
       })
     : undefined;
@@ -82,7 +75,7 @@ export const Route = createFileRoute("/about")({
   head: () =>
     pageHead({
       description:
-        "The history, mission and people of St. Aloysius' College, Galle - founders, vision and mission, motto, principal's message and college anthem.",
+        "The history, mission and people of St. Aloysius' College, Galle - history, vision and mission, motto, principal's message and college anthem.",
       path: "/about",
       title: "About | St. Aloysius' College, Galle",
     }),

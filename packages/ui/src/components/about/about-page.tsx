@@ -1,7 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 
 import type { LeadershipMember } from "../../content/about";
-import { FOUNDERS, TIMELINE } from "../../content/about";
+import { TIMELINE } from "../../content/about";
 import type { AboutImages, AboutTextContent } from "../../content/cms-to-about";
 import type { NavItem } from "../../content/home";
 import type { PrincipalContent } from "../../content/principal";
@@ -13,7 +13,6 @@ import { SiteHeader } from "../site/site-header";
 import { AboutHero } from "./about-hero";
 import { Administration } from "./administration";
 import { Anthem } from "./anthem";
-import { Founders } from "./founders";
 import { HistoryTimeline } from "./history-timeline";
 import { MottoBanner } from "./motto-banner";
 import { VisionMission } from "./vision-mission";
@@ -53,12 +52,6 @@ export const AboutPage = ({
   principal,
   extraNavItems,
 }: AboutPageProps) => {
-  const founders = images
-    ? FOUNDERS.map((founder, index) => ({
-        ...founder,
-        image: [images.founder1Image, images.founder2Image][index],
-      }))
-    : FOUNDERS;
   const timeline = images
     ? TIMELINE.map((entry, index) => ({
         ...entry,
@@ -77,11 +70,6 @@ export const AboutPage = ({
       <SiteHeader activeHref="/about" extraNavItems={extraNavItems} />
       <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
         <AboutHero />
-        <Founders
-          eyebrow={text?.foundersEyebrow}
-          heading={text?.foundersHeading}
-          founders={founders}
-        />
         <HistoryTimeline heading={text?.historyHeading} entries={timeline} />
         <VisionMission />
         <MottoBanner />

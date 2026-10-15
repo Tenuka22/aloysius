@@ -92,6 +92,8 @@ export const MottoBanner = ({
     <img
       alt=""
       aria-hidden="true"
+      decoding="async"
+      loading="lazy"
       src={crestSrc}
       {...stylex.props(styles.watermark)}
     />

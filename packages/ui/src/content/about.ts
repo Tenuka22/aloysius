@@ -27,30 +27,6 @@ export const ABOUT_HERO_TITLE = "Our Story, Our Heritage";
 export const ABOUT_HERO_INTRO =
   "The history, mission and people of St. Aloysius' College - a Catholic institution rooted in the heart of Galle.";
 
-export interface Founder {
-  name: string;
-  body: string;
-  image?: ImageSource;
-}
-
-export const FOUNDERS_EYEBROW = "Our foundations";
-export const FOUNDERS_HEADING = "Built on Faith & Tradition";
-export const FOUNDERS: readonly Founder[] = [
-  {
-    name: "Bishop Joseph Van Reeth",
-    body: "Founded in 1895 by Belgian Jesuit missionaries under Bishop Joseph Van Reeth, the first bishop of Galle, St. Aloysius' College carries forward a 130-year tradition of forming young men of competence, conscience and compassion.",
-    image: {
-      src: "/about-founder-van-reeth.png",
-      alt: "Bishop Joseph Van Reeth",
-    },
-  },
-  {
-    name: "St. Aloysius Gonzaga",
-    body: "Named after St. Aloysius Gonzaga, the patron saint of youth, the college embodies the Jesuit values of academic excellence, moral integrity and service to others.",
-    image: { src: "/about-founder-gonzaga.png", alt: "St. Aloysius Gonzaga" },
-  },
-];
-
 export interface TimelineEntry {
   year: string;
   title: string;

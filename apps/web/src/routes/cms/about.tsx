@@ -9,7 +9,7 @@ import {
   ScreenHead,
   ScreenWrap,
 } from "@aloysius/ui/components/cms/screen-head";
-import { ANTHEM_IMAGE, FOUNDERS, TIMELINE } from "@aloysius/ui/content/about";
+import { ANTHEM_IMAGE, TIMELINE } from "@aloysius/ui/content/about";
 import { ABOUT_BLOCKS } from "@aloysius/ui/content/cms";
 import {
   useMutation,
@@ -24,8 +24,6 @@ import { client, orpc } from "@/utils/orpc";
 
 /** Default archival photos shown when no CMS override is saved. */
 const DEFAULT_IMAGES: Record<string, string> = {
-  "founder1-image": FOUNDERS[0].image?.src ?? "",
-  "founder2-image": FOUNDERS[1].image?.src ?? "",
   "history-1-image": TIMELINE[0].image?.src ?? "",
   "history-2-image": TIMELINE[1].image?.src ?? "",
   "history-3-image": TIMELINE[2].image?.src ?? "",
