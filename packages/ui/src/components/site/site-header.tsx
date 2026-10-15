@@ -116,13 +116,13 @@ const styles = stylex.create({
   desktopNav: {
     display: {
       default: "none",
-      [bp.xxxl]: "flex",
+      [bp.xxl]: "flex",
     },
     alignItems: "center",
     minWidth: 0,
     gap: {
       default: space.sm,
-      [bp.xxxl]: space.md,
+      [bp.xxl]: space.md,
     },
   },
   navLink: {
@@ -180,7 +180,7 @@ const styles = stylex.create({
   menuButton: {
     display: {
       default: "inline-flex",
-      [bp.xxxl]: "none",
+      [bp.xxl]: "none",
     },
     alignItems: "center",
     justifyContent: "center",
@@ -221,28 +221,40 @@ const styles = stylex.create({
    */
   drawer: {
     position: "fixed",
-    insetBlock: 0,
-    insetInlineStart: "auto",
-    insetInlineEnd: 0,
+    inset: 0,
     zIndex: layer.drawer,
     margin: 0,
     padding: 0,
     borderWidth: 0,
-    // Never wider than the viewport on a 320px phone, never a full-bleed wall
-    // on a tablet.
-    width: "min(22rem, 92vw)",
+    // The designer's full-screen menu: it covers the page rather than sliding
+    // over part of it, so there is nothing behind it to mis-tap.
+    width: "100%",
     maxWidth: "100vw",
     height: "100%",
     maxHeight: "100dvh",
+    overflow: "hidden",
     backgroundColor: color.surfaceInverse,
     color: color.onInverse,
-    boxShadow: "-12px 0 40px rgba(0, 0, 0, 0.35)",
     overscrollBehavior: "contain",
     "::backdrop": {
       backgroundColor: "rgba(1, 52, 5, 0.6)",
     },
   },
+  drawerWatermark: {
+    position: "absolute",
+    insetInlineEnd: "-7rem",
+    insetBlockEnd: "-5.5rem",
+    height: "26rem",
+    width: "auto",
+    opacity: 0.07,
+    pointerEvents: "none",
+  },
+  drawerCrest: {
+    height: "2.5rem",
+    width: "auto",
+  },
   drawerInner: {
+    position: "relative",
     display: "flex",
     flexDirection: "column",
     height: "100%",
@@ -260,32 +272,41 @@ const styles = stylex.create({
     gap: space.sm,
     marginBlockEnd: space.md,
   },
-  drawerTitle: {
-    margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWidest,
-    textTransform: "uppercase",
-    color: color.accent,
-  },
   drawerNav: {
     display: "flex",
     flexDirection: "column",
+    // Centred in the space between the header row and the footer, as designed.
+    marginBlock: "auto",
+    paddingInline: space.sm,
   },
   drawerLink: {
     display: "flex",
-    alignItems: "center",
+    alignItems: "baseline",
+    gap: space.sm,
     minHeight: "3rem",
+    paddingBlock: space["2xs"],
     borderBlockEndWidth: space.px,
     borderBlockEndStyle: "solid",
-    borderBlockEndColor: color.borderInverse,
-    fontSize: font.sizeLg,
-    fontWeight: font.weightSemibold,
+    borderBlockEndColor: "rgba(255, 248, 231, 0.1)",
     textDecoration: "none",
     color: {
       default: color.onInverse,
       ":hover": color.accent,
     },
+  },
+  drawerNumber: {
+    fontFamily: font.mono,
+    fontSize: font.size2xs,
+    color: "rgba(255, 248, 231, 0.55)",
+  },
+  drawerNumberActive: {
+    color: color.accent,
+  },
+  drawerLabel: {
+    fontFamily: font.display,
+    fontSize: "clamp(1.75rem, 1.4rem + 1.8vw, 2.25rem)",
+    fontWeight: font.weightSemibold,
+    lineHeight: font.leadingSnug,
   },
   drawerLinkActive: {
     color: color.accent,
@@ -295,6 +316,7 @@ const styles = stylex.create({
     flexDirection: "column",
     gap: space.sm,
     marginBlockStart: space.lg,
+    paddingInline: space.sm,
   },
   drawerCta: {
     display: "inline-flex",
@@ -310,10 +332,11 @@ const styles = stylex.create({
   },
   drawerMotto: {
     margin: 0,
-    fontFamily: font.display,
-    fontStyle: "italic",
-    fontSize: font.sizeLg,
-    color: color.onInverseSubtle,
+    textAlign: "center",
+    fontSize: font.size2xs,
+    letterSpacing: font.trackingWidest,
+    textTransform: "uppercase",
+    color: "rgba(255, 248, 231, 0.6)",
   },
 });
 
@@ -497,8 +520,23 @@ export const SiteHeader = ({
         {...stylex.props(styles.drawer)}
       >
         <div data-lenis-prevent {...stylex.props(styles.drawerInner)}>
+          <img
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            loading="lazy"
+            src={crestSrc}
+            {...stylex.props(styles.drawerWatermark)}
+          />
           <div {...stylex.props(styles.drawerHead)}>
-            <p {...stylex.props(styles.drawerTitle)}>Menu</p>
+            <img
+              alt=""
+              aria-hidden="true"
+              decoding="async"
+              loading="lazy"
+              src={crestSrc}
+              {...stylex.props(styles.drawerCrest)}
+            />
             <button
               aria-label="Close menu"
               onClick={close}
@@ -510,7 +548,7 @@ export const SiteHeader = ({
           </div>
 
           <nav aria-label="Mobile" {...stylex.props(styles.drawerNav)}>
-            {allItems.map((item) => {
+            {allItems.map((item, index) => {
               const isActive = item.href === activeHref;
               return (
                 <a
@@ -523,7 +561,18 @@ export const SiteHeader = ({
                     isActive && styles.drawerLinkActive
                   )}
                 >
-                  {item.label}
+                  <span
+                    aria-hidden="true"
+                    {...stylex.props(
+                      styles.drawerNumber,
+                      isActive && styles.drawerNumberActive
+                    )}
+                  >
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span {...stylex.props(styles.drawerLabel)}>
+                    {item.label}
+                  </span>
                 </a>
               );
             })}

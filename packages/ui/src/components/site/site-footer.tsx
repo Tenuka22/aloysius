@@ -5,12 +5,22 @@ import {
   ADMISSIONS_URL,
   COLLEGE_LOCATION,
   COLLEGE_NAME,
+  FOUNDED_YEAR,
   MOTTO,
   MOTTO_TRANSLATION,
 } from "../../content/home";
 import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
+import {
+  color,
+  font,
+  motionToken,
+  radius,
+  space,
+} from "../../tokens/tokens.stylex";
+import { ButtonLink } from "../primitives/button";
 import { VisuallyHidden } from "../primitives/layout";
+import { Media } from "../primitives/media";
+import type { ImageSource } from "../primitives/media";
 
 /*
  * Brand marks, inlined rather than imported.
@@ -81,71 +91,178 @@ const YoutubeMark = ({ className }: BrandMarkProps) => (
 
 const styles = stylex.create({
   footer: {
-    backgroundColor: color.surfaceInverseDeep,
+    backgroundColor: color.surfaceSunken,
+    color: color.onSurface,
+  },
+
+  /* ------------------------------------------------------------ visit band */
+  visit: {
+    position: "relative",
+    overflow: "hidden",
+    // Fluid, like the design's clamp(260px, 34vw, 420px); in rem so the 4K
+    // root-size scaling carries it along.
+    minBlockSize: "clamp(16rem, 34vw, 26rem)",
+    display: "flex",
+    alignItems: "center",
+    backgroundColor: color.surfaceInverse,
     color: color.onInverse,
-    borderBlockStartWidth: "2px",
-    borderBlockStartStyle: "solid",
-    borderBlockStartColor: color.accent,
     paddingInline: space.gutter,
-    // Leave room for the home indicator on iOS and for TV safe areas.
-    paddingBlockEnd: `max(${space.lg}, env(safe-area-inset-bottom))`,
-    paddingBlockStart: space["2xl"],
   },
-  inner: {
+  visitPhoto: {
+    position: "absolute",
+    inset: 0,
+    inlineSize: "100%",
+    blockSize: "100%",
+  },
+  visitScrim: {
+    position: "absolute",
+    inset: 0,
+    backgroundImage:
+      "linear-gradient(90deg, rgba(1,52,5,0.92) 0%, rgba(1,52,5,0.55) 55%, rgba(1,52,5,0.15) 100%)",
+    pointerEvents: "none",
+  },
+  visitWatermark: {
+    position: "absolute",
+    insetInlineEnd: "-4rem",
+    insetBlockEnd: "-6rem",
+    blockSize: "26rem",
+    inlineSize: "auto",
+    opacity: 0.07,
+    pointerEvents: "none",
+  },
+  visitInner: {
+    position: "relative",
+    inlineSize: "100%",
+    maxWidth: space.content,
     marginInline: "auto",
-    maxWidth: space.contentWide,
+    paddingBlock: space["2xl"],
   },
-  columns: {
-    display: "grid",
-    gap: space.xl,
-    // One column on a phone, two on a large phone/tablet, four on a laptop.
-    gridTemplateColumns: {
-      default: "minmax(0, 1fr)",
-      [bp.mdToXl]: "repeat(2, minmax(0, 1fr))",
-      [bp.xl]: "1.3fr 1fr 1fr 1.2fr",
-    },
-  },
-  brandCol: {
-    minWidth: 0,
-  },
-  crest: {
-    height: "5rem",
-    width: "auto",
-    marginBlockEnd: space.sm,
-    objectFit: "contain",
-  },
-  brandName: {
+  visitEyebrow: {
     margin: 0,
-    fontSize: font.sizeLg,
-    fontWeight: font.weightExtrabold,
-    letterSpacing: font.trackingWide,
-    textTransform: "uppercase",
-  },
-  brandPlace: {
-    margin: 0,
-    marginBlockStart: space["3xs"],
     fontSize: font.size2xs,
-    letterSpacing: font.trackingWidest,
+    fontWeight: font.weightBold,
+    letterSpacing: font.trackingUltra,
     textTransform: "uppercase",
     color: color.accentOnInverse,
   },
-  motto: {
+  visitTitle: {
     margin: 0,
     marginBlockStart: space.sm,
     fontFamily: font.display,
-    fontStyle: "italic",
-    fontSize: font.sizeLg,
-    color: color.onInverseSubtle,
+    fontWeight: font.weightSemibold,
+    fontSize: "clamp(2.375rem, 1.5rem + 3.4vw, 4rem)",
+    lineHeight: font.leadingTight,
+    textWrap: "balance",
+  },
+  visitAccent: {
+    fontWeight: font.weightMedium,
+    color: color.accentOnInverse,
+  },
+  visitActions: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: space.xs,
+    marginBlockStart: space.lg,
   },
 
-  colTitle: {
+  /* ------------------------------------------------------------ body */
+  body: {
+    paddingInline: space.gutter,
+  },
+  inner: {
+    marginInline: "auto",
+    maxWidth: space.content,
+  },
+  brandRow: {
+    display: "grid",
+    alignItems: "center",
+    gap: `${space.lg} ${space.xl}`,
+    paddingBlockStart: space["2xl"],
+    gridTemplateColumns: {
+      default: "minmax(0, 1fr)",
+      [bp.xl]: "repeat(2, minmax(0, 1fr))",
+    },
+  },
+  brand: {
+    display: "flex",
+    alignItems: "center",
+    gap: space.md,
+    minWidth: 0,
+  },
+  crest: {
+    flexShrink: 0,
+    blockSize: "clamp(4.5rem, 3rem + 4vw, 6.5rem)",
+    inlineSize: "auto",
+    objectFit: "contain",
+  },
+  brandText: {
+    minWidth: 0,
+    paddingInlineStart: space.md,
+    borderInlineStartWidth: space.px,
+    borderInlineStartStyle: "solid",
+    borderInlineStartColor: color.borderStrong,
+  },
+  brandName: {
     margin: 0,
-    marginBlockEnd: space.sm,
+    fontFamily: font.display,
+    fontWeight: font.weightSemibold,
+    fontSize: "clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem)",
+    lineHeight: font.leadingTight,
+  },
+  brandPlace: {
+    margin: 0,
+    marginBlockStart: space.xs,
     fontSize: font.size2xs,
     fontWeight: font.weightBold,
     letterSpacing: font.trackingWidest,
     textTransform: "uppercase",
-    color: color.accentOnInverse,
+    color: color.accentOnSurface,
+  },
+  mottoBlock: {
+    display: "flex",
+    flexDirection: "column",
+    gap: space["3xs"],
+    minWidth: 0,
+  },
+  motto: {
+    margin: 0,
+    fontFamily: font.display,
+    fontStyle: "italic",
+    fontWeight: font.weightMedium,
+    fontSize: "clamp(1.625rem, 1.3rem + 1.2vw, 2.125rem)",
+    lineHeight: font.leadingSnug,
+  },
+  mottoNote: {
+    margin: 0,
+    maxWidth: "46ch",
+    fontSize: font.sizeSm,
+    lineHeight: font.leadingRelaxed,
+    color: color.onSurfaceMuted,
+  },
+
+  columns: {
+    display: "grid",
+    gap: `${space.xl} ${space.md}`,
+    marginBlockStart: space["2xl"],
+    paddingBlock: space["2xl"],
+    borderBlockStartWidth: space.px,
+    borderBlockStartStyle: "solid",
+    borderBlockStartColor: color.border,
+    // One column on a phone, two from a large phone, four on a laptop.
+    gridTemplateColumns: {
+      default: "minmax(0, 1fr)",
+      [bp.sm]: "repeat(2, minmax(0, 1fr))",
+      [bp.xl]: "repeat(4, minmax(0, 1fr))",
+    },
+  },
+  colTitle: {
+    margin: 0,
+    marginBlockEnd: space.sm,
+    fontFamily: font.display,
+    fontStyle: "italic",
+    fontWeight: font.weightSemibold,
+    fontSize: font.sizeXl,
+    color: color.accentOnSurface,
   },
   list: {
     display: "flex",
@@ -157,13 +274,17 @@ const styles = stylex.create({
   link: {
     display: "inline-flex",
     alignItems: "center",
-    // 44px rows: comfortably tappable on a phone and on a smart board.
-    minHeight: "2.75rem",
+    // 44px rows on touch screens and smart boards, a tighter 28px with a mouse.
+    minBlockSize: {
+      default: "2.75rem",
+      [bp.hover]: "1.75rem",
+    },
     fontSize: font.sizeSm,
+    fontWeight: font.weightMedium,
     textDecoration: "none",
     color: {
-      default: color.onInverseMuted,
-      ":hover": color.accent,
+      default: color.onSurface,
+      ":hover": color.accentOnSurface,
     },
     transitionProperty: "color",
     transitionDuration: motionToken.fast,
@@ -171,28 +292,35 @@ const styles = stylex.create({
   address: {
     // <address> is italic by default in every UA stylesheet.
     fontStyle: "normal",
+    display: "flex",
+    flexDirection: "column",
   },
   contactItem: {
     display: "flex",
     margin: 0,
     alignItems: "flex-start",
     gap: space["2xs"],
-    minHeight: "2.75rem",
     paddingBlock: space["3xs"],
     fontSize: font.sizeSm,
-    color: color.onInverseMuted,
+    lineHeight: font.leadingNormal,
+    color: color.onSurfaceMuted,
   },
   contactIcon: {
     flexShrink: 0,
     width: "1rem",
     height: "1rem",
     marginBlockStart: "0.2rem",
-    color: color.accentOnInverse,
+    color: color.accentOnSurface,
   },
   contactLink: {
+    // WCAG 2.2 SC 2.5.8: a bare 14px inline link is a ~19px target.
+    display: "inline-flex",
+    alignItems: "center",
+    minBlockSize: "1.5rem",
+    overflowWrap: "anywhere",
     color: {
-      default: color.onInverseMuted,
-      ":hover": color.accent,
+      default: color.onSurfaceMuted,
+      ":hover": color.accentOnSurface,
     },
     textDecoration: "none",
   },
@@ -211,40 +339,54 @@ const styles = stylex.create({
     justifyContent: "center",
     width: "2.75rem",
     height: "2.75rem",
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: {
-      default: color.borderInverse,
-      ":hover": color.accent,
+    borderRadius: radius.circle,
+    backgroundColor: {
+      default: color.surfaceInverse,
+      ":hover": color.danger,
     },
-    color: {
-      default: color.onInverseMuted,
-      ":hover": color.accent,
-    },
-    transitionProperty: "color, border-color",
+    color: color.onInverse,
+    transitionProperty: "background-color",
     transitionDuration: motionToken.fast,
   },
   socialIcon: {
-    width: "1.15rem",
-    height: "1.15rem",
+    width: "1.05rem",
+    height: "1.05rem",
   },
 
+  /* ------------------------------------------------------------ legal bar */
   legal: {
+    backgroundColor: color.surfaceInverse,
+    color: color.onInverseMuted,
+    borderBlockStartWidth: "3px",
+    borderBlockStartStyle: "solid",
+    borderBlockStartColor: color.accent,
+    paddingInline: space.gutter,
+    // Leave room for the home indicator on iOS and for TV safe areas.
+    paddingBlockEnd: "env(safe-area-inset-bottom)",
+  },
+  legalInner: {
     display: "flex",
     flexWrap: "wrap",
+    alignItems: "center",
     justifyContent: "space-between",
-    gap: space.sm,
-    marginBlockStart: space["2xl"],
-    paddingBlockStart: space.md,
-    borderBlockStartWidth: space.px,
-    borderBlockStartStyle: "solid",
-    borderBlockStartColor: color.borderInverse,
+    gap: `${space.xs} ${space.lg}`,
+    marginInline: "auto",
+    maxWidth: space.content,
+    paddingBlock: space.md,
     fontSize: font.sizeXs,
-    color: color.onInverseSubtle,
   },
-  legalMotto: {
-    letterSpacing: font.trackingWidest,
+  backToTop: {
+    display: "inline-flex",
+    alignItems: "center",
+    minBlockSize: "1.5rem",
+    fontWeight: font.weightBold,
+    letterSpacing: font.trackingWide,
+    textDecoration: "none",
     textTransform: "uppercase",
+    color: {
+      default: color.accentOnInverse,
+      ":hover": color.accentHover,
+    },
   },
 });
 
@@ -259,26 +401,79 @@ export interface FooterContact {
 
 const EMPTY_CONTACT: FooterContact = {};
 
-const COLLEGE_LINKS = [
-  { id: "about", label: "About", href: "/about" },
+interface FooterLink {
+  id: string;
+  label: string;
+  href: string;
+}
+
+const COLLEGE_LINKS: readonly FooterLink[] = [
+  { id: "heritage", label: "Our Heritage", href: "/about#history" },
+  { id: "vision", label: "Vision & Mission", href: "/about#vision" },
+  { id: "principal", label: "Principal's Message", href: "/about#principal" },
+  {
+    id: "administration",
+    label: "Administration",
+    href: "/about#administration",
+  },
+];
+
+const LEARNING_LINKS: readonly FooterLink[] = [
   { id: "academics", label: "Academics", href: "/academics" },
-  { id: "students", label: "Students", href: "/students" },
+  { id: "results", label: "Examination Results", href: "/results" },
+  { id: "facilities", label: "Facilities", href: "/academics#facilities" },
   { id: "admissions", label: "Admissions", href: ADMISSIONS_URL },
 ];
 
-const COMMUNITY_LINKS = [
+const COMMUNITY_LINKS: readonly FooterLink[] = [
+  { id: "students", label: "Student Life", href: "/students" },
   { id: "news", label: "News & Events", href: "/news" },
-  { id: "alumni", label: "Alumni", href: "/alumni" },
-  { id: "media", label: "Media", href: "/media" },
-  { id: "contact", label: "Contact", href: "/contact" },
+  { id: "alumni", label: "Old Boys' Association", href: "/alumni" },
+  { id: "media", label: "Gallery", href: "/media" },
 ];
+
+const LinkColumn = ({
+  id,
+  title,
+  links,
+}: {
+  id: string;
+  title: string;
+  links: readonly FooterLink[];
+}) => (
+  <nav aria-labelledby={id}>
+    <h2 id={id} {...stylex.props(styles.colTitle)}>
+      {title}
+    </h2>
+    <ul {...stylex.props(styles.list)}>
+      {links.map((item) => {
+        const external = EXTERNAL_LINK.test(item.href);
+        return (
+          <li key={item.id}>
+            <a
+              href={item.href}
+              rel={external ? "noopener noreferrer" : undefined}
+              target={external ? "_blank" : undefined}
+              {...stylex.props(styles.link)}
+            >
+              {item.label}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </nav>
+);
 
 export const SiteFooter = ({
   contact = EMPTY_CONTACT,
   crestSrc = "/logo.png",
+  visitImage,
 }: {
   contact?: FooterContact;
   crestSrc?: string;
+  /** Wide photograph of the College for the "Visit" band; a crest watermark stands in until it is supplied. */
+  visitImage?: ImageSource;
 }) => {
   const socials = [
     {
@@ -309,155 +504,170 @@ export const SiteFooter = ({
 
   return (
     <footer {...stylex.props(styles.footer)}>
-      <div {...stylex.props(styles.inner)}>
-        <div {...stylex.props(styles.columns)}>
-          <div {...stylex.props(styles.brandCol)}>
-            <img
-              alt={`${COLLEGE_NAME} crest`}
-              height={80}
-              src={crestSrc}
-              width={80}
-              {...stylex.props(styles.crest)}
+      <div {...stylex.props(styles.visit)}>
+        {visitImage ? (
+          <>
+            <Media
+              fill
+              placeholder=""
+              source={visitImage}
+              style={styles.visitPhoto}
             />
-            <p {...stylex.props(styles.brandName)}>{COLLEGE_NAME}</p>
-            <p {...stylex.props(styles.brandPlace)}>{COLLEGE_LOCATION}</p>
-            <p {...stylex.props(styles.motto)}>
-              {MOTTO}
-              {" - "}
-              {MOTTO_TRANSLATION}
-            </p>
-          </div>
-
-          <nav aria-labelledby="footer-college">
-            <h2 id="footer-college" {...stylex.props(styles.colTitle)}>
-              College
-            </h2>
-            <ul {...stylex.props(styles.list)}>
-              {COLLEGE_LINKS.map((item) => (
-                <li key={item.id}>
-                  <a
-                    href={item.href}
-                    rel={
-                      EXTERNAL_LINK.test(item.href)
-                        ? "noopener noreferrer"
-                        : undefined
-                    }
-                    target={
-                      EXTERNAL_LINK.test(item.href) ? "_blank" : undefined
-                    }
-                    {...stylex.props(styles.link)}
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <nav aria-labelledby="footer-community">
-            <h2 id="footer-community" {...stylex.props(styles.colTitle)}>
-              Community
-            </h2>
-            <ul {...stylex.props(styles.list)}>
-              {COMMUNITY_LINKS.map((item) => (
-                <li key={item.id}>
-                  <a
-                    href={item.href}
-                    rel={
-                      EXTERNAL_LINK.test(item.href)
-                        ? "noopener noreferrer"
-                        : undefined
-                    }
-                    target={
-                      EXTERNAL_LINK.test(item.href) ? "_blank" : undefined
-                    }
-                    {...stylex.props(styles.link)}
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <div>
-            <h2 {...stylex.props(styles.colTitle)}>Contact</h2>
-            <address {...stylex.props(styles.address)}>
-              {contact.address ? (
-                <p {...stylex.props(styles.contactItem)}>
-                  <MapPin
-                    aria-hidden="true"
-                    {...stylex.props(styles.contactIcon)}
-                  />
-                  {contact.address}
-                </p>
-              ) : null}
-              {contact.telephone ? (
-                <p {...stylex.props(styles.contactItem)}>
-                  <Phone
-                    aria-hidden="true"
-                    {...stylex.props(styles.contactIcon)}
-                  />
-                  <a
-                    href={`tel:${contact.telephone.replaceAll(/\s/gu, "")}`}
-                    {...stylex.props(styles.contactLink)}
-                  >
-                    {contact.telephone}
-                  </a>
-                </p>
-              ) : null}
-              {contact.email ? (
-                <p {...stylex.props(styles.contactItem)}>
-                  <Mail
-                    aria-hidden="true"
-                    {...stylex.props(styles.contactIcon)}
-                  />
-                  <a
-                    href={`mailto:${contact.email}`}
-                    {...stylex.props(styles.contactLink)}
-                  >
-                    {contact.email}
-                  </a>
-                </p>
-              ) : null}
-            </address>
-
-            {hasContactDetails ? null : (
-              // Until the CMS supplies an address, a link beats an empty column.
-              <a href="/contact" {...stylex.props(styles.link)}>
-                Contact the college office
-              </a>
-            )}
-
-            {socials.length > 0 ? (
-              <ul {...stylex.props(styles.social)}>
-                {socials.map(({ id, label, href, Icon }) => (
-                  <li key={id}>
-                    <a
-                      href={href}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                      {...stylex.props(styles.socialLink)}
-                    >
-                      <Icon
-                        aria-hidden={true}
-                        {...stylex.props(styles.socialIcon)}
-                      />
-                      <VisuallyHidden>{label}</VisuallyHidden>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+            <div aria-hidden="true" {...stylex.props(styles.visitScrim)} />
+          </>
+        ) : (
+          <img
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            loading="lazy"
+            src={crestSrc}
+            {...stylex.props(styles.visitWatermark)}
+          />
+        )}
+        <div {...stylex.props(styles.visitInner)}>
+          <p {...stylex.props(styles.visitEyebrow)}>Visit the College</p>
+          <h2 {...stylex.props(styles.visitTitle)}>
+            Come and see
+            <br />
+            <em {...stylex.props(styles.visitAccent)}>Aloysian life.</em>
+          </h2>
+          <div {...stylex.props(styles.visitActions)}>
+            <ButtonLink href="/contact">Plan a visit</ButtonLink>
+            <ButtonLink external href={ADMISSIONS_URL} variant="outlineInverse">
+              Admissions
+            </ButtonLink>
           </div>
         </div>
+      </div>
 
-        <div {...stylex.props(styles.legal)}>
+      <div {...stylex.props(styles.body)}>
+        <div {...stylex.props(styles.inner)}>
+          <div {...stylex.props(styles.brandRow)}>
+            <div {...stylex.props(styles.brand)}>
+              <img
+                alt={`${COLLEGE_NAME} crest`}
+                height={104}
+                src={crestSrc}
+                width={104}
+                {...stylex.props(styles.crest)}
+              />
+              <div {...stylex.props(styles.brandText)}>
+                <p {...stylex.props(styles.brandName)}>{COLLEGE_NAME}, Galle</p>
+                <p {...stylex.props(styles.brandPlace)}>
+                  Est. {FOUNDED_YEAR} &middot; Sri Lanka
+                </p>
+              </div>
+            </div>
+            <div {...stylex.props(styles.mottoBlock)}>
+              <p {...stylex.props(styles.motto)}>&ldquo;{MOTTO}&rdquo;</p>
+              <p {...stylex.props(styles.mottoNote)}>
+                {MOTTO_TRANSLATION} &mdash; forming young men of faith,
+                discipline and excellence in the heart of {COLLEGE_LOCATION}.
+              </p>
+            </div>
+          </div>
+
+          <div {...stylex.props(styles.columns)}>
+            <LinkColumn
+              id="footer-college"
+              links={COLLEGE_LINKS}
+              title="The College"
+            />
+            <LinkColumn
+              id="footer-learning"
+              links={LEARNING_LINKS}
+              title="Learning"
+            />
+            <LinkColumn
+              id="footer-community"
+              links={COMMUNITY_LINKS}
+              title="Community"
+            />
+
+            <div>
+              <h2 {...stylex.props(styles.colTitle)}>Contact</h2>
+              <address {...stylex.props(styles.address)}>
+                {contact.address ? (
+                  <p {...stylex.props(styles.contactItem)}>
+                    <MapPin
+                      aria-hidden="true"
+                      {...stylex.props(styles.contactIcon)}
+                    />
+                    {contact.address}
+                  </p>
+                ) : null}
+                {contact.telephone ? (
+                  <p {...stylex.props(styles.contactItem)}>
+                    <Phone
+                      aria-hidden="true"
+                      {...stylex.props(styles.contactIcon)}
+                    />
+                    <a
+                      href={`tel:${contact.telephone.replaceAll(/\s/gu, "")}`}
+                      {...stylex.props(styles.contactLink)}
+                    >
+                      {contact.telephone}
+                    </a>
+                  </p>
+                ) : null}
+                {contact.email ? (
+                  <p {...stylex.props(styles.contactItem)}>
+                    <Mail
+                      aria-hidden="true"
+                      {...stylex.props(styles.contactIcon)}
+                    />
+                    <a
+                      href={`mailto:${contact.email}`}
+                      {...stylex.props(styles.contactLink)}
+                    >
+                      {contact.email}
+                    </a>
+                  </p>
+                ) : null}
+              </address>
+
+              {hasContactDetails ? null : (
+                // Until the CMS supplies an address, a link beats an empty column.
+                <a href="/contact" {...stylex.props(styles.link)}>
+                  Contact the college office
+                </a>
+              )}
+
+              {socials.length > 0 ? (
+                <ul {...stylex.props(styles.social)}>
+                  {socials.map(({ id, label, href, Icon }) => (
+                    <li key={id}>
+                      <a
+                        href={href}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                        {...stylex.props(styles.socialLink)}
+                      >
+                        <Icon
+                          aria-hidden={true}
+                          {...stylex.props(styles.socialIcon)}
+                        />
+                        <VisuallyHidden>{label}</VisuallyHidden>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div {...stylex.props(styles.legal)}>
+        <div {...stylex.props(styles.legalInner)}>
           <span>
             &copy; {new Date().getFullYear()} {COLLEGE_NAME}, Galle. All rights
             reserved.
           </span>
-          <span {...stylex.props(styles.legalMotto)}>{MOTTO}</span>
+          <a href="#top" {...stylex.props(styles.backToTop)}>
+            Back to top <span aria-hidden="true">&nbsp;&uarr;</span>
+          </a>
         </div>
       </div>
     </footer>

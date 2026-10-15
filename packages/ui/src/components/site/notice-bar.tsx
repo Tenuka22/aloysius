@@ -113,10 +113,12 @@ export const NoticeBar = ({ notice }: { notice?: Notice }) => {
           {isHigh ? "Urgent" : "Notice"}
         </span>
         <p {...stylex.props(styles.text)}>{notice.text}</p>
-        <a href={notice.href} {...stylex.props(styles.link)}>
-          View all notices
-          <ArrowRight aria-hidden="true" {...stylex.props(styles.linkIcon)} />
-        </a>
+        {notice.href ? (
+          <a href={notice.href} {...stylex.props(styles.link)}>
+            View all notices
+            <ArrowRight aria-hidden="true" {...stylex.props(styles.linkIcon)} />
+          </a>
+        ) : null}
       </div>
     </div>
   );

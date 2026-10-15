@@ -52,6 +52,19 @@
   }
 
   /*
+   * 1920px and up (iMac, 4K, 5K, 8K, TVs, kiosks). Every size in the system is
+   * rem-based, so scaling the root scales the whole layout in proportion:
+   * 16px at 1920, 32px at 3840, 64px at 7680. Without it a 4K screen shows the
+   * same 1200px column as a laptop, stranded in a sea of empty background. Media
+   * queries are unaffected - `rem` in a query always means the initial 16px.
+   */
+  @media (min-width: 120rem) {
+    html {
+      font-size: max(100%, 0.8333vw);
+    }
+  }
+
+  /*
    * Lenis (momentum scrolling) and CSS `scroll-behavior: smooth` are mutually
    * exclusive: Lenis drives the scroll position every frame, and the native
    * smooth-scroll animation fights it, which shows up as anchor jumps that
