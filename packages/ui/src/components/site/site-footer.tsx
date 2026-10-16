@@ -468,10 +468,20 @@ const LinkColumn = ({
 export const SiteFooter = ({
   contact = EMPTY_CONTACT,
   crestSrc = "/logo.png",
+  showVisitBand = true,
   visitImage,
 }: {
   contact?: FooterContact;
   crestSrc?: string;
+  /**
+   * The "Visit the College" band that opens the footer.
+   *
+   * Off on `/academics`, which already ends with its own full-width
+   * "Examination Results & Achievements" call to action in the same inverse
+   * green. Two stacked inverse bands read as one section that ran on, and the
+   * band's crest watermark landed right under the results copy.
+   */
+  showVisitBand?: boolean;
   /** Wide photograph of the College for the "Visit" band; a crest watermark stands in until it is supplied. */
   visitImage?: ImageSource;
 }) => {
@@ -504,42 +514,48 @@ export const SiteFooter = ({
 
   return (
     <footer {...stylex.props(styles.footer)}>
-      <div {...stylex.props(styles.visit)}>
-        {visitImage ? (
-          <>
-            <Media
-              fill
-              placeholder=""
-              source={visitImage}
-              style={styles.visitPhoto}
+      {showVisitBand ? (
+        <div {...stylex.props(styles.visit)}>
+          {visitImage ? (
+            <>
+              <Media
+                fill
+                placeholder=""
+                source={visitImage}
+                style={styles.visitPhoto}
+              />
+              <div aria-hidden="true" {...stylex.props(styles.visitScrim)} />
+            </>
+          ) : (
+            <img
+              alt=""
+              aria-hidden="true"
+              decoding="async"
+              loading="lazy"
+              src={crestSrc}
+              {...stylex.props(styles.visitWatermark)}
             />
-            <div aria-hidden="true" {...stylex.props(styles.visitScrim)} />
-          </>
-        ) : (
-          <img
-            alt=""
-            aria-hidden="true"
-            decoding="async"
-            loading="lazy"
-            src={crestSrc}
-            {...stylex.props(styles.visitWatermark)}
-          />
-        )}
-        <div {...stylex.props(styles.visitInner)}>
-          <p {...stylex.props(styles.visitEyebrow)}>Visit the College</p>
-          <h2 {...stylex.props(styles.visitTitle)}>
-            Come and see
-            <br />
-            <em {...stylex.props(styles.visitAccent)}>Aloysian life.</em>
-          </h2>
-          <div {...stylex.props(styles.visitActions)}>
-            <ButtonLink href="/contact">Plan a visit</ButtonLink>
-            <ButtonLink external href={ADMISSIONS_URL} variant="outlineInverse">
-              Admissions
-            </ButtonLink>
+          )}
+          <div {...stylex.props(styles.visitInner)}>
+            <p {...stylex.props(styles.visitEyebrow)}>Visit the College</p>
+            <h2 {...stylex.props(styles.visitTitle)}>
+              Come and see
+              <br />
+              <em {...stylex.props(styles.visitAccent)}>Aloysian life.</em>
+            </h2>
+            <div {...stylex.props(styles.visitActions)}>
+              <ButtonLink href="/contact">Plan a visit</ButtonLink>
+              <ButtonLink
+                external
+                href={ADMISSIONS_URL}
+                variant="outlineInverse"
+              >
+                Admissions
+              </ButtonLink>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       <div {...stylex.props(styles.body)}>
         <div {...stylex.props(styles.inner)}>

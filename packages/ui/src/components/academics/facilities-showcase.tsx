@@ -18,6 +18,7 @@ import {
   space,
 } from "../../tokens/tokens.stylex";
 import { Container, Eyebrow, Heading, Section } from "../primitives/layout";
+import type { ImageSource } from "../primitives/media";
 import { Media } from "../primitives/media";
 
 const pad = (value: number) => String(value).padStart(2, "0");
@@ -234,17 +235,31 @@ const styles = stylex.create({
  * previews it in the photograph panel beside it; the arrows step through the
  * list. The panel is announced politely so a screen-reader user hears which
  * facility is showing without losing their place in the list.
+ *
+ * `images` is the CMS-supplied photograph per facility, keyed by
+ * `Facility.id`. The facility list itself is shipped copy; only the pictures
+ * are editable, so a facility with no photograph published yet falls back to
+ * its own placeholder rather than dropping out of the showcase.
  */
 export const FacilitiesShowcase = ({
   facilities = FACILITIES,
+  images,
 }: {
   facilities?: readonly Facility[];
+  images?: Readonly<Record<string, ImageSource>>;
 }) => {
   const [index, setIndex] = useState(0);
 
-  const count = facilities.length;
+  const rows = images
+    ? facilities.map((facility) => ({
+        ...facility,
+        image: images[facility.id] ?? facility.image,
+      }))
+    : facilities;
+
+  const count = rows.length;
   const current = Math.min(index, Math.max(count - 1, 0));
-  const active = facilities[current];
+  const active = rows[current];
   if (!active) {
     return null;
   }
@@ -268,7 +283,7 @@ export const FacilitiesShowcase = ({
 
         <div {...stylex.props(styles.layout)}>
           <ul {...stylex.props(styles.list)}>
-            {facilities.map((facility, position) => {
+            {rows.map((facility, position) => {
               const on = position === current;
               return (
                 <li key={facility.id} {...stylex.props(styles.item)}>

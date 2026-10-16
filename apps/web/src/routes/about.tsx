@@ -1,14 +1,18 @@
 import { AboutPage } from "@aloysius/ui/components/about/about-page";
 import {
+  ABOUT_HERO_INTRO,
+  ABOUT_HERO_TITLE,
   HISTORY_HEADING,
   TIMELINE,
   ANTHEM_IMAGE,
 } from "@aloysius/ui/content/about";
 import {
+  blocksToAboutHeader,
   blocksToAboutImages,
   blocksToAboutText,
 } from "@aloysius/ui/content/cms-to-about";
 import { principalContent } from "@aloysius/ui/content/cms-to-principal";
+import type { AcademicHead } from "@aloysius/ui/content/people";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -27,6 +31,8 @@ const AboutContent = () => {
    */
   const principalQuery = orpc.cms.getPrincipal.queryOptions();
   const { data: principal } = useSuspenseQuery(principalQuery);
+  const headsQuery = orpc.cms.listAcademicHeads.queryOptions();
+  const { data: heads } = useSuspenseQuery(headsQuery);
   const { data: session } = authClient.useSession();
 
   const images = about?.blocks
@@ -46,6 +52,14 @@ const AboutContent = () => {
       })
     : undefined;
 
+  const header = about?.blocks
+    ? blocksToAboutHeader(about.blocks, {
+        eyebrow: "About the College",
+        heading: ABOUT_HERO_TITLE,
+        tagline: ABOUT_HERO_INTRO,
+      })
+    : undefined;
+
   const extraNavItems = (() => {
     if (!session?.user) {
       return [];
@@ -61,8 +75,24 @@ const AboutContent = () => {
     return items;
   })();
 
+  /*
+   * The router returns a flat `imageUrl` per person; `AcademicHead` takes an
+   * `ImageSource`. Same bridge as `/results`, and the alt text is the person's
+   * name so a screen reader announces who the portrait is of.
+   */
+  const academicHeads: AcademicHead[] = heads.map((head) => ({
+    id: head.id,
+    slug: head.slug,
+    name: head.name,
+    role: head.role,
+    bio: head.bio,
+    ...(head.imageUrl ? { image: { src: head.imageUrl, alt: head.name } } : {}),
+  }));
+
   return (
     <AboutPage
+      academicHeads={academicHeads}
+      header={header}
       images={images}
       text={text}
       principal={principalContent(principal?.blocks)}

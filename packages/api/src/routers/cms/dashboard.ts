@@ -27,17 +27,28 @@ import { cmsProcedure } from "../../index";
  *   migration job - not a row in this database.
  */
 
-/** The pages that have a CMS editor, in nav order. */
+/**
+ * The pages that have a CMS editor, in nav order.
+ *
+ * Was missing `academics`, which has had an editor for as long as `principal`
+ * has, and did not list `galleries` or `results` until they got one. The count
+ * on the dashboard is "how many of the pages we can edit have something
+ * published", so leaving a page out here understates it by one per omission -
+ * quietly, because nothing on the screen says the list is incomplete.
+ */
 const CMS_PAGES = [
   "homepage",
   "principal",
   "about",
+  "academics",
   "news",
   "notices",
   "contact",
   "alumni",
   "media",
   "students",
+  "galleries",
+  "results",
 ] as const;
 
 export const dashboardStats = cmsProcedure.handler(async ({ context }) => {

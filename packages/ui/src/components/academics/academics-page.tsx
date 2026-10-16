@@ -1,13 +1,13 @@
 import * as stylex from "@stylexjs/stylex";
 
+import type { AcademicsHeaderProps } from "../../content/cms-to-pages";
 import type { NavItem } from "../../content/home";
 import { SkipLink } from "../primitives/layout";
+import type { ImageSource } from "../primitives/media";
 import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
 import { AcademicsHero } from "./academics-hero";
-import type { AcademicsLeader } from "./academics-leadership";
-import { AcademicsLeadership } from "./academics-leadership";
 import { AlStreams } from "./al-streams";
 import { FacilitiesShowcase } from "./facilities-showcase";
 import { ResultsCta } from "./results-cta";
@@ -35,28 +35,38 @@ const styles = stylex.create({
 export interface AcademicsPageProps {
   contact?: FooterContact;
   extraNavItems?: readonly NavItem[];
-  /** Principal, Primary sectional head and Secondary deputy principal. */
-  leaders?: readonly AcademicsLeader[];
+  /** The `academics-header` CMS block, resolved by the route. */
+  header?: AcademicsHeaderProps;
+  /** CMS photographs for the facilities showcase, keyed by facility id. */
+  facilityImages?: Readonly<Record<string, ImageSource>>;
 }
 
 export const AcademicsPage = ({
   contact,
   extraNavItems,
-  leaders,
+  header,
+  facilityImages,
 }: AcademicsPageProps) => (
   <>
     <SkipLink targetId={MAIN_ID} />
     <SiteHeader activeHref="/academics" extraNavItems={extraNavItems} />
     <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
-      <AcademicsHero />
+      <AcademicsHero
+        eyebrow={header?.eyebrow}
+        heroImage={header?.heroImage}
+        intro={header?.tagline}
+        title={header?.heading}
+      />
       <StudySections />
-      {leaders && leaders.length > 0 && (
-        <AcademicsLeadership leaders={leaders} />
-      )}
       <AlStreams />
-      <FacilitiesShowcase />
+      <FacilitiesShowcase images={facilityImages} />
       <ResultsCta />
     </main>
-    <SiteFooter contact={contact} />
+    {/*
+      No footer's "Visit the College" band here: the results CTA above is the
+      same inverse green and full-bleed, so the two stacked read as one section
+      that ran on past the end of its content.
+    */}
+    <SiteFooter contact={contact} showVisitBand={false} />
   </>
 );

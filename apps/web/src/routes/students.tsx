@@ -110,6 +110,7 @@ const StudentsContent = () => {
       houseNames={cmsProps.houseNames}
       prefectsBody={cmsProps.prefectsBody}
       prefectsHeading={cmsProps.prefectsHeading}
+      prefectsImage={cmsProps.prefectsImage}
       sportImages={cmsProps.sportImages}
       sportsEyebrow={cmsProps.sportsEyebrow}
       sportsHeading={cmsProps.sportsHeading}

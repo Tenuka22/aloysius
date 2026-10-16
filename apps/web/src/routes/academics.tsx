@@ -1,7 +1,8 @@
-import type { AcademicsLeader } from "@aloysius/ui/components/academics/academics-leadership";
 import { AcademicsPage } from "@aloysius/ui/components/academics/academics-page";
-import { blocksToAcademicsLeadership } from "@aloysius/ui/content/cms-to-pages";
-import { principalContent } from "@aloysius/ui/content/cms-to-principal";
+import {
+  blocksToAcademicsFacilities,
+  blocksToAcademicsHeaderProps,
+} from "@aloysius/ui/content/cms-to-pages";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -13,19 +14,20 @@ import { orpc } from "@/utils/orpc";
 /**
  * `/academics` - curriculum, streams and departments.
  *
- * Sections of study, A/L streams and results are real
- * shipped copy (`content/academics.ts`), not CMS-editable yet - see
- * `cms-to-pages.ts`'s note on `ACADEMICS_BLOCKS`. The one live section is
- * leadership: the Principal (`cms.getPrincipal`, the same global block every
- * other page reads) alongside the Primary section's sectional head and the
- * Secondary section's deputy principal (`cms.getAcademics`).
+ * Sections of study, A/L streams and facilities are real shipped copy
+ * (`content/academics.ts`), not CMS-editable - see `cms-to-pages.ts`'s note on
+ * `ACADEMICS_BLOCKS`. The page header and the facility photographs are CMS
+ * content.
+ *
+ * The leadership section that used to be here is gone: the Principal, the
+ * Primary sectional head and the Secondary deputy principal are all on `/about`
+ * now, in the academic-heads roster at `/cms/academic-heads`. They were being
+ * rendered twice, here and there, from two different sets of photographs.
  */
 
 const AcademicsContent = () => {
   const academicsQuery = orpc.cms.getAcademics.queryOptions();
   const { data: academics } = useSuspenseQuery(academicsQuery);
-  const principalQuery = orpc.cms.getPrincipal.queryOptions();
-  const { data: principal } = useSuspenseQuery(principalQuery);
   const { data: session } = authClient.useSession();
 
   const extraNavItems = (() => {
@@ -43,33 +45,21 @@ const AcademicsContent = () => {
     return items;
   })();
 
-  const principalInfo = principalContent(principal?.blocks);
-  const { primaryHead, secondaryDeputy } = academics?.blocks
-    ? blocksToAcademicsLeadership(academics.blocks)
-    : { primaryHead: {}, secondaryDeputy: {} };
-
-  const leaders: AcademicsLeader[] = [
-    {
-      role: "Principal",
-      name: principalInfo.name,
-      title: principalInfo.role,
-      photo: principalInfo.portrait,
-    },
-    {
-      role: "Primary Section",
-      name: primaryHead.name,
-      title: primaryHead.title,
-      photo: primaryHead.photo,
-    },
-    {
-      role: "Secondary Section",
-      name: secondaryDeputy.name,
-      title: secondaryDeputy.title,
-      photo: secondaryDeputy.photo,
-    },
-  ];
-
-  return <AcademicsPage extraNavItems={extraNavItems} leaders={leaders} />;
+  return (
+    <AcademicsPage
+      extraNavItems={extraNavItems}
+      facilityImages={
+        academics?.blocks
+          ? blocksToAcademicsFacilities(academics.blocks)
+          : undefined
+      }
+      header={
+        academics?.blocks
+          ? blocksToAcademicsHeaderProps(academics.blocks)
+          : undefined
+      }
+    />
+  );
 };
 
 export const Route = createFileRoute("/academics")({

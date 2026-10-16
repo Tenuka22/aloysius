@@ -112,6 +112,31 @@ const CmsLayout = () => {
       href: "/cms/clubs",
       active: pathname.startsWith("/cms/clubs"),
     },
+    {
+      num: "17",
+      label: "Galleries Page",
+      href: "/cms/galleries-page",
+      active: pathname.startsWith("/cms/galleries-page"),
+    },
+    {
+      num: "18",
+      label: "Results Page",
+      href: "/cms/results-page",
+      active: pathname.startsWith("/cms/results-page"),
+    },
+    {
+      num: "19",
+      label: "Examination Results",
+      href: "/cms/results",
+      active:
+        pathname === "/cms/results" || pathname.startsWith("/cms/results/"),
+    },
+    {
+      num: "20",
+      label: "Academic Heads",
+      href: "/cms/academic-heads",
+      active: pathname.startsWith("/cms/academic-heads"),
+    },
   ];
 
   return (

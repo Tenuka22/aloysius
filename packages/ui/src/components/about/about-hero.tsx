@@ -8,6 +8,8 @@ import {
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
 import { Container } from "../primitives/layout";
+import type { ImageSource } from "../primitives/media";
+import { Media } from "../primitives/media";
 
 const styles = stylex.create({
   hero: {
@@ -126,19 +128,38 @@ const styles = stylex.create({
     color: color.accentOnInverse,
     borderBlockEndColor: color.accent,
   },
+  eyebrow: {
+    margin: 0,
+    marginBlockEnd: space.xs,
+    fontSize: font.sizeSm,
+    fontWeight: font.weightBold,
+    letterSpacing: font.trackingWider,
+    textTransform: "uppercase",
+    color: color.accentOnInverse,
+  },
+  heroMedia: {
+    marginBlockStart: space["2xl"],
+  },
 });
 
-export const AboutHero = ({
-  title = ABOUT_HERO_TITLE,
-  intro = ABOUT_HERO_INTRO,
-  crestSrc = "/logo.png",
-  jumpLinks = ABOUT_JUMP_LINKS,
-}: {
+export interface AboutHeroProps {
+  eyebrow?: string;
   title?: string;
   intro?: string;
   crestSrc?: string;
   jumpLinks?: typeof ABOUT_JUMP_LINKS;
-}) => (
+  /** Optional CMS photograph, rendered under the jump links. */
+  heroImage?: ImageSource;
+}
+
+export const AboutHero = ({
+  eyebrow,
+  title = ABOUT_HERO_TITLE,
+  intro = ABOUT_HERO_INTRO,
+  crestSrc = "/logo.png",
+  jumpLinks = ABOUT_JUMP_LINKS,
+  heroImage,
+}: AboutHeroProps) => (
   <section aria-labelledby="about-hero-title" {...stylex.props(styles.hero)}>
     <img
       alt=""
@@ -156,6 +177,7 @@ export const AboutHero = ({
           </a>{" "}
           / <span {...stylex.props(styles.breadcrumbCurrent)}>About</span>
         </p>
+        {eyebrow ? <p {...stylex.props(styles.eyebrow)}>{eyebrow}</p> : null}
         <h1 id="about-hero-title" {...stylex.props(styles.title)}>
           {title}
         </h1>
@@ -177,6 +199,11 @@ export const AboutHero = ({
             ))}
           </ul>
         </nav>
+        {heroImage ? (
+          <div {...stylex.props(styles.heroMedia)}>
+            <Media placeholder="" ratio="16:9" source={heroImage} />
+          </div>
+        ) : null}
       </div>
     </Container>
   </section>

@@ -9,6 +9,8 @@ import {
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
 import { Container } from "../primitives/layout";
+import type { ImageSource } from "../primitives/media";
+import { Media } from "../primitives/media";
 
 const styles = stylex.create({
   /*
@@ -130,19 +132,42 @@ const styles = stylex.create({
     color: color.accentOnInverse,
     borderBlockEndColor: color.accent,
   },
+  eyebrow: {
+    margin: 0,
+    marginBlockEnd: space.xs,
+    fontSize: font.sizeSm,
+    fontWeight: font.weightBold,
+    letterSpacing: font.trackingWider,
+    textTransform: "uppercase",
+    color: color.accentOnInverse,
+  },
+  heroMedia: {
+    marginBlockStart: space["2xl"],
+  },
 });
 
-export const AcademicsHero = ({
-  title = ACADEMICS_HERO_TITLE,
-  intro = ACADEMICS_HERO_INTRO,
-  crestSrc = "/logo.png",
-  jumpLinks = ACADEMICS_JUMP_LINKS,
-}: {
+export interface AcademicsHeroProps {
+  eyebrow?: string;
   title?: string;
   intro?: string;
   crestSrc?: string;
   jumpLinks?: readonly JumpLink[];
-}) => (
+  /**
+   * Optional CMS photograph. Rendered under the jump links rather than behind
+   * the text: this hero is a short wayfinding band, and a background image
+   * would sit under the title at exactly the contrast the title needs.
+   */
+  heroImage?: ImageSource;
+}
+
+export const AcademicsHero = ({
+  eyebrow,
+  title = ACADEMICS_HERO_TITLE,
+  intro = ACADEMICS_HERO_INTRO,
+  crestSrc = "/logo.png",
+  jumpLinks = ACADEMICS_JUMP_LINKS,
+  heroImage,
+}: AcademicsHeroProps) => (
   <section
     aria-labelledby="academics-hero-title"
     {...stylex.props(styles.hero)}
@@ -163,6 +188,7 @@ export const AcademicsHero = ({
           </a>{" "}
           / <span {...stylex.props(styles.breadcrumbCurrent)}>Academics</span>
         </p>
+        {eyebrow ? <p {...stylex.props(styles.eyebrow)}>{eyebrow}</p> : null}
         <h1 id="academics-hero-title" {...stylex.props(styles.title)}>
           {title}
         </h1>
@@ -184,6 +210,11 @@ export const AcademicsHero = ({
             ))}
           </ul>
         </nav>
+        {heroImage ? (
+          <div {...stylex.props(styles.heroMedia)}>
+            <Media placeholder="" ratio="16:9" source={heroImage} />
+          </div>
+        ) : null}
       </div>
     </Container>
   </section>

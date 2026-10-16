@@ -1,5 +1,10 @@
 import type { ImageSource } from "../components/primitives/media";
 import {
+  ACADEMICS_HERO_INTRO,
+  ACADEMICS_HERO_TITLE,
+  FACILITIES,
+} from "./academics";
+import {
   ALUMNI_ABOUT_BODY,
   ALUMNI_ABOUT_CAPTION,
   ALUMNI_ABOUT_HEADING,
@@ -13,6 +18,7 @@ import {
   ALUMNI_OBA_LABEL,
   ALUMNI_OFFER_HEADING,
 } from "./alumni";
+import { facilityImageFieldId } from "./cms";
 import type { CmsBlock } from "./cms-to-home";
 import {
   CONTACT_DEFAULT_ADDRESS,
@@ -23,6 +29,7 @@ import {
   CONTACT_MAP_EMBED_URL,
   CONTACT_MAP_URL,
 } from "./contact";
+import { GALLERIES_HERO_INTRO, GALLERIES_HERO_TITLE } from "./galleries";
 import {
   MEDIA_HERO_EYEBROW,
   MEDIA_HERO_INTRO,
@@ -350,58 +357,119 @@ export const blocksToAlumniProps = (blocks: CmsBlock[]): AlumniPageProps => ({
   ),
 });
 
-/* ------------------------------------------------------------- academics */
+/* ------------------------------------------------------------- galleries */
 
-export interface AcademicsLeaderProps {
-  name?: string;
-  title?: string;
-  photo?: ImageSource;
-}
-
-export interface AcademicsLeadershipProps {
-  primaryHead: AcademicsLeaderProps;
-  secondaryDeputy: AcademicsLeaderProps;
+export interface GalleriesPageProps {
+  eyebrow?: string;
+  heading?: string;
+  tagline?: string;
+  heroImage?: ImageSource;
 }
 
 /**
- * The Principal's own name/title/portrait are not read here - they come from
- * the global Principal block (`principalContent`), the same object every
- * other page reads, so the Academics page composes its leadership row from
- * that plus these two section-level roles rather than storing a third copy
- * of the Principal's photo.
+ * The `/galleries` index masthead.
+ *
+ * Only the page around the photographs is CMS content; the photographs are
+ * approved `gallery` rows and are edited at `/cms/galleries`.
  */
-export const blocksToAcademicsLeadership = (
+export const blocksToGalleriesProps = (
   blocks: CmsBlock[]
-): AcademicsLeadershipProps => ({
-  primaryHead: {
-    name: isHidden(blocks, "academics-leadership")
-      ? undefined
-      : fieldValue(blocks, "academics-leadership", "primary-head-name"),
-    title: isHidden(blocks, "academics-leadership")
-      ? undefined
-      : fieldValue(blocks, "academics-leadership", "primary-head-title"),
-    photo: imageSource(
-      blocks,
-      "academics-leadership",
-      "primary-head-photo",
-      "Primary section head"
-    ),
-  },
-  secondaryDeputy: {
-    name: isHidden(blocks, "academics-leadership")
-      ? undefined
-      : fieldValue(blocks, "academics-leadership", "secondary-deputy-name"),
-    title: isHidden(blocks, "academics-leadership")
-      ? undefined
-      : fieldValue(blocks, "academics-leadership", "secondary-deputy-title"),
-    photo: imageSource(
-      blocks,
-      "academics-leadership",
-      "secondary-deputy-photo",
-      "Secondary section deputy principal"
-    ),
-  },
+): GalleriesPageProps => ({
+  eyebrow: fieldOrDefault(blocks, "galleries-header", "galleries-eyebrow", ""),
+  heading: fieldOrDefault(
+    blocks,
+    "galleries-header",
+    "galleries-heading",
+    GALLERIES_HERO_TITLE
+  ),
+  tagline: fieldOrDefault(
+    blocks,
+    "galleries-header",
+    "galleries-tagline",
+    GALLERIES_HERO_INTRO
+  ),
+  heroImage: imageSource(
+    blocks,
+    "galleries-header",
+    "galleries-hero-image",
+    "Photographs from around St. Aloysius' College"
+  ),
 });
+
+/* ------------------------------------------------------------- academics */
+
+export interface AcademicsHeaderProps {
+  eyebrow?: string;
+  heading?: string;
+  tagline?: string;
+  heroImage?: ImageSource;
+}
+
+/**
+ * The Academics page header.
+ *
+ * Same shape as `blocksToNewsProps` and for the same reason: the hero used to
+ * read its title and tagline straight from `content/academics.ts`, which left
+ * it the one page header on the site a CMS editor could not change.
+ */
+export const blocksToAcademicsHeaderProps = (
+  blocks: CmsBlock[]
+): AcademicsHeaderProps => ({
+  eyebrow: fieldOrDefault(blocks, "academics-header", "academics-eyebrow", ""),
+  heading: fieldOrDefault(
+    blocks,
+    "academics-header",
+    "academics-heading",
+    ACADEMICS_HERO_TITLE
+  ),
+  tagline: fieldOrDefault(
+    blocks,
+    "academics-header",
+    "academics-tagline",
+    ACADEMICS_HERO_INTRO
+  ),
+  heroImage: imageSource(
+    blocks,
+    "academics-header",
+    "academics-hero-image",
+    "Students in a lesson at St. Aloysius' College"
+  ),
+});
+
+/**
+ * The Academics page's facility photographs, keyed by `FACILITIES[].id`.
+ *
+ * Keyed by the facility id rather than returned as a list so the route can hand
+ * `FacilitiesShowcase` exactly the rows it already has: a facility with no
+ * photograph is simply absent from this record, and the component falls back to
+ * its own placeholder for that row alone.
+ */
+export const blocksToAcademicsFacilities = (
+  blocks: CmsBlock[]
+): Record<string, ImageSource> => {
+  const images: Record<string, ImageSource> = {};
+  const block = blocks.find(
+    (candidate) => candidate.id === "academics-facilities"
+  );
+  if (!block) {
+    return images;
+  }
+
+  for (const facility of FACILITIES) {
+    const fieldId = facilityImageFieldId(facility.id);
+    const source = imageSource(
+      blocks,
+      "academics-facilities",
+      fieldId,
+      `${facility.name} at St. Aloysius' College`
+    );
+    if (source) {
+      images[facility.id] = source;
+    }
+  }
+
+  return images;
+};
 
 /* ----------------------------------------------------------------- media */
 
@@ -523,6 +591,7 @@ export interface StudentsPageProps {
   houseNames?: Record<string, string>;
   prefectsHeading?: string;
   prefectsBody?: string;
+  prefectsImage?: ImageSource;
 }
 
 export const blocksToStudentsProps = (
@@ -644,6 +713,12 @@ export const blocksToStudentsProps = (
       "students-prefects",
       "students-prefects-body",
       PREFECTS_BODY
+    ),
+    prefectsImage: imageSource(
+      blocks,
+      "students-prefects",
+      "students-prefects-image",
+      "Prefects at the College"
     ),
   };
 };

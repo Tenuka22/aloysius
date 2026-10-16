@@ -14,6 +14,12 @@
  */
 
 import type { AspectRatioKey } from "../tokens/aspect-ratios";
+import { ABOUT_HERO_INTRO, ABOUT_HERO_TITLE } from "./about";
+import {
+  ACADEMICS_HERO_INTRO,
+  ACADEMICS_HERO_TITLE,
+  FACILITIES,
+} from "./academics";
 import {
   ALUMNI_BRANCHES_HEADING,
   ALUMNI_BRANCHES_INTRO,
@@ -21,12 +27,14 @@ import {
   ALUMNI_OFFER_HEADING,
 } from "./alumni";
 import { CONTACT_DEFAULT_TELEPHONE } from "./contact";
+import { GALLERIES_HERO_INTRO, GALLERIES_HERO_TITLE } from "./galleries";
 import { ADMISSIONS_URL } from "./home";
 import {
   PRINCIPAL_BLOCK_ID,
   PRINCIPAL_DEFAULTS,
   PRINCIPAL_FIELD,
 } from "./principal";
+import { RESULTS_HERO_INTRO, RESULTS_HERO_TITLE } from "./results";
 import {
   HOUSES_HEADING,
   HOUSES_INTRO,
@@ -461,6 +469,10 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
  * The About page's editable blocks. Images and key headings are editable;
  * body copy is real, published prose (see `content/about.ts`), not draft
  * text a non-technical editor should rewrite from this screen.
+ *
+ * `about-header` covers the page's own title, tagline and hero photograph. It
+ * is separate from the Principal's Message block, which is global and shown on
+ * every page - the About page shows both, and they are not the same content.
  */
 /**
  * The site's one global block.
@@ -548,6 +560,41 @@ export const PRINCIPAL_BLOCKS: readonly PageBlock[] = [
 ];
 
 export const ABOUT_BLOCKS: readonly PageBlock[] = [
+  {
+    id: "about-header",
+    name: "Page Header",
+    type: "Hero",
+    status: "published",
+    summary: "Page title, tagline and hero image",
+    fields: [
+      {
+        id: "about-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: "About the College",
+      },
+      {
+        id: "about-heading",
+        label: "Heading",
+        kind: "text",
+        value: ABOUT_HERO_TITLE,
+      },
+      {
+        id: "about-tagline",
+        label: "Tagline",
+        kind: "textarea",
+        value: ABOUT_HERO_INTRO,
+        wide: true,
+      },
+      {
+        id: "about-hero-image",
+        label: "Hero image",
+        kind: "image",
+        hint: "Landscape, at least 2400px wide.",
+        wide: true,
+      },
+    ],
+  },
   {
     id: "history",
     name: "History Timeline",
@@ -995,56 +1042,189 @@ export const ALUMNI_BLOCKS: readonly PageBlock[] = [
   },
 ];
 
+/* --------------------------------------------------------------- results */
+
 /**
- * Academics page blocks. The Principal's portrait is not here - it is the
- * global `PRINCIPAL_BLOCKS` block, read the same way every other page reads
- * it, so there is exactly one photo and one name to keep in sync, not two.
+ * The `/results` page header.
+ *
+ * Only the masthead. The year-by-year figures underneath it are database
+ * content - `resultsYear` and its children, edited at `/cms/results` - so this
+ * block is what an editor reaches for when the page's framing changes and not
+ * when a ranker is added.
+ */
+export const RESULTS_BLOCKS: readonly PageBlock[] = [
+  {
+    id: "results-header",
+    name: "Page Header",
+    type: "Hero",
+    status: "published",
+    summary: "Page title and tagline",
+    fields: [
+      {
+        id: "results-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: "Examinations",
+      },
+      {
+        id: "results-heading",
+        label: "Heading",
+        kind: "text",
+        value: RESULTS_HERO_TITLE,
+      },
+      {
+        id: "results-tagline",
+        label: "Tagline",
+        kind: "textarea",
+        value: RESULTS_HERO_INTRO,
+        wide: true,
+      },
+    ],
+  },
+];
+
+/* ------------------------------------------------------------- galleries */
+
+/**
+ * The `/galleries` index page's own header.
+ *
+ * A page key rather than an extension of the existing gallery management
+ * screen: `/cms/galleries` edits the *records* (create, review, delete a
+ * gallery), while this edits the *page around them* - the masthead a visitor
+ * reads before the first photograph. The two are different jobs with different
+ * editors, so they are different screens under `/cms/galleries-page` and
+ * `/cms/galleries`.
+ */
+export const GALLERIES_BLOCKS: readonly PageBlock[] = [
+  {
+    id: "galleries-header",
+    name: "Page Header",
+    type: "Hero",
+    status: "published",
+    summary: "Page title, tagline and hero image",
+    fields: [
+      {
+        id: "galleries-eyebrow",
+        label: "Eyebrow",
+        kind: "text",
+        value: "Media",
+      },
+      {
+        id: "galleries-heading",
+        label: "Heading",
+        kind: "text",
+        value: GALLERIES_HERO_TITLE,
+      },
+      {
+        id: "galleries-tagline",
+        label: "Tagline",
+        kind: "textarea",
+        value: GALLERIES_HERO_INTRO,
+        wide: true,
+      },
+      {
+        id: "galleries-hero-image",
+        label: "Hero image",
+        kind: "image",
+        hint: "Landscape, at least 2400px wide.",
+        wide: true,
+      },
+    ],
+  },
+];
+
+/**
+ * One CMS image field per facility, derived from `FACILITIES`.
+ *
+ * Generated rather than written out, because the list of facilities and the
+ * list of fields have to be the same list: a hand-written copy is one
+ * forgotten field away from a facility whose photograph the editor cannot
+ * upload and the page cannot show. Deriving it means a facility added to
+ * `content/academics.ts` gets its upload control for free.
+ */
+export const ACADEMICS_FACILITY_FIELDS: readonly BlockField[] = FACILITIES.map(
+  (facility) => ({
+    id: `facility-${facility.id}`,
+    label: facility.name,
+    kind: "image",
+    hint: "Portrait crop, 4:5.",
+  })
+);
+
+/** The CMS field id that holds a facility's photograph. */
+export const facilityImageFieldId = (facilityId: string): string =>
+  `facility-${facilityId}`;
+
+/**
+ * Academics page blocks: the page header and one photograph per facility.
+ *
+ * `academics-leadership` used to live here and has gone. The Principal, the
+ * Primary sectional head and the Secondary deputy principal are all on `/about`
+ * now, in the academic-heads roster edited at `/cms/academic-heads`, so the
+ * same three people were being rendered in two places with two different sets
+ * of photographs.
+ *
+ * The Principal's own message and portrait are the global `PRINCIPAL_BLOCKS`
+ * block, read the same way every other page reads it, so there is exactly one
+ * photo and one name to keep in sync, not two.
+ *
+ * `academics-header` was added late, and for the same reason every other page
+ * has one: the hero was the only page header on the site with no editor behind
+ * it, so its title and tagline were the only ones a CMS editor could not
+ * change. `academics-eyebrow` and `academics-heading` are spelled the same as
+ * the homepage's Academics card-grid fields on purpose - the ids are scoped to
+ * (page, block), so the two cannot collide, and matching the `news-header`
+ * precedent keeps one naming rule for page headers.
  */
 export const ACADEMICS_BLOCKS: readonly PageBlock[] = [
   {
-    id: "academics-leadership",
-    name: "Section Leadership",
-    type: "Card grid",
+    id: "academics-header",
+    name: "Page Header",
+    type: "Hero",
     status: "published",
-    summary: "Primary sectional head and secondary deputy principal",
+    summary: "Page title, tagline and hero image",
     fields: [
       {
-        id: "primary-head-name",
-        label: "Primary section - Sectional Head name",
+        id: "academics-eyebrow",
+        label: "Eyebrow",
         kind: "text",
-        hint: "Optional. Leave empty to name the office rather than a person.",
+        value: "Academics",
       },
       {
-        id: "primary-head-title",
-        label: "Primary section - Title",
+        id: "academics-heading",
+        label: "Heading",
         kind: "text",
-        value: "Sectional Head, Primary",
+        value: ACADEMICS_HERO_TITLE,
       },
       {
-        id: "primary-head-photo",
-        label: "Primary section - Photo",
+        id: "academics-tagline",
+        label: "Tagline",
+        kind: "textarea",
+        value: ACADEMICS_HERO_INTRO,
+        wide: true,
+      },
+      {
+        id: "academics-hero-image",
+        label: "Hero image",
         kind: "image",
-        hint: "Portrait orientation.",
-      },
-      {
-        id: "secondary-deputy-name",
-        label: "Secondary section - Deputy Principal name",
-        kind: "text",
-        hint: "Optional. Leave empty to name the office rather than a person.",
-      },
-      {
-        id: "secondary-deputy-title",
-        label: "Secondary section - Title",
-        kind: "text",
-        value: "Deputy Principal, Secondary",
-      },
-      {
-        id: "secondary-deputy-photo",
-        label: "Secondary section - Photo",
-        kind: "image",
-        hint: "Portrait orientation.",
+        hint: "Landscape, at least 2400px wide.",
+        wide: true,
       },
     ],
+  },
+  {
+    /*
+     * One photograph per facility. The list of facilities is shipped code copy
+     * (`content/academics.ts`) because the College publishes these as a fixed
+     * set, but the pictures are CMS content - an editor replacing a photo of
+     * the library should not need a deploy.
+     */
+    id: "academics-facilities",
+    name: "Facility Photographs",
+    type: "Media grid",
+    status: "published",
+    summary: "A photograph for each facility in the showcase",
+    fields: [...ACADEMICS_FACILITY_FIELDS],
   },
 ];
 
@@ -1285,7 +1465,7 @@ export const STUDENTS_BLOCKS: readonly PageBlock[] = [
     name: "Prefects' Guild",
     type: "Text + media",
     status: "published",
-    summary: "The student-leadership banner copy",
+    summary: "The student-leadership banner copy and photograph",
     fields: [
       {
         id: "students-prefects-heading",
@@ -1299,6 +1479,12 @@ export const STUDENTS_BLOCKS: readonly PageBlock[] = [
         kind: "textarea",
         value: PREFECTS_BODY,
         wide: true,
+      },
+      {
+        id: "students-prefects-image",
+        label: "Photograph",
+        kind: "image",
+        hint: "Landscape or portrait. Clearing this leaves the copy full width.",
       },
     ],
   },

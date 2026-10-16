@@ -6,6 +6,7 @@ import { HOUSES } from "../../content/students";
 import { Achievements } from "../home/achievements";
 import { Gallery } from "../home/gallery";
 import { SkipLink } from "../primitives/layout";
+import type { ImageSource } from "../primitives/media";
 import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
@@ -58,6 +59,7 @@ export interface StudentsPageProps {
   moreSports?: readonly string[];
   prefectsHeading?: string;
   prefectsBody?: string;
+  prefectsImage?: ImageSource;
   clubs?: readonly Club[];
   activitiesEyebrow?: string;
   activitiesHeading?: string;
@@ -124,6 +126,7 @@ export const StudentsPage = ({
   moreSports,
   prefectsHeading,
   prefectsBody,
+  prefectsImage,
   clubs,
   activitiesEyebrow,
   activitiesHeading,
@@ -164,7 +167,11 @@ export const StudentsPage = ({
       {galleryItems && galleryItems.length > 0 && (
         <Gallery items={galleryItems} />
       )}
-      <PrefectsCta body={prefectsBody} heading={prefectsHeading} />
+      <PrefectsCta
+        body={prefectsBody}
+        heading={prefectsHeading}
+        image={prefectsImage}
+      />
     </main>
     <SiteFooter contact={contact} />
   </>

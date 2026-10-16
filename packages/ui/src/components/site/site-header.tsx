@@ -3,7 +3,6 @@ import { Menu, X } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import {
-  ADMISSIONS_URL,
   COLLEGE_LOCATION,
   COLLEGE_NAME,
   MOTTO,
@@ -20,20 +19,6 @@ import {
 } from "../../tokens/tokens.stylex";
 
 const SCROLL_THRESHOLD_PX = 24;
-
-/**
- * Whether a link leaves the site.
- *
- * The Admissions call to action now points at the college's own admissions
- * subdomain. A link that leaves should open in a new tab and carry
- * `rel="noopener noreferrer"`, so the destination cannot reach back through
- * `window.opener` and the visitor keeps the page they came from.
- *
- * Deliberately checked at render rather than hard-coded on one link, so an
- * in-app destination passed in by a caller is not given a `target="_blank"` it
- * does not need.
- */
-const isExternalHref = (href: string): boolean => /^https?:\/\//u.test(href);
 
 const styles = stylex.create({
   header: {
@@ -344,13 +329,11 @@ export const SiteHeader = ({
   activeHref = "/",
   items = NAV_ITEMS,
   extraNavItems,
-  admissionsHref = ADMISSIONS_URL,
   crestSrc = "/logo.png",
 }: {
   activeHref?: string;
   items?: readonly NavItem[];
   extraNavItems?: readonly NavItem[];
-  admissionsHref?: string;
   crestSrc?: string;
 }) => {
   const [open, setOpen] = useState(false);
@@ -466,14 +449,14 @@ export const SiteHeader = ({
             })}
           </nav>
 
-          <a
-            href={admissionsHref}
-            rel="noopener noreferrer"
-            target={isExternalHref(admissionsHref) ? "_blank" : undefined}
-            {...stylex.props(styles.cta)}
-          >
-            Admissions
-          </a>
+          {/*
+            No Admissions call to action here any more. It pointed at the
+            College's own admissions subdomain, which this site does not own,
+            so it was the one item in the bar that left the product - and it
+            sat after "Contact" as if it were another page of this site. The
+            footer's "Visit the College" band still carries it, which is where
+            a prospective applicant is actually being asked.
+          */}
 
           <button
             aria-controls={drawerId}
@@ -579,14 +562,6 @@ export const SiteHeader = ({
           </nav>
 
           <div {...stylex.props(styles.drawerFooter)}>
-            <a
-              href={admissionsHref}
-              rel="noopener noreferrer"
-              target={isExternalHref(admissionsHref) ? "_blank" : undefined}
-              {...stylex.props(styles.drawerCta)}
-            >
-              Admissions
-            </a>
             <p {...stylex.props(styles.drawerMotto)}>{MOTTO}</p>
           </div>
         </div>

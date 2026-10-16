@@ -18,6 +18,14 @@ const styles = stylex.create({
     backgroundColor: color.surfaceInverse,
     color: color.onInverse,
     paddingBlockStart: space["3xl"],
+    /*
+     * The tabs and year picker sit at the very bottom of this band, so without
+     * a matching bottom inset they finished flush against the edge and the next
+     * section started immediately underneath them. A smaller inset than the
+     * top one on purpose: the top has to clear the watermark, the bottom only
+     * has to stop the two bands touching.
+     */
+    paddingBlockEnd: space["2xl"],
     paddingInline: space.gutter,
   },
   watermark: {

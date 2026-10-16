@@ -1,5 +1,10 @@
 import * as stylex from "@stylexjs/stylex";
 
+import type { GalleriesPageProps } from "../../content/cms-to-pages";
+import {
+  GALLERIES_HERO_INTRO,
+  GALLERIES_HERO_TITLE,
+} from "../../content/galleries";
 import type { NavItem } from "../../content/home";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
@@ -31,6 +36,8 @@ export interface GalleriesIndexItem {
 export interface GalleriesIndexPageProps {
   galleries: readonly GalleriesIndexItem[];
   extraNavItems?: readonly NavItem[];
+  /** The `galleries-header` CMS block, resolved by the route. */
+  header?: GalleriesPageProps;
 }
 
 const styles = stylex.create({
@@ -70,6 +77,18 @@ const styles = stylex.create({
     lineHeight: font.leadingRelaxed,
     color: color.onSurfaceMuted,
     textWrap: "pretty",
+  },
+  eyebrow: {
+    margin: 0,
+    marginBlockEnd: space.xs,
+    fontSize: font.sizeSm,
+    fontWeight: font.weightBold,
+    letterSpacing: font.trackingWider,
+    textTransform: "uppercase",
+    color: color.accentOnSurface,
+  },
+  heroMedia: {
+    marginBlockStart: space.xl,
   },
   empty: {
     margin: 0,
@@ -120,6 +139,7 @@ const styles = stylex.create({
 export const GalleriesIndexPage = ({
   galleries,
   extraNavItems,
+  header,
 }: GalleriesIndexPageProps) => (
   <>
     <SkipLink targetId={MAIN_ID} />
@@ -127,11 +147,20 @@ export const GalleriesIndexPage = ({
     <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
       <header {...stylex.props(styles.header)}>
         <Container width="wide">
-          <h1 {...stylex.props(styles.heading)}>Galleries</h1>
+          {header?.eyebrow ? (
+            <p {...stylex.props(styles.eyebrow)}>{header.eyebrow}</p>
+          ) : null}
+          <h1 {...stylex.props(styles.heading)}>
+            {header?.heading ?? GALLERIES_HERO_TITLE}
+          </h1>
           <p {...stylex.props(styles.tagline)}>
-            Photographs from around the college, published once a CMS reviewer
-            has approved them.
+            {header?.tagline ?? GALLERIES_HERO_INTRO}
           </p>
+          {header?.heroImage ? (
+            <div {...stylex.props(styles.heroMedia)}>
+              <Media placeholder="" ratio="16:9" source={header.heroImage} />
+            </div>
+          ) : null}
         </Container>
       </header>
 

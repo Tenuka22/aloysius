@@ -25,6 +25,31 @@ const imageField = (
 };
 
 /**
+ * An optional image field: `undefined` when the editor has not set one.
+ *
+ * The counterpart to `imageOrDefault` below, for the fields that have no
+ * shipped photograph to fall back to - the page header's hero image, where an
+ * empty value means "no image", not "the default image".
+ */
+const imageSource = (
+  blocks: CmsBlock[],
+  blockId: string,
+  fieldId: string,
+  alt: string
+): ImageSource | undefined => {
+  const field = imageField(blocks, blockId, fieldId);
+  const url = field?.value;
+  if (!url) {
+    return undefined;
+  }
+  return {
+    src: url.startsWith("image:") ? url.slice("image:".length) : url,
+    alt,
+    ...(field?.aspectRatio ? { aspectRatio: field.aspectRatio } : {}),
+  };
+};
+
+/**
  * Resolve an editable image field against a real default.
  *
  * Unlike the homepage's text fields (which fall back to an empty section), an
@@ -49,6 +74,38 @@ const imageOrDefault = (
       }
     : fallback;
 };
+
+export interface AboutHeaderProps {
+  eyebrow?: string;
+  heading?: string;
+  tagline?: string;
+  heroImage?: ImageSource;
+}
+
+/**
+ * The About page's own header.
+ *
+ * Separate from `blocksToAboutText`, which only ever carried the history
+ * section's heading. The hero title and tagline were the rest of what an editor
+ * could not change about this page.
+ */
+export const blocksToAboutHeader = (
+  blocks: CmsBlock[],
+  defaults: { eyebrow: string; heading: string; tagline: string }
+): AboutHeaderProps => ({
+  eyebrow:
+    fieldValue(blocks, "about-header", "about-eyebrow") ?? defaults.eyebrow,
+  heading:
+    fieldValue(blocks, "about-header", "about-heading") ?? defaults.heading,
+  tagline:
+    fieldValue(blocks, "about-header", "about-tagline") ?? defaults.tagline,
+  heroImage: imageSource(
+    blocks,
+    "about-header",
+    "about-hero-image",
+    "St. Aloysius' College, Galle"
+  ),
+});
 
 export interface AboutTextContent {
   historyHeading?: string;

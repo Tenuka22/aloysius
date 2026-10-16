@@ -1,4 +1,5 @@
 import { GalleriesIndexPage } from "@aloysius/ui/components/pages/galleries-index-page";
+import { blocksToGalleriesProps } from "@aloysius/ui/content/cms-to-pages";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -22,6 +23,9 @@ const CLUB = "photography" as const;
 const GalleriesIndexContent = () => {
   const { data: galleries } = useSuspenseQuery(
     orpc.club.listApprovedGalleries.queryOptions({ input: { club: CLUB } })
+  );
+  const { data: page } = useSuspenseQuery(
+    orpc.cms.getGalleriesPage.queryOptions()
   );
   const { data: session } = authClient.useSession();
 
@@ -52,6 +56,7 @@ const GalleriesIndexContent = () => {
         slug: gallery.slug,
         title: gallery.title,
       }))}
+      header={page?.blocks ? blocksToGalleriesProps(page.blocks) : undefined}
     />
   );
 };

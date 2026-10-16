@@ -5,6 +5,12 @@ import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 
 import { cmsProcedure, protectedProcedure, publicProcedure } from "../../index";
+import {
+  createAcademicHead,
+  deleteAcademicHead,
+  listAcademicHeads,
+  updateAcademicHead,
+} from "./academic-heads";
 import { listAchievements } from "./achievements";
 import {
   createAnnouncement,
@@ -28,6 +34,24 @@ import {
   updateNewsPost,
 } from "./news-posts";
 import { cmsPublisher } from "./publisher";
+import {
+  createAlRanker,
+  createNineA,
+  createNineABand,
+  createResultsYear,
+  createScholarship,
+  deleteAlRanker,
+  deleteNineA,
+  deleteNineABand,
+  deleteResultsYear,
+  deleteScholarship,
+  listResults,
+  updateAlRanker,
+  updateNineA,
+  updateNineABand,
+  updateResultsYear,
+  updateScholarship,
+} from "./results";
 
 export interface CmsHomepageEvent {
   blocks: SnapshotBlock[];
@@ -565,6 +589,17 @@ const principal = editorEndpoints("principal");
 /** The Academics page editor. See `ACADEMICS_BLOCKS`. */
 const academics = editorEndpoints("academics");
 
+/** The `/galleries` index masthead editor. See `GALLERIES_BLOCKS`. */
+const galleriesPage = editorEndpoints("galleries");
+
+/**
+ * The `/results` masthead editor. See `RESULTS_BLOCKS`.
+ *
+ * The results *figures* are not blocks - they are rows, edited through the
+ * results router at `/cms/results`. Only the page's framing is a block.
+ */
+const results = editorEndpoints("results");
+
 export const cmsRouter = {
   getPrincipal: principal.get,
   getPrincipalDraft: principal.getDraft,
@@ -579,6 +614,20 @@ export const cmsRouter = {
   updateAcademics: academics.update,
   watchAcademics: academics.watch,
   publishAcademics: academics.publish,
+
+  getGalleriesPage: galleriesPage.get,
+  getGalleriesPageDraft: galleriesPage.getDraft,
+  getGalleriesPageHistory: galleriesPage.getHistory,
+  updateGalleriesPage: galleriesPage.update,
+  watchGalleriesPage: galleriesPage.watch,
+  publishGalleriesPage: galleriesPage.publish,
+
+  getResults: results.get,
+  getResultsDraft: results.getDraft,
+  getResultsHistory: results.getHistory,
+  updateResults: results.update,
+  watchResults: results.watch,
+  publishResults: results.publish,
 
   /** Fetch the latest published version for each block on the homepage. */
   getHomepage: publicProcedure.handler(async ({ context }) => {
@@ -1217,6 +1266,33 @@ export const cmsRouter = {
   createNewsPost,
   updateNewsPost,
   deleteNewsPost,
+
+  // Examination results: the `/results` page reads one call that returns every
+  // year with its rankers, achievers and scholarship passers. CMS-direct, like
+  // announcements and news posts - see `results.ts` for why there is no queue.
+  listResults,
+  createResultsYear,
+  updateResultsYear,
+  deleteResultsYear,
+  createAlRanker,
+  updateAlRanker,
+  deleteAlRanker,
+  createNineA,
+  updateNineA,
+  deleteNineA,
+  createNineABand,
+  updateNineABand,
+  deleteNineABand,
+  createScholarship,
+  updateScholarship,
+  deleteScholarship,
+
+  // Who leads each part of the College, shown on `/about`. Rows in `person`,
+  // which had no caller until this - see `academic-heads.ts`.
+  listAcademicHeads,
+  createAcademicHead,
+  updateAcademicHead,
+  deleteAcademicHead,
 
   listAchievements,
 

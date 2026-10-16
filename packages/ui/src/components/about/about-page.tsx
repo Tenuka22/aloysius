@@ -1,9 +1,13 @@
 import * as stylex from "@stylexjs/stylex";
 
-import type { LeadershipMember } from "../../content/about";
 import { TIMELINE } from "../../content/about";
-import type { AboutImages, AboutTextContent } from "../../content/cms-to-about";
+import type {
+  AboutHeaderProps,
+  AboutImages,
+  AboutTextContent,
+} from "../../content/cms-to-about";
 import type { NavItem } from "../../content/home";
+import type { AcademicHead } from "../../content/people";
 import type { PrincipalContent } from "../../content/principal";
 import { SkipLink } from "../primitives/layout";
 import { PrincipalMessage } from "../principal/principal-message";
@@ -11,7 +15,7 @@ import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
 import { AboutHero } from "./about-hero";
-import { Administration } from "./administration";
+import { AcademicHeads } from "./academic-heads";
 import { Anthem } from "./anthem";
 import { HistoryTimeline } from "./history-timeline";
 import { MottoBanner } from "./motto-banner";
@@ -31,7 +35,6 @@ const styles = stylex.create({
 
 export interface AboutPageProps {
   contact?: FooterContact;
-  leadership?: readonly LeadershipMember[];
   /** Editable image overrides resolved from CMS blocks, already defaulted. */
   images?: AboutImages;
   /** Editable text overrides resolved from CMS blocks. */
@@ -42,15 +45,20 @@ export interface AboutPageProps {
    */
   principal?: PrincipalContent;
   extraNavItems?: readonly NavItem[];
+  /** The `about-header` CMS block, resolved by the route. */
+  header?: AboutHeaderProps;
+  /** The academic-heads roster, resolved by the route. */
+  academicHeads?: readonly AcademicHead[];
 }
 
 export const AboutPage = ({
   contact,
-  leadership,
   images,
   text,
   principal,
   extraNavItems,
+  header,
+  academicHeads,
 }: AboutPageProps) => {
   const timeline = images
     ? TIMELINE.map((entry, index) => ({
@@ -69,7 +77,12 @@ export const AboutPage = ({
       <SkipLink targetId={MAIN_ID} />
       <SiteHeader activeHref="/about" extraNavItems={extraNavItems} />
       <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
-        <AboutHero />
+        <AboutHero
+          eyebrow={header?.eyebrow}
+          heroImage={header?.heroImage}
+          intro={header?.tagline}
+          title={header?.heading}
+        />
         <HistoryTimeline heading={text?.historyHeading} entries={timeline} />
         <VisionMission />
         <MottoBanner />
@@ -80,11 +93,19 @@ export const AboutPage = ({
             variant="article"
           />
         )}
+        {/*
+          Directly under the Principal, and in place of the Administration
+          section that used to sit at the foot of the page. The roster was a
+          fixed list of nothing, so it rendered "Leadership profiles will be
+          published here soon" under an otherwise finished page; it is now a
+          CMS roster an editor fills in, and it sits with the Principal because
+          that is who these people report to.
+        */}
+        <AcademicHeads heads={academicHeads} />
         <Anthem
           image={images?.anthemImage}
           sinhalaImage={images?.anthemSinhalaImage}
         />
-        <Administration members={leadership} />
       </main>
       <SiteFooter contact={contact} />
     </>

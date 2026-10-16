@@ -19,8 +19,8 @@ export const ABOUT_JUMP_LINKS: readonly JumpLink[] = [
   { label: "Vision & Mission", href: "#vision" },
   { label: "Motto", href: "#motto" },
   { label: "Principal", href: "#principal" },
+  { label: "Academic Heads", href: "#academic-heads" },
   { label: "Anthem", href: "#anthem" },
-  { label: "Administration", href: "#administration" },
 ];
 
 export const ABOUT_HERO_TITLE = "Our Story, Our Heritage";
@@ -305,13 +305,3 @@ export const ANTHEM_LANGUAGES: Record<"en" | "si", AnthemLanguage> = {
     stanzas: [],
   },
 };
-
-export interface LeadershipMember {
-  id: string;
-  name: string;
-  role: string;
-  year: string;
-  portrait?: ImageSource;
-}
-
-export const ADMINISTRATION_HEADING = "College Leadership";
