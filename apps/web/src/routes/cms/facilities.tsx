@@ -235,7 +235,7 @@ const FacilitiesContent = () => {
                           editing: {
                             description: row.description ?? "",
                             id: row.id,
-                            imageId: null,
+                            imageId: row.imageId,
                             imagePreviewUrl: row.imageUrl,
                             name: row.name,
                             sortOrder: String(row.sortOrder),

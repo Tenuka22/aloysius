@@ -210,7 +210,7 @@ const SportTilesContent = () => {
                         setDialog({
                           editing: {
                             id: tile.id,
-                            imageId: null,
+                            imageId: tile.imageId,
                             imagePreviewUrl: tile.imageUrl,
                             name: tile.name,
                             sortOrder: String(tile.sortOrder),

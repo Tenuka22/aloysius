@@ -56,6 +56,7 @@ export const listAcademicHeads = publicProcedure.handler(
       name: row.name,
       role: row.role,
       bio: row.bio,
+      imageId: row.imageId,
       imageUrl: row.imageId ? (urls.get(row.imageId) ?? null) : null,
     }));
   }

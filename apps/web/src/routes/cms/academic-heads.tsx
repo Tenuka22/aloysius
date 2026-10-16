@@ -232,8 +232,8 @@ const AcademicHeadsContent = () => {
                           editing: {
                             bio: head.bio ?? "",
                             id: head.id,
-                            imageId: null,
-                            imagePreviewUrl: null,
+                            imageId: head.imageId,
+                            imagePreviewUrl: head.imageUrl,
                             name: head.name,
                             role: head.role ?? "",
                             slug: head.slug,

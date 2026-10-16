@@ -47,6 +47,7 @@ export const listAlumniNotables = publicProcedure.handler(
       category: row.category,
       name: row.name,
       role: row.role,
+      imageId: row.imageId,
       imageUrl: row.imageId ? (urls.get(row.imageId) ?? null) : null,
     }));
   }

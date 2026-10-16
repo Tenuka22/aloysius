@@ -47,6 +47,7 @@ export const listFacilities = publicProcedure.handler(async ({ context }) => {
     tag: row.tag,
     description: row.description,
     sortOrder: row.sortOrder,
+    imageId: row.imageId,
     imageUrl: row.imageId ? (urls.get(row.imageId) ?? null) : null,
   }));
 });

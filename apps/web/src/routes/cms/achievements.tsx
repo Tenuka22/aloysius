@@ -244,7 +244,7 @@ const AchievementsContent = () => {
                               achievement.category as AchievementCategory,
                             detail: achievement.detail,
                             id: achievement.id,
-                            imageId: null,
+                            imageId: achievement.imageId,
                             imagePreviewUrl: achievement.imageUrl,
                             title: achievement.title,
                           },

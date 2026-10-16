@@ -44,6 +44,7 @@ export const listSportTiles = publicProcedure.handler(async ({ context }) => {
     id: row.id,
     name: row.name,
     sortOrder: row.sortOrder,
+    imageId: row.imageId,
     imageUrl: row.imageId ? (urls.get(row.imageId) ?? null) : null,
   }));
 });

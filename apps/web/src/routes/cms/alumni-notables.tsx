@@ -251,7 +251,7 @@ const AlumniNotablesContent = () => {
                           editing: {
                             category: notable.category,
                             id: notable.id,
-                            imageId: null,
+                            imageId: notable.imageId,
                             imagePreviewUrl: notable.imageUrl,
                             name: notable.name,
                             role: notable.role ?? "",
