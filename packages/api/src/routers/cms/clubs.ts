@@ -12,7 +12,7 @@ import { ORPCError } from "@orpc/server";
 import { asc, count, eq } from "drizzle-orm";
 import * as v from "valibot";
 
-import { cmsProcedure } from "../../index";
+import { cmsProcedure, publicProcedure } from "../../index";
 
 const clubFieldsSchema = v.object({
   name: v.pipe(v.string(), v.minLength(1), v.maxLength(120)),
@@ -96,6 +96,28 @@ export const listClubs = cmsProcedure.handler(async ({ context }) => {
     inUse: hasContent(row),
   }));
 });
+
+/**
+ * The public `/students` page's own read of the club registry: just enough
+ * to render a card per club, with none of the ownership counts or draft
+ * state that only the CMS screen needs.
+ */
+export const listPublishedClubs = publicProcedure.handler(
+  async ({ context }) => {
+    const rows = await context.db
+      .select({
+        id: club.id,
+        slug: club.slug,
+        name: club.name,
+        description: club.description,
+      })
+      .from(club)
+      .orderBy(asc(club.name))
+      .all();
+
+    return rows;
+  }
+);
 
 export const createClub = cmsProcedure
   .input(clubFieldsSchema)

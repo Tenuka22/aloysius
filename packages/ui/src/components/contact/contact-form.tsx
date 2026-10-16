@@ -29,6 +29,7 @@ import {
   CONTACT_TOPICS,
 } from "../../content/contact";
 import type {
+  ContactDepartment,
   ContactField,
   ContactFormValues,
   ContactTopic,
@@ -353,6 +354,12 @@ export interface ContactFormProps {
   /** Where the composed message is addressed. Defaults to the College office. */
   mailTo?: string;
   topics?: readonly ContactTopic[];
+  /**
+   * The directory `resolveRecipient` joins `topics[*].departmentId` against.
+   * Defaults to the static `CONTACT_DEPARTMENTS`; the Contact route passes
+   * the live CMS list so an admin's edits change where enquiries land.
+   */
+  departments?: readonly ContactDepartment[];
 }
 
 /**
@@ -360,8 +367,12 @@ export interface ContactFormProps {
  * is configured, otherwise the main office. "Sent to" shows this, so the page
  * never names an office that will not receive the message.
  */
-const resolveRecipient = (topic: ContactTopic | undefined, mailTo: string) => {
-  const department = CONTACT_DEPARTMENTS.find(
+const resolveRecipient = (
+  topic: ContactTopic | undefined,
+  mailTo: string,
+  departments: readonly ContactDepartment[]
+) => {
+  const department = departments.find(
     (entry) => entry.id === topic?.departmentId
   );
   if (topic && department?.email) {
@@ -475,6 +486,7 @@ export const ContactForm = ({
   onSubmit,
   mailTo = CONTACT_DEFAULT_EMAIL,
   topics = CONTACT_TOPICS,
+  departments = CONTACT_DEPARTMENTS,
 }: ContactFormProps) => {
   const formId = useId();
   /*
@@ -494,7 +506,7 @@ export const ContactForm = ({
   const [outcome, setOutcome] = useState<Outcome>("idle");
 
   const topic = topics.find((entry) => entry.id === topicId);
-  const recipient = resolveRecipient(topic, mailTo);
+  const recipient = resolveRecipient(topic, mailTo, departments);
 
   const pickTopic = (next: ContactTopic) => {
     setTopicId(next.id);

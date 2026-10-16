@@ -58,6 +58,15 @@ export interface NewsItem {
   image?: ImageSource;
 }
 
+export type AchievementCategory =
+  | "Academic"
+  | "Sports"
+  | "Innovation"
+  | "Arts"
+  | "Leadership"
+  | "National"
+  | "International";
+
 export interface Achievement {
   id: string;
   category: string;
@@ -214,16 +223,17 @@ export const EXAM_CARDS: readonly ExamCard[] = [
   },
 ];
 
-export const ACHIEVEMENT_CATEGORIES: readonly string[] = [
-  "All",
-  "Academic",
-  "Sports",
-  "Innovation",
-  "Arts",
-  "Leadership",
-  "National",
-  "International",
-];
+export const ACHIEVEMENT_CATEGORIES: readonly ("All" | AchievementCategory)[] =
+  [
+    "All",
+    "Academic",
+    "Sports",
+    "Innovation",
+    "Arts",
+    "Leadership",
+    "National",
+    "International",
+  ];
 
 export const STUDENT_LIFE = [
   { id: "sports", label: "Sports", placeholder: "Sports - action photograph" },
@@ -293,6 +303,23 @@ export const GALLERY_ITEMS: readonly GalleryItem[] = [
     preferredRatio: aspectRatios.achievementCard,
   },
 ];
+
+/**
+ * How many photographs the gallery strip renders.
+ *
+ * This is the same twelve `GALLERY_ITEMS` below carries, for the same reason:
+ * the grid is a CSS multi-column at 2, 3 and 4 columns, and only a count that
+ * divides by all three keeps every column the same length. A route that feeds
+ * the strip from the approved-photo tables therefore has to stop at a multiple
+ * of twelve rather than pass through however many photographs happen to exist -
+ * an uncapped list both breaks the column balance the layout is built around
+ * and renders one `<img>` per photograph on the page, on a page whose purpose is
+ * to link to the gallery rather than to be it.
+ *
+ * Twelve, not six: six across four columns is 2/1/2/1, which leaves the
+ * bottom-left as a two-tile void.
+ */
+export const GALLERY_STRIP_LIMIT = 12;
 
 export const MOTTO = "Certa Viriliter";
 export const MOTTO_TRANSLATION = "Strive Manfully";

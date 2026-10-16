@@ -110,6 +110,7 @@ export interface ContactPageProps
 export const ContactPage = ({
   address,
   contact,
+  departments,
   email,
   extraNavItems,
   heading,
@@ -145,7 +146,7 @@ export const ContactPage = ({
         mapImage={mapImage}
         mapUrl={mapUrl}
       />
-      <ContactDepartments />
+      <ContactDepartments departments={departments} />
       <Section id="contact-form" labelledBy="contact-form-title" tone="inverse">
         <Container>
           <div {...stylex.props(styles.formLayout)}>
@@ -177,7 +178,11 @@ export const ContactPage = ({
                 </ul>
               ) : null}
             </div>
-            <ContactForm mailTo={email} onSubmit={onSubmit} />
+            <ContactForm
+              departments={departments}
+              mailTo={email}
+              onSubmit={onSubmit}
+            />
           </div>
         </Container>
       </Section>

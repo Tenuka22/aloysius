@@ -3,13 +3,17 @@ import {
   ABOUT_HERO_INTRO,
   ABOUT_HERO_TITLE,
   HISTORY_HEADING,
+  MISSION_STATEMENT,
   TIMELINE,
+  VISION_STATEMENT,
   ANTHEM_IMAGE,
 } from "@aloysius/ui/content/about";
 import {
   blocksToAboutHeader,
   blocksToAboutImages,
   blocksToAboutText,
+  blocksToAboutTimeline,
+  blocksToAnthemSinhalaStanzas,
 } from "@aloysius/ui/content/cms-to-about";
 import { principalContent } from "@aloysius/ui/content/cms-to-principal";
 import type { AcademicHead } from "@aloysius/ui/content/people";
@@ -49,8 +53,18 @@ const AboutContent = () => {
   const text = about?.blocks
     ? blocksToAboutText(about.blocks, {
         historyHeading: HISTORY_HEADING,
+        missionStatement: MISSION_STATEMENT,
+        visionStatement: VISION_STATEMENT,
       })
     : undefined;
+
+  const timeline = about?.blocks
+    ? blocksToAboutTimeline(about.blocks, TIMELINE)
+    : TIMELINE;
+
+  const anthemSinhalaStanzas = about?.blocks
+    ? blocksToAnthemSinhalaStanzas(about.blocks)
+    : [];
 
   const header = about?.blocks
     ? blocksToAboutHeader(about.blocks, {
@@ -92,9 +106,11 @@ const AboutContent = () => {
   return (
     <AboutPage
       academicHeads={academicHeads}
+      anthemSinhalaStanzas={anthemSinhalaStanzas}
       header={header}
       images={images}
       text={text}
+      timeline={timeline}
       principal={principalContent(principal?.blocks)}
       extraNavItems={extraNavItems}
     />

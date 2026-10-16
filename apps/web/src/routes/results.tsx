@@ -1,4 +1,5 @@
 import { ResultsPage } from "@aloysius/ui/components/results/results-page";
+import { blocksToResultsHeroProps } from "@aloysius/ui/content/cms-to-pages";
 import type { YearResults } from "@aloysius/ui/content/results";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -44,6 +45,8 @@ const withImage = <T extends { name: string; imageUrl: string | null }>(
 const ResultsContent = () => {
   const resultsQuery = orpc.cms.listResults.queryOptions();
   const { data: publishedYears } = useSuspenseQuery(resultsQuery);
+  const pageQuery = orpc.cms.getResults.queryOptions();
+  const { data: page } = useSuspenseQuery(pageQuery);
   const { data: session } = authClient.useSession();
 
   const years = publishedYears.map((year) => year.year);
@@ -100,6 +103,7 @@ const ResultsContent = () => {
   return (
     <ResultsPage
       extraNavItems={extraNavItems}
+      hero={blocksToResultsHeroProps(page?.blocks ?? [])}
       results={results}
       years={years}
     />

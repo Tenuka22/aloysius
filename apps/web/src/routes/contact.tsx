@@ -27,10 +27,20 @@ import { orpc } from "@/utils/orpc";
 const ContactContent = () => {
   const contactQuery = orpc.cms.getContact.queryOptions();
   const { data: contact } = useSuspenseQuery(contactQuery);
+  const departmentsQuery = orpc.cms.listContactDepartments.queryOptions();
+  const { data: departmentRows } = useSuspenseQuery(departmentsQuery);
   const { data: session } = authClient.useSession();
 
   /* Always call the mapper so an unpublished page falls back to content/contact.ts. */
   const cmsProps = blocksToContactProps(contact?.blocks ?? []);
+
+  const departments = departmentRows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    description: row.description ?? "",
+    telephone: row.telephone ?? undefined,
+    email: row.email ?? undefined,
+  }));
 
   const extraNavItems = (() => {
     if (!session?.user) {
@@ -58,6 +68,7 @@ const ContactContent = () => {
         instagramUrl: cmsProps.instagramUrl,
         youtubeUrl: cmsProps.youtubeUrl,
       }}
+      departments={departments}
       email={cmsProps.email}
       extraNavItems={extraNavItems}
       heading={cmsProps.heading}

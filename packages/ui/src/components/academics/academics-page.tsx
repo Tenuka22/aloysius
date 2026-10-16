@@ -1,9 +1,9 @@
 import * as stylex from "@stylexjs/stylex";
 
+import type { Facility } from "../../content/academics";
 import type { AcademicsHeaderProps } from "../../content/cms-to-pages";
 import type { NavItem } from "../../content/home";
 import { SkipLink } from "../primitives/layout";
-import type { ImageSource } from "../primitives/media";
 import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
@@ -37,15 +37,15 @@ export interface AcademicsPageProps {
   extraNavItems?: readonly NavItem[];
   /** The `academics-header` CMS block, resolved by the route. */
   header?: AcademicsHeaderProps;
-  /** CMS photographs for the facilities showcase, keyed by facility id. */
-  facilityImages?: Readonly<Record<string, ImageSource>>;
+  /** The facilities showcase rows, resolved by the route from `listFacilities`. */
+  facilities?: readonly Facility[];
 }
 
 export const AcademicsPage = ({
   contact,
   extraNavItems,
   header,
-  facilityImages,
+  facilities,
 }: AcademicsPageProps) => (
   <>
     <SkipLink targetId={MAIN_ID} />
@@ -59,7 +59,7 @@ export const AcademicsPage = ({
       />
       <StudySections />
       <AlStreams />
-      <FacilitiesShowcase images={facilityImages} />
+      <FacilitiesShowcase facilities={facilities} />
       <ResultsCta />
     </main>
     {/*

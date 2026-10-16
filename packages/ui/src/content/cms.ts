@@ -14,12 +14,13 @@
  */
 
 import type { AspectRatioKey } from "../tokens/aspect-ratios";
-import { ABOUT_HERO_INTRO, ABOUT_HERO_TITLE } from "./about";
 import {
-  ACADEMICS_HERO_INTRO,
-  ACADEMICS_HERO_TITLE,
-  FACILITIES,
-} from "./academics";
+  ABOUT_HERO_INTRO,
+  ABOUT_HERO_TITLE,
+  MISSION_STATEMENT,
+  VISION_STATEMENT,
+} from "./about";
+import { ACADEMICS_HERO_INTRO, ACADEMICS_HERO_TITLE } from "./academics";
 import {
   ALUMNI_BRANCHES_HEADING,
   ALUMNI_BRANCHES_INTRO,
@@ -222,9 +223,6 @@ const IMAGE_RATIO_KEYS: Partial<Record<string, AspectRatioKey>> = {
   "notices-hero-image": "hero",
   "media-hero-image": "hero",
   "students-hero-image": "hero",
-  "students-sports-cricket": "mosaicTile",
-  "students-sports-rugby": "mosaicTile",
-  "students-sports-athletics": "mosaicTile",
   "alumni-hero-image": "hero",
 };
 
@@ -600,7 +598,8 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
     name: "History Timeline",
     type: "Media grid",
     status: "published",
-    summary: "Heading and archival photo for each of the four timeline entries",
+    summary:
+      "Heading, year-by-year copy and archival photo for each of the four timeline entries",
     fields: [
       {
         id: "history-heading",
@@ -610,28 +609,107 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
         wide: true,
       },
       {
+        id: "history-1-title",
+        label: "1895 — Title",
+        kind: "text",
+        value: "Founding of the College",
+      },
+      {
+        id: "history-1-body",
+        label: "1895 — Body",
+        kind: "textarea",
+        value:
+          "St. Aloysius' College was established by Belgian Jesuit missionaries led by Bishop Joseph Van Reeth.",
+        wide: true,
+      },
+      {
         id: "history-1-image",
-        label: "1895 Ã¢â‚¬â€ Founding of the College",
+        label: "1895 — Founding of the College",
         kind: "image",
         hint: "Clearing this restores the default archival photo.",
+      },
+      {
+        id: "history-2-title",
+        label: "1920s — Title",
+        kind: "text",
+        value: "Early Growth",
+      },
+      {
+        id: "history-2-body",
+        label: "1920s — Body",
+        kind: "textarea",
+        value: "Expansion of the College, early buildings and student body.",
+        wide: true,
       },
       {
         id: "history-2-image",
-        label: "1920s Ã¢â‚¬â€ Early Growth",
+        label: "1920s — Early Growth",
         kind: "image",
         hint: "Clearing this restores the default archival photo.",
+      },
+      {
+        id: "history-3-title",
+        label: "1971 — Title",
+        kind: "text",
+        value: "A Century of Excellence",
+      },
+      {
+        id: "history-3-body",
+        label: "1971 — Body",
+        kind: "textarea",
+        value:
+          "Became a national school with the appointment of the first Buddhist principal, marking milestones in academics, sport and national life.",
+        wide: true,
       },
       {
         id: "history-3-image",
-        label: "1971 Ã¢â‚¬â€ A Century of Excellence",
+        label: "1971 — A Century of Excellence",
         kind: "image",
         hint: "Clearing this restores the default archival photo.",
       },
       {
+        id: "history-4-title",
+        label: "Today — Title",
+        kind: "text",
+        value: "The Modern College",
+      },
+      {
+        id: "history-4-body",
+        label: "Today — Body",
+        kind: "textarea",
+        value:
+          "St. Aloysius' College today - facilities, programmes and a community of over 5,000 students.",
+        wide: true,
+      },
+      {
         id: "history-4-image",
-        label: "Today Ã¢â‚¬â€ The Modern College",
+        label: "Today — The Modern College",
         kind: "image",
         hint: "Clearing this restores the default archival photo.",
+      },
+    ],
+  },
+  {
+    id: "about-statements",
+    name: "Vision & Mission",
+    type: "Card grid",
+    status: "published",
+    summary:
+      "The two strategic statements shown between the timeline and the motto",
+    fields: [
+      {
+        id: "about-vision",
+        label: "Vision",
+        kind: "textarea",
+        value: VISION_STATEMENT,
+        wide: true,
+      },
+      {
+        id: "about-mission",
+        label: "Mission",
+        kind: "textarea",
+        value: MISSION_STATEMENT,
+        wide: true,
       },
     ],
   },
@@ -653,6 +731,14 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
         label: "Sinhala anthem creators",
         kind: "image",
         hint: "Clearing this restores the default portrait collage.",
+      },
+      {
+        id: "anthem-sinhala-lyrics",
+        label: "Sinhala lyrics",
+        kind: "textarea",
+        value: "",
+        wide: true,
+        hint: "One stanza per paragraph (blank line between stanzas), one line per row within a stanza. Leave empty to hide the Sinhala tab's lyrics.",
       },
     ],
   },
@@ -1134,29 +1220,7 @@ export const GALLERIES_BLOCKS: readonly PageBlock[] = [
 ];
 
 /**
- * One CMS image field per facility, derived from `FACILITIES`.
- *
- * Generated rather than written out, because the list of facilities and the
- * list of fields have to be the same list: a hand-written copy is one
- * forgotten field away from a facility whose photograph the editor cannot
- * upload and the page cannot show. Deriving it means a facility added to
- * `content/academics.ts` gets its upload control for free.
- */
-export const ACADEMICS_FACILITY_FIELDS: readonly BlockField[] = FACILITIES.map(
-  (facility) => ({
-    id: `facility-${facility.id}`,
-    label: facility.name,
-    kind: "image",
-    hint: "Portrait crop, 4:5.",
-  })
-);
-
-/** The CMS field id that holds a facility's photograph. */
-export const facilityImageFieldId = (facilityId: string): string =>
-  `facility-${facilityId}`;
-
-/**
- * Academics page blocks: the page header and one photograph per facility.
+ * Academics page blocks: the page header.
  *
  * `academics-leadership` used to live here and has gone. The Principal, the
  * Primary sectional head and the Secondary deputy principal are all on `/about`
@@ -1175,6 +1239,12 @@ export const facilityImageFieldId = (facilityId: string): string =>
  * the homepage's Academics card-grid fields on purpose - the ids are scoped to
  * (page, block), so the two cannot collide, and matching the `news-header`
  * precedent keeps one naming rule for page headers.
+ *
+ * The facility photographs that used to live here as a generated per-facility
+ * "Media grid" block are gone: the facilities showcase on `/academics` - name,
+ * tag, description and photograph - is now the `facility` table, edited as a
+ * roster at `/cms/facilities`, the same shape change `/cms/academic-heads`
+ * made to the old fixed leadership fields.
  */
 export const ACADEMICS_BLOCKS: readonly PageBlock[] = [
   {
@@ -1211,20 +1281,6 @@ export const ACADEMICS_BLOCKS: readonly PageBlock[] = [
         wide: true,
       },
     ],
-  },
-  {
-    /*
-     * One photograph per facility. The list of facilities is shipped code copy
-     * (`content/academics.ts`) because the College publishes these as a fixed
-     * set, but the pictures are CMS content - an editor replacing a photo of
-     * the library should not need a deploy.
-     */
-    id: "academics-facilities",
-    name: "Facility Photographs",
-    type: "Media grid",
-    status: "published",
-    summary: "A photograph for each facility in the showcase",
-    fields: [...ACADEMICS_FACILITY_FIELDS],
   },
 ];
 
@@ -1354,21 +1410,6 @@ export const STUDENTS_BLOCKS: readonly PageBlock[] = [
         label: "Heading",
         kind: "text",
         value: SPORTS_HEADING,
-      },
-      {
-        id: "students-sports-cricket",
-        label: "Cricket photograph",
-        kind: "image",
-      },
-      {
-        id: "students-sports-rugby",
-        label: "Rugby photograph",
-        kind: "image",
-      },
-      {
-        id: "students-sports-athletics",
-        label: "Athletics photograph",
-        kind: "image",
       },
       {
         id: "students-more-sports",

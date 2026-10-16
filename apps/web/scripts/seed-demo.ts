@@ -43,6 +43,8 @@ import { user } from "@aloysius/db/schema/auth";
 import { clubPhoto, gallery } from "@aloysius/db/schema/club-photos";
 import { club } from "@aloysius/db/schema/clubs";
 import { contentVersion } from "@aloysius/db/schema/cms";
+import { contactDepartment } from "@aloysius/db/schema/contact-department";
+import { facility } from "@aloysius/db/schema/facility";
 import { files } from "@aloysius/db/schema/files";
 import { newsPost } from "@aloysius/db/schema/news-posts";
 import {
@@ -53,7 +55,7 @@ import {
   resultsYear,
 } from "@aloysius/db/schema/results";
 import { achievement, event, person } from "@aloysius/db/schema/root-content";
-import { FACILITIES } from "@aloysius/ui/content/academics";
+import { sportTile } from "@aloysius/db/schema/sport-tile";
 import type { PageBlock } from "@aloysius/ui/content/cms";
 import {
   ACADEMICS_BLOCKS,
@@ -68,7 +70,6 @@ import {
   PRINCIPAL_BLOCKS,
   RESULTS_BLOCKS,
   STUDENTS_BLOCKS,
-  facilityImageFieldId,
 } from "@aloysius/ui/content/cms";
 import type { AspectRatioKey } from "@aloysius/ui/tokens/aspect-ratios";
 import { aspectRatios } from "@aloysius/ui/tokens/aspect-ratios";
@@ -1036,18 +1037,6 @@ const SEED_PAGES: readonly SeedPage[] = [
         seed: "page-academics-hero",
         ratio: "hero",
       },
-      /*
-       * One photograph per facility, generated from the same registry the CMS
-       * editor renders its upload controls from. Listed here rather than
-       * written out so a facility added to `content/academics.ts` is picked up
-       * automatically - `requireEveryImageSeeded` below fails the run if it is
-       * not.
-       */
-      ...FACILITIES.map((facility) => ({
-        fieldId: facilityImageFieldId(facility.id),
-        seed: `page-facility-${facility.id}`,
-        ratio: "heritagePhoto" as const,
-      })),
     ],
     fill: {},
   },
@@ -1179,21 +1168,6 @@ const SEED_PAGES: readonly SeedPage[] = [
         fieldId: "students-hero-image",
         seed: "page-students-hero",
         ratio: "hero",
-      },
-      {
-        fieldId: "students-sports-cricket",
-        seed: "page-students-cricket",
-        ratio: "mosaicTile",
-      },
-      {
-        fieldId: "students-sports-rugby",
-        seed: "page-students-rugby",
-        ratio: "mosaicTile",
-      },
-      {
-        fieldId: "students-sports-athletics",
-        seed: "page-students-athletics",
-        ratio: "mosaicTile",
       },
       {
         fieldId: "students-prefects-image",
@@ -1788,6 +1762,217 @@ const seedAcademicHeads = async (uploaderId: string) => {
   return ACADEMIC_HEADS.length;
 };
 
+/* -------------------------------------------------------- contact departments */
+
+/**
+ * The "Reach the right office" directory on `/contact`. Ids match
+ * `CONTACT_TOPICS`'s hardcoded `departmentId` values exactly, so the
+ * enquiry form's routing works unchanged against this seeded data.
+ */
+const CONTACT_DEPARTMENT_SEED = [
+  {
+    id: "principal",
+    name: "Principal's Office",
+    description: "Appointments and official correspondence",
+  },
+  {
+    id: "admissions",
+    name: "Admissions Office",
+    description: "Applications, interviews and enrolment",
+  },
+  {
+    id: "academic",
+    name: "Deputy Principal (Academic)",
+    description: "Examinations, results and curriculum",
+  },
+  {
+    id: "sports",
+    name: "Sports Office",
+    description: "Fixtures, trials and sports administration",
+  },
+  {
+    id: "oba",
+    name: "Old Boys' Association",
+    description: "Alumni membership and events",
+  },
+  {
+    id: "media",
+    name: "Media Unit",
+    description: "Press, photography and website",
+  },
+] as const;
+
+const seedContactDepartments = async () => {
+  await Promise.all(
+    CONTACT_DEPARTMENT_SEED.map((department) =>
+      db
+        .insert(contactDepartment)
+        .values({
+          id: department.id,
+          name: department.name,
+          description: department.description,
+          sortOrder: CONTACT_DEPARTMENT_SEED.indexOf(department),
+          publishedAt: new Date(),
+        })
+        .run()
+    )
+  );
+
+  return CONTACT_DEPARTMENT_SEED.length;
+};
+
+/* -------------------------------------------------------------- sport tiles */
+
+/**
+ * The "On the Field" sports mosaic on `/students`. Replaces `SPORT_TILES`, a
+ * fixed three-row array (Cricket, Rugby, Athletics) with its photograph
+ * pinned to a `students-sports-*` block field - see `/cms/sport-tiles` and
+ * `schema/sport-tile.ts`. `sortOrder` keeps this same Cricket, Rugby,
+ * Athletics order; the mosaic's hero tile is whichever published row sorts
+ * first, derived by the public page rather than stored here.
+ */
+const SPORT_TILES_SEED = [
+  { name: "Cricket", sortOrder: 0 },
+  { name: "Rugby", sortOrder: 1 },
+  { name: "Athletics", sortOrder: 2 },
+] as const;
+
+const seedSportTiles = async (uploaderId: string) => {
+  const { width, height } = seedImageSize("mosaicTile");
+  const images = await Promise.all(
+    SPORT_TILES_SEED.map((tile) =>
+      uploadSeedImage(
+        `sport-tile-${tile.name.toLowerCase()}`,
+        width,
+        height,
+        uploaderId
+      )
+    )
+  );
+
+  await Promise.all(
+    SPORT_TILES_SEED.map((tile, index) =>
+      db
+        .insert(sportTile)
+        .values({
+          id: crypto.randomUUID(),
+          name: tile.name,
+          sortOrder: tile.sortOrder,
+          imageId: images[index] ?? null,
+          publishedAt: new Date(),
+        })
+        .run()
+    )
+  );
+
+  return SPORT_TILES_SEED.length;
+};
+
+/* ----------------------------------------------------------------- facilities */
+
+/**
+ * The facilities showcase on `/academics`. Replaces `FACILITIES`, a fixed
+ * twelve-row array with only its photograph CMS-editable - see
+ * `/cms/facilities` and `schema/facility.ts`. `sortOrder` keeps the same
+ * laboratories-first, grounds-and-classrooms-last order the shipped array had.
+ */
+const FACILITIES_SEED = [
+  {
+    name: "Physics Laboratory",
+    tag: "Science",
+    description:
+      "Practical work for O/L science and the A/L physical science stream.",
+  },
+  {
+    name: "Chemistry Laboratory",
+    tag: "Science",
+    description:
+      "Fume-safe benches for experiments and A/L chemistry practicals.",
+  },
+  {
+    name: "Biology Laboratory",
+    tag: "Science",
+    description:
+      "Specimens, microscopes and dissection for the biological stream.",
+  },
+  {
+    name: "ICT & Computer Labs",
+    tag: "Technology",
+    description:
+      "Networked computers for ICT, technology and digital literacy.",
+  },
+  {
+    name: "Engineering Technology Lab",
+    tag: "Technology",
+    description: "Workshop space for the A/L engineering technology stream.",
+  },
+  {
+    name: "College Library",
+    tag: "Learning",
+    description:
+      "Reference, lending and quiet study for every section of the College.",
+  },
+  {
+    name: "Primary Library",
+    tag: "Learning",
+    description: "An age-appropriate reading room for Grades 1 to 5.",
+  },
+  {
+    name: "Music & Art Rooms",
+    tag: "Aesthetics",
+    description:
+      "Instruments, studio space and exhibitions for aesthetic studies.",
+  },
+  {
+    name: "Main Hall",
+    tag: "Community",
+    description: "Assemblies, prize-giving, concerts and examinations.",
+  },
+  {
+    name: "Chapel",
+    tag: "Community",
+    description: "The spiritual heart of the College's Catholic tradition.",
+  },
+  {
+    name: "Sports Grounds",
+    tag: "Sport",
+    description: "Cricket, rugby, football and athletics on College grounds.",
+  },
+  {
+    name: "Smart Classrooms",
+    tag: "Technology",
+    description: "Multimedia-equipped rooms for interactive teaching.",
+  },
+] as const;
+
+const seedFacilities = async (uploaderId: string) => {
+  const { width, height } = seedImageSize("principalPortrait");
+  const images = await Promise.all(
+    FACILITIES_SEED.map((_row, index) =>
+      uploadSeedImage(`facility-${index}`, width, height, uploaderId)
+    )
+  );
+
+  await Promise.all(
+    FACILITIES_SEED.map((row, index) =>
+      db
+        .insert(facility)
+        .values({
+          id: crypto.randomUUID(),
+          name: row.name,
+          tag: row.tag,
+          description: row.description,
+          sortOrder: index,
+          imageId: images[index] ?? null,
+          publishedAt: new Date(),
+        })
+        .run()
+    )
+  );
+
+  return FACILITIES_SEED.length;
+};
+
 const main = async () => {
   const cmsUserId = await requireUserId("cms");
   const clubUserId = await requireUserId(CLUB_SEAT_USERNAME);
@@ -1804,6 +1989,9 @@ const main = async () => {
   await db.delete(achievement).run();
   await db.delete(resultsYear).run();
   await db.delete(person).run();
+  await db.delete(sportTile).run();
+  await db.delete(facility).run();
+  await db.delete(contactDepartment).run();
   /*
    * `content_version` goes too, and this is the one deletion here that costs
    * more than a reseed: it holds every page's published blocks *and* any
@@ -1844,6 +2032,15 @@ const main = async () => {
   console.log("Seeding academic heads...");
   const heads = await seedAcademicHeads(cmsUserId);
 
+  console.log("Seeding sport tiles...");
+  const sportTileCount = await seedSportTiles(cmsUserId);
+
+  console.log("Seeding facilities...");
+  const facilityCount = await seedFacilities(cmsUserId);
+
+  console.log("Seeding contact departments...");
+  const contactDepartmentCount = await seedContactDepartments();
+
   console.log("Sealing examination results...");
   const resultsYears = await seedResults(cmsUserId);
 
@@ -1863,6 +2060,9 @@ const main = async () => {
   );
   console.log(`  ${heads} academic heads`);
   console.log(`  ${resultsYears} examination years`);
+  console.log(`  ${sportTileCount} sport tiles`);
+  console.log(`  ${facilityCount} facilities`);
+  console.log(`  ${contactDepartmentCount} contact departments`);
 };
 
 /*

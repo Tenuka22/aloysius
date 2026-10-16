@@ -137,6 +137,48 @@ const CmsLayout = () => {
       href: "/cms/academic-heads",
       active: pathname.startsWith("/cms/academic-heads"),
     },
+    {
+      num: "21",
+      label: "Achievements",
+      href: "/cms/achievements",
+      active: pathname.startsWith("/cms/achievements"),
+    },
+    {
+      num: "22",
+      label: "Distinguished Alumni",
+      href: "/cms/alumni-notables",
+      active: pathname.startsWith("/cms/alumni-notables"),
+    },
+    {
+      num: "23",
+      label: "Media Links",
+      href: "/cms/media-links",
+      active: pathname.startsWith("/cms/media-links"),
+    },
+    {
+      num: "24",
+      label: "Alumni Branches",
+      href: "/cms/alumni-branches",
+      active: pathname.startsWith("/cms/alumni-branches"),
+    },
+    {
+      num: "25",
+      label: "Sport Tiles",
+      href: "/cms/sport-tiles",
+      active: pathname.startsWith("/cms/sport-tiles"),
+    },
+    {
+      num: "26",
+      label: "Contact Departments",
+      href: "/cms/contact-departments",
+      active: pathname.startsWith("/cms/contact-departments"),
+    },
+    {
+      num: "27",
+      label: "Facilities",
+      href: "/cms/facilities",
+      active: pathname.startsWith("/cms/facilities"),
+    },
   ];
 
   return (

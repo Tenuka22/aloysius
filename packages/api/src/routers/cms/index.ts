@@ -11,22 +11,63 @@ import {
   listAcademicHeads,
   updateAcademicHead,
 } from "./academic-heads";
-import { listAchievements } from "./achievements";
+import {
+  createAchievement,
+  deleteAchievement,
+  listAchievements,
+  updateAchievement,
+} from "./achievements";
+import {
+  createAlumniBranch,
+  deleteAlumniBranch,
+  listAlumniBranches,
+  updateAlumniBranch,
+} from "./alumni-branches";
+import {
+  createAlumniNotable,
+  deleteAlumniNotable,
+  listAlumniNotables,
+  updateAlumniNotable,
+} from "./alumni-notables";
 import {
   createAnnouncement,
   deleteAnnouncement,
   listAnnouncements,
   updateAnnouncement,
 } from "./announcements";
-import { createClub, deleteClub, listClubs, updateClub } from "./clubs";
+import {
+  createClub,
+  deleteClub,
+  listClubs,
+  listPublishedClubs,
+  updateClub,
+} from "./clubs";
+import {
+  createContactDepartment,
+  deleteContactDepartment,
+  listContactDepartments,
+  updateContactDepartment,
+} from "./contact-departments";
 import { dashboardStats } from "./dashboard";
 import { createEvent, deleteEvent, listEvents, updateEvent } from "./events";
+import {
+  createFacility,
+  deleteFacility,
+  listFacilities,
+  updateFacility,
+} from "./facilities";
 import {
   createGallery as createGalleryCms,
   deleteGallery as deleteGalleryCms,
   listGalleries,
   updateGallery as updateGalleryCms,
 } from "./galleries";
+import {
+  createMediaLink,
+  deleteMediaLink,
+  listMediaLinks,
+  updateMediaLink,
+} from "./media-links";
 import {
   createNewsPost,
   deleteNewsPost,
@@ -52,6 +93,12 @@ import {
   updateResultsYear,
   updateScholarship,
 } from "./results";
+import {
+  createSportTile,
+  deleteSportTile,
+  listSportTiles,
+  updateSportTile,
+} from "./sport-tiles";
 
 export interface CmsHomepageEvent {
   blocks: SnapshotBlock[];
@@ -1029,6 +1076,13 @@ export const cmsRouter = {
     return { success: true, publishedIds };
   }),
 
+  // The "Reach the right office" directory on `/contact`, and the department
+  // emails the enquiry form routes messages to. See `contact-departments.ts`.
+  listContactDepartments,
+  createContactDepartment,
+  updateContactDepartment,
+  deleteContactDepartment,
+
   /* ------------------------------------------------------------- alumni */
 
   getAlumni: publicProcedure.handler(async ({ context }) => {
@@ -1295,6 +1349,19 @@ export const cmsRouter = {
   deleteAcademicHead,
 
   listAchievements,
+  createAchievement,
+  updateAchievement,
+  deleteAchievement,
+
+  listAlumniNotables,
+  createAlumniNotable,
+  updateAlumniNotable,
+  deleteAlumniNotable,
+
+  listAlumniBranches,
+  createAlumniBranch,
+  updateAlumniBranch,
+  deleteAlumniBranch,
 
   // The dashboard's own counts. Every figure on that screen is a `count()`
   // against the table it describes - see `dashboard.ts` for why it used to be
@@ -1304,6 +1371,7 @@ export const cmsRouter = {
   // Clubs are data, not a constant: a CMS editor adds one, and the seeded
   // `photography` seat is the one the delete guard protects.
   listClubs,
+  listPublishedClubs,
   createClub,
   updateClub,
   deleteClub,
@@ -1312,4 +1380,25 @@ export const cmsRouter = {
   createGallery: createGalleryCms,
   updateGallery: updateGalleryCms,
   deleteGallery: deleteGalleryCms,
+
+  // The "Magazines & Reports" and "In the Press" tabs on `/media` - see
+  // `media-links.ts` for why `fileId` and `href` are both optional.
+  listMediaLinks,
+  createMediaLink,
+  updateMediaLink,
+  deleteMediaLink,
+
+  // The `/academics` facilities showcase - see `schema/facility.ts` for why
+  // this table replaced the shipped `FACILITIES` array wholesale.
+  listFacilities,
+  createFacility,
+  updateFacility,
+  deleteFacility,
+
+  // The "On the Field" sports mosaic on `/students` - see `schema/sport-tile.ts`
+  // for why this table replaced the shipped `SPORT_TILES` array wholesale.
+  listSportTiles,
+  createSportTile,
+  updateSportTile,
+  deleteSportTile,
 };

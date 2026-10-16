@@ -68,11 +68,6 @@ export const ALUMNI_OFFER_ITEMS: readonly AlumniOfferItem[] = [
 export const ALUMNI_BRANCHES_HEADING = "Where to Find the Association";
 export const ALUMNI_BRANCHES_INTRO =
   "Three branches carry the Association's name: one at the College itself, one in the capital, and one for every Aloysian who left the island.";
-export const ALUMNI_BRANCHES: readonly string[] = [
-  "Galle",
-  "Colombo",
-  "Overseas",
-];
 
 export const ALUMNI_LINKS_HEADING = "Stay Connected";
 export const ALUMNI_LINKS_BODY =
@@ -121,8 +116,24 @@ export interface DistinguishedAloysian {
   /** Left unset until the person is confirmed; the portrait slot still shows. */
   name?: string;
   field: string;
+  /** Shown above the name when set, e.g. "Alumni President". */
+  role?: string;
   image?: ImageSource;
 }
+
+/**
+ * Maps a stored `alumni_notable.category` value to the display label shown
+ * as `field` on a card. Kept in sync by hand with
+ * `ALUMNI_NOTABLE_CATEGORIES` in `@aloysius/db/schema/alumni-notables`, the
+ * same way `achievements.ts`'s `ACHIEVEMENT_CATEGORIES` mirrors its own
+ * check constraint - the `ui` package never imports from `db`.
+ */
+export const ALUMNI_NOTABLE_CATEGORY_LABELS: Record<string, string> = {
+  "public-service": "Public Service",
+  academia: "Academia",
+  sport: "Sport",
+  "arts-culture": "Arts & Culture",
+};
 
 /**
  * The Hall of Fame. Set `name` and `image: { src, alt }` on a row to fill it in,

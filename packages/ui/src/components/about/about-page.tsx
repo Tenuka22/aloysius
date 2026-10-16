@@ -1,6 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 
-import { TIMELINE } from "../../content/about";
+import { ANTHEM_LANGUAGES, TIMELINE } from "../../content/about";
+import type { AnthemStanza, TimelineEntry } from "../../content/about";
 import type {
   AboutHeaderProps,
   AboutImages,
@@ -33,6 +34,8 @@ const styles = stylex.create({
   },
 });
 
+const NO_SINHALA_STANZAS: readonly AnthemStanza[] = [];
+
 export interface AboutPageProps {
   contact?: FooterContact;
   /** Editable image overrides resolved from CMS blocks, already defaulted. */
@@ -49,6 +52,10 @@ export interface AboutPageProps {
   header?: AboutHeaderProps;
   /** The academic-heads roster, resolved by the route. */
   academicHeads?: readonly AcademicHead[];
+  /** The history timeline's per-entry title/body, merged over the defaults. */
+  timeline?: readonly TimelineEntry[];
+  /** Sinhala anthem stanzas parsed from the CMS textarea; empty hides the tab's lyrics. */
+  anthemSinhalaStanzas?: readonly AnthemStanza[];
 }
 
 export const AboutPage = ({
@@ -59,9 +66,12 @@ export const AboutPage = ({
   extraNavItems,
   header,
   academicHeads,
+  timeline: timelineOverride,
+  anthemSinhalaStanzas = NO_SINHALA_STANZAS,
 }: AboutPageProps) => {
+  const baseTimeline = timelineOverride ?? TIMELINE;
   const timeline = images
-    ? TIMELINE.map((entry, index) => ({
+    ? baseTimeline.map((entry, index) => ({
         ...entry,
         image: [
           images.history1Image,
@@ -70,7 +80,15 @@ export const AboutPage = ({
           images.history4Image,
         ][index],
       }))
-    : TIMELINE;
+    : baseTimeline;
+
+  const anthemLanguages =
+    anthemSinhalaStanzas.length > 0
+      ? {
+          ...ANTHEM_LANGUAGES,
+          si: { ...ANTHEM_LANGUAGES.si, stanzas: anthemSinhalaStanzas },
+        }
+      : undefined;
 
   return (
     <>
@@ -84,7 +102,10 @@ export const AboutPage = ({
           title={header?.heading}
         />
         <HistoryTimeline heading={text?.historyHeading} entries={timeline} />
-        <VisionMission />
+        <VisionMission
+          mission={text?.missionStatement}
+          vision={text?.visionStatement}
+        />
         <MottoBanner />
         {principal && !principal.hidden && (
           <PrincipalMessage
@@ -104,6 +125,7 @@ export const AboutPage = ({
         <AcademicHeads heads={academicHeads} />
         <Anthem
           image={images?.anthemImage}
+          languages={anthemLanguages}
           sinhalaImage={images?.anthemSinhalaImage}
         />
       </main>

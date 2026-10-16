@@ -166,12 +166,17 @@ export interface ResultsHeroProps {
   years: readonly string[];
   year: string;
   onYearChange: (year: string) => void;
+  eyebrow?: string;
+  heading?: string;
+  tagline?: string;
 }
 
 export const ResultsHero = ({
   years,
   year,
   onYearChange,
+  heading,
+  tagline,
 }: ResultsHeroProps) => (
   <section aria-labelledby="results-hero-title" {...stylex.props(styles.hero)}>
     <img
@@ -200,9 +205,9 @@ export const ResultsHero = ({
           </p>
         </nav>
         <h1 id="results-hero-title" {...stylex.props(styles.title)}>
-          {RESULTS_HERO_TITLE}
+          {heading ?? RESULTS_HERO_TITLE}
         </h1>
-        <p {...stylex.props(styles.intro)}>{RESULTS_HERO_INTRO}</p>
+        <p {...stylex.props(styles.intro)}>{tagline ?? RESULTS_HERO_INTRO}</p>
 
         <div {...stylex.props(styles.controls)}>
           <nav aria-label="Result categories" {...stylex.props(styles.tabs)}>

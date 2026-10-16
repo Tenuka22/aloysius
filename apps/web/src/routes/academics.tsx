@@ -1,8 +1,5 @@
 import { AcademicsPage } from "@aloysius/ui/components/academics/academics-page";
-import {
-  blocksToAcademicsFacilities,
-  blocksToAcademicsHeaderProps,
-} from "@aloysius/ui/content/cms-to-pages";
+import { blocksToAcademicsHeaderProps } from "@aloysius/ui/content/cms-to-pages";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -14,10 +11,10 @@ import { orpc } from "@/utils/orpc";
 /**
  * `/academics` - curriculum, streams and departments.
  *
- * Sections of study, A/L streams and facilities are real shipped copy
+ * Sections of study and A/L streams are real shipped copy
  * (`content/academics.ts`), not CMS-editable - see `cms-to-pages.ts`'s note on
- * `ACADEMICS_BLOCKS`. The page header and the facility photographs are CMS
- * content.
+ * `ACADEMICS_BLOCKS`. The page header is CMS content, and the facilities
+ * showcase is the `facility` table, edited as a roster at `/cms/facilities`.
  *
  * The leadership section that used to be here is gone: the Principal, the
  * Primary sectional head and the Secondary deputy principal are all on `/about`
@@ -28,7 +25,17 @@ import { orpc } from "@/utils/orpc";
 const AcademicsContent = () => {
   const academicsQuery = orpc.cms.getAcademics.queryOptions();
   const { data: academics } = useSuspenseQuery(academicsQuery);
+  const facilitiesQuery = orpc.cms.listFacilities.queryOptions();
+  const { data: facilityRows } = useSuspenseQuery(facilitiesQuery);
   const { data: session } = authClient.useSession();
+
+  const facilities = facilityRows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    tag: row.tag,
+    description: row.description ?? "",
+    image: row.imageUrl ? { alt: row.name, src: row.imageUrl } : undefined,
+  }));
 
   const extraNavItems = (() => {
     if (!session?.user) {
@@ -48,11 +55,7 @@ const AcademicsContent = () => {
   return (
     <AcademicsPage
       extraNavItems={extraNavItems}
-      facilityImages={
-        academics?.blocks
-          ? blocksToAcademicsFacilities(academics.blocks)
-          : undefined
-      }
+      facilities={facilities}
       header={
         academics?.blocks
           ? blocksToAcademicsHeaderProps(academics.blocks)

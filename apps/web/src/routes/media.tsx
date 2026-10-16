@@ -1,5 +1,6 @@
 import { MediaPage } from "@aloysius/ui/components/pages/media-page";
 import { blocksToMediaProps } from "@aloysius/ui/content/cms-to-pages";
+import type { MediaLink } from "@aloysius/ui/content/media";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -7,6 +8,35 @@ import { Suspense } from "react";
 import { authClient } from "@/lib/auth-client";
 import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
+
+interface MediaLinkRow {
+  id: string;
+  kind: "publication" | "press";
+  title: string;
+  meta: string | null;
+  href: string;
+}
+
+const toMediaLink = (link: MediaLinkRow): MediaLink => ({
+  id: link.id,
+  title: link.title,
+  meta: link.meta ?? undefined,
+  href: link.href,
+});
+interface SplitMediaLinks {
+  publications: MediaLink[];
+  press: MediaLink[];
+}
+
+const splitMediaLinks = (links: readonly MediaLinkRow[]): SplitMediaLinks => {
+  const publications: MediaLink[] = [];
+  const press: MediaLink[] = [];
+  for (const link of links) {
+    const target = link.kind === "publication" ? publications : press;
+    target.push(toMediaLink(link));
+  }
+  return { publications, press };
+};
 
 const MediaContent = () => {
   const { data: media } = useSuspenseQuery(orpc.cms.getMedia.queryOptions());
@@ -18,6 +48,9 @@ const MediaContent = () => {
    */
   const { data: galleries } = useSuspenseQuery(
     orpc.club.listApprovedGalleries.queryOptions({ input: {} })
+  );
+  const { data: mediaLinks } = useSuspenseQuery(
+    orpc.cms.listMediaLinks.queryOptions()
   );
   const { data: session } = authClient.useSession();
 
@@ -47,6 +80,8 @@ const MediaContent = () => {
     ];
   });
 
+  const { publications, press } = splitMediaLinks(mediaLinks);
+
   const extraNavItems = (() => {
     if (!session?.user) {
       return [];
@@ -67,6 +102,8 @@ const MediaContent = () => {
       {...cmsProps}
       extraNavItems={extraNavItems}
       galleries={galleryItems}
+      press={press}
+      publications={publications}
     />
   );
 };

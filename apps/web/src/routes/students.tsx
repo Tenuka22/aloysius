@@ -1,8 +1,9 @@
+import type { ImageSource } from "@aloysius/ui/components/primitives/media";
 import { StudentsPage } from "@aloysius/ui/components/students/students-page";
 import type { StudentEvent } from "@aloysius/ui/components/students/students-page";
 import { blocksToStudentsProps } from "@aloysius/ui/content/cms-to-pages";
 import type { GalleryItem } from "@aloysius/ui/content/home";
-import { CLUBS } from "@aloysius/ui/content/students";
+import type { Club, SportTile } from "@aloysius/ui/content/students";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, useState } from "react";
@@ -14,13 +15,12 @@ import { orpc } from "@/utils/orpc";
 /**
  * `/students` - Student Life.
  *
- * `clubs` is the college's own published list of societies (`content/students`),
- * not a query - there is no more club registry to list, only the one club seat
- * (`photography`) the flat model actually serves. Its approved photographs and
- * upcoming events are still live data, folded into this page's gallery strip
- * and events list. Achievements (`cms.listAchievements`) are CMS-direct,
- * school-wide content with no club of their own; every other club on the
- * list renders as a plain card with no content behind it yet.
+ * `clubs` is the CMS-managed club registry (`cms.listPublishedClubs`), not
+ * the old static list - a club created, renamed or removed in `/cms/clubs`
+ * shows up here on the next load. Its approved photographs and upcoming
+ * events are still live data, folded into this page's gallery strip and
+ * events list. Achievements (`cms.listAchievements`) are CMS-direct,
+ * school-wide content with no club of their own.
  */
 
 const CLUB = "photography" as const;
@@ -35,6 +35,12 @@ const StudentsContent = () => {
   const { data: achievements } = useSuspenseQuery(
     orpc.cms.listAchievements.queryOptions()
   );
+  const { data: clubs } = useSuspenseQuery(
+    orpc.cms.listPublishedClubs.queryOptions()
+  );
+  const { data: sportTileRows } = useSuspenseQuery(
+    orpc.cms.listSportTiles.queryOptions()
+  );
   const { data: session } = authClient.useSession();
 
   /*
@@ -46,6 +52,28 @@ const StudentsContent = () => {
    * to `content/students.ts`; not calling it is what produced the placeholder.
    */
   const cmsProps = blocksToStudentsProps(students?.blocks ?? []);
+
+  /*
+   * The mosaic's hero ("feature") tile is always whichever published sport
+   * sorts first; every other tile gets the smaller "third" footprint - a
+   * position-derived rule, not a CMS field, so an editor never has to pick a
+   * layout. See `SportTile` and `SportsGrid`'s `SPAN_STYLES`.
+   */
+  const sportTiles: SportTile[] = sportTileRows.map((row, index) => ({
+    id: row.id,
+    name: row.name,
+    placeholder: `${row.name} photograph`,
+    span: index === 0 ? "feature" : "third",
+  }));
+  const sportImages: Record<string, ImageSource> = {};
+  for (const row of sportTileRows) {
+    if (row.imageUrl) {
+      sportImages[row.id] = {
+        src: row.imageUrl,
+        alt: `${row.name} photograph`,
+      };
+    }
+  }
 
   const galleryItems: GalleryItem[] = galleries.flatMap((gallery) =>
     gallery.photos.map((photo) => ({
@@ -111,7 +139,8 @@ const StudentsContent = () => {
       prefectsBody={cmsProps.prefectsBody}
       prefectsHeading={cmsProps.prefectsHeading}
       prefectsImage={cmsProps.prefectsImage}
-      sportImages={cmsProps.sportImages}
+      sportImages={sportImages}
+      tiles={sportTiles}
       sportsEyebrow={cmsProps.sportsEyebrow}
       sportsHeading={cmsProps.sportsHeading}
       moreSports={cmsProps.moreSports}
@@ -121,7 +150,12 @@ const StudentsContent = () => {
         title: achievement.title,
         detail: achievement.detail ?? "",
       }))}
-      clubs={CLUBS}
+      clubs={clubs.map((row): Club => ({
+        id: row.id,
+        name: row.name,
+        description: row.description ?? undefined,
+        href: row.slug === "photography" ? "/galleries" : undefined,
+      }))}
       events={studentEvents}
       extraNavItems={extraNavItems}
       galleryItems={galleryItems}

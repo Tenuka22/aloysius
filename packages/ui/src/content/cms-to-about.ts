@@ -1,4 +1,5 @@
 import type { ImageSource } from "../components/primitives/media";
+import type { AnthemStanza, TimelineEntry } from "../content/about";
 import type { CmsBlock } from "./cms-to-home";
 
 const fieldValue = (
@@ -109,6 +110,8 @@ export const blocksToAboutHeader = (
 
 export interface AboutTextContent {
   historyHeading?: string;
+  visionStatement?: string;
+  missionStatement?: string;
 }
 
 export interface AboutImages {
@@ -129,11 +132,62 @@ export const blocksToAboutText = (
   blocks: CmsBlock[],
   defaults: {
     historyHeading: string;
+    visionStatement: string;
+    missionStatement: string;
   }
 ): AboutTextContent => ({
   historyHeading:
     fieldValue(blocks, "history", "history-heading") ?? defaults.historyHeading,
+  visionStatement:
+    fieldValue(blocks, "about-statements", "about-vision") ??
+    defaults.visionStatement,
+  missionStatement:
+    fieldValue(blocks, "about-statements", "about-mission") ??
+    defaults.missionStatement,
 });
+
+/**
+ * Merge the history timeline's per-entry title/body CMS fields over the
+ * static defaults. `year` is never editable - it is the timeline's own
+ * identity, not prose - only `title` and `body` can be overridden per entry.
+ */
+export const blocksToAboutTimeline = (
+  blocks: CmsBlock[],
+  defaults: readonly TimelineEntry[]
+): TimelineEntry[] =>
+  defaults.map((entry, index) => {
+    const n = index + 1;
+    return {
+      ...entry,
+      title: fieldValue(blocks, "history", `history-${n}-title`) ?? entry.title,
+      body: fieldValue(blocks, "history", `history-${n}-body`) ?? entry.body,
+    };
+  });
+
+/**
+ * Parse the Sinhala anthem lyrics textarea into stanzas: a blank line
+ * separates stanzas, a newline separates lines within one. Empty or unset
+ * renders no Sinhala lyrics (the tab still shows, with its portrait image
+ * and an empty state), rather than inventing stanzas that do not exist yet.
+ */
+export const blocksToAnthemSinhalaStanzas = (
+  blocks: CmsBlock[]
+): readonly AnthemStanza[] => {
+  const raw = fieldValue(blocks, "anthem", "anthem-sinhala-lyrics")?.trim();
+  if (!raw) {
+    return [];
+  }
+  return raw
+    .split(/\n\s*\n/u)
+    .map((stanza) =>
+      stanza
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+    )
+    .filter((lines) => lines.length > 0)
+    .map((lines, index) => ({ id: index + 1, lines }));
+};
 
 /**
  * Convert CMS blocks into the image overrides the About page's sections

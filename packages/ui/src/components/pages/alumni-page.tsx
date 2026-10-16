@@ -11,8 +11,14 @@ import {
   ALUMNI_NOTABLES_LABEL,
   ALUMNI_NOTABLES_TITLE,
   ALUMNI_OBA_LABEL,
+  ALUMNI_OFFER_HEADING,
+  ALUMNI_OFFER_ITEMS,
 } from "../../content/alumni";
-import type { AlumniBranch, DistinguishedAloysian } from "../../content/alumni";
+import type {
+  AlumniBranch,
+  AlumniOfferItem,
+  DistinguishedAloysian,
+} from "../../content/alumni";
 import type { NavItem } from "../../content/home";
 import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
@@ -140,6 +146,42 @@ const styles = stylex.create({
     transitionDuration: motionToken.fast,
   },
 
+  /* ----------------------------------------------------------------- offer */
+  offerGrid: {
+    display: "grid",
+    margin: 0,
+    padding: 0,
+    listStyle: "none",
+    gap: space.lg,
+    gridTemplateColumns: {
+      default: "minmax(0, 1fr)",
+      [bp.sm]: "repeat(2, minmax(0, 1fr))",
+      [bp.xl]: "repeat(4, minmax(0, 1fr))",
+    },
+  },
+  offerCard: {
+    paddingBlock: space.lg,
+    paddingInline: space.lg,
+    backgroundColor: color.surfaceRaised,
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: color.border,
+  },
+  offerTitle: {
+    margin: 0,
+    fontFamily: font.display,
+    fontSize: font.sizeLg,
+    fontWeight: font.weightSemibold,
+    lineHeight: font.leadingSnug,
+  },
+  offerBody: {
+    margin: 0,
+    marginBlockStart: space.xs,
+    fontSize: font.sizeSm,
+    lineHeight: font.leadingRelaxed,
+    color: color.onSurfaceMuted,
+  },
+
   /* -------------------------------------------------------------- branches */
   header: {
     marginBlockEnd: space.xl,
@@ -212,12 +254,24 @@ const styles = stylex.create({
       [bp.xl]: "repeat(4, minmax(0, 1fr))",
     },
   },
+  notableRole: {
+    margin: 0,
+    marginBlockStart: space.sm,
+    fontSize: font.sizeXs,
+    fontWeight: font.weightBold,
+    letterSpacing: font.trackingWide,
+    textTransform: "uppercase",
+    color: color.accentOnInverse,
+  },
   notableName: {
     margin: 0,
     marginBlockStart: space.sm,
     fontSize: font.sizeLg,
     fontWeight: font.weightBold,
     color: color.onInverse,
+  },
+  notableNameTight: {
+    marginBlockStart: space["3xs"],
   },
   notableField: {
     margin: 0,
@@ -239,11 +293,19 @@ export interface AlumniPageProps {
   /** The Association's own site; adds a second hero button when set. */
   obaHref?: string;
   obaLabel?: string;
+  offerItems?: readonly AlumniOfferItem[];
   branches?: readonly AlumniBranch[];
   notables?: readonly DistinguishedAloysian[];
   contact?: FooterContact;
   extraNavItems?: readonly NavItem[];
 }
+
+const OfferCard = ({ item }: { item: AlumniOfferItem }) => (
+  <li {...stylex.props(styles.offerCard)}>
+    <h3 {...stylex.props(styles.offerTitle)}>{item.title}</h3>
+    <p {...stylex.props(styles.offerBody)}>{item.body}</p>
+  </li>
+);
 
 const BranchCard = ({ branch }: { branch: AlumniBranch }) => (
   <li {...stylex.props(styles.branchCard)}>
@@ -262,13 +324,23 @@ const BranchCard = ({ branch }: { branch: AlumniBranch }) => (
 const NotableCard = ({ notable }: { notable: DistinguishedAloysian }) => (
   <li>
     <Media placeholder="Portrait" ratio="4:5" source={notable.image} />
+    {notable.role ? (
+      <p {...stylex.props(styles.notableRole)}>{notable.role}</p>
+    ) : null}
     {notable.name ? (
-      <p {...stylex.props(styles.notableName)}>{notable.name}</p>
+      <p
+        {...stylex.props(
+          styles.notableName,
+          Boolean(notable.role) && styles.notableNameTight
+        )}
+      >
+        {notable.name}
+      </p>
     ) : null}
     <p
       {...stylex.props(
         styles.notableField,
-        !notable.name && styles.notableFieldSpaced
+        !notable.name && !notable.role && styles.notableFieldSpaced
       )}
     >
       {notable.field}
@@ -281,6 +353,7 @@ export const AlumniPage = ({
   tagline = ALUMNI_HERO_INTRO,
   obaHref,
   obaLabel = ALUMNI_OBA_LABEL,
+  offerItems = ALUMNI_OFFER_ITEMS,
   branches = ALUMNI_BRANCH_CARDS,
   notables = ALUMNI_NOTABLES,
   contact,
@@ -348,6 +421,23 @@ export const AlumniPage = ({
           </div>
         </Container>
       </section>
+
+      {offerItems.length > 0 ? (
+        <Section id="offer" labelledBy="offer-title" tone="surface">
+          <Container>
+            <div {...stylex.props(styles.header)}>
+              <Heading id="offer-title" level={2}>
+                {ALUMNI_OFFER_HEADING}
+              </Heading>
+            </div>
+            <ul {...stylex.props(styles.offerGrid)}>
+              {offerItems.map((item) => (
+                <OfferCard item={item} key={item.id} />
+              ))}
+            </ul>
+          </Container>
+        </Section>
+      ) : null}
 
       {branches.length > 0 ? (
         <Section id="branches" labelledBy="branches-title" tone="surface">

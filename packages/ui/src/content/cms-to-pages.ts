@@ -1,9 +1,5 @@
 import type { ImageSource } from "../components/primitives/media";
-import {
-  ACADEMICS_HERO_INTRO,
-  ACADEMICS_HERO_TITLE,
-  FACILITIES,
-} from "./academics";
+import { ACADEMICS_HERO_INTRO, ACADEMICS_HERO_TITLE } from "./academics";
 import {
   ALUMNI_ABOUT_BODY,
   ALUMNI_ABOUT_CAPTION,
@@ -18,7 +14,6 @@ import {
   ALUMNI_OBA_LABEL,
   ALUMNI_OFFER_HEADING,
 } from "./alumni";
-import { facilityImageFieldId } from "./cms";
 import type { CmsBlock } from "./cms-to-home";
 import {
   CONTACT_DEFAULT_ADDRESS,
@@ -36,6 +31,7 @@ import {
   MEDIA_HERO_TITLE,
 } from "./media";
 import { NEWS_ARCHIVE_HEADING, NEWS_HERO_INTRO, NEWS_HERO_TITLE } from "./news";
+import { RESULTS_HERO_INTRO, RESULTS_HERO_TITLE } from "./results";
 import {
   CLUBS_EYEBROW,
   CLUBS_HEADING,
@@ -146,6 +142,32 @@ export const blocksToNewsProps = (blocks: CmsBlock[]): NewsPageProps => ({
     "news-feed",
     "news-feed-heading",
     NEWS_ARCHIVE_HEADING
+  ),
+});
+
+/* -------------------------------------------------------------- results */
+
+export interface ResultsHeroContentProps {
+  eyebrow?: string;
+  heading?: string;
+  tagline?: string;
+}
+
+export const blocksToResultsHeroProps = (
+  blocks: CmsBlock[]
+): ResultsHeroContentProps => ({
+  eyebrow: fieldOrDefault(blocks, "results-header", "results-eyebrow", ""),
+  heading: fieldOrDefault(
+    blocks,
+    "results-header",
+    "results-heading",
+    RESULTS_HERO_TITLE
+  ),
+  tagline: fieldOrDefault(
+    blocks,
+    "results-header",
+    "results-tagline",
+    RESULTS_HERO_INTRO
   ),
 });
 
@@ -436,41 +458,6 @@ export const blocksToAcademicsHeaderProps = (
   ),
 });
 
-/**
- * The Academics page's facility photographs, keyed by `FACILITIES[].id`.
- *
- * Keyed by the facility id rather than returned as a list so the route can hand
- * `FacilitiesShowcase` exactly the rows it already has: a facility with no
- * photograph is simply absent from this record, and the component falls back to
- * its own placeholder for that row alone.
- */
-export const blocksToAcademicsFacilities = (
-  blocks: CmsBlock[]
-): Record<string, ImageSource> => {
-  const images: Record<string, ImageSource> = {};
-  const block = blocks.find(
-    (candidate) => candidate.id === "academics-facilities"
-  );
-  if (!block) {
-    return images;
-  }
-
-  for (const facility of FACILITIES) {
-    const fieldId = facilityImageFieldId(facility.id);
-    const source = imageSource(
-      blocks,
-      "academics-facilities",
-      fieldId,
-      `${facility.name} at St. Aloysius' College`
-    );
-    if (source) {
-      images[facility.id] = source;
-    }
-  }
-
-  return images;
-};
-
 /* ----------------------------------------------------------------- media */
 
 export interface MediaPageProps {
@@ -557,13 +544,6 @@ const listField = (
   return items.length > 0 ? items : [];
 };
 
-/** The students section headings, resolved across every sport tile at once. */
-const STUDENT_SPORT_IMAGE_FIELDS: readonly [string, string][] = [
-  ["cricket", "students-sports-cricket"],
-  ["rugby", "students-sports-rugby"],
-  ["athletics", "students-sports-athletics"],
-];
-
 const STUDENT_HOUSE_NAME_FIELDS: readonly [string, string][] = [
   ["crimson", "students-house-crimson"],
   ["gold", "students-house-gold"],
@@ -581,8 +561,6 @@ export interface StudentsPageProps {
   activitiesIntro?: string;
   sportsEyebrow?: string;
   sportsHeading?: string;
-  /** Keyed by `SportTile.id`, matching `content/students.ts`. */
-  sportImages?: Record<string, ImageSource>;
   moreSports?: readonly string[];
   housesEyebrow?: string;
   housesHeading?: string;
@@ -597,19 +575,6 @@ export interface StudentsPageProps {
 export const blocksToStudentsProps = (
   blocks: CmsBlock[]
 ): StudentsPageProps => {
-  const sportImages: Record<string, ImageSource> = {};
-  for (const [tileId, fieldId] of STUDENT_SPORT_IMAGE_FIELDS) {
-    const source = imageSource(
-      blocks,
-      "students-sports",
-      fieldId,
-      `A college ${tileId} photograph`
-    );
-    if (source) {
-      sportImages[tileId] = source;
-    }
-  }
-
   const houseNames: Record<string, string> = {};
   for (const [houseId, fieldId] of STUDENT_HOUSE_NAME_FIELDS) {
     const name = optionalField(blocks, "students-houses", fieldId);
@@ -655,7 +620,6 @@ export const blocksToStudentsProps = (
       "students-sports-heading",
       SPORTS_HEADING
     ),
-    sportImages,
     moreSports: listField(
       blocks,
       "students-sports",

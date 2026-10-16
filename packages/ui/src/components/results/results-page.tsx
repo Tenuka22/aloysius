@@ -1,6 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import { useState } from "react";
 
+import type { ResultsHeroContentProps } from "../../content/cms-to-pages";
 import type { NavItem } from "../../content/home";
 import type { YearResults } from "../../content/results";
 import { Container, Section, SkipLink } from "../primitives/layout";
@@ -46,6 +47,7 @@ export interface ResultsPageProps {
    */
   years?: readonly string[];
   results?: Readonly<Record<string, YearResults>>;
+  hero?: ResultsHeroContentProps;
 }
 
 export const ResultsPage = ({
@@ -53,6 +55,7 @@ export const ResultsPage = ({
   extraNavItems,
   years = NO_YEARS,
   results = NO_PUBLISHED_RESULTS,
+  hero,
 }: ResultsPageProps) => {
   const [year, setYear] = useState(years[0] ?? "");
   const data = results[year] ?? NO_RESULTS;
@@ -62,7 +65,14 @@ export const ResultsPage = ({
       <SkipLink targetId={MAIN_ID} />
       <SiteHeader activeHref="/academics" extraNavItems={extraNavItems} />
       <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
-        <ResultsHero onYearChange={setYear} year={year} years={years} />
+        <ResultsHero
+          eyebrow={hero?.eyebrow}
+          heading={hero?.heading}
+          onYearChange={setYear}
+          tagline={hero?.tagline}
+          year={year}
+          years={years}
+        />
         {/*
           One empty state for "no year has been published", rather than four
           tabs that each say this year has no results. The old page listed

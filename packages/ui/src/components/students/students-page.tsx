@@ -1,7 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 
 import type { Achievement, GalleryItem, NavItem } from "../../content/home";
-import type { Club, House } from "../../content/students";
+import type { Club, House, SportTile } from "../../content/students";
 import { HOUSES } from "../../content/students";
 import { Achievements } from "../home/achievements";
 import { Gallery } from "../home/gallery";
@@ -51,6 +51,12 @@ export interface StudentsPageProps {
    */
   heading?: string;
   tagline?: string;
+  /**
+   * The CMS-published sport tiles, in display order, replacing `SPORT_TILES` -
+   * see `apps/web/src/routes/students.tsx` for how its position derives each
+   * tile's mosaic span.
+   */
+  tiles?: readonly SportTile[];
   /** Sports photographs keyed by tile id, once the CMS supplies them. */
   sportImages?: SportImages;
   sportsEyebrow?: string;
@@ -120,6 +126,7 @@ export const StudentsPage = ({
   extraNavItems,
   heading,
   tagline,
+  tiles,
   sportImages,
   sportsEyebrow,
   sportsHeading,
@@ -149,6 +156,7 @@ export const StudentsPage = ({
         heading={sportsHeading}
         images={sportImages}
         moreSports={moreSports}
+        tiles={tiles}
       />
       <ClubsSocieties
         clubs={clubs}

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import type { CmsBlock } from "./cms-to-home";
 import { blocksToStudentsProps } from "./cms-to-pages";
-import { SPORT_TILES } from "./students";
 
 const blocks = (
   entries: Record<string, Record<string, string>>,
@@ -49,22 +48,6 @@ describe(blocksToStudentsProps, () => {
     );
   });
 
-  it("resolves a sport photograph onto the tile it belongs to", () => {
-    const result = blocksToStudentsProps(
-      blocks({
-        "students-sports": { "students-sports-rugby": "image:rugby.jpg" },
-      })
-    );
-
-    expect(result.sportImages?.rugby).toMatchObject({ src: "rugby.jpg" });
-    // Only the tile that was actually supplied gets a photograph; the others
-    // keep the branded placeholder rather than inheriting this one.
-    expect(Object.keys(result.sportImages ?? {})).toStrictEqual(["rugby"]);
-    for (const tile of SPORT_TILES) {
-      expect(tile.id).toBeTruthy();
-    }
-  });
-
   it("reads the overflow list as a comma-separated field", () => {
     expect(
       blocksToStudentsProps(
@@ -107,6 +90,5 @@ describe(blocksToStudentsProps, () => {
     );
 
     expect(result.sportsHeading).toBeUndefined();
-    expect(result.sportImages).toStrictEqual({});
   });
 });
