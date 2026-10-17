@@ -2,7 +2,7 @@ import type { GalleryPageItem } from "@aloysius/ui/components/pages/gallery-page
 import { GalleryPage } from "@aloysius/ui/components/pages/gallery-page";
 import type { NavItem } from "@aloysius/ui/content/home";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 import { authClient } from "@/lib/auth-client";
@@ -21,8 +21,8 @@ import { orpc } from "@/utils/orpc";
  * additional gate: a gallery only reaches that list once a CMS reviewer has
  * approved it, so the approval *is* the access control.
  *
- * An unrecognised slug renders the same "not found" state a withdrawn or
- * never-published gallery would, rather than a server validation error.
+ * `:slug` not found in the approved list is a real 404, not a 200 "not
+ * found" screen - see the loader.
  */
 
 const CLUB = "photography" as const;
@@ -132,6 +132,14 @@ const GalleryContent = () => {
 };
 
 export const Route = createFileRoute("/galleries/$slug")({
+  loader: async ({ context, params }) => {
+    const galleries = await context.queryClient.ensureQueryData(
+      orpc.club.listApprovedGalleries.queryOptions({ input: { club: CLUB } })
+    );
+    if (!galleries.some((candidate) => candidate.slug === params.slug)) {
+      throw notFound();
+    }
+  },
   head: ({ params }) =>
     pageHead({
       description:
