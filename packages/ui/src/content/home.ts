@@ -338,6 +338,16 @@ export const FOUNDED_YEAR = 1895;
  */
 export const ADMISSIONS_URL = "https://admissions.aloysiuscollege.lk/";
 
+/**
+ * Where the home hero's "Explore the College" button points.
+ *
+ * The college's management system lives on its own subdomain, so the button
+ * leaves the site. `ButtonLink` decides that from the href itself - see
+ * `external` in `components/primitives/button.tsx` - so it opens in a new tab
+ * with `rel="noopener noreferrer"` like the admissions link does.
+ */
+export const MANAGEMENT_URL = "https://mgmt.aloysiuscollege.lk/";
+
 export const formatNewsDate = (iso?: string): string => {
   if (!iso) {
     return "";

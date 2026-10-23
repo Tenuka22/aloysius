@@ -4,6 +4,7 @@ import {
   ADMISSIONS_URL,
   COLLEGE_LOCATION,
   COLLEGE_NAME,
+  MANAGEMENT_URL,
   MOTTO,
 } from "../../content/home";
 import type { HeroBackground } from "../../content/home";
@@ -141,7 +142,7 @@ export const Hero = ({
   tagline = "Tradition. Excellence. Leadership.",
   background,
   crestSrc = "/logo.png",
-  exploreHref = "/about",
+  exploreHref = MANAGEMENT_URL,
   admissionsHref = ADMISSIONS_URL,
   motto = MOTTO,
   place = COLLEGE_LOCATION,
