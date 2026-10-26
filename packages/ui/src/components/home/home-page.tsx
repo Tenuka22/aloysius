@@ -121,8 +121,7 @@ export const HomePage = ({
             tagline={resolvedTagline}
             motto={cms?.heroMotto}
             place={cms?.heroPlace}
-            cta1={cms?.heroCta1}
-            cta2={cms?.heroCta2}
+            cta={cms?.heroCta}
           />
         )}
         {!h?.heritage && (

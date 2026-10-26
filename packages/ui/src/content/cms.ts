@@ -266,15 +266,9 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
       },
       {
         id: "hero-cta-1",
-        label: "Primary button",
+        label: "Button",
         kind: "text",
-        value: "Explore the College",
-      },
-      {
-        id: "hero-cta-2",
-        label: "Secondary button",
-        kind: "text",
-        value: "Admissions",
+        value: "Management Portal",
       },
       {
         id: "hero-bg",

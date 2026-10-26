@@ -339,12 +339,13 @@ export const FOUNDED_YEAR = 1895;
 export const ADMISSIONS_URL = "https://admissions.aloysiuscollege.lk/";
 
 /**
- * Where the home hero's "Explore the College" button points.
+ * Where the home hero's one button ("Management Portal") points.
  *
  * The college's management system lives on its own subdomain, so the button
- * leaves the site. `ButtonLink` decides that from the href itself - see
- * `external` in `components/primitives/button.tsx` - so it opens in a new tab
- * with `rel="noopener noreferrer"` like the admissions link does.
+ * leaves the site. The hero passes `external` to `ButtonLink`
+ * (see `components/primitives/button.tsx`), so it opens in a new tab with
+ * `rel="noopener noreferrer"` like the admissions link does. The
+ * Admissions link lives in the header and footer, not in the hero.
  */
 export const MANAGEMENT_URL = "https://mgmt.aloysiuscollege.lk/";
 

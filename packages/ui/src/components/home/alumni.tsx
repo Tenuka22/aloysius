@@ -61,7 +61,7 @@ export const Alumni = ({
   photo,
   crestSrc = "/logo.png",
   associationHref = "/alumni",
-  distinguishedHref = "/alumni/distinguished",
+  distinguishedHref = "/alumni#distinguished",
 }: {
   body?: string;
   photo?: ImageSource;

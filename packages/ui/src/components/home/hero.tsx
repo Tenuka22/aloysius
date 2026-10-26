@@ -1,7 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 
 import {
-  ADMISSIONS_URL,
   COLLEGE_LOCATION,
   COLLEGE_NAME,
   MANAGEMENT_URL,
@@ -142,24 +141,20 @@ export const Hero = ({
   tagline = "Tradition. Excellence. Leadership.",
   background,
   crestSrc = "/logo.png",
-  exploreHref = MANAGEMENT_URL,
-  admissionsHref = ADMISSIONS_URL,
+  managementHref = MANAGEMENT_URL,
   motto = MOTTO,
   place = COLLEGE_LOCATION,
   title = COLLEGE_NAME,
-  cta1 = "Explore the College",
-  cta2 = "Admissions",
+  cta = "Management Portal",
 }: {
   tagline?: string;
   background?: HeroBackground;
   crestSrc?: string;
-  exploreHref?: string;
-  admissionsHref?: string;
+  managementHref?: string;
   motto?: string;
   place?: string;
   title?: string;
-  cta1?: string;
-  cta2?: string;
+  cta?: string;
 }) => {
   // Two-line lockup as in the design: the last word drops to its own line.
   const splitAt = title.lastIndexOf(" ");
@@ -230,15 +225,13 @@ export const Hero = ({
         <hr {...stylex.props(styles.rule)} />
         <p {...stylex.props(styles.tagline)}>{tagline}</p>
         <div {...stylex.props(styles.actions)}>
-          <ButtonLink href={exploreHref} style={styles.action} variant="solid">
-            {cta1}
-          </ButtonLink>
           <ButtonLink
-            href={admissionsHref}
+            external
+            href={managementHref}
             style={styles.action}
-            variant="outlineInverse"
+            variant="solid"
           >
-            {cta2}
+            {cta}
           </ButtonLink>
         </div>
       </div>

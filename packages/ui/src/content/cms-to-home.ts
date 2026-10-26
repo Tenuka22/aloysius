@@ -99,8 +99,7 @@ export const blocksToProps = (blocks: CmsBlock[]) => {
     heroTagline: optionalField("hero", "hero-tagline"),
     heroMotto: optionalField("hero", "hero-motto"),
     heroPlace: optionalField("hero", "hero-place"),
-    heroCta1: optionalField("hero", "hero-cta-1"),
-    heroCta2: optionalField("hero", "hero-cta-2"),
+    heroCta: optionalField("hero", "hero-cta-1"),
     heroBackground: isHidden(blocks, "hero")
       ? undefined
       : parseHeroBackground(
