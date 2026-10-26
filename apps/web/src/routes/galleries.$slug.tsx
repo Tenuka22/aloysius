@@ -6,7 +6,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 import { authClient } from "@/lib/auth-client";
-import { pageHead } from "@/lib/seo";
+import { ORGANIZATION_ID, WEBSITE_ID, absoluteUrl, pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
 
 /**
@@ -136,17 +136,53 @@ export const Route = createFileRoute("/galleries/$slug")({
     const galleries = await context.queryClient.ensureQueryData(
       orpc.club.listApprovedGalleries.queryOptions({ input: { club: CLUB } })
     );
-    if (!galleries.some((candidate) => candidate.slug === params.slug)) {
+    const found = galleries.find((candidate) => candidate.slug === params.slug);
+    if (!found) {
       throw notFound();
     }
+    return {
+      description: found.description,
+      imageUrl: found.coverImageUrl ?? found.photos[0]?.imageUrl ?? null,
+      publishedAt: found.publishedAt,
+      title: found.title,
+    };
   },
-  head: ({ params }) =>
-    pageHead({
-      description:
-        "A published photo gallery from St. Aloysius' College, Galle, approved by the CMS team.",
-      path: `/galleries/${params.slug}`,
-      title: "Gallery | St. Aloysius' College, Galle",
-    }),
+  head: ({ loaderData, params }) => {
+    const path = `/galleries/${params.slug}`;
+    if (!loaderData) {
+      return {};
+    }
+    const description =
+      loaderData.description?.trim() ||
+      `${loaderData.title} - a photo gallery from St. Aloysius' College, Galle.`;
+    const image = loaderData.imageUrl
+      ? absoluteUrl(loaderData.imageUrl)
+      : undefined;
+
+    return pageHead({
+      crumbs: [
+        { name: "Galleries", path: "/galleries" },
+        { name: loaderData.title, path },
+      ],
+      description,
+      image,
+      jsonLd: [
+        {
+          "@context": "https://schema.org",
+          "@type": "ImageGallery",
+          datePublished: loaderData.publishedAt ?? undefined,
+          description,
+          image,
+          isPartOf: { "@id": WEBSITE_ID },
+          name: loaderData.title,
+          publisher: { "@id": ORGANIZATION_ID },
+          url: absoluteUrl(path),
+        },
+      ],
+      path,
+      title: `${loaderData.title} | Galleries | St. Aloysius' College, Galle`,
+    });
+  },
   component: () => (
     <Suspense fallback={<div>Loading…</div>}>
       <GalleryContent />

@@ -4,6 +4,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { privateHead } from "@/lib/seo";
 import { fetchSession } from "@/lib/session";
 
 /**
@@ -127,18 +128,8 @@ export const Route = createFileRoute("/sign-in")({
     }
   },
 
-  head: () => ({
-    meta: [
-      { title: "Sign in | St. Aloysius' College, Galle" },
-      {
-        name: "description",
-        content:
-          "Sign in to the St. Aloysius' College staff and content management portal.",
-      },
-      // A sign-in screen must never rank; `follow` keeps the outbound links
-      // (home, contact) contributing normally.
-      { name: "robots", content: "noindex, follow" },
-    ],
-  }),
+  // A sign-in screen must never rank; `follow` keeps the outbound links
+  // (home, contact) contributing normally.
+  head: () => privateHead("Sign in | St. Aloysius' College, Galle", true),
   component: SignIn,
 });

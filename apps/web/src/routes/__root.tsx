@@ -1,8 +1,3 @@
-/*
- * `react/no-danger` is disabled for this file: the single use is the JSON-LD
- * block below, serialised from constants declared in this file.
- */
-// oxlint-disable react/no-danger
 import { SmoothScroll } from "@aloysius/ui/components/smooth-scroll";
 import { LoadingScreen } from "@aloysius/ui/components/status/loading-screen";
 import { NotFoundPage } from "@aloysius/ui/components/status/not-found-page";
@@ -21,6 +16,14 @@ import type { orpc } from "@/utils/orpc";
 
 import { AppToaster } from "../components/app-toaster";
 import { DevStyleXInject } from "../components/dev-stylex-inject";
+import {
+  OG_IMAGE,
+  SITE_DESCRIPTION,
+  SITE_LOCALE,
+  SITE_NAME,
+  SITE_URL,
+  siteJsonLdScripts,
+} from "../lib/seo";
 
 import appCss from "../index.css?url";
 
@@ -28,31 +31,6 @@ export interface RouterAppContext {
   orpc: typeof orpc;
   queryClient: QueryClient;
 }
-
-const SITE_URL = "https://aloysiuscollege.lk";
-const SITE_NAME = "St. Aloysius' College, Galle";
-const SITE_DESCRIPTION =
-  "Official website of St. Aloysius' College, Galle, Sri Lanka - a Catholic boys' college founded in 1895. Admissions, academics, student life, news and the Old Boys' Association.";
-
-/**
- * `EducationalOrganization` structured data. Search engines use this for the
- * knowledge panel; without it a school homepage is just an untyped document.
- */
-const structuredData = JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "EducationalOrganization",
-  name: "St. Aloysius' College",
-  alternateName: "St. Aloysius' College, Galle",
-  url: SITE_URL,
-  logo: `${SITE_URL}/logo.png`,
-  foundingDate: "1895",
-  slogan: "Certa Viriliter",
-  address: {
-    "@type": "PostalAddress",
-    addressLocality: "Galle",
-    addressCountry: "LK",
-  },
-});
 
 /**
  * Correlation id shown on the 500 screen. Server-thrown errors that already
@@ -82,10 +60,6 @@ const RootDocument = () => (
       <noscript>
         <style>{"[data-loading-screen]{display:none !important}"}</style>
       </noscript>
-      <script
-        dangerouslySetInnerHTML={{ __html: structuredData }}
-        type="application/ld+json"
-      />
     </head>
     <body>
       <LoadingScreen />
@@ -111,52 +85,83 @@ const RootDocument = () => (
 );
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      {
-        name: "viewport",
-        // `viewport-fit=cover` lets the safe-area insets in index.css do their
-        // job on notched phones and foldables.
-        content: "width=device-width, initial-scale=1, viewport-fit=cover",
-      },
-      { title: SITE_NAME },
-      { name: "description", content: SITE_DESCRIPTION },
-      { name: "theme-color", content: "#013405" },
-      { name: "color-scheme", content: "light" },
-      { name: "format-detection", content: "telephone=no" },
+  head: ({ matches }) => {
+    // A not-found page answers 404; the tag keeps it out of the index too.
+    const isNotFound = matches.some(
+      (match) => match.status === "notFound" || match._notFound
+    );
 
-      { property: "og:type", content: "website" },
-      { property: "og:site_name", content: SITE_NAME },
-      { property: "og:title", content: SITE_NAME },
-      { property: "og:description", content: SITE_DESCRIPTION },
-      { property: "og:url", content: SITE_URL },
-      { property: "og:locale", content: "en_LK" },
-      { property: "og:image", content: `${SITE_URL}/icon-512.png` },
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        {
+          name: "viewport",
+          // `viewport-fit=cover` lets the safe-area insets in index.css do their
+          // job on notched phones and foldables.
+          content: "width=device-width, initial-scale=1, viewport-fit=cover",
+        },
+        { title: isNotFound ? `Page not found | ${SITE_NAME}` : SITE_NAME },
+        { name: "description", content: SITE_DESCRIPTION },
+        {
+          name: "robots",
+          content: isNotFound
+            ? "noindex, nofollow"
+            : "index, follow, max-image-preview:large",
+        },
+        { name: "theme-color", content: "#013405" },
+        { name: "color-scheme", content: "light" },
+        { name: "format-detection", content: "telephone=no" },
 
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: SITE_NAME },
-      { name: "twitter:description", content: SITE_DESCRIPTION },
-      { name: "twitter:image", content: `${SITE_URL}/icon-512.png` },
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", sizes: "any" },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "32x32",
-        href: "/favicon-32.png",
-      },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "192x192",
-        href: "/icon-192.png",
-      },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-    ],
-  }),
+        { property: "og:type", content: "website" },
+        { property: "og:site_name", content: SITE_NAME },
+        { property: "og:title", content: SITE_NAME },
+        { property: "og:description", content: SITE_DESCRIPTION },
+        { property: "og:url", content: `${SITE_URL}/` },
+        { property: "og:locale", content: SITE_LOCALE },
+        { property: "og:image", content: OG_IMAGE.url },
+        { property: "og:image:width", content: String(OG_IMAGE.width) },
+        { property: "og:image:height", content: String(OG_IMAGE.height) },
+        { property: "og:image:alt", content: OG_IMAGE.alt },
+
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: SITE_NAME },
+        { name: "twitter:description", content: SITE_DESCRIPTION },
+        { name: "twitter:image", content: OG_IMAGE.url },
+        { name: "twitter:image:alt", content: OG_IMAGE.alt },
+      ],
+      links: [
+        { rel: "stylesheet", href: appCss },
+        /*
+         * Google wants a favicon whose size is a multiple of 48px, and it
+         * caches `/favicon.ico` for weeks - a stale copy of an old host's icon
+         * can outlive the file. `/favicon-48.png` is a URL it has never seen,
+         * so it is listed first as the icon to pick up.
+         */
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "48x48",
+          href: "/favicon-48.png",
+        },
+        { rel: "icon", href: "/favicon.ico", sizes: "any" },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "32x32",
+          href: "/favicon-32.png",
+        },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "192x192",
+          href: "/icon-192.png",
+        },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+        { rel: "manifest", href: "/site.webmanifest" },
+      ],
+      scripts: siteJsonLdScripts(),
+    };
+  },
 
   component: RootDocument,
 

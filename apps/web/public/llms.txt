@@ -1,30 +1,47 @@
 # St. Aloysius' College, Galle
 
-> A Catholic boys' college in Galle, Sri Lanka, founded in 1895 by Belgian
-> Jesuit missionaries under Bishop Joseph Van Reeth. Motto: Certa Viriliter
-> ("Strive Manfully").
+> Official website of St. Aloysius' College, Galle, Sri Lanka - a Catholic boys'
+> college founded in 1895 by Belgian Jesuit missionaries under Bishop Joseph
+> Van Reeth. Motto: Certa Viriliter ("Strive Manfully"). Pages are server-rendered
+> HTML; every public page carries schema.org JSON-LD (EducationalOrganization /
+> School, WebSite, BreadcrumbList) and a canonical URL on https://aloysiuscollege.lk
+> (no `www`, no trailing slash).
 
 ## Pages
 
-- Homepage: https://aloysiuscollege.lk/
-- About (history, founders, mission, principal's message): https://aloysiuscollege.lk/about
-- Academics (sections of study, A/L streams, departments, leadership): https://aloysiuscollege.lk/academics
-- Admissions (application process, requirements, key dates, FAQs): https://aloysiuscollege.lk/admissions
-- Student Life (clubs, galleries, events): https://aloysiuscollege.lk/students
-- News & Events: https://aloysiuscollege.lk/news
-- Alumni / Old Boys' Association: https://aloysiuscollege.lk/alumni
-- Media (photo galleries): https://aloysiuscollege.lk/media
-- Galleries index: https://aloysiuscollege.lk/galleries
-- Contact: https://aloysiuscollege.lk/contact
+- [Home](https://aloysiuscollege.lk/): overview, principal's message, latest news, exam results highlights, gallery
+- [About](https://aloysiuscollege.lk/about): history from 1895, founders, vision and mission, administration, principal's message
+- [Academics](https://aloysiuscollege.lk/academics): sections of study, G.C.E. A/L streams, departments, academic leadership, facilities
+- [Examinations & Results](https://aloysiuscollege.lk/results): G.C.E. O/L and A/L results, Grade 5 scholarship results, top rankers
+- [Student Life](https://aloysiuscollege.lk/students): clubs and societies, sports, events, achievements
+- [News & Events](https://aloysiuscollege.lk/news): announcements, news articles, upcoming events
+- [Alumni](https://aloysiuscollege.lk/alumni): the Old Boys' Association, branches, distinguished Aloysians
+- [Media](https://aloysiuscollege.lk/media): photo galleries and media links
+- [Galleries](https://aloysiuscollege.lk/galleries): index of published photo galleries; each gallery lives at `/galleries/<slug>`
+- [Contact](https://aloysiuscollege.lk/contact): College office address, telephone, email, department directory, map
 
 ## Key facts
 
-- Founded: 1895, Galle, Sri Lanka
+- Name: St. Aloysius' College, Galle
+- Founded: 1895
 - Type: Catholic boys' college, Primary through G.C.E. Advanced Level
+- Location: Templers' Road, Kaluwella, Galle 80000, Sri Lanka
+- Telephone: +94 91 223 4657
+- Email: info@aloysiuscollege.lk
 - Motto: Certa Viriliter (Strive Manfully)
 - A/L streams: Physical Science, Biological Science, Commerce, Arts & Technology
 
+## Other College sites
+
+- [Admissions](https://admissions.aloysiuscollege.lk/): applications and enrolment (a separate site, not a path on this one)
+- [Management portal](https://mgmt.aloysiuscollege.lk/): the College's management system (staff and students)
+
 ## Machine-readable data
 
-- Sitemap: https://aloysiuscollege.lk/sitemap.xml
-- robots.txt: https://aloysiuscollege.lk/robots.txt
+- [Sitemap](https://aloysiuscollege.lk/sitemap.xml): every public URL with last-modified dates (`/sitemaps.xml` redirects here)
+- [robots.txt](https://aloysiuscollege.lk/robots.txt): crawling is open to search and AI crawlers; staff areas (/admin, /cms, /club-admin, /sign-in, /preview) are excluded
+
+## Optional
+
+- Photos on the site are served from `/api/files/<key>` and are public.
+- Staff areas are not public and carry no indexable content.

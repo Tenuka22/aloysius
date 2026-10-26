@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
+import { privateHead } from "@/lib/seo";
 import { client } from "@/utils/orpc";
 
 /**
@@ -19,5 +20,6 @@ export const Route = createFileRoute("/club-admin")({
       throw redirect({ to: "/" });
     }
   },
+  head: () => privateHead("Club admin | St. Aloysius' College"),
   component: Outlet,
 });

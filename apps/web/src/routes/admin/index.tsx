@@ -16,6 +16,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { WorkspaceShell } from "@/components/workspace-shell";
+import { privateHead } from "@/lib/seo";
 import { client, orpc } from "@/utils/orpc";
 
 interface GeneratedPassword {
@@ -156,5 +157,6 @@ export const Route = createFileRoute("/admin/")({
     return { user: session.user };
   },
   loader: ({ context }) => ({ user: context.user }),
+  head: () => privateHead("Admin | St. Aloysius' College"),
   component: AdminContent,
 });

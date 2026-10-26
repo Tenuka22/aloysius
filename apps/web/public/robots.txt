@@ -1,5 +1,39 @@
 # https://www.robotstxt.org/robotstxt.html
+#
+# The public website is open to every crawler, including the AI search and
+# assistant crawlers: the College wants to be found and cited accurately.
+# Only the staff workspaces and the API's non-public endpoints are closed.
+# /api/files/ (every photo on the site) and /assets/ (CSS/JS) stay crawlable.
+
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /cms
+Disallow: /club-admin
+Disallow: /sign-in
+Disallow: /preview
+Disallow: /api/rpc
+Disallow: /api/auth
+
+# AI search / assistant crawlers - explicitly welcome. A named group replaces
+# the `*` group for that crawler, so the private paths are repeated.
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: GPTBot
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: ClaudeBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
+Allow: /
+Disallow: /admin
+Disallow: /cms
+Disallow: /club-admin
+Disallow: /sign-in
+Disallow: /preview
+Disallow: /api/rpc
+Disallow: /api/auth
 
 Sitemap: https://aloysiuscollege.lk/sitemap.xml
