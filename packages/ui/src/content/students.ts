@@ -1,150 +1,109 @@
-import type { JumpLink } from "./about";
-
 /**
- * Content for the Students page, following the same rule as
- * `content/academics.ts`: every string is a typed constant carrying real copy,
+ * Content for the Students page, to the approved UI/UX design
+ * (Students.dc.html). Every string is a typed constant carrying real copy,
  * never a `[CMS: ...]` marker.
- *
- * Facts the college has not published - the four house names, what each club
- * actually does, where "Meet the Prefects" should lead - are modelled as
- * optional fields. The sections that use them degrade to an honest empty state
- * rather than inventing a name, a description or a destination.
  */
 
 export const STUDENTS_HERO_TITLE = "Student Life";
 export const STUDENTS_HERO_INTRO =
-  "Sports, societies, houses and the traditions that shape every Aloysian - the hours between lessons that decide what kind of Aloysian a boy becomes.";
-
-export const STUDENTS_JUMP_LINKS: readonly JumpLink[] = [
-  { label: "Sports", href: "#sports" },
-  { label: "Clubs & Societies", href: "#clubs" },
-  { label: "Houses", href: "#houses" },
-  { label: "Prefects", href: "#prefects" },
-];
-
-/**
- * A tile in the sports mosaic. `span` selects the tile's footprint in the
- * 6-column desktop grid; below 64rem it is ignored and every tile is full
- * width (or half, from 40rem).
- */
-export interface SportTile {
-  id: string;
-  name: string;
-  /** Caption for the branded box shown until a photograph is supplied. */
-  placeholder: string;
-  span: "feature" | "half" | "third";
-}
-
-/**
- * Exactly the sports the design names, and no others. Adding a plausible-
- * looking sport here would be inventing a fact about the college.
- */
-export const SPORT_TILES: readonly SportTile[] = [
-  {
-    id: "cricket",
-    name: "Cricket",
-    placeholder: "Cricket - big match photograph",
-    span: "feature",
-  },
-  {
-    id: "rugby",
-    name: "Rugby",
-    placeholder: "Rugby",
-    span: "third",
-  },
-  {
-    id: "athletics",
-    name: "Athletics",
-    placeholder: "Athletics",
-    span: "third",
-  },
-];
+  "Sports, societies, houses and the traditions that shape every Aloysian.";
 
 export const SPORTS_EYEBROW = "Sports";
 export const SPORTS_HEADING = "On the Field";
-export const MORE_SPORTS_TITLE = "More sports";
-/** Named in the design's own "more sports" panel, so they are the college's list. */
-export const MORE_SPORTS: readonly string[] = ["Swimming", "Football", "Chess"];
 
-export interface Club {
-  id: string;
-  name: string;
-  /** Omitted until the college publishes what the society does. */
-  description?: string;
-  /**
-   * The club's own cover banner, set by its administrator and approved like any
-   * other piece of club content. Optional, because a club with no approved
-   * banner yet is the normal case rather than an error - the card falls back to
-   * the plain surface rather than reserving an empty box.
-   */
-  coverImageUrl?: string | null;
-  /**
-   * The club's own page, when it has one. Static routes, hand-typed: a club
-   * without a dedicated page renders a plain card, and one with a page links
-   * to an address that was written on purpose, not derived from a slug.
-   */
-  href?: string;
-}
-
-export const CLUBS: readonly Club[] = [
-  {
-    id: "photography",
-    name: "Photography Club",
-    href: "/galleries",
-  },
-  { id: "debating", name: "Debating Society" },
-  { id: "science", name: "Science Society" },
-  { id: "media", name: "Media Unit" },
-  { id: "interact", name: "Interact Club" },
-  { id: "scouts", name: "Scouts" },
-  { id: "cadets", name: "Cadets" },
-  { id: "choir", name: "Choir & Eastern Band" },
-  { id: "environment", name: "Environmental Society" },
+/** The four main sports, each with a photograph tile. */
+export const MAIN_SPORTS: readonly string[] = [
+  "Cricket",
+  "Rugby",
+  "Hockey",
+  "Football",
 ];
 
-export const CLUBS_EYEBROW = "Clubs & societies";
+/** Every other sport the College plays, listed as chips. */
+export const OTHER_SPORTS: readonly string[] = [
+  "Athletics",
+  "Swimming",
+  "Basketball",
+  "Volleyball",
+  "Badminton",
+  "Chess",
+  "Karate",
+  "Boxing",
+  "Wrestling",
+  "Shooting",
+  "Water Polo",
+];
+
+export const CLUBS_EYEBROW = "Clubs & Societies";
 export const CLUBS_HEADING = "Beyond the Classroom";
-export const CLUBS_INTRO =
-  "Every boy belongs to at least one society. They meet through the week, run the college's events, and carry its name to competitions across the Southern Province.";
 
 /**
- * The four house colours, as a token key rather than a hex string: the content
- * layer names the colour, the component owns how it is painted. `colorName` is
- * real visible text, not a caption for the swatch - the swatch itself is
- * decorative, so colour is never the only thing carrying a house's identity
- * (WCAG 2.2 SC 1.4.1).
+ * The societies shown in the grid. A description appears under a name once the
+ * College publishes one for it in the club registry; until then the card is
+ * just the name.
  */
+export const CLUB_NAMES: readonly string[] = [
+  "Photography Club",
+  "Media Unit",
+  "Debating Society",
+  "Science Society",
+  "Scouts",
+  "Cadets",
+  "Choir & Eastern Band",
+  "Environmental Society",
+];
+
+export interface Encounter {
+  sport: string;
+  title: string;
+  vs: string;
+  note: string;
+}
+
+export const ENCOUNTERS_EYEBROW = "Big Matches";
+export const ENCOUNTERS_HEADING = "Annual Encounters";
+export const ENCOUNTERS_INTRO =
+  "Key fixtures in the Southern Province school sports calendar, many played at Galle International Stadium.";
+
+export const ENCOUNTERS: readonly Encounter[] = [
+  {
+    sport: "Cricket",
+    title: "The Battle of Dreams",
+    vs: "vs. Holy Cross College, Kalutara",
+    note: "A two-day encounter inaugurated in 2025; the 2026 edition at Galle International Stadium ended in a draw.",
+  },
+  {
+    sport: "Rugby",
+    title: "The Aloysian – Richmond Encounter",
+    vs: "vs. Richmond College, Galle",
+    note: "Centre stage of the sporting calendar since the first historic match in 1992.",
+  },
+  {
+    sport: "Basketball",
+    title: "The Aloysian – Mahinda Encounter",
+    vs: "vs. Mahinda College, Galle",
+    note: "The annual basketball match between two Galle schools.",
+  },
+];
+
+export const HOUSES_EYEBROW = "House System";
+export const HOUSES_HEADING = "The College Houses";
+export const HOUSES_INTRO =
+  "Five houses, named after the Jesuit fathers who pioneered the College in its early days. Students are placed in a house according to their admission number.";
+
 export interface House {
   id: string;
-  swatch: "crimson" | "gold" | "green" | "blue";
+  name: string;
+  /** The house's colour as a hex value, painted as the card's diamond. */
+  color: string;
+  /** Visible text naming the colour, so colour is never the only signal. */
   colorName: string;
-  /** Omitted until the college publishes the house roster. */
-  name?: string;
 }
 
 export const HOUSES: readonly House[] = [
-  { id: "crimson", swatch: "crimson", colorName: "Crimson" },
-  { id: "gold", swatch: "gold", colorName: "Gold" },
-  { id: "green", swatch: "green", colorName: "Green" },
-  { id: "blue", swatch: "blue", colorName: "Blue" },
+  { id: "cooreman", name: "Cooreman", color: "#A51919", colorName: "Crimson" },
+  { id: "murphy", name: "Murphy", color: "#FFB203", colorName: "Gold" },
+  { id: "neut", name: "Neut", color: "#013405", colorName: "Green" },
+  { id: "standaert", name: "Standaert", color: "#3B5BA5", colorName: "Blue" },
+  { id: "van-reeth", name: "Van Reeth", color: "#5B2A86", colorName: "Purple" },
 ];
-
-export const HOUSES_EYEBROW = "House system";
-export const HOUSES_HEADING = "The College Houses";
-export const HOUSES_INTRO =
-  "Every student joins one of four houses on the day he enrols and competes for it until the day he leaves - on the track, in the pool, on the debating floor and at the inter-house athletics meet.";
-
-/**
- * Upcoming events. Real copy rather than a marker, but no dates are named
- * here - the entries themselves come from the CMS `events` collection, so the
- * section renders only when the college has published at least one.
- */
-export const EVENTS_EYEBROW = "Diary";
-export const EVENTS_HEADING = "Coming Up";
-export const EVENTS_INTRO =
-  "Assemblies, competitions, expeditions and the events our clubs run. Photographs of each are published as galleries.";
-export const EVENTS_ALL_LABEL = "Full diary";
-
-export const PREFECTS_HEADING = "Prefects' Guild & Student Leadership";
-export const PREFECTS_BODY =
-  "The Guild is the senior school's own body of leadership, service and discipline. Its members keep the college's daily order and represent the student body to the staff.";

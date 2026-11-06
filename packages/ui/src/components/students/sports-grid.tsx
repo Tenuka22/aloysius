@@ -1,189 +1,252 @@
 import * as stylex from "@stylexjs/stylex";
 
 import {
-  MORE_SPORTS,
-  MORE_SPORTS_TITLE,
+  MAIN_SPORTS,
+  OTHER_SPORTS,
   SPORTS_EYEBROW,
   SPORTS_HEADING,
-  SPORT_TILES,
 } from "../../content/students";
-import type { SportTile } from "../../content/students";
-import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, space } from "../../tokens/tokens.stylex";
-import { Container, Eyebrow, Heading, Section } from "../primitives/layout";
-import { Media } from "../primitives/media";
+import { font } from "../../tokens/tokens.stylex";
+import { DcEyebrow, DcHeading, DcInner, DcSection, DcSlot } from "../home/dc";
 import type { ImageSource } from "../primitives/media";
-import { Reveal } from "../primitives/reveal";
+
+const MONO = "ui-monospace, monospace";
+
+const pad = (value: number) => String(value).padStart(2, "0");
+
+/** Photographs keyed by lower-cased sport name, e.g. `cricket`. */
+export type SportImages = Readonly<Record<string, ImageSource>>;
 
 const styles = stylex.create({
-  /*
-   * The design's mosaic is a fixed 6-column / 128px-row bento, which overflows
-   * at any width below ~1024px and gives each photograph a different crop at
-   * every viewport. Built up instead: a plain stack at 320px, two columns from
-   * 40rem, and only at 64rem does it become the mosaic.
-   *
-   * `minmax(10rem, auto)` rather than the mock's hard `128px`: a tile can grow
-   * when its label wraps, so nothing ever clips.
-   */
-  grid: {
-    display: "grid",
-    listStyle: "none",
+  header: {
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: "24px",
+    marginBlockEnd: "clamp(36px, 5vw, 56px)",
+  },
+  eyebrow: {
+    marginBlockEnd: "18px",
+  },
+  heading: {
+    lineHeight: 1.05,
+  },
+  total: {
+    display: "flex",
+    alignItems: "baseline",
+    gap: "12px",
+  },
+  totalNumber: {
+    fontFamily: font.display,
+    fontSize: "64px",
+    fontWeight: 600,
+    color: "#FFB203",
+    lineHeight: 0.9,
+  },
+  totalLabel: {
+    fontSize: "11px",
+    letterSpacing: "0.2em",
+    fontWeight: 700,
+    color: "rgba(1, 52, 5, 0.65)",
+    lineHeight: 1.4,
+    textTransform: "uppercase",
+  },
+  label: {
     margin: 0,
-    marginBlockStart: space["2xl"],
+    marginBlockEnd: "18px",
+    fontSize: "11px",
+    letterSpacing: "0.32em",
+    fontWeight: 700,
+    color: "rgba(1, 52, 5, 0.6)",
+    textTransform: "uppercase",
+  },
+  mainGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 170px), 1fr))",
+    gap: "14px",
+    margin: 0,
+    marginBlockEnd: "clamp(40px, 5vw, 64px)",
     padding: 0,
-    gap: space.sm,
-    gridTemplateColumns: {
-      default: "minmax(0, 1fr)",
-      [bp.mdToXl]: "repeat(2, minmax(0, 1fr))",
-      [bp.xl]: "repeat(6, minmax(0, 1fr))",
-    },
-    gridAutoRows: {
-      default: "auto",
-      [bp.xl]: "minmax(10rem, auto)",
-    },
+    listStyle: "none",
   },
   tile: {
     position: "relative",
-    display: "flex",
+    aspectRatio: "3 / 4",
+    backgroundColor: "#013405",
     overflow: "hidden",
-    minBlockSize: {
-      default: "12rem",
-      [bp.xl]: "auto",
-    },
   },
-
-  /** Cricket: the hero tile, two thirds of the row and two rows tall. */
-  spanFeature: {
-    gridColumn: { default: "auto", [bp.mdToXl]: "span 2", [bp.xl]: "span 4" },
-    gridRow: { default: "auto", [bp.xl]: "span 2" },
-    minBlockSize: {
-      default: "16rem",
-      [bp.xl]: "auto",
-    },
-  },
-  spanThird: {
-    gridColumn: { default: "auto", [bp.xl]: "span 2" },
-  },
-  /** The "more sports" panel closes the mosaic as a full-width row, never an orphan cell. */
-  spanFull: {
-    gridColumn: { default: "auto", [bp.mdToXl]: "span 2", [bp.xl]: "span 6" },
-  },
-
-  photo: {
+  tilePhoto: {
     position: "absolute",
     inset: 0,
-    inlineSize: "100%",
-    blockSize: "100%",
+    width: "100%",
+    height: "100%",
   },
-  caption: {
-    position: "relative",
-    alignSelf: "flex-end",
-    margin: space.sm,
-    paddingBlock: space["3xs"],
-    paddingInline: space["2xs"],
-    backgroundColor: color.surfaceInverse,
-    color: color.onInverse,
-    fontSize: font.sizeXs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
-    textTransform: "uppercase",
+  tileFade: {
+    position: "absolute",
+    insetInline: 0,
+    insetBlockEnd: 0,
+    height: "42%",
+    backgroundImage:
+      "linear-gradient(180deg, rgba(1, 52, 5, 0) 0%, rgba(1, 52, 5, 0.92) 100%)",
+    pointerEvents: "none",
   },
-
-  morePanel: {
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: space["2xs"],
-    padding: space.md,
-    textAlign: "center",
-    backgroundColor: color.danger,
-    color: color.onInverse,
+  tileNumber: {
+    position: "absolute",
+    insetBlockStart: "16px",
+    insetInlineStart: "16px",
+    paddingBlock: "4px",
+    paddingInline: "9px",
+    backgroundColor: "#FFB203",
+    color: "#013405",
+    fontFamily: MONO,
+    fontSize: "11px",
+    pointerEvents: "none",
   },
-  moreTitle: {
+  tileCaption: {
+    position: "absolute",
+    insetInline: "22px",
+    insetBlockEnd: "22px",
+    color: "#FFF8E7",
+    pointerEvents: "none",
+  },
+  tileName: {
     margin: 0,
-    fontSize: font.sizeSm,
-    fontWeight: font.weightExtrabold,
-    letterSpacing: font.trackingWide,
-    textTransform: "uppercase",
+    fontFamily: font.display,
+    fontSize: "clamp(26px, 2.6vw, 34px)",
+    fontWeight: 600,
+    lineHeight: 1,
   },
-  /*
-   * A real list rather than the mock's bullet-separated string, so assistive
-   * tech announces the count instead of reading one run-on line.
-   */
-  moreList: {
+  tileRule: {
+    inlineSize: "32px",
+    blockSize: "2px",
+    marginBlockStart: "12px",
+    backgroundColor: "#FFB203",
+  },
+  allHeader: {
     display: "flex",
+    alignItems: "baseline",
+    justifyContent: "space-between",
     flexWrap: "wrap",
-    justifyContent: "center",
-    gap: space["2xs"],
+    gap: "16px",
+    marginBlockEnd: "18px",
+  },
+  allLabel: {
+    margin: 0,
+  },
+  allCount: {
+    fontSize: "12.5px",
+    color: "rgba(1, 52, 5, 0.6)",
+  },
+  chips: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 210px), 1fr))",
+    gap: "12px",
     margin: 0,
     padding: 0,
     listStyle: "none",
-    fontSize: font.sizeXs,
-    color: color.accentHover,
+  },
+  chip: {
+    display: "block",
+    minWidth: 0,
+    padding: "18px",
+    backgroundColor: "#fffdf6",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "rgba(1, 52, 5, 0.16)",
+    borderInlineStartWidth: "3px",
+    borderInlineStartColor: "#FFB203",
+  },
+  chipNumber: {
+    display: "block",
+    fontFamily: MONO,
+    fontSize: "10px",
+    color: "rgba(1, 52, 5, 0.5)",
+  },
+  chipName: {
+    display: "block",
+    marginBlockStart: "2px",
+    fontWeight: 700,
+    fontSize: "15px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
 });
 
-export type SportImages = Readonly<Record<string, ImageSource>>;
-
-const SPAN_STYLES = {
-  feature: styles.spanFeature,
-  half: styles.spanThird,
-  third: styles.spanThird,
-} as const;
-
+/**
+ * The "On the Field" section: the four main sports as photograph tiles, then
+ * every other sport as a numbered chip, with the grand total beside the
+ * heading. The total is counted from the two lists, never typed.
+ */
 export const SportsGrid = ({
-  tiles = SPORT_TILES,
-  moreSports = MORE_SPORTS,
   images,
-  eyebrow = SPORTS_EYEBROW,
-  heading = SPORTS_HEADING,
+  main = MAIN_SPORTS,
+  others = OTHER_SPORTS,
 }: {
-  tiles?: readonly SportTile[];
-  moreSports?: readonly string[];
   images?: SportImages;
-  /** CMS-resolved section copy; falls back to the page's own constants. */
-  eyebrow?: string;
-  heading?: string;
+  main?: readonly string[];
+  others?: readonly string[];
 }) => (
-  <Section id="sports" labelledBy="sports-title" tone="surface">
-    <Container>
-      <Eyebrow>{eyebrow}</Eyebrow>
-      <Heading id="sports-title" level={2}>
-        {heading}
-      </Heading>
+  <DcSection id="sports" labelledBy="sports-title" tone="cream">
+    <DcInner>
+      <div {...stylex.props(styles.header)}>
+        <div>
+          <DcEyebrow style={styles.eyebrow}>{SPORTS_EYEBROW}</DcEyebrow>
+          <DcHeading id="sports-title" style={styles.heading}>
+            {SPORTS_HEADING}
+          </DcHeading>
+        </div>
+        <div {...stylex.props(styles.total)}>
+          <span {...stylex.props(styles.totalNumber)}>
+            {main.length + others.length}
+          </span>
+          <span {...stylex.props(styles.totalLabel)}>
+            Sports
+            <br />
+            at the College
+          </span>
+        </div>
+      </div>
 
-      <Reveal direction="up">
-        <ul {...stylex.props(styles.grid)}>
-          {tiles.map((tile) => (
-            <li
-              key={tile.id}
-              {...stylex.props(styles.tile, SPAN_STYLES[tile.span])}
-            >
-              <Media
-                fill
-                placeholder={tile.placeholder}
-                source={images?.[tile.id]}
-                style={styles.photo}
-                zoom
-              />
-              <h3 {...stylex.props(styles.caption)}>{tile.name}</h3>
-            </li>
-          ))}
+      <p {...stylex.props(styles.label)}>Main sports</p>
+      <ul {...stylex.props(styles.mainGrid)}>
+        {main.map((name, index) => (
+          <li key={name} {...stylex.props(styles.tile)}>
+            <DcSlot
+              inverse
+              placeholder={`${name} — action photo`}
+              source={images?.[name.toLowerCase()]}
+              style={styles.tilePhoto}
+            />
+            <div aria-hidden="true" {...stylex.props(styles.tileFade)} />
+            <span aria-hidden="true" {...stylex.props(styles.tileNumber)}>
+              {pad(index + 1)}
+            </span>
+            <div {...stylex.props(styles.tileCaption)}>
+              <h3 {...stylex.props(styles.tileName)}>{name}</h3>
+              <div aria-hidden="true" {...stylex.props(styles.tileRule)} />
+            </div>
+          </li>
+        ))}
+      </ul>
 
-          {moreSports.length > 0 ? (
-            <li
-              {...stylex.props(styles.tile, styles.morePanel, styles.spanFull)}
-            >
-              <h3 {...stylex.props(styles.moreTitle)}>{MORE_SPORTS_TITLE}</h3>
-              <ul {...stylex.props(styles.moreList)}>
-                {moreSports.map((sport) => (
-                  <li key={sport}>{sport}</li>
-                ))}
-              </ul>
-            </li>
-          ) : null}
-        </ul>
-      </Reveal>
-    </Container>
-  </Section>
+      <div {...stylex.props(styles.allHeader)}>
+        <p {...stylex.props(styles.label, styles.allLabel)}>All sports</p>
+        <span {...stylex.props(styles.allCount)}>
+          {others.length} more sports
+        </span>
+      </div>
+      <ul {...stylex.props(styles.chips)}>
+        {others.map((name, index) => (
+          <li key={name} {...stylex.props(styles.chip)}>
+            <span aria-hidden="true" {...stylex.props(styles.chipNumber)}>
+              {pad(main.length + index + 1)}
+            </span>
+            <span {...stylex.props(styles.chipName)}>{name}</span>
+          </li>
+        ))}
+      </ul>
+    </DcInner>
+  </DcSection>
 );

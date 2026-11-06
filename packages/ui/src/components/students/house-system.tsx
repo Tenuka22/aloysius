@@ -7,144 +7,102 @@ import {
   HOUSES_INTRO,
 } from "../../content/students";
 import type { House } from "../../content/students";
-import { color, font, palette, space } from "../../tokens/tokens.stylex";
-import {
-  Container,
-  Eyebrow,
-  Heading,
-  Lead,
-  Section,
-} from "../primitives/layout";
+import { font } from "../../tokens/tokens.stylex";
+import { DcEyebrow, DcHeading, DcInner, DcSection } from "../home/dc";
 import { Reveal } from "../primitives/reveal";
 
 const styles = stylex.create({
+  heading: {
+    marginBlockEnd: "18px",
+  },
+  intro: {
+    margin: 0,
+    marginBlockEnd: "clamp(36px, 5vw, 56px)",
+    maxWidth: "62ch",
+    fontSize: "16px",
+    lineHeight: 1.7,
+    color: "rgba(1, 52, 5, 0.75)",
+    textWrap: "pretty",
+  },
   grid: {
     display: "grid",
-    listStyle: "none",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 190px), 1fr))",
+    gap: "20px",
     margin: 0,
-    marginBlockStart: space["2xl"],
     padding: 0,
-    // Four across on a laptop, two on a tablet, one on a phone - without a
-    // breakpoint for each, and it keeps filling sensibly on an ultra-wide panel.
-    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 13rem), 1fr))",
-    gap: space.md,
+    listStyle: "none",
   },
   cell: {
     blockSize: "100%",
   },
   card: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: space["2xs"],
     blockSize: "100%",
-    // The mock's fixed `44px 24px` is most of the cell at 320px.
-    paddingBlock: space.xl,
-    paddingInline: space.md,
+    paddingBlock: "44px",
+    paddingInline: "24px",
     textAlign: "center",
-    backgroundColor: color.surface,
-    borderWidth: space.px,
+    backgroundColor: "#FFF8E7",
+    borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: color.borderStrong,
+    borderColor: "rgba(1, 52, 5, 0.15)",
   },
-  /*
-   * The rotated diamond from the design. Purely decorative: the house's
-   * identity is carried by the text below it, never by this colour alone
-   * (WCAG 2.2 SC 1.4.1), so it is `aria-hidden` at the call site.
-   */
-  swatch: {
-    inlineSize: "3.25rem",
-    blockSize: "3.25rem",
-    marginBlockEnd: space["2xs"],
+  swatch: (backgroundColor: string) => ({
+    inlineSize: "54px",
+    blockSize: "54px",
+    marginBlockStart: 0,
+    marginBlockEnd: "20px",
+    marginInline: "auto",
     transform: "rotate(45deg)",
-    flexShrink: 0,
-  },
-  swatchCrimson: { backgroundColor: palette.crimson },
-  swatchGold: { backgroundColor: palette.gold },
-  swatchGreen: { backgroundColor: palette.greenDeep },
-  /*
-   * The one house colour with no brand equivalent - it is school data, not a
-   * palette entry, which is why it is a literal here rather than a token.
-   */
-  swatchBlue: { backgroundColor: "#3b5ba5" },
-
+    backgroundColor,
+  }),
   name: {
     margin: 0,
     fontFamily: font.display,
-    fontSize: font.sizeXl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingSnug,
-    color: color.onSurface,
-    textWrap: "balance",
+    fontSize: "28px",
+    fontWeight: 600,
   },
-  colorName: {
+  colour: {
     margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWider,
+    marginBlockStart: "8px",
+    fontSize: "11px",
+    letterSpacing: "0.16em",
+    color: "rgba(1, 52, 5, 0.6)",
     textTransform: "uppercase",
-    color: color.onSurfaceSubtle,
-  },
-  heading: {
-    marginBlockEnd: space.sm,
   },
 });
 
-const SWATCH_STYLES = {
-  crimson: styles.swatchCrimson,
-  gold: styles.swatchGold,
-  green: styles.swatchGreen,
-  blue: styles.swatchBlue,
-} as const;
-
+/** The College's five houses, each with its colour as a diamond. */
 export const HouseSystem = ({
   houses = HOUSES,
-  eyebrow = HOUSES_EYEBROW,
-  heading = HOUSES_HEADING,
-  intro = HOUSES_INTRO,
 }: {
   houses?: readonly House[];
-  /** CMS-resolved section copy; falls back to the page's own constants. */
-  eyebrow?: string;
-  heading?: string;
-  intro?: string;
 }) => (
-  <Section id="houses" labelledBy="houses-title" tone="raised">
-    <Container>
-      <Eyebrow>{eyebrow}</Eyebrow>
-      <Heading id="houses-title" level={2} style={styles.heading}>
-        {heading}
-      </Heading>
-      <Lead>{intro}</Lead>
-
+  <DcSection id="houses" labelledBy="houses-title" tone="raised">
+    <DcInner>
+      <DcEyebrow>{HOUSES_EYEBROW}</DcEyebrow>
+      <DcHeading id="houses-title" style={styles.heading}>
+        {HOUSES_HEADING}
+      </DcHeading>
+      <p {...stylex.props(styles.intro)}>{HOUSES_INTRO}</p>
       <ul {...stylex.props(styles.grid)}>
-        {houses.map((house) => (
+        {houses.map((house, index) => (
           <li key={house.id} {...stylex.props(styles.cell)}>
-            <Reveal direction="up" style={styles.cell}>
+            <Reveal
+              delay={Math.min(index, 2) as 0 | 1 | 2}
+              direction="up"
+              style={styles.cell}
+            >
               <div {...stylex.props(styles.card)}>
-                <span
+                <div
                   aria-hidden="true"
-                  {...stylex.props(styles.swatch, SWATCH_STYLES[house.swatch])}
+                  {...stylex.props(styles.swatch(house.color))}
                 />
-                {/*
-                  Until the college publishes the roster the colour name *is*
-                  the house's name here - promoted to the heading so every card
-                  is announced by real text. A published name takes its place;
-                  neither case invents one.
-                */}
-                {house.name ? (
-                  <>
-                    <h3 {...stylex.props(styles.name)}>{house.name}</h3>
-                    <p {...stylex.props(styles.colorName)}>{house.colorName}</p>
-                  </>
-                ) : (
-                  <h3 {...stylex.props(styles.name)}>{house.colorName}</h3>
-                )}
+                <h3 {...stylex.props(styles.name)}>{house.name}</h3>
+                <p {...stylex.props(styles.colour)}>{house.colorName}</p>
               </div>
             </Reveal>
           </li>
         ))}
       </ul>
-    </Container>
-  </Section>
+    </DcInner>
+  </DcSection>
 );

@@ -1,247 +1,98 @@
 import * as stylex from "@stylexjs/stylex";
 
 import {
-  CLUBS,
   CLUBS_EYEBROW,
   CLUBS_HEADING,
-  CLUBS_INTRO,
+  CLUB_NAMES,
 } from "../../content/students";
-import type { Club } from "../../content/students";
-import { aspectRatios } from "../../tokens/aspect-ratios";
-import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
-import {
-  Container,
-  Eyebrow,
-  Heading,
-  Lead,
-  Section,
-} from "../primitives/layout";
+import { bp } from "../../tokens/breakpoints.stylex";
+import { DcEyebrow, DcHeading, DcInner, DcSection } from "../home/dc";
 import { Reveal } from "../primitives/reveal";
 
+const GOLD_LINE = "rgba(255, 178, 3, 0.2)";
+
+/** Club descriptions keyed by lower-cased club name. */
+export type ClubDescriptions = Readonly<Record<string, string>>;
+
 const styles = stylex.create({
+  heading: {
+    marginBlockEnd: "clamp(36px, 5vw, 60px)",
+  },
   /*
-   * Hairlines are drawn per cell as a right/bottom border, with the
-   * container's own 1px border closing the frame.
-   * Drawing the gap as a *container* background (the mock's trick) paints
-   * every unoccupied track too - with `auto-fit` and an item count that
-   * doesn't divide evenly into a row, the trailing row's empty tracks still
-   * have grid area and still show that background, which reads as a giant
-   * stray colour block after the last card. Per-cell shadows only draw where
-   * a cell actually exists, so a sparse last row stays exactly as wide as its
-   * cards and nothing more.
-   *
-   * `auto-fit` + `minmax` rather than the mock's hard `repeat(4, 1fr)`, which
-   * gives each of these eight cells ~56px at 320px. `min(100%, 15rem)` is what
-   * stops the track floor exceeding the container on a narrow phone.
+   * The hairline rules between cells are drawn by a 1px grid gap over the
+   * container's gold background, so the lines never double up where two cells
+   * meet at any column count.
    */
   grid: {
     display: "grid",
-    listStyle: "none",
+    gridTemplateColumns: {
+      default: "minmax(0, 1fr)",
+      [bp.md]: "repeat(2, minmax(0, 1fr))",
+      [bp.xl]: "repeat(4, minmax(0, 1fr))",
+    },
+    gap: "1px",
     margin: 0,
-    marginBlockStart: space["2xl"],
     padding: 0,
-    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 15rem), 1fr))",
-    gap: 0,
-    borderWidth: space.px,
+    listStyle: "none",
+    backgroundColor: GOLD_LINE,
+    borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: color.borderAccent,
+    borderColor: GOLD_LINE,
   },
   cell: {
     blockSize: "100%",
-    borderInlineEndWidth: space.px,
-    borderInlineEndStyle: "solid",
-    borderInlineEndColor: color.borderAccent,
-    borderBlockEndWidth: space.px,
-    borderBlockEndStyle: "solid",
-    borderBlockEndColor: color.borderAccent,
   },
   card: {
-    display: "flex",
-    flexDirection: "column",
-    gap: space["3xs"],
-    justifyContent: "center",
     blockSize: "100%",
-    // Keeps every cell a comfortable band on touch displays and smart boards
-    // even where a club has no description yet.
-    minBlockSize: "5.5rem",
-    padding: space.lg,
-    backgroundColor: {
-      default: color.surfaceInverse,
-      ":hover": color.surfaceInverseDeep,
-    },
-    transitionProperty: "background-color",
-    transitionDuration: motionToken.base,
-  },
-  /*
-   * A card carrying a banner puts its text below the image rather than over it.
-   * Overlaying would need a scrim, and a scrim over a photographer's chosen
-   * image decides for them which parts of their photograph stay visible - which
-   * is the one thing a cover banner should not do.
-   */
-  cardWithBanner: {
-    justifyContent: "flex-start",
-    padding: 0,
-    overflow: "hidden",
-  },
-  bannerText: {
-    display: "flex",
-    flexDirection: "column",
-    gap: space["3xs"],
-    padding: space.lg,
+    paddingBlock: "30px",
+    paddingInline: "26px",
+    backgroundColor: "#013405",
   },
   name: {
     margin: 0,
-    fontSize: font.sizeLg,
-    fontWeight: font.weightBold,
-    lineHeight: font.leadingSnug,
-    color: color.onInverse,
-    textWrap: "balance",
+    fontWeight: 700,
+    fontSize: "16px",
   },
   description: {
     margin: 0,
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingRelaxed,
-    color: color.onInverseSubtle,
-    textWrap: "pretty",
-  },
-  /*
-   * The club's own cover banner, shown as a band across the top of its card.
-   *
-   * The card is a fixed-height row in a hairline grid, so the banner is a
-   * reserved landscape box rather than a background: `object-fit: cover` on a
-   * full-bleed background would crop a photographer's composition differently at
-   * every card width, and the whole point of a club choosing this image is that
-   * it represents the club. A club with no banner renders no box at all, which
-   * keeps the grid tidy rather than showing a placeholder per card.
-   */
-  banner: {
-    display: "block",
-    width: "100%",
-    objectFit: "cover",
-  },
-  /*
-   * A card that links to the club's own page. The whole card becomes the hit
-   * target and the name underlines on hover - the affordance a visitor expects
-   * from a card that is also a link, without repainting the tile.
-   */
-  linkedCard: {
-    textDecoration: "none",
-    color: "inherit",
-  },
-  linkedName: {
-    textDecoration: {
-      default: "none",
-      ":hover": "underline",
-    },
-  },
-  // `Heading` and `Lead` both reset their margins, so the gap between them is
-  // the caller's to supply.
-  heading: {
-    color: color.onInverse,
-    marginBlockEnd: space.sm,
+    marginBlockStart: "6px",
+    fontSize: "12px",
+    lineHeight: 1.6,
+    color: "rgba(255, 248, 231, 0.55)",
   },
 });
 
-/**
- * One club tile: a link when the club has its own page, a plain card when it
- * does not. Both render the same visual, so a linked club is discoverable by
- * the underline-on-hover affordance rather than by a different layout.
- */
-const CardInner = ({ club }: { club: Club }) => {
-  const body = (
-    <>
-      {club.coverImageUrl ? (
-        // Decorative next to the club's name, which is right beside it,
-        // so an empty alt is correct rather than a missed description.
-        <img
-          alt=""
-          src={club.coverImageUrl}
-          style={{ aspectRatio: aspectRatios.mosaicTile }}
-          {...stylex.props(styles.banner)}
-        />
-      ) : null}
-      <div
-        {...stylex.props(club.coverImageUrl ? styles.bannerText : undefined)}
-      >
-        <h3
-          {...stylex.props(
-            styles.name,
-            club.href ? styles.linkedName : undefined
-          )}
-        >
-          {club.name}
-        </h3>
-        {/*
-          No filler when the society has not published what it does:
-          an empty slot is honest, `[CMS: description]` is not.
-          */}
-        {club.description ? (
-          <p {...stylex.props(styles.description)}>{club.description}</p>
-        ) : null}
-      </div>
-    </>
-  );
-
-  if (!club.href) {
-    return (
-      <div
-        {...stylex.props(
-          styles.card,
-          club.coverImageUrl ? styles.cardWithBanner : undefined
-        )}
-      >
-        {body}
-      </div>
-    );
-  }
-
-  return (
-    <a
-      href={club.href}
-      {...stylex.props(
-        styles.card,
-        styles.linkedCard,
-        club.coverImageUrl ? styles.cardWithBanner : undefined
-      )}
-    >
-      {body}
-    </a>
-  );
-};
-
+/** The College's societies, each with its published description if it has one. */
 export const ClubsSocieties = ({
-  clubs = CLUBS,
-  heading = CLUBS_HEADING,
-  intro = CLUBS_INTRO,
-  eyebrow = CLUBS_EYEBROW,
+  names = CLUB_NAMES,
+  descriptions,
 }: {
-  clubs?: readonly Club[];
-  /**
-   * The CMS `students-activities` heading. It used to be resolved by the route
-   * and then dropped, because `ClubsSocieties` rendered its own heading from
-   * the constant - so an editor who changed it saw no change on the page.
-   */
-  heading?: string;
-  intro?: string;
-  eyebrow?: string;
+  names?: readonly string[];
+  descriptions?: ClubDescriptions;
 }) => (
-  <Section id="clubs" labelledBy="clubs-title" tone="inverseGradient">
-    <Container>
-      <Eyebrow inverse>{eyebrow}</Eyebrow>
-      <Heading id="clubs-title" level={2} style={styles.heading}>
-        {heading}
-      </Heading>
-      <Lead inverse>{intro}</Lead>
-
+  <DcSection id="clubs" labelledBy="clubs-title" tone="greenGradient">
+    <DcInner>
+      <DcEyebrow gold>{CLUBS_EYEBROW}</DcEyebrow>
+      <DcHeading id="clubs-title" style={styles.heading}>
+        {CLUBS_HEADING}
+      </DcHeading>
       <ul {...stylex.props(styles.grid)}>
-        {clubs.map((club) => (
-          <li key={club.id} {...stylex.props(styles.cell)}>
-            <Reveal direction="up" style={styles.cell}>
-              <CardInner club={club} />
-            </Reveal>
-          </li>
-        ))}
+        {names.map((name) => {
+          const description = descriptions?.[name.toLowerCase()];
+          return (
+            <li key={name} {...stylex.props(styles.cell)}>
+              <Reveal direction="up" style={styles.cell}>
+                <div {...stylex.props(styles.card)}>
+                  <h3 {...stylex.props(styles.name)}>{name}</h3>
+                  {description ? (
+                    <p {...stylex.props(styles.description)}>{description}</p>
+                  ) : null}
+                </div>
+              </Reveal>
+            </li>
+          );
+        })}
       </ul>
-    </Container>
-  </Section>
+    </DcInner>
+  </DcSection>
 );
