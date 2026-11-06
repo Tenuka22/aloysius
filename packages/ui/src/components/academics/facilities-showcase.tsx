@@ -134,7 +134,7 @@ const styles = stylex.create({
     fontSize: "11px",
     letterSpacing: "0.06em",
   },
-  numIdle: { color: "rgba(255, 248, 231, 0.4)" },
+  numIdle: { color: "rgba(255, 248, 231, 0.62)" },
   numActive: { color: "#FFB203" },
   name: {
     fontFamily: font.display,
@@ -159,7 +159,7 @@ const styles = stylex.create({
     textTransform: "uppercase",
     whiteSpace: "nowrap",
   },
-  tagIdle: { color: "rgba(255, 248, 231, 0.32)" },
+  tagIdle: { color: "rgba(255, 248, 231, 0.6)" },
   tagActive: { color: "rgba(255, 248, 231, 0.75)" },
 
   stage: {

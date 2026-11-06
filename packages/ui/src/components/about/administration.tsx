@@ -71,8 +71,8 @@ export const Administration = ({
         </DcHeading>
         <ul {...stylex.props(styles.grid)}>
           {people.map((person) => (
-            <Reveal direction="up" key={person.id}>
-              <li {...stylex.props(styles.card)}>
+            <li key={person.id} {...stylex.props(styles.card)}>
+              <Reveal direction="up">
                 <DcSlot
                   inverse
                   placeholder="Portrait"
@@ -83,8 +83,8 @@ export const Administration = ({
                 {person.role ? (
                   <p {...stylex.props(styles.role)}>{person.role}</p>
                 ) : null}
-              </li>
-            </Reveal>
+              </Reveal>
+            </li>
           ))}
         </ul>
       </DcInner>

@@ -45,7 +45,7 @@ const styles = stylex.create({
     fontFamily: "ui-monospace, monospace",
     fontSize: "16px",
     lineHeight: 1,
-    color: "rgba(1, 52, 5, 0.4)",
+    color: "rgba(1, 52, 5, 0.66)",
   },
   rule: {
     gridColumn: {

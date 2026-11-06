@@ -41,7 +41,8 @@ const styles = stylex.create({
     fontFamily: font.display,
     fontSize: "64px",
     fontWeight: 600,
-    color: "#FFB203",
+    // The design's gold on cream is 1.7:1; its own darker gold passes at this size.
+    color: "#936500",
     lineHeight: 0.9,
   },
   totalLabel: {
@@ -58,7 +59,7 @@ const styles = stylex.create({
     fontSize: "11px",
     letterSpacing: "0.32em",
     fontWeight: 700,
-    color: "rgba(1, 52, 5, 0.6)",
+    color: "rgba(1, 52, 5, 0.72)",
     textTransform: "uppercase",
   },
   mainGrid: {
@@ -136,7 +137,7 @@ const styles = stylex.create({
   },
   allCount: {
     fontSize: "12.5px",
-    color: "rgba(1, 52, 5, 0.6)",
+    color: "rgba(1, 52, 5, 0.72)",
   },
   chips: {
     display: "grid",
@@ -161,7 +162,7 @@ const styles = stylex.create({
     display: "block",
     fontFamily: MONO,
     fontSize: "10px",
-    color: "rgba(1, 52, 5, 0.5)",
+    color: "rgba(1, 52, 5, 0.7)",
   },
   chipName: {
     display: "block",

@@ -61,7 +61,7 @@ const styles = stylex.create({
     fontSize: "12px",
     letterSpacing: "0.14em",
     textTransform: "uppercase",
-    color: "rgba(1, 52, 5, 0.6)",
+    color: "rgba(1, 52, 5, 0.72)",
   },
   photos: {
     display: "flex",

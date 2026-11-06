@@ -65,7 +65,7 @@ const styles = stylex.create({
     marginBlockStart: "8px",
     fontSize: "11px",
     letterSpacing: "0.16em",
-    color: "rgba(1, 52, 5, 0.6)",
+    color: "rgba(1, 52, 5, 0.72)",
     textTransform: "uppercase",
   },
 });
