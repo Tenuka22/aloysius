@@ -19,8 +19,11 @@ export const aspectRatios = {
    */
   heritageDetail: 3 / 2,
 
-  /** Principal portrait (portrait orientation). */
+  /** Portrait of a person (portrait orientation) - staff, notables, facilities. */
   principalPortrait: 4 / 5,
+
+  /** The Principal's own photograph beside their message: 3 wide by 4 tall. */
+  principalMessage: 3 / 4,
 
   /** News card thumbnail (landscape, tight crop). */
   newsCard: 16 / 10,
@@ -56,6 +59,7 @@ export const aspectRatioNames: Record<AspectRatioKey, string> = {
   heritagePhoto: "4:3",
   heritageDetail: "3:2",
   principalPortrait: "4:5",
+  principalMessage: "3:4",
   newsCard: "16:10",
   galleryThumb: "1:1",
   mosaicTile: "3:2",
@@ -72,6 +76,7 @@ export const aspectRatioLabels: Record<AspectRatioKey, string> = {
   heritagePhoto: "4 : 3 — Heritage photograph",
   heritageDetail: "3 : 2 — Heritage architectural detail",
   principalPortrait: "4 : 5 — Portrait",
+  principalMessage: "3 : 4 — Principal's photograph",
   newsCard: "16 : 10 — News card",
   galleryThumb: "1 : 1 — Square thumbnail",
   mosaicTile: "3 : 2 — Mosaic tile",
@@ -88,6 +93,7 @@ export const aspectRatioMinWidth: Record<AspectRatioKey, number> = {
   heritagePhoto: 1200,
   heritageDetail: 1200,
   principalPortrait: 800,
+  principalMessage: 900,
   newsCard: 800,
   galleryThumb: 600,
   mosaicTile: 800,
