@@ -20,6 +20,13 @@ import {
 
 const SCROLL_THRESHOLD_PX = 24;
 
+const rise = stylex.keyframes({
+  from: { opacity: 0, transform: "translateY(18px)" },
+  to: { opacity: 1, transform: "translateY(0)" },
+});
+
+const EASE_OUT = "cubic-bezier(0.2, 0.7, 0.2, 1)";
+
 const styles = stylex.create({
   header: {
     position: "sticky",
@@ -27,14 +34,90 @@ const styles = stylex.create({
     zIndex: layer.header,
     backgroundColor: color.surfaceInverse,
     color: color.onInverse,
-    boxShadow: "0 1px 0 rgba(255, 178, 3, 0.25)",
-    transitionProperty: "box-shadow, background-color",
-    transitionDuration: motionToken.base,
+    boxShadow: "none",
+    transitionProperty: "box-shadow, background-color, backdrop-filter",
+    transitionDuration: "320ms",
+    transitionTimingFunction: EASE_OUT,
     // Respect the notch in landscape on iPhone.
     paddingInline: space.gutter,
   },
+  /**
+   * Over the home page's video.
+   *
+   * Wide screens (the full link row): the header is transparent, and turns into
+   * the frosted green bar once the page scrolls.
+   *
+   * Phones and tablets (menu button): the header is invisible and only the
+   * capsule inside it (`innerCapsule`) is drawn, inset from the screen edges, so
+   * nothing runs edge to edge across the footage.
+   */
+  headerOverlay: {
+    backgroundColor: "transparent",
+    boxShadow: "none",
+    paddingBlockStart: {
+      default: space.xs,
+      [bp.xxl]: 0,
+    },
+  },
+  headerOverlayScrolled: {
+    backgroundColor: {
+      default: "transparent",
+      [bp.xxl]: "rgba(1, 52, 5, 0.86)",
+    },
+    backdropFilter: {
+      default: "none",
+      [bp.xxl]: "blur(16px) saturate(1.5)",
+    },
+  },
+  overlayText: {
+    textShadow: "0 1px 2px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.45)",
+  },
+  innerCapsule: {
+    backgroundColor: {
+      default: "rgba(6, 36, 9, 0.52)",
+      [bp.xxl]: "transparent",
+    },
+    backdropFilter: {
+      default: "blur(18px) saturate(1.6)",
+      [bp.xxl]: "none",
+    },
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: {
+      default: "rgba(255, 248, 231, 0.18)",
+      [bp.xxl]: "transparent",
+    },
+    borderRadius: {
+      default: "1.75rem",
+      [bp.md]: "999px",
+      [bp.xxl]: 0,
+    },
+    paddingInlineStart: {
+      default: space.xs,
+      [bp.xxl]: 0,
+    },
+    paddingInlineEnd: {
+      default: space.xs,
+      [bp.xxl]: 0,
+    },
+    transitionProperty: "background-color, border-color",
+    transitionDuration: "320ms",
+  },
+  innerCapsuleScrolled: {
+    backgroundColor: {
+      default: "rgba(6, 36, 9, 0.82)",
+      [bp.xxl]: "transparent",
+    },
+    borderColor: {
+      default: "rgba(255, 178, 3, 0.32)",
+      [bp.xxl]: "transparent",
+    },
+  },
+  /** Frosted deep-green glass once the page is moving underneath it. */
   headerScrolled: {
-    boxShadow: "0 8px 28px rgba(0, 0, 0, 0.28)",
+    backgroundColor: "rgba(1, 52, 5, 0.86)",
+    backdropFilter: "blur(16px) saturate(1.5)",
+    boxShadow: "none",
   },
   inner: {
     display: "flex",
@@ -46,7 +129,16 @@ const styles = stylex.create({
     // stealing a fifth of a small phone's viewport.
     minHeight: {
       default: "4rem",
-      [bp.lg]: "4.875rem",
+      [bp.lg]: "5rem",
+    },
+    transitionProperty: "min-height",
+    transitionDuration: "320ms",
+    transitionTimingFunction: EASE_OUT,
+  },
+  innerCompact: {
+    minHeight: {
+      default: "3.5rem",
+      [bp.lg]: "4.25rem",
     },
   },
 
@@ -64,11 +156,34 @@ const styles = stylex.create({
   crest: {
     flexShrink: 0,
     height: {
-      default: "2.25rem",
-      [bp.lg]: "3.25rem",
+      default: "2.5rem",
+      [bp.lg]: "3.5rem",
     },
     width: "auto",
     objectFit: "contain",
+    filter: "drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35))",
+    transitionProperty: "height",
+    transitionDuration: "320ms",
+    transitionTimingFunction: EASE_OUT,
+  },
+  crestCompact: {
+    height: {
+      default: "2.25rem",
+      [bp.lg]: "2.75rem",
+    },
+  },
+  /** A hairline between the crest and the name, as on a letterhead. */
+  brandRule: {
+    flexShrink: 0,
+    width: space.px,
+    alignSelf: "stretch",
+    marginBlock: space["2xs"],
+    marginInline: space["2xs"],
+    backgroundColor: "rgba(255, 248, 231, 0.28)",
+    display: {
+      default: "none",
+      [bp.sm]: "block",
+    },
   },
   brandText: {
     display: "flex",
@@ -78,17 +193,34 @@ const styles = stylex.create({
     overflowWrap: "break-word",
   },
   brandName: {
+    fontFamily: font.display,
     fontSize: {
-      default: font.sizeXs,
-      [bp.lg]: font.sizeSm,
+      default: font.sizeSm,
+      [bp.sm]: font.sizeMd,
+      [bp.lg]: font.sizeXl,
     },
-    fontWeight: font.weightExtrabold,
-    letterSpacing: font.trackingWide,
+    fontWeight: font.weightBold,
+    letterSpacing: {
+      default: "0.04em",
+      [bp.lg]: "0.06em",
+    },
+    lineHeight: 1.1,
     textTransform: "uppercase",
   },
   brandPlace: {
-    fontSize: font.size2xs,
-    letterSpacing: font.trackingWidest,
+    marginBlockStart: "0.2rem",
+    // Never wraps: a second line of tracked capitals under the name is what made
+    // the bar look broken on a 320px phone.
+    whiteSpace: "nowrap",
+    fontSize: {
+      default: "0.625rem",
+      [bp.sm]: font.size2xs,
+    },
+    fontWeight: font.weightSemibold,
+    letterSpacing: {
+      default: "0.18em",
+      [bp.sm]: "0.32em",
+    },
     textTransform: "uppercase",
     color: color.accent,
   },
@@ -115,29 +247,33 @@ const styles = stylex.create({
     display: "inline-flex",
     alignItems: "center",
     minHeight: "2.75rem",
-    fontSize: font.sizeSm,
-    fontWeight: font.weightSemibold,
+    paddingInline: space["3xs"],
+    fontSize: font.sizeMd,
+    fontWeight: font.weightMedium,
+    letterSpacing: "0.04em",
     textDecoration: "none",
     whiteSpace: "nowrap",
     color: {
-      default: color.onInverse,
-      ":hover": color.accent,
+      default: "rgba(255, 248, 231, 0.92)",
+      ":hover": color.onInverse,
     },
-    // The underline is a permanently-present transparent border rather than a
-    // pseudo-element that appears on hover: it can never change the box and
-    // shift the links beside it.
-    borderBlockEndWidth: "2px",
-    borderBlockEndStyle: "solid",
-    borderBlockEndColor: {
-      default: "transparent",
-      ":hover": color.accent,
+    // The underline is a background that grows from the centre, so it can never
+    // change the box and shift the links beside it.
+    backgroundImage: `linear-gradient(${color.accent}, ${color.accent})`,
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "center calc(100% - 0.55rem)",
+    backgroundSize: {
+      default: "0% 2px",
+      ":hover": "100% 2px",
     },
-    transitionProperty: "color, border-color",
-    transitionDuration: motionToken.fast,
+    transitionProperty: "color, background-size",
+    transitionDuration: "360ms",
+    transitionTimingFunction: EASE_OUT,
   },
   navLinkActive: {
     color: color.accent,
-    borderBlockEndColor: color.accent,
+    fontWeight: font.weightSemibold,
+    backgroundSize: "100% 2px",
   },
 
   cta: {
@@ -153,7 +289,7 @@ const styles = stylex.create({
       ":hover": color.accentHover,
     },
     color: color.onAccent,
-    fontSize: font.sizeXs,
+    fontSize: font.sizeMd,
     fontWeight: font.weightExtrabold,
     letterSpacing: font.trackingWide,
     textDecoration: "none",
@@ -174,11 +310,17 @@ const styles = stylex.create({
     padding: 0,
     borderWidth: space.px,
     borderStyle: "solid",
-    borderColor: color.borderInverse,
+    borderColor: {
+      default: "rgba(255, 248, 231, 0.3)",
+      ":hover": color.accent,
+    },
+    borderRadius: "999px",
     backgroundColor: {
       default: "transparent",
-      ":hover": "rgba(255, 248, 231, 0.1)",
+      ":hover": "rgba(255, 178, 3, 0.12)",
     },
+    transitionProperty: "border-color, background-color",
+    transitionDuration: "240ms",
     color: color.onInverse,
     cursor: "pointer",
     touchAction: "manipulation",
@@ -225,6 +367,14 @@ const styles = stylex.create({
       backgroundColor: "rgba(1, 52, 5, 0.6)",
     },
   },
+  // The watermark bleeds off the edge on purpose; clipping it in its own box
+  // means it adds nothing to the menu's scrollable width.
+  drawerWatermarkClip: {
+    position: "absolute",
+    inset: 0,
+    overflow: "hidden",
+    pointerEvents: "none",
+  },
   drawerWatermark: {
     position: "absolute",
     insetInlineEnd: "-7rem",
@@ -246,6 +396,10 @@ const styles = stylex.create({
     // Scrolls internally when a short landscape phone cannot show all the
     // items at once.
     overflowY: "auto",
+    // The watermark deliberately bleeds off the right edge. Without this the
+    // overflow made the whole menu scrollable sideways, and focusing the close
+    // button scrolled the links out of view.
+    overflowX: "hidden",
     paddingBlock: space.md,
     paddingInline: space.md,
     paddingInlineEnd: `max(${space.md}, env(safe-area-inset-right))`,
@@ -265,6 +419,13 @@ const styles = stylex.create({
     paddingInline: space.sm,
   },
   drawerLink: {
+    animationName: {
+      default: rise,
+      "@media (prefers-reduced-motion: reduce)": "none",
+    },
+    animationDuration: "560ms",
+    animationTimingFunction: EASE_OUT,
+    animationFillMode: "both",
     display: "flex",
     alignItems: "baseline",
     gap: space.sm,
@@ -281,7 +442,8 @@ const styles = stylex.create({
   },
   drawerNumber: {
     fontFamily: font.mono,
-    fontSize: font.size2xs,
+    fontSize: font.sizeXs,
+    letterSpacing: "0.12em",
     color: "rgba(255, 248, 231, 0.55)",
   },
   drawerNumberActive: {
@@ -290,7 +452,7 @@ const styles = stylex.create({
   drawerLabel: {
     fontFamily: font.display,
     fontSize: "clamp(1.75rem, 1.4rem + 1.8vw, 2.25rem)",
-    fontWeight: font.weightSemibold,
+    fontWeight: font.weightBold,
     lineHeight: font.leadingSnug,
   },
   drawerLinkActive: {
@@ -310,7 +472,7 @@ const styles = stylex.create({
     minHeight: "3rem",
     backgroundColor: color.accent,
     color: color.onAccent,
-    fontSize: font.sizeSm,
+    fontSize: font.sizeMd,
     fontWeight: font.weightExtrabold,
     letterSpacing: font.trackingWide,
     textDecoration: "none",
@@ -330,7 +492,9 @@ export const SiteHeader = ({
   items = NAV_ITEMS,
   extraNavItems,
   crestSrc = "/logo.png",
+  overlay = false,
 }: {
+  overlay?: boolean;
   activeHref?: string;
   items?: readonly NavItem[];
   extraNavItems?: readonly NavItem[];
@@ -411,17 +575,31 @@ export const SiteHeader = ({
   return (
     <>
       <header
-        {...stylex.props(styles.header, scrolled && styles.headerScrolled)}
+        {...stylex.props(
+          styles.header,
+          !overlay && scrolled && styles.headerScrolled,
+          overlay && styles.headerOverlay,
+          overlay && scrolled && styles.headerOverlayScrolled,
+          overlay && !scrolled && styles.overlayText
+        )}
       >
-        <div {...stylex.props(styles.inner)}>
+        <div
+          {...stylex.props(
+            styles.inner,
+            overlay && styles.innerCapsule,
+            overlay && scrolled && styles.innerCapsuleScrolled,
+            scrolled && styles.innerCompact
+          )}
+        >
           <a href="/" {...stylex.props(styles.brand)}>
             <img
               alt={`${COLLEGE_NAME} crest`}
               height={52}
               src={crestSrc}
               width={52}
-              {...stylex.props(styles.crest)}
+              {...stylex.props(styles.crest, scrolled && styles.crestCompact)}
             />
+            <span aria-hidden="true" {...stylex.props(styles.brandRule)} />
             <span {...stylex.props(styles.brandText)}>
               <span {...stylex.props(styles.brandName)}>{COLLEGE_NAME}</span>
               <span {...stylex.props(styles.brandPlace)}>
@@ -503,14 +681,15 @@ export const SiteHeader = ({
         {...stylex.props(styles.drawer)}
       >
         <div data-lenis-prevent {...stylex.props(styles.drawerInner)}>
-          <img
-            alt=""
-            aria-hidden="true"
-            decoding="async"
-            loading="lazy"
-            src={crestSrc}
-            {...stylex.props(styles.drawerWatermark)}
-          />
+          <div aria-hidden="true" {...stylex.props(styles.drawerWatermarkClip)}>
+            <img
+              alt=""
+              decoding="async"
+              loading="lazy"
+              src={crestSrc}
+              {...stylex.props(styles.drawerWatermark)}
+            />
+          </div>
           <div {...stylex.props(styles.drawerHead)}>
             <img
               alt=""
@@ -533,16 +712,21 @@ export const SiteHeader = ({
           <nav aria-label="Mobile" {...stylex.props(styles.drawerNav)}>
             {allItems.map((item, index) => {
               const isActive = item.href === activeHref;
+              const linkProps = stylex.props(
+                styles.drawerLink,
+                isActive && styles.drawerLinkActive
+              );
               return (
                 <a
                   aria-current={isActive ? "page" : undefined}
                   href={item.href}
                   key={item.id}
                   onClick={close}
-                  {...stylex.props(
-                    styles.drawerLink,
-                    isActive && styles.drawerLinkActive
-                  )}
+                  {...linkProps}
+                  style={{
+                    ...linkProps.style,
+                    animationDelay: `${120 + index * 55}ms`,
+                  }}
                 >
                   <span
                     aria-hidden="true"

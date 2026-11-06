@@ -72,9 +72,6 @@ const GalleryContent = () => {
     }
     const items: NavItem[] = [];
     const { role } = session.user;
-    if (role === "admin" || role === "cms") {
-      items.push({ id: "cms", label: "CMS", href: "/cms" });
-    }
     if (role === "admin") {
       items.push({ id: "admin", label: "Admin", href: "/admin" });
     }
