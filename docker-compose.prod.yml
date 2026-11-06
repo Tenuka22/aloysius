@@ -45,15 +45,30 @@ services:
       - -c
       - |
         set -eu
-        apk add --no-cache bash wget >/dev/null
-        wget -qO- 'https://artifacts-cli.infisical.com/setup.apk.sh' | sh >/dev/null
-        apk add --no-cache infisical >/dev/null
+        # Each step announces itself and lets its own errors through, so a failed
+        # deploy says which step broke. Never add `set -x`: it would print the
+        # client secret into the container log.
+        echo "[1/5] installing tools"
+        apk add --no-cache bash wget ca-certificates
+        echo "[2/5] installing the Infisical CLI"
+        wget -qO- 'https://artifacts-cli.infisical.com/setup.apk.sh' | sh
+        apk add --no-cache infisical
+        infisical --version
+        echo "[3/5] checking $$INFISICAL_DOMAIN is reachable"
+        wget -q --spider --timeout=15 "$$INFISICAL_DOMAIN/api/status" \
+          || { echo "cannot reach $$INFISICAL_DOMAIN from this container (DNS, firewall or TLS)"; exit 1; }
+        echo "[4/5] logging in as the machine identity"
         TOKEN=$$(infisical login --method=universal-auth \
           --client-id="$$IDENTITY_CLIENT_ID" --client-secret="$$IDENTITY_CLIENT_SECRET" \
-          --plain --silent)
+          --plain --silent) \
+          || { echo "login failed: check IDENTITY_CLIENT_ID and IDENTITY_CLIENT_SECRET"; exit 1; }
+        [ -n "$$TOKEN" ] || { echo "login returned no token"; exit 1; }
         export INFISICAL_TOKEN="$$TOKEN"
+        echo "[5/5] exporting the prod secrets"
         infisical sm export --projectId="$$INFISICAL_PROJECT_ID" --env=prod \
-          --format=dotenv > /secrets/app.env.tmp
+          --format=dotenv > /secrets/app.env.tmp \
+          || { echo "export failed: check INFISICAL_PROJECT_ID and that the identity can read the prod environment"; exit 1; }
+        [ -s /secrets/app.env.tmp ] || { echo "export was empty: the prod environment has no secrets"; exit 1; }
         chmod 644 /secrets/app.env.tmp
         mv /secrets/app.env.tmp /secrets/app.env
         echo "secrets synced"
