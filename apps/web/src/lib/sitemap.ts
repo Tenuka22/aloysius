@@ -24,7 +24,6 @@ export const STATIC_PAGES: readonly StaticPage[] = [
   { contentPages: ["homepage", "principal"], path: "/" },
   { contentPages: ["about"], path: "/about" },
   { contentPages: ["academics"], path: "/academics" },
-  { contentPages: ["results"], path: "/results" },
   { contentPages: ["alumni"], path: "/alumni" },
   { contentPages: ["students"], path: "/students" },
   { contentPages: ["news"], path: "/news" },

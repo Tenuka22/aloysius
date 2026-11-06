@@ -9,10 +9,9 @@
 
 ## Pages
 
-- [Home](https://aloysiuscollege.lk/): overview, principal's message, latest news, exam results highlights, gallery
+- [Home](https://aloysiuscollege.lk/): overview, principal's message, latest news, gallery
 - [About](https://aloysiuscollege.lk/about): history from 1895, founders, vision and mission, administration, principal's message
 - [Academics](https://aloysiuscollege.lk/academics): sections of study, G.C.E. A/L streams, departments, academic leadership, facilities
-- [Examinations & Results](https://aloysiuscollege.lk/results): G.C.E. O/L and A/L results, Grade 5 scholarship results, top rankers
 - [Student Life](https://aloysiuscollege.lk/students): clubs and societies, sports, events, achievements
 - [News & Events](https://aloysiuscollege.lk/news): announcements, news articles, upcoming events
 - [Alumni](https://aloysiuscollege.lk/alumni): the Old Boys' Association, branches, distinguished Aloysians
