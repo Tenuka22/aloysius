@@ -239,7 +239,7 @@ export const ContactHero = ({
           <h1 id="contact-hero-title" {...stylex.props(styles.title)}>
             {title === CONTACT_HERO_TITLE ? (
               <>
-                {title.slice(0, -CONTACT_HERO_TITLE_ACCENT.length).trimEnd()}
+                {title.slice(0, -CONTACT_HERO_TITLE_ACCENT.length).trimEnd()}{" "}
                 <br />
                 <em {...stylex.props(styles.accent)}>
                   {CONTACT_HERO_TITLE_ACCENT}
