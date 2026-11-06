@@ -118,13 +118,12 @@ export const blocksToProps = (blocks: CmsBlock[]) => {
      * rather than being duplicated into every page's props.
      */
 
-    academicsEyebrow: optionalField("academics", "academics-eyebrow"),
-    academicsHeading: optionalField("academics", "academics-heading"),
-
     lifeHeading: optionalField("life", "life-heading"),
     newsHeading: optionalField("news", "news-heading"),
-    achHeading: optionalField("achievements", "ach-heading"),
-    alumniHeading: optionalField("alumni", "alumni-heading"),
+    achHeading: optionalField("achievements", "ach-title"),
+    achIntro: optionalField("achievements", "ach-intro"),
+    alumniQuote: optionalField("alumni", "alumni-quote"),
+    alumniBody: optionalField("alumni", "alumni-body"),
 
     heritageImages: [
       imageSource(
@@ -153,6 +152,18 @@ export const blocksToProps = (blocks: CmsBlock[]) => {
         "life-music",
         "Students participating in music and drama"
       ),
+      scouts: imageSource(
+        blocks,
+        "life",
+        "life-scouts",
+        "Scouts and cadets on parade"
+      ),
+      faith: imageSource(
+        blocks,
+        "life",
+        "life-faith",
+        "Students at chapel and in community service"
+      ),
     },
     alumniPhoto: imageSource(
       blocks,
@@ -165,7 +176,6 @@ export const blocksToProps = (blocks: CmsBlock[]) => {
     hidden: {
       hero: isHidden(blocks, "hero"),
       heritage: isHidden(blocks, "heritage"),
-      academics: isHidden(blocks, "academics"),
       life: isHidden(blocks, "life"),
       news: isHidden(blocks, "news"),
       achievements: isHidden(blocks, "achievements"),

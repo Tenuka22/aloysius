@@ -2,71 +2,64 @@ import * as stylex from "@stylexjs/stylex";
 
 import { formatNewsDate } from "../../content/home";
 import type { NewsItem } from "../../content/home";
-import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
-import { ArrowLink } from "../primitives/button";
-import {
-  Container,
-  Eyebrow,
-  Heading,
-  Section,
-  SectionHeader,
-} from "../primitives/layout";
-import { Media } from "../primitives/media";
+import { font } from "../../tokens/tokens.stylex";
 import { Reveal } from "../primitives/reveal";
+import { DcEyebrow, DcHeading, DcInner, DcLink, DcSection, DcSlot } from "./dc";
+import { dc } from "./dc-styles";
 
 const styles = stylex.create({
   grid: {
     display: "grid",
-    gap: space.xl,
-    gridTemplateColumns: {
-      default: "minmax(0, 1fr)",
-      [bp.xl]: "minmax(0, 1.4fr) minmax(0, 1fr)",
-    },
+    gap: "40px",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))",
     alignItems: "start",
   },
   featured: {
     display: "block",
     textDecoration: "none",
-    color: "inherit",
+    color: "#013405",
     minWidth: 0,
+  },
+  featuredPhoto: {
+    width: "100%",
+    height: "clamp(260px, 40vw, 380px)",
   },
   featuredTitle: {
     margin: 0,
-    marginBlockStart: space["2xs"],
     fontFamily: font.display,
-    fontSize: font.size2xl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingSnug,
-    textWrap: "pretty",
+    fontSize: "32px",
+    fontWeight: 600,
+    lineHeight: 1.15,
     color: {
-      default: color.onSurface,
-      ":hover": color.accentOnSurface,
+      default: "#013405",
+      ":hover": "#A51919",
     },
-    transitionProperty: "color",
-    transitionDuration: motionToken.fast,
   },
   meta: {
     display: "flex",
     flexWrap: "wrap",
-    gap: space["2xs"],
     alignItems: "center",
-    marginBlockStart: space.sm,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWider,
+    gap: "14px",
+    margin: 0,
+    marginBlock: "20px 10px",
+    fontSize: "11px",
+    fontWeight: 700,
+    letterSpacing: "0.14em",
     textTransform: "uppercase",
   },
-  category: {
-    color: color.accentOnSurface,
+  metaItem: {
+    marginBlock: "0 8px",
+    fontSize: "10.5px",
+  },
+  categoryCrimson: {
+    color: "#A51919",
+  },
+  categoryGreen: {
+    color: "#013405",
   },
   date: {
-    color: color.onSurfaceSubtle,
-    // Normal case reads better than uppercase for a date.
-    textTransform: "none",
-    letterSpacing: font.trackingWide,
+    color: "rgba(1, 52, 5, 0.45)",
   },
-
   list: {
     display: "flex",
     flexDirection: "column",
@@ -76,39 +69,32 @@ const styles = stylex.create({
     minWidth: 0,
   },
   item: {
-    borderBlockEndWidth: space.px,
+    borderBlockEndWidth: "1px",
     borderBlockEndStyle: "solid",
-    borderBlockEndColor: color.border,
+    borderBlockEndColor: "rgba(1, 52, 5, 0.12)",
   },
   itemLink: {
     display: "block",
-    paddingBlock: space.sm,
+    paddingBlock: "22px",
     textDecoration: "none",
-    color: "inherit",
+    color: "#013405",
   },
   itemTitle: {
     margin: 0,
-    marginBlockStart: space["3xs"],
-    fontSize: font.sizeLg,
-    fontWeight: font.weightBold,
-    lineHeight: font.leadingNormal,
-    textWrap: "pretty",
+    fontSize: "16.5px",
+    fontWeight: 700,
+    lineHeight: 1.4,
     color: {
-      default: color.onSurface,
-      ":hover": color.accentOnSurface,
+      default: "#013405",
+      ":hover": "#A51919",
     },
-    transitionProperty: "color",
-    transitionDuration: motionToken.fast,
-  },
-  itemMeta: {
-    marginBlockStart: 0,
   },
   empty: {
     margin: 0,
-    paddingBlock: space.xl,
-    color: color.onSurfaceSubtle,
-    fontSize: font.sizeSm,
+    paddingBlock: "48px",
+    fontSize: "14px",
     textAlign: "center",
+    color: "rgba(1, 52, 5, 0.68)",
   },
 });
 
@@ -116,106 +102,103 @@ export const News = ({
   featured,
   items,
   allHref = "/news",
+  heading = "Life at the College",
 }: {
   featured?: NewsItem;
   items: readonly NewsItem[];
   allHref?: string;
+  heading?: string;
 }) => {
-  /*
-   * Both the featured slot and the list are fed from real tables, so this
-   * section genuinely can arrive with nothing in it. The heading is left in
-   * place with a one-line placeholder rather than the section being dropped
-   * outright: the section is not what the CMS hidden toggle controls, and a
-   * heading that vanishes while its neighbours stay reads as a broken page.
-   * An empty `<ul>` with no explanation is the thing worth avoiding.
-   */
-  if (!featured && items.length === 0) {
-    return (
-      <Section id="news" labelledBy="news-title" tone="raised">
-        <Container>
-          <SectionHeader>
-            <Eyebrow>News &amp; events</Eyebrow>
-            <Heading id="news-title" level={2}>
-              Life at the College
-            </Heading>
-          </SectionHeader>
+  const hasNothing = !featured && items.length === 0;
+
+  return (
+    <DcSection id="news" labelledBy="news-title" tone="raised">
+      <DcInner>
+        <div {...stylex.props(dc.header)}>
+          <div>
+            <DcEyebrow>News &amp; events</DcEyebrow>
+            <DcHeading id="news-title">{heading}</DcHeading>
+          </div>
+          {hasNothing ? null : (
+            <DcLink href={allHref}>
+              View All News <span aria-hidden="true">→</span>
+            </DcLink>
+          )}
+        </div>
+
+        {/*
+         * Both slots are fed from real tables, so the section can arrive with
+         * nothing in it. The heading stays (hiding is the CMS toggle's call) and
+         * a line explains the gap rather than leaving an empty list.
+         */}
+        {hasNothing ? (
           <p {...stylex.props(styles.empty)}>
             No stories have been published yet. Visit the news page for the
             latest from the College.
           </p>
-        </Container>
-      </Section>
-    );
-  }
+        ) : (
+          <div {...stylex.props(styles.grid)}>
+            {featured ? (
+              <Reveal direction="up">
+                <a href={featured.href} {...stylex.props(styles.featured)}>
+                  <DcSlot
+                    placeholder="Featured story image"
+                    source={featured.image}
+                    style={styles.featuredPhoto}
+                  />
+                  <p {...stylex.props(styles.meta)}>
+                    <span {...stylex.props(styles.categoryCrimson)}>
+                      {featured.category}
+                    </span>
+                    {featured.date ? (
+                      <time
+                        dateTime={featured.date}
+                        {...stylex.props(styles.date)}
+                      >
+                        {formatNewsDate(featured.date)}
+                      </time>
+                    ) : null}
+                  </p>
+                  <h3 {...stylex.props(styles.featuredTitle)}>
+                    {featured.title}
+                  </h3>
+                </a>
+              </Reveal>
+            ) : null}
 
-  return (
-    <Section id="news" labelledBy="news-title" tone="raised">
-      <Container>
-        <SectionHeader
-          action={<ArrowLink href={allHref}>View all news</ArrowLink>}
-        >
-          <Eyebrow>News &amp; events</Eyebrow>
-          <Heading id="news-title" level={2}>
-            Life at the College
-          </Heading>
-        </SectionHeader>
-
-        <div {...stylex.props(styles.grid)}>
-          {featured ? (
-            <Reveal direction="up">
-              <a href={featured.href} {...stylex.props(styles.featured)}>
-                <Media
-                  placeholder="Featured story image"
-                  ratio="3:2"
-                  source={featured.image}
-                  zoom
-                />
-                <p {...stylex.props(styles.meta)}>
-                  <span {...stylex.props(styles.category)}>
-                    {featured.category}
-                  </span>
-                  {featured.date ? (
-                    <time
-                      dateTime={featured.date}
-                      {...stylex.props(styles.date)}
-                    >
-                      {formatNewsDate(featured.date)}
-                    </time>
-                  ) : null}
-                </p>
-                <h3 {...stylex.props(styles.featuredTitle)}>
-                  {featured.title}
-                </h3>
-              </a>
-            </Reveal>
-          ) : null}
-
-          <Reveal delay={1} direction="up">
-            <ul {...stylex.props(styles.list)}>
-              {items.map((item) => (
-                <li key={item.id} {...stylex.props(styles.item)}>
-                  <a href={item.href} {...stylex.props(styles.itemLink)}>
-                    <p {...stylex.props(styles.meta, styles.itemMeta)}>
-                      <span {...stylex.props(styles.category)}>
-                        {item.category}
-                      </span>
-                      {item.date ? (
-                        <time
-                          dateTime={item.date}
-                          {...stylex.props(styles.date)}
+            <Reveal delay={1} direction="up">
+              <ul {...stylex.props(styles.list)}>
+                {items.map((item, index) => (
+                  <li key={item.id} {...stylex.props(styles.item)}>
+                    <a href={item.href} {...stylex.props(styles.itemLink)}>
+                      <p {...stylex.props(styles.meta, styles.metaItem)}>
+                        <span
+                          {...stylex.props(
+                            index % 2 === 0
+                              ? styles.categoryGreen
+                              : styles.categoryCrimson
+                          )}
                         >
-                          {formatNewsDate(item.date)}
-                        </time>
-                      ) : null}
-                    </p>
-                    <h3 {...stylex.props(styles.itemTitle)}>{item.title}</h3>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-        </div>
-      </Container>
-    </Section>
+                          {item.category}
+                        </span>
+                        {item.date ? (
+                          <time
+                            dateTime={item.date}
+                            {...stylex.props(styles.date)}
+                          >
+                            {formatNewsDate(item.date)}
+                          </time>
+                        ) : null}
+                      </p>
+                      <h3 {...stylex.props(styles.itemTitle)}>{item.title}</h3>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+          </div>
+        )}
+      </DcInner>
+    </DcSection>
   );
 };

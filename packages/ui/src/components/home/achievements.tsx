@@ -3,130 +3,129 @@ import { useMemo, useState } from "react";
 
 import { ACHIEVEMENT_CATEGORIES } from "../../content/home";
 import type { Achievement } from "../../content/home";
-import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
-import {
-  Container,
-  Eyebrow,
-  Heading,
-  Lead,
-  Section,
-  VisuallyHidden,
-} from "../primitives/layout";
+import { font } from "../../tokens/tokens.stylex";
+import { VisuallyHidden } from "../primitives/layout";
 import { Reveal } from "../primitives/reveal";
+import { DcEyebrow, DcHeading, DcInner, DcSection } from "./dc";
 
 const ALL = "All";
 
+/** Categories the design tints red instead of gold. */
+const NATIONAL_CATEGORIES = new Set(["National", "International"]);
+
 const styles = stylex.create({
-  section: {
-    backgroundImage: `linear-gradient(135deg, ${color.surfaceInverseDeep}, ${color.surfaceInverse})`,
-    color: color.onInverse,
+  backdrop: {
+    position: "absolute",
+    inset: 0,
+    backgroundImage: "linear-gradient(135deg, #000000, #013405)",
+    pointerEvents: "none",
   },
   heading: {
-    color: color.onInverse,
+    marginBlockEnd: "16px",
+    color: "#FFF8E7",
   },
-  headingSpacing: {
-    marginBlock: `${space.sm} ${space.sm}`,
+  intro: {
+    margin: 0,
+    marginBlockEnd: "56px",
+    maxWidth: "60ch",
+    fontSize: "15px",
+    color: "rgba(255, 248, 231, 0.65)",
   },
   filters: {
     display: "flex",
     flexWrap: "wrap",
     listStyle: "none",
     margin: 0,
+    marginBlockEnd: "44px",
     padding: 0,
-    gap: space["2xs"],
-    marginBlock: `${space.xl} ${space.lg}`,
+    gap: "12px",
   },
   chip: {
-    display: "inline-flex",
-    alignItems: "center",
-    minHeight: "2.75rem",
-    paddingInline: space.md,
-    borderWidth: space.px,
+    paddingBlock: "9px",
+    paddingInline: "18px",
+    borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: color.borderAccent,
+    borderColor: "rgba(255, 178, 3, 0.4)",
     backgroundColor: {
       default: "transparent",
-      ":hover": "rgba(255, 178, 3, 0.16)",
+      ":hover": "#FFB203",
     },
-    color: color.accentOnInverse,
+    color: {
+      default: "#FFB203",
+      ":hover": "#013405",
+    },
     fontFamily: font.body,
-    fontSize: font.sizeXs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
+    fontSize: "12px",
+    fontWeight: 700,
+    letterSpacing: "0.1em",
     textTransform: "uppercase",
     cursor: "pointer",
     touchAction: "manipulation",
-    WebkitTapHighlightColor: "transparent",
-    transitionProperty: "background-color, color, border-color",
-    transitionDuration: motionToken.fast,
   },
   chipActive: {
-    backgroundColor: color.accent,
-    borderColor: color.accent,
-    color: color.onAccent,
+    backgroundColor: "#FFB203",
+    color: "#013405",
   },
-
   grid: {
     display: "grid",
     listStyle: "none",
     margin: 0,
     padding: 0,
-    gap: space.lg,
-    gridTemplateColumns: {
-      default: "minmax(0, 1fr)",
-      [bp.md]: "repeat(auto-fit, minmax(min(100%, 17rem), 1fr))",
-    },
+    gap: "28px",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
   },
   card: {
     borderBlockStartWidth: "2px",
     borderBlockStartStyle: "solid",
-    borderBlockStartColor: color.accent,
-    paddingBlockStart: space.md,
+    borderBlockStartColor: "#FFB203",
+    paddingBlockStart: "24px",
   },
   cardCategory: {
     margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWider,
+    fontSize: "11px",
+    fontWeight: 700,
+    letterSpacing: "0.16em",
     textTransform: "uppercase",
-    color: color.accentOnInverse,
+    color: "#FFB203",
+  },
+  cardCategoryNational: {
+    color: "#E05252",
   },
   cardTitle: {
     margin: 0,
-    marginBlock: `${space["2xs"]} ${space["3xs"]}`,
+    marginBlock: "14px 10px",
     fontFamily: font.display,
-    fontSize: font.sizeXl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingSnug,
-    color: color.onInverse,
-    textWrap: "pretty",
+    fontSize: "27px",
+    fontWeight: 600,
+    lineHeight: 1.2,
   },
   cardDetail: {
     margin: 0,
-    fontSize: font.sizeSm,
-    color: color.onInverseSubtle,
+    fontSize: "13px",
+    color: "rgba(255, 248, 231, 0.6)",
   },
   empty: {
     margin: 0,
-    fontSize: font.sizeMd,
-    color: color.onInverseMuted,
+    fontSize: "15px",
+    color: "rgba(255, 248, 231, 0.65)",
   },
 });
 
 /**
- * Category filter. In the design these chips were `<span>`s with hover styling
- * and no behaviour - invisible to assistive tech and to the keyboard. Here they
- * are real buttons in a tablist-free "toggle group": each one reports its state
- * via `aria-pressed`, and the results region is a live region so a screen reader
- * user hears the count change.
+ * Category filter. The design draws these chips as inert `<span>`s; here they
+ * are real buttons (same look) that report state via `aria-pressed`, and a
+ * single always-mounted live region announces the resulting count.
  */
 export const Achievements = ({
   achievements,
   categories = ACHIEVEMENT_CATEGORIES,
+  heading = "The Achievement Wall",
+  intro = "Academic, sporting and national honours earned by Aloysians.",
 }: {
   achievements: readonly Achievement[];
   categories?: readonly string[];
+  heading?: string;
+  intro?: string;
 }) => {
   const [active, setActive] = useState(ALL);
 
@@ -139,23 +138,14 @@ export const Achievements = ({
   );
 
   return (
-    <Section
-      labelledBy="achievements-title"
-      style={styles.section}
-      tone="inverse"
-    >
-      <Container>
-        <Eyebrow inverse>Hall of fame</Eyebrow>
-        <Heading
-          id="achievements-title"
-          level={2}
-          style={[styles.heading, styles.headingSpacing]}
-        >
-          The Achievement Wall
-        </Heading>
-        <Lead inverse>
-          Academic, sporting and national honours earned by Aloysians.
-        </Lead>
+    <DcSection labelledBy="achievements-title" tone="black">
+      <div aria-hidden="true" {...stylex.props(styles.backdrop)} />
+      <DcInner>
+        <DcEyebrow gold>Hall of fame</DcEyebrow>
+        <DcHeading id="achievements-title" style={styles.heading}>
+          {heading}
+        </DcHeading>
+        <p {...stylex.props(styles.intro)}>{intro}</p>
 
         <ul {...stylex.props(styles.filters)}>
           {categories.map((category) => {
@@ -175,13 +165,6 @@ export const Achievements = ({
           })}
         </ul>
 
-        {/*
-          One stable live region that only ever holds a short count, rather than
-          `aria-live` on the grid itself. A live region on the grid announces
-          every card's full text on each filter change, and the empty-state
-          variant was a *newly inserted* live region, which browsers do not
-          announce at all. This node is always mounted, so the update is seen.
-        */}
         <VisuallyHidden>
           <output aria-live="polite">
             {visible.length === 0
@@ -195,7 +178,15 @@ export const Achievements = ({
             <ul {...stylex.props(styles.grid)}>
               {visible.map((item) => (
                 <li key={item.id} {...stylex.props(styles.card)}>
-                  <p {...stylex.props(styles.cardCategory)}>{item.category}</p>
+                  <p
+                    {...stylex.props(
+                      styles.cardCategory,
+                      NATIONAL_CATEGORIES.has(item.category) &&
+                        styles.cardCategoryNational
+                    )}
+                  >
+                    {item.category}
+                  </p>
                   <h3 {...stylex.props(styles.cardTitle)}>{item.title}</h3>
                   <p {...stylex.props(styles.cardDetail)}>{item.detail}</p>
                 </li>
@@ -209,7 +200,7 @@ export const Achievements = ({
             </p>
           )}
         </Reveal>
-      </Container>
-    </Section>
+      </DcInner>
+    </DcSection>
   );
 };

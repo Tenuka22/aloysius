@@ -11,13 +11,13 @@ import type {
   Notice,
 } from "../../content/home";
 import type { PrincipalContent } from "../../content/principal";
+import { layer } from "../../tokens/tokens.stylex";
 import { SkipLink } from "../primitives/layout";
 import { PrincipalMessage } from "../principal/principal-message";
 import { NoticeBar } from "../site/notice-bar";
 import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
-import { Academics } from "./academics";
 import { Achievements } from "./achievements";
 import { Alumni } from "./alumni";
 import { Gallery } from "./gallery";
@@ -32,6 +32,13 @@ const NO_NEWS: readonly NewsItem[] = [];
 const NO_ACHIEVEMENTS: readonly Achievement[] = [];
 
 const styles = stylex.create({
+  // Out of flow so the hero video runs up behind the transparent header.
+  headerStack: {
+    position: "fixed",
+    insetBlockStart: 0,
+    insetInline: 0,
+    zIndex: layer.header,
+  },
   main: {
     display: "block",
     outline: {
@@ -73,14 +80,11 @@ export const HomePage = ({
   galleryItems,
   contact,
   principal,
-  tagline,
   blocks,
   extraNavItems,
 }: HomePageProps) => {
   const cms = blocks ? blocksToProps(blocks) : undefined;
   const h = cms?.hidden;
-
-  const resolvedTagline = tagline ?? cms?.heroTagline;
 
   const headerRef = useRef<HTMLDivElement>(null);
 
@@ -110,18 +114,16 @@ export const HomePage = ({
   return (
     <>
       <SkipLink targetId={MAIN_ID} />
-      <div ref={headerRef}>
+      <div ref={headerRef} {...stylex.props(styles.headerStack)}>
         <NoticeBar notice={notice} />
-        <SiteHeader activeHref="/" extraNavItems={extraNavItems} />
+        <SiteHeader overlay activeHref="/" extraNavItems={extraNavItems} />
       </div>
       <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
         {!h?.hero && (
           <Hero
             background={cms?.heroBackground}
-            tagline={resolvedTagline}
             motto={cms?.heroMotto}
             place={cms?.heroPlace}
-            cta={cms?.heroCta}
           />
         )}
         {!h?.heritage && (
@@ -140,11 +142,33 @@ export const HomePage = ({
         {principal && !principal.hidden && (
           <PrincipalMessage content={principal} />
         )}
-        {!h?.academics && <Academics />}
-        {!h?.life && <StudentLife photos={cms?.studentLifePhotos} />}
-        {!h?.news && <News featured={featuredNews} items={news} />}
-        {!h?.achievements && <Achievements achievements={achievements} />}
-        {!h?.alumni && <Alumni photo={cms?.alumniPhoto} />}
+        {!h?.life && (
+          <StudentLife
+            heading={cms?.lifeHeading}
+            photos={cms?.studentLifePhotos}
+          />
+        )}
+        {!h?.news && (
+          <News
+            featured={featuredNews}
+            heading={cms?.newsHeading}
+            items={news}
+          />
+        )}
+        {!h?.achievements && (
+          <Achievements
+            achievements={achievements}
+            heading={cms?.achHeading}
+            intro={cms?.achIntro}
+          />
+        )}
+        {!h?.alumni && (
+          <Alumni
+            body={cms?.alumniBody}
+            photo={cms?.alumniPhoto}
+            quote={cms?.alumniQuote}
+          />
+        )}
         {!h?.gallery && <Gallery items={galleryItems} />}
       </main>
       <SiteFooter contact={contact} />

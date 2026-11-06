@@ -1,115 +1,147 @@
 import * as stylex from "@stylexjs/stylex";
 
-import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, space } from "../../tokens/tokens.stylex";
-import { ButtonLink } from "../primitives/button";
-import { Container, Eyebrow, Lead, Section } from "../primitives/layout";
-import { Media } from "../primitives/media";
+import { font } from "../../tokens/tokens.stylex";
 import type { ImageSource } from "../primitives/media";
 import { Reveal } from "../primitives/reveal";
+import { DcEyebrow, DcInner, DcSection, DcSlot } from "./dc";
+import { dc } from "./dc-styles";
 
 const styles = stylex.create({
-  grid: {
-    display: "grid",
-    gap: space.xl,
-    gridTemplateColumns: {
-      default: "minmax(0, 1fr)",
-      [bp.xl]: "minmax(0, 1fr) minmax(0, 23rem)",
-    },
-    alignItems: "center",
+  section: {
+    paddingBlock: "clamp(72px, 10vw, 130px)",
   },
   watermark: {
-    position: "absolute",
-    insetInlineStart: "-6rem",
+    insetInlineStart: "-100px",
     insetBlockStart: "50%",
     transform: "translateY(-50%)",
-    height: "32rem",
-    width: "auto",
+    height: "520px",
     opacity: 0.06,
-    pointerEvents: "none",
-    display: {
-      default: "none",
-      [bp.xl]: "block",
-    },
+  },
+  grid: {
+    display: "grid",
+    gap: "48px 80px",
+    alignItems: "center",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
+  },
+  eyebrow: {
+    marginBlockEnd: "20px",
   },
   quote: {
     margin: 0,
-    marginBlock: `${space.sm} ${space.md}`,
+    marginBlockEnd: "26px",
     fontFamily: font.display,
-    fontSize: font.size3xl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingSnug,
-    color: color.onInverse,
-    textWrap: "balance",
+    fontSize: "clamp(35px, 4.7vw, 56px)",
+    fontWeight: 600,
+    lineHeight: 1.08,
+    color: "#FFF8E7",
+  },
+  body: {
+    margin: 0,
+    marginBlockEnd: "40px",
+    maxWidth: "54ch",
+    fontSize: "16px",
+    lineHeight: 1.75,
+    color: "rgba(255, 248, 231, 0.75)",
+    textWrap: "pretty",
   },
   actions: {
     display: "flex",
     flexWrap: "wrap",
-    gap: space.sm,
-    marginBlockStart: space.xl,
+    gap: "16px",
   },
-  action: {
-    flex: {
-      default: "1 1 100%",
-      [bp.sm]: "0 1 auto",
+  buttonPrimary: {
+    display: "inline-block",
+    paddingBlock: "14px",
+    paddingInline: "30px",
+    backgroundColor: {
+      default: "#FFB203",
+      ":hover": "#FFD45A",
     },
+    color: "#013405",
+    fontSize: "14px",
+    fontWeight: 800,
+    textDecoration: "none",
+  },
+  buttonOutline: {
+    display: "inline-block",
+    paddingBlock: "14px",
+    paddingInline: "30px",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: {
+      default: "rgba(255, 248, 231, 0.5)",
+      ":hover": "#FFB203",
+    },
+    color: {
+      default: "#FFF8E7",
+      ":hover": "#FFB203",
+    },
+    fontSize: "14px",
+    fontWeight: 700,
+    textDecoration: "none",
+  },
+  photo: {
+    width: "100%",
+    height: "clamp(260px, 40vw, 440px)",
   },
 });
 
 export const Alumni = ({
-  body = "A global network of Aloysians in leadership, service and scholarship - connected by the crest they carried.",
+  quote = "The Aloysian Legacy Continues.",
+  body = "A global network of Aloysians in leadership, service and scholarship — connected by the crest they carried.",
   photo,
   crestSrc = "/logo.png",
   associationHref = "/alumni",
   distinguishedHref = "/alumni#distinguished",
 }: {
+  quote?: string;
   body?: string;
   photo?: ImageSource;
   crestSrc?: string;
   associationHref?: string;
   distinguishedHref?: string;
 }) => (
-  <Section labelledBy="alumni-title" tone="inverse">
+  <DcSection labelledBy="alumni-title" style={styles.section} tone="green">
     <img
       alt=""
       aria-hidden="true"
       src={crestSrc}
-      {...stylex.props(styles.watermark)}
+      {...stylex.props(dc.watermark, styles.watermark)}
     />
-    <Container>
+    <DcInner narrow>
       <div {...stylex.props(styles.grid)}>
         <Reveal direction="up">
           <div>
-            <Eyebrow inverse>Old Boys&rsquo; Association</Eyebrow>
+            <DcEyebrow gold style={styles.eyebrow}>
+              Old Boys&rsquo; Association
+            </DcEyebrow>
             <h2 id="alumni-title" {...stylex.props(styles.quote)}>
-              &ldquo;The Aloysian legacy continues.&rdquo;
+              &ldquo;{quote}&rdquo;
             </h2>
-            <Lead inverse>{body}</Lead>
+            <p {...stylex.props(styles.body)}>{body}</p>
             <div {...stylex.props(styles.actions)}>
-              <ButtonLink href={associationHref} style={styles.action}>
+              <a href={associationHref} {...stylex.props(styles.buttonPrimary)}>
                 Old Boys&rsquo; Association
-              </ButtonLink>
-              <ButtonLink
+              </a>
+              <a
                 href={distinguishedHref}
-                style={styles.action}
-                variant="outlineInverse"
+                {...stylex.props(styles.buttonOutline)}
               >
                 Distinguished Aloysians
-              </ButtonLink>
+              </a>
             </div>
           </div>
         </Reveal>
 
         <Reveal delay={1} direction="up">
-          <Media
+          <DcSlot
             inverse
             placeholder="Archival group photograph"
-            ratio="4:5"
             source={photo}
-            zoom
+            style={styles.photo}
           />
         </Reveal>
       </div>
-    </Container>
-  </Section>
+    </DcInner>
+  </DcSection>
 );

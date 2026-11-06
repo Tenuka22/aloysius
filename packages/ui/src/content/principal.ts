@@ -70,9 +70,9 @@ export const PRINCIPAL_DEFAULTS = {
   eyebrow: "From the principal",
   heading: "A Word from the Principal",
   quote:
-    "Every Aloysian carries forward a tradition of faith, discipline and excellence - certa viriliter.",
+    "Every Aloysian carries forward a tradition of faith, discipline and excellence — certa viriliter.",
   body: "<p>Every Aloysian carries forward a tradition of faith, discipline and excellence — <em>certa viriliter</em>.</p><p>It is a tradition handed to us by the generations who came before, and one we are trusted to hand on. The Chapel, the classroom, the playing field and the society room each ask the same thing of us: to give our best, and to do it for others.</p>",
-  name: undefined,
+  name: "A. J. P. Pubudu Sampath",
   role: "Principal, St. Aloysius' College",
-  link: { href: "/about#principal", label: "Read the full message" },
+  link: { href: "/about#principal", label: "Read the Full Message" },
 } as const satisfies Omit<PrincipalContent, "portrait" | "hidden">;

@@ -163,66 +163,6 @@ export const STATS: readonly Stat[] = [
   { id: "honours", label: "National honours" },
 ];
 
-export interface ExamStat {
-  label: string;
-  /** Omitted until the results registry supplies a figure. */
-  value?: string;
-}
-
-export interface ExamCard {
-  id: string;
-  level: string;
-  /** Large gold callout over the photograph, e.g. "A/L". */
-  mark: string;
-  title: string;
-  description: string;
-  stats: readonly ExamStat[];
-  cta: string;
-  href: string;
-  /** Caption shown while the photograph is pending. */
-  photoHint: string;
-}
-
-/** The three national examinations the College reports on, in display order. */
-export const EXAM_CARDS: readonly ExamCard[] = [
-  {
-    id: "al",
-    level: "G.C.E. Advanced Level",
-    mark: "A/L",
-    title: "Top Rankers by Stream",
-    description:
-      "Island and district rankers across Physical Science, Biological Science, Commerce, Arts and Technology.",
-    stats: [{ label: "University entrants" }, { label: "3A passes" }],
-    cta: "A/L results",
-    href: "/results#al",
-    photoHint: "A/L rankers group photo",
-  },
-  {
-    id: "ol",
-    level: "G.C.E. Ordinary Level",
-    mark: "9A",
-    title: "The 9A Achievers",
-    description:
-      "Aloysians who earned distinctions in all nine subjects at the Ordinary Level.",
-    stats: [{ label: "9A achievers" }, { label: "Pass rate" }],
-    cta: "O/L results",
-    href: "/results#ol",
-    photoHint: "O/L 9A achievers photo",
-  },
-  {
-    id: "scholarship",
-    level: "Grade 5 Scholarship",
-    mark: "G5",
-    title: "Scholarship Passers",
-    description:
-      "Primary section students who passed the Grade 5 Scholarship Examination.",
-    stats: [{ label: "Passers" }, { label: "Highest mark" }],
-    cta: "Scholarship results",
-    href: "/results#scholarship",
-    photoHint: "Scholarship passers photo",
-  },
-];
-
 export const ACHIEVEMENT_CATEGORIES: readonly ("All" | AchievementCategory)[] =
   [
     "All",
@@ -307,19 +247,12 @@ export const GALLERY_ITEMS: readonly GalleryItem[] = [
 /**
  * How many photographs the gallery strip renders.
  *
- * This is the same twelve `GALLERY_ITEMS` below carries, for the same reason:
- * the grid is a CSS multi-column at 2, 3 and 4 columns, and only a count that
- * divides by all three keeps every column the same length. A route that feeds
- * the strip from the approved-photo tables therefore has to stop at a multiple
- * of twelve rather than pass through however many photographs happen to exist -
- * an uncapped list both breaks the column balance the layout is built around
- * and renders one `<img>` per photograph on the page, on a page whose purpose is
- * to link to the gallery rather than to be it.
- *
- * Twelve, not six: six across four columns is 2/1/2/1, which leaves the
- * bottom-left as a two-tile void.
+ * The strip is a fixed six-tile bento (four columns by two rows, the first and
+ * third tiles two rows tall), so the count is the layout's, not a preference:
+ * more than six would spill onto an unplanned third row. The strip exists to
+ * point at the media page, so it shows the six newest and stops.
  */
-export const GALLERY_STRIP_LIMIT = 12;
+export const GALLERY_STRIP_LIMIT = 6;
 
 export const MOTTO = "Certa Viriliter";
 export const MOTTO_TRANSLATION = "Strive Manfully";

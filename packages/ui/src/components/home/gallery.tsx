@@ -1,197 +1,165 @@
 import * as stylex from "@stylexjs/stylex";
 
-import { GALLERY_ITEMS } from "../../content/home";
+import { GALLERY_ITEMS, GALLERY_STRIP_LIMIT } from "../../content/home";
 import type { GalleryItem } from "../../content/home";
 import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, space } from "../../tokens/tokens.stylex";
-import { ArrowLink } from "../primitives/button";
-import {
-  Container,
-  Eyebrow,
-  Heading,
-  Section,
-  SectionHeader,
-  VisuallyHidden,
-} from "../primitives/layout";
-import { Media } from "../primitives/media";
+import { VisuallyHidden } from "../primitives/layout";
 import { Reveal } from "../primitives/reveal";
+import { DcEyebrow, DcHeading, DcInner, DcLink, DcSection, DcSlot } from "./dc";
+import { dc } from "./dc-styles";
 
+/*
+ * The design's gallery is a fixed six-tile bento: four columns of 150px rows
+ * with a 14px gap, tiles 1 and 3 two rows tall. Under 40rem the four columns
+ * would be thumbnails, so it drops to two columns of equal tiles.
+ */
 const styles = stylex.create({
-  /*
-   * Masonry via CSS multi-column, not grid.
-   *
-   * The alternatives all cost something this page has promised not to pay. A
-   * JS layout has to measure the column width before it can place anything, so
-   * the grid is built twice and the tiles shift; a fixed-row-unit grid needs
-   * the tile's height in pixels to work out its row span, which is the same
-   * measurement by another name; `grid-template-rows: masonry` is still not
-   * broadly supported. Multi-column needs no measurement at all, so the box for
-   * every tile is reserved by its own `aspect-ratio` before the first paint and
-   * CLS stays at 0.
-   *
-   * The trade is visual order: columns fill top to bottom, so the second tile
-   * sits below the first rather than beside it. Source order is untouched, so
-   * the accessibility tree and the tab order are still the authored order.
-   *
-   * The trade has one consequence worth respecting when changing the item list:
-   * because the browser splits items into contiguous columns, a count that is
-   * not a multiple of `columnCount` at the widest breakpoint forces the
-   * remainder into a short column. `GALLERY_ITEMS` is sized to 3/3/3/3 for that
-   * reason - see the note on it in `content/home.ts`.
-   */
   grid: {
+    display: "grid",
     listStyle: "none",
     margin: 0,
     padding: 0,
-    columnGap: space["2xs"],
-    columnCount: {
-      default: 2,
-      [bp.md]: 3,
-      [bp.xl]: 4,
+    gap: "14px",
+    gridTemplateColumns: {
+      default: "repeat(2, minmax(0, 1fr))",
+      [bp.md]: "repeat(4, minmax(0, 1fr))",
+    },
+    gridAutoRows: {
+      default: "9rem",
+      [bp.md]: "150px",
     },
   },
   tile: {
-    // Without this a tile can be split across a column break, which cuts a
-    // photograph in half.
-    breakInside: "avoid",
-    // `column-gap` only spaces the columns; this spaces the tiles within one.
-    marginBlockEnd: space["2xs"],
+    position: "relative",
     minWidth: 0,
+    overflow: "hidden",
+  },
+  tall: {
+    gridRow: {
+      default: "auto",
+      [bp.md]: "span 2",
+    },
+  },
+  fill: {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
   },
   link: {
-    display: "grid",
-    gap: space["3xs"],
-    color: color.onSurface,
+    position: "absolute",
+    inset: 0,
+    display: "block",
     textDecoration: "none",
-    ":hover": {
-      textDecoration: "none",
-    },
-    // The whole tile is the hit area, so the focus ring has to follow the tile
-    // and not the photograph inside it.
     ":focus-visible": {
-      outlineOffset: space["3xs"],
+      outlineOffset: "-4px",
     },
   },
   linkLabel: {
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
+    position: "absolute",
+    insetInlineStart: "12px",
+    insetBlockEnd: "12px",
+    paddingBlock: "4px",
+    paddingInline: "8px",
+    backgroundColor: "#013405",
+    color: "#FFF8E7",
+    fontSize: "11px",
+    fontWeight: 700,
+    letterSpacing: "0.06em",
     textTransform: "uppercase",
-    color: color.accentOnSurface,
-    ":hover": {
-      textDecoration: "underline",
-    },
+    pointerEvents: "none",
   },
   empty: {
     margin: 0,
-    paddingBlock: space.xl,
-    color: color.onSurfaceSubtle,
-    fontSize: font.sizeSm,
+    paddingBlock: "48px",
+    fontSize: "14px",
     textAlign: "center",
+    color: "rgba(1, 52, 5, 0.68)",
   },
 });
+
+const isTallTile = (index: number) => index === 0 || index === 2;
 
 export const Gallery = ({
   items = GALLERY_ITEMS,
   allHref = "/media/gallery",
+  eyebrow = "Media",
+  heading = "Gallery",
 }: {
   items?: readonly GalleryItem[];
   allHref?: string;
-}) => {
-  const linkProps = stylex.props(styles.link);
+  eyebrow?: string;
+  heading?: string;
+}) => (
+  <DcSection labelledBy="gallery-title" tone="cream">
+    <DcInner>
+      <div {...stylex.props(dc.header)}>
+        <div>
+          <DcEyebrow>{eyebrow}</DcEyebrow>
+          <DcHeading id="gallery-title">{heading}</DcHeading>
+        </div>
+        <DcLink href={allHref}>
+          Full Gallery <span aria-hidden="true">→</span>
+        </DcLink>
+      </div>
 
-  /*
-   * The route hands over whatever the gallery tables return, which is an empty
-   * array on a site with no approved photos. An empty multi-column box reserves
-   * no height at all and just leaves a gap under the heading, so the section
-   * says something instead - the heading stays, because the section's presence
-   * is the CMS hidden toggle's decision, not this component's.
-   */
-  if (items.length === 0) {
-    return (
-      <Section labelledBy="gallery-title" tone="surface">
-        <Container>
-          <SectionHeader>
-            <Eyebrow>Media</Eyebrow>
-            <Heading id="gallery-title" level={2}>
-              Gallery
-            </Heading>
-          </SectionHeader>
-          <p {...stylex.props(styles.empty)}>
-            No photographs have been published yet. Visit the media page for
-            pictures from College life.
-          </p>
-        </Container>
-      </Section>
-    );
-  }
-
-  return (
-    <Section labelledBy="gallery-title" tone="surface">
-      <Container>
-        <SectionHeader
-          action={<ArrowLink href={allHref}>Full gallery</ArrowLink>}
-        >
-          <Eyebrow>Media</Eyebrow>
-          <Heading id="gallery-title" level={2}>
-            Gallery
-          </Heading>
-        </SectionHeader>
-
+      {items.length === 0 ? (
+        <p {...stylex.props(styles.empty)}>
+          No photographs have been published yet. Visit the media page for
+          pictures from College life.
+        </p>
+      ) : (
         <Reveal direction="up">
           <ul {...stylex.props(styles.grid)}>
-            {items.map((item) => {
-              const media = (
-                <Media
+            {items.slice(0, GALLERY_STRIP_LIMIT).map((item, index) => {
+              const photo = (
+                <DcSlot
                   placeholder={item.label}
-                  ratio={item.preferredRatio}
                   source={item.image}
-                  zoom
+                  style={styles.fill}
                 />
               );
-
               return (
-                <li key={item.id} {...stylex.props(styles.tile)}>
-                  {/*
-                   * Only when there is no real image. Once the CMS supplies
-                   * one, its `alt` already names the tile and this would make a
-                   * screen reader announce every tile's subject twice.
-                   */}
+                <li
+                  key={item.id}
+                  {...stylex.props(
+                    styles.tile,
+                    isTallTile(index) && styles.tall
+                  )}
+                >
+                  {/* Once a real image is present its `alt` names the tile. */}
                   {item.image ? null : (
                     <VisuallyHidden>{item.label}</VisuallyHidden>
                   )}
-                  {/*
-                   * A tile that goes somewhere is a link around the image, not
-                   * around the caption: the photograph is the target, and a
-                   * link whose accessible name is a row of small capitals is a
-                   * worse thing to hit than the picture it sits on.
-                   */}
                   {item.href ? (
                     <a
                       href={item.href}
                       rel="noopener noreferrer"
                       target="_blank"
-                      {...linkProps}
+                      {...stylex.props(styles.link)}
                     >
-                      <span aria-hidden="true">{media}</span>
+                      <span aria-hidden="true">{photo}</span>
                       <VisuallyHidden>
                         {`${item.label}. ${item.hrefLabel ?? "Open"}`}
                       </VisuallyHidden>
                       {item.hrefLabel ? (
-                        <span {...stylex.props(styles.linkLabel)}>
+                        <span
+                          aria-hidden="true"
+                          {...stylex.props(styles.linkLabel)}
+                        >
                           {item.hrefLabel}
                         </span>
                       ) : null}
                     </a>
                   ) : (
-                    media
+                    photo
                   )}
                 </li>
               );
             })}
           </ul>
         </Reveal>
-      </Container>
-    </Section>
-  );
-};
+      )}
+    </DcInner>
+  </DcSection>
+);
