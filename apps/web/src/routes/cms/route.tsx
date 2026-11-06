@@ -133,7 +133,7 @@ const CmsLayout = () => {
     },
     {
       num: "20",
-      label: "Academic Heads",
+      label: "Leadership",
       href: "/cms/academic-heads",
       active: pathname.startsWith("/cms/academic-heads"),
     },

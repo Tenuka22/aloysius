@@ -21,35 +21,22 @@ import {
   VISION_STATEMENT,
 } from "./about";
 import { ACADEMICS_HERO_INTRO, ACADEMICS_HERO_TITLE } from "./academics";
+import { ALUMNI_HERO_INTRO, ALUMNI_HERO_TITLE } from "./alumni";
 import {
-  ALUMNI_BRANCHES_HEADING,
-  ALUMNI_BRANCHES_INTRO,
-  ALUMNI_OBA_HREF,
-  ALUMNI_OFFER_HEADING,
-} from "./alumni";
-import { CONTACT_DEFAULT_TELEPHONE } from "./contact";
+  CONTACT_DEFAULT_TELEPHONE,
+  CONTACT_HERO_INTRO,
+  CONTACT_HERO_TITLE,
+} from "./contact";
 import { GALLERIES_HERO_INTRO, GALLERIES_HERO_TITLE } from "./galleries";
 import { ADMISSIONS_URL } from "./home";
+import { MEDIA_HERO_TITLE } from "./media";
 import {
   PRINCIPAL_BLOCK_ID,
   PRINCIPAL_DEFAULTS,
   PRINCIPAL_FIELD,
 } from "./principal";
 import { RESULTS_HERO_INTRO, RESULTS_HERO_TITLE } from "./results";
-import {
-  HOUSES_HEADING,
-  HOUSES_INTRO,
-  MORE_SPORTS,
-  PREFECTS_BODY,
-  PREFECTS_HEADING,
-  SPORTS_EYEBROW,
-  SPORTS_HEADING,
-  STUDENTS_HERO_INTRO,
-  STUDENTS_HERO_TITLE,
-  CLUBS_EYEBROW,
-  CLUBS_HEADING,
-  CLUBS_INTRO,
-} from "./students";
+import { STUDENTS_HERO_INTRO, STUDENTS_HERO_TITLE } from "./students";
 
 export type ScreenId =
   | "dashboard"
@@ -209,21 +196,18 @@ const IMAGE_RATIO_KEYS: Partial<Record<string, AspectRatioKey>> = {
   "hero-bg": "hero",
   "heritage-image-1": "heritagePhoto",
   "heritage-image-2": "heritageDetail",
-  "principal-portrait": "principalPortrait",
+  "principal-portrait": "principalMessage",
   "life-sports": "mosaicTile",
   "life-music": "mosaicTile",
+  "life-scouts": "mosaicTile",
+  "life-faith": "mosaicTile",
   "alumni-image": "alumniPhoto",
   "history-1-image": "heritagePhoto",
   "history-2-image": "heritagePhoto",
   "history-3-image": "heritagePhoto",
   "history-4-image": "heritagePhoto",
-  "anthem-image": "alumniPhoto",
-  "anthem-sinhala-image": "alumniPhoto",
-  "news-hero-image": "hero",
   "notices-hero-image": "hero",
-  "media-hero-image": "hero",
   "students-hero-image": "hero",
-  "alumni-hero-image": "hero",
 };
 
 export const getImageRatioKey = (fieldId: string): AspectRatioKey =>
@@ -303,7 +287,7 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
         label: "Body copy",
         kind: "textarea",
         value:
-          "For generations, St. Aloysius' College has shaped the minds and character of young men in the Southern Province - grounded in faith, discipline and the pursuit of excellence.",
+          "Founded in 1895 by Belgian Jesuit missionaries on Mount Calvary, Galle, St. Aloysius' College has shaped generations of young men in the Southern Province — today a National School of over 3,500 boys from Grade 1 to G.C.E. Advanced Level.",
         wide: true,
       },
       {
@@ -323,40 +307,11 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
     ],
   },
   {
-    id: "academics",
-    name: "Academics",
-    type: "Card grid",
-    status: "published",
-    summary: "Four departments and four statistics",
-    fields: [
-      {
-        id: "academics-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: "Academics",
-      },
-      {
-        id: "academics-heading",
-        label: "Heading",
-        kind: "text",
-        value: "Streams & Departments",
-      },
-      {
-        id: "academics-note",
-        label: "Departments",
-        kind: "readonly",
-        value: "Managed as a list Ã¢â‚¬â€ 4 entries",
-        hint: "Edit individual departments from the Academics screen.",
-        wide: true,
-      },
-    ],
-  },
-  {
     id: "life",
     name: "Student Life",
     type: "Mosaic",
     status: "published",
-    summary: "Six tiles with labels and images",
+    summary: "Heading and a seven-tile mosaic with four photographs",
     fields: [
       {
         id: "life-heading",
@@ -366,6 +321,8 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
       },
       { id: "life-sports", label: "Sports tile image", kind: "image" },
       { id: "life-music", label: "Music & drama tile image", kind: "image" },
+      { id: "life-scouts", label: "Scouts & cadets tile image", kind: "image" },
+      { id: "life-faith", label: "Faith & service tile image", kind: "image" },
     ],
   },
   {
@@ -396,13 +353,20 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
     name: "Achievement Wall",
     type: "Feed",
     status: "published",
-    summary: "Category filters and three highlights",
+    summary: "Heading, introduction and filterable honours",
     fields: [
       {
-        id: "ach-heading",
+        id: "ach-title",
         label: "Heading",
         kind: "text",
-        value: "Achievements",
+        value: "The Achievement Wall",
+      },
+      {
+        id: "ach-intro",
+        label: "Introduction",
+        kind: "textarea",
+        value: "Academic, sporting and national honours earned by Aloysians.",
+        wide: true,
       },
     ],
   },
@@ -411,13 +375,23 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
     name: "Alumni",
     type: "Text + media",
     status: "published",
-    summary: "Heading, body copy, image and two buttons",
+    summary: "Headline quote, body copy, image and two buttons",
     fields: [
       {
-        id: "alumni-heading",
-        label: "Heading",
+        id: "alumni-quote",
+        label: "Headline quote",
         kind: "text",
-        value: "The Old Boys' Association",
+        value: "The Aloysian Legacy Continues.",
+        hint: "Set in large type between quotation marks.",
+        wide: true,
+      },
+      {
+        id: "alumni-body",
+        label: "Body copy",
+        kind: "textarea",
+        value:
+          "A global network of Aloysians in leadership, service and scholarship - connected by the crest they carried.",
+        wide: true,
       },
       { id: "alumni-image", label: "Image", kind: "image" },
     ],
@@ -427,7 +401,7 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
     name: "Gallery",
     type: "Media grid",
     status: "auto",
-    summary: "Six images drawn from the Media library",
+    summary: "Six-tile bento of the most recent Media library photographs",
     fields: [
       {
         id: "gallery-auto",
@@ -519,6 +493,7 @@ export const PRINCIPAL_BLOCKS: readonly PageBlock[] = [
         id: PRINCIPAL_FIELD.name,
         label: "Attributed to",
         kind: "text",
+        value: PRINCIPAL_DEFAULTS.name,
         hint: "Optional. Leave empty to name the office rather than a person.",
       },
       {
@@ -557,14 +532,8 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
     name: "Page Header",
     type: "Hero",
     status: "published",
-    summary: "Page title, tagline and hero image",
+    summary: "Page title and tagline",
     fields: [
-      {
-        id: "about-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: "About the College",
-      },
       {
         id: "about-heading",
         label: "Heading",
@@ -576,13 +545,6 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
         label: "Tagline",
         kind: "textarea",
         value: ABOUT_HERO_INTRO,
-        wide: true,
-      },
-      {
-        id: "about-hero-image",
-        label: "Hero image",
-        kind: "image",
-        hint: "Landscape, at least 2400px wide.",
         wide: true,
       },
     ],
@@ -606,38 +568,39 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
         id: "history-1-title",
         label: "1895 — Title",
         kind: "text",
-        value: "Founding of the College",
+        value: "Founded on Mount Calvary",
       },
       {
         id: "history-1-body",
         label: "1895 — Body",
         kind: "textarea",
         value:
-          "St. Aloysius' College was established by Belgian Jesuit missionaries led by Bishop Joseph Van Reeth.",
+          "Established by newly arrived Belgian Jesuit missionaries led by Joseph Van Reeth, first Bishop of Galle, and named after the Jesuit saint Aloysius Gonzaga — beside St. Mary's Cathedral and Sacred Heart Convent.",
         wide: true,
       },
       {
         id: "history-1-image",
-        label: "1895 — Founding of the College",
+        label: "1895 — Founded on Mount Calvary",
         kind: "image",
         hint: "Clearing this restores the default archival photo.",
       },
       {
         id: "history-2-title",
-        label: "1920s — Title",
+        label: "1896 — Title",
         kind: "text",
-        value: "Early Growth",
+        value: "The Jesuit Years",
       },
       {
         id: "history-2-body",
-        label: "1920s — Body",
+        label: "1896 — Body",
         kind: "textarea",
-        value: "Expansion of the College, early buildings and student body.",
+        value:
+          "Under Jesuit principals from Joseph Van Reeth to Paul Caspersz, the College grew with English as its medium of instruction and five houses named after its pioneering fathers.",
         wide: true,
       },
       {
         id: "history-2-image",
-        label: "1920s — Early Growth",
+        label: "1896 — The Jesuit Years",
         kind: "image",
         hint: "Clearing this restores the default archival photo.",
       },
@@ -645,19 +608,19 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
         id: "history-3-title",
         label: "1971 — Title",
         kind: "text",
-        value: "A Century of Excellence",
+        value: "A New Chapter",
       },
       {
         id: "history-3-body",
         label: "1971 — Body",
         kind: "textarea",
         value:
-          "Became a national school with the appointment of the first Buddhist principal, marking milestones in academics, sport and national life.",
+          "Following the nationalisation of schools, B. K. Silva became the first Buddhist principal and the medium of instruction changed to Sinhala.",
         wide: true,
       },
       {
         id: "history-3-image",
-        label: "1971 — A Century of Excellence",
+        label: "1971 — A New Chapter",
         kind: "image",
         hint: "Clearing this restores the default archival photo.",
       },
@@ -665,19 +628,19 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
         id: "history-4-title",
         label: "Today — Title",
         kind: "text",
-        value: "The Modern College",
+        value: "A National School",
       },
       {
         id: "history-4-body",
         label: "Today — Body",
         kind: "textarea",
         value:
-          "St. Aloysius' College today - facilities, programmes and a community of over 5,000 students.",
+          "A boys' National School of over 3,500 students from Grade 1 to G.C.E. Advanced Level, serving families of many faiths across the South.",
         wide: true,
       },
       {
         id: "history-4-image",
-        label: "Today — The Modern College",
+        label: "Today — A National School",
         kind: "image",
         hint: "Clearing this restores the default archival photo.",
       },
@@ -707,40 +670,12 @@ export const ABOUT_BLOCKS: readonly PageBlock[] = [
       },
     ],
   },
-  {
-    id: "anthem",
-    name: "College Anthem",
-    type: "Text + media",
-    status: "published",
-    summary: "Portraits of the anthem's writers and composers",
-    fields: [
-      {
-        id: "anthem-image",
-        label: "English anthem creators",
-        kind: "image",
-        hint: "Clearing this restores the default portrait collage.",
-      },
-      {
-        id: "anthem-sinhala-image",
-        label: "Sinhala anthem creators",
-        kind: "image",
-        hint: "Clearing this restores the default portrait collage.",
-      },
-      {
-        id: "anthem-sinhala-lyrics",
-        label: "Sinhala lyrics",
-        kind: "textarea",
-        value: "",
-        wide: true,
-        hint: "One stanza per paragraph (blank line between stanzas), one line per row within a stanza. Leave empty to hide the Sinhala tab's lyrics.",
-      },
-    ],
-  },
 ];
 
 /**
- * News page blocks. The page header and feed configuration are editable;
- * individual news posts will be managed from a dedicated list screen.
+ * News page blocks. Only the page title is editable here; the stories
+ * themselves are rows managed at `/cms/news`, and everything else on the page
+ * is the approved design's own content.
  */
 export const NEWS_BLOCKS: readonly PageBlock[] = [
   {
@@ -748,56 +683,13 @@ export const NEWS_BLOCKS: readonly PageBlock[] = [
     name: "Page Header",
     type: "Hero",
     status: "published",
-    summary: "Page title, tagline and hero image",
+    summary: "Page title",
     fields: [
-      {
-        id: "news-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: "Latest Updates",
-      },
       {
         id: "news-heading",
         label: "Heading",
         kind: "text",
         value: "News & Events",
-      },
-      {
-        id: "news-tagline",
-        label: "Tagline",
-        kind: "textarea",
-        value:
-          "Stay informed with the latest news, events and achievements from St. Aloysius' College.",
-        wide: true,
-      },
-      {
-        id: "news-hero-image",
-        label: "Hero image",
-        kind: "image",
-        hint: "Landscape, at least 2400px wide.",
-        wide: true,
-      },
-    ],
-  },
-  {
-    id: "news-feed",
-    name: "News Feed",
-    type: "Feed",
-    status: "auto",
-    summary: "Featured post plus recent articles, selected automatically",
-    fields: [
-      {
-        id: "news-feed-heading",
-        label: "Section heading",
-        kind: "text",
-        value: "Recent Articles",
-      },
-      {
-        id: "news-feed-count",
-        label: "Items per page",
-        kind: "text",
-        value: "9",
-        hint: "Number of news items shown per page.",
       },
     ],
   },
@@ -813,7 +705,7 @@ export const NOTICES_BLOCKS: readonly PageBlock[] = [
     name: "Page Header",
     type: "Hero",
     status: "published",
-    summary: "Page title, tagline and hero image",
+    summary: "Page title and tagline",
     fields: [
       {
         id: "notices-eyebrow",
@@ -879,23 +771,16 @@ export const CONTACT_BLOCKS: readonly PageBlock[] = [
     summary: "Page title and tagline",
     fields: [
       {
-        id: "contact-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: "Get in Touch",
-      },
-      {
         id: "contact-heading",
         label: "Heading",
         kind: "text",
-        value: "Contact Us",
+        value: CONTACT_HERO_TITLE,
       },
       {
         id: "contact-tagline",
         label: "Tagline",
         kind: "textarea",
-        value:
-          "We'd love to hear from you. Reach out to us for admissions, inquiries or general information.",
+        value: CONTACT_HERO_INTRO,
         wide: true,
       },
     ],
@@ -977,8 +862,9 @@ export const CONTACT_BLOCKS: readonly PageBlock[] = [
 ];
 
 /**
- * Alumni page blocks. The Old Boys' Association section and
- * distinguished alumni content.
+ * Alumni page blocks. Only the page title and tagline are editable here;
+ * branch details and portraits come from their own CMS rosters, and the rest
+ * is the approved design's own content.
  */
 export const ALUMNI_BLOCKS: readonly PageBlock[] = [
   {
@@ -986,137 +872,20 @@ export const ALUMNI_BLOCKS: readonly PageBlock[] = [
     name: "Page Header",
     type: "Hero",
     status: "published",
-    summary: "Page title, tagline and hero image",
+    summary: "Page title and tagline",
     fields: [
       {
         id: "alumni-heading",
         label: "Heading",
         kind: "text",
-        value: "Alumni",
+        value: ALUMNI_HERO_TITLE,
       },
       {
         id: "alumni-tagline",
         label: "Tagline",
         kind: "textarea",
-        value:
-          "A global network of Aloysians united by shared memories and a commitment to giving back.",
+        value: ALUMNI_HERO_INTRO,
         wide: true,
-      },
-      {
-        id: "alumni-hero-image",
-        label: "Hero image",
-        kind: "image",
-        hint: "Landscape, at least 2400px wide.",
-        wide: true,
-      },
-    ],
-  },
-  {
-    id: "alumni-about",
-    name: "About the OBA",
-    type: "Text + media",
-    status: "published",
-    summary: "Body copy and image for the alumni section",
-    fields: [
-      {
-        id: "alumni-about-heading",
-        label: "Section heading",
-        kind: "text",
-        value: "A Bond That Outlasts School",
-      },
-      {
-        id: "alumni-body",
-        label: "Body copy",
-        kind: "textarea",
-        value:
-          "The Old Boys' Association of St. Aloysius' College connects generations of Aloysians. Whether you left last year or decades ago, the OBA keeps you connected to your alma mater and fellow alumni worldwide.",
-        wide: true,
-      },
-      {
-        id: "alumni-image",
-        label: "Featured image",
-        kind: "image",
-        hint: "Landscape or portrait orientation.",
-      },
-      {
-        id: "alumni-image-caption",
-        label: "Image caption",
-        kind: "text",
-        value: "Old Boys' Association event",
-        hint: "Also used as the photograph's alt text.",
-      },
-    ],
-  },
-  {
-    id: "alumni-offer",
-    name: "What the Association Does",
-    type: "Card grid",
-    status: "published",
-    summary: "Section heading above the Association's fixed list of activities",
-    fields: [
-      {
-        id: "alumni-offer-heading",
-        label: "Section heading",
-        kind: "text",
-        value: ALUMNI_OFFER_HEADING,
-      },
-    ],
-  },
-  {
-    id: "alumni-branches",
-    name: "Branches",
-    type: "Text + media",
-    status: "published",
-    summary: "Heading and intro above the Association's three branches",
-    fields: [
-      {
-        id: "alumni-branches-heading",
-        label: "Section heading",
-        kind: "text",
-        value: ALUMNI_BRANCHES_HEADING,
-      },
-      {
-        id: "alumni-branches-intro",
-        label: "Intro copy",
-        kind: "textarea",
-        value: ALUMNI_BRANCHES_INTRO,
-        wide: true,
-      },
-    ],
-  },
-  {
-    id: "alumni-links",
-    name: "Stay Connected",
-    type: "Card grid",
-    status: "published",
-    summary: "How an old boy gets back in touch",
-    fields: [
-      {
-        id: "alumni-links-heading",
-        label: "Section heading",
-        kind: "text",
-        value: "Stay Connected",
-      },
-      {
-        id: "alumni-links-body",
-        label: "Body copy",
-        kind: "textarea",
-        value:
-          "Members can update their details with the branch secretary, or contact the College office to re-establish an address on the register.",
-        wide: true,
-      },
-      {
-        id: "alumni-oba-label",
-        label: "OBA button label",
-        kind: "text",
-        value: "Visit the OBA",
-      },
-      {
-        id: "alumni-oba-href",
-        label: "OBA portal link",
-        kind: "text",
-        value: ALUMNI_OBA_HREF,
-        hint: "Leave empty and the button does not appear.",
       },
     ],
   },
@@ -1181,7 +950,7 @@ export const GALLERIES_BLOCKS: readonly PageBlock[] = [
     name: "Page Header",
     type: "Hero",
     status: "published",
-    summary: "Page title, tagline and hero image",
+    summary: "Page title and tagline",
     fields: [
       {
         id: "galleries-eyebrow",
@@ -1229,7 +998,7 @@ export const GALLERIES_BLOCKS: readonly PageBlock[] = [
  * `academics-header` was added late, and for the same reason every other page
  * has one: the hero was the only page header on the site with no editor behind
  * it, so its title and tagline were the only ones a CMS editor could not
- * change. `academics-eyebrow` and `academics-heading` are spelled the same as
+ * change. `academics-heading` and `academics-tagline` are spelled the same as
  * the homepage's Academics card-grid fields on purpose - the ids are scoped to
  * (page, block), so the two cannot collide, and matching the `news-header`
  * precedent keeps one naming rule for page headers.
@@ -1246,14 +1015,8 @@ export const ACADEMICS_BLOCKS: readonly PageBlock[] = [
     name: "Page Header",
     type: "Hero",
     status: "published",
-    summary: "Page title, tagline and hero image",
+    summary: "Page title and tagline",
     fields: [
-      {
-        id: "academics-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: "Academics",
-      },
       {
         id: "academics-heading",
         label: "Heading",
@@ -1265,13 +1028,6 @@ export const ACADEMICS_BLOCKS: readonly PageBlock[] = [
         label: "Tagline",
         kind: "textarea",
         value: ACADEMICS_HERO_INTRO,
-        wide: true,
-      },
-      {
-        id: "academics-hero-image",
-        label: "Hero image",
-        kind: "image",
-        hint: "Landscape, at least 2400px wide.",
         wide: true,
       },
     ],
@@ -1287,68 +1043,21 @@ export const MEDIA_BLOCKS: readonly PageBlock[] = [
     name: "Page Header",
     type: "Hero",
     status: "published",
-    summary: "Page title, tagline and hero image",
+    summary: "Page title",
     fields: [
-      {
-        id: "media-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: "Photo & Video",
-      },
       {
         id: "media-heading",
         label: "Heading",
         kind: "text",
-        value: "Media Gallery",
-      },
-      {
-        id: "media-tagline",
-        label: "Tagline",
-        kind: "textarea",
-        value:
-          "Browse photographs and videos capturing life at St. Aloysius' College.",
-        wide: true,
-      },
-      {
-        id: "media-hero-image",
-        label: "Hero image",
-        kind: "image",
-        hint: "Landscape, at least 2400px wide.",
-        wide: true,
-      },
-    ],
-  },
-  {
-    id: "media-gallery",
-    name: "Gallery Settings",
-    type: "Media grid",
-    status: "auto",
-    summary: "Media items drawn from the library",
-    fields: [
-      {
-        id: "media-gallery-count",
-        label: "Items per page",
-        kind: "text",
-        value: "12",
-        hint: "Number of media items shown per page.",
+        value: MEDIA_HERO_TITLE,
       },
     ],
   },
 ];
 
 /**
- * Student Life page blocks. Student activities, clubs and campus life.
- *
- * One block per section the page actually renders, seeded from
- * `content/students.ts` rather than from literals: a seed that disagrees with
- * the page's own default is how an editor ends up looking at "Clubs &
- * Activities" while a visitor sees "Beyond the Classroom", and saving without
- * touching anything then overwrites the page's copy.
- *
- * The four house names and the prefects destination are seeded **empty**. The
- * college has not published them, and an empty field is the honest control -
- * the page falls back to the colour name and renders no button, rather than
- * four invented house names and a link to nowhere.
+ * Student Life page blocks. The page header is the only editable copy: every
+ * other section is the approved design's own content (`content/students.ts`).
  */
 export const STUDENTS_BLOCKS: readonly PageBlock[] = [
   {
@@ -1356,14 +1065,8 @@ export const STUDENTS_BLOCKS: readonly PageBlock[] = [
     name: "Page Header",
     type: "Hero",
     status: "published",
-    summary: "Page title, tagline and hero image",
+    summary: "Page title and tagline",
     fields: [
-      {
-        id: "students-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: "Campus Life",
-      },
       {
         id: "students-heading",
         label: "Heading",
@@ -1376,150 +1079,6 @@ export const STUDENTS_BLOCKS: readonly PageBlock[] = [
         kind: "textarea",
         value: STUDENTS_HERO_INTRO,
         wide: true,
-      },
-      {
-        id: "students-hero-image",
-        label: "Hero image",
-        kind: "image",
-        hint: "Landscape, at least 2400px wide.",
-        wide: true,
-      },
-    ],
-  },
-  {
-    id: "students-sports",
-    name: "Sports",
-    type: "Mosaic",
-    status: "published",
-    summary: "The sports mosaic, its photographs and the overflow list",
-    fields: [
-      {
-        id: "students-sports-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: SPORTS_EYEBROW,
-      },
-      {
-        id: "students-sports-heading",
-        label: "Heading",
-        kind: "text",
-        value: SPORTS_HEADING,
-      },
-      {
-        id: "students-more-sports",
-        label: "More sports",
-        kind: "textarea",
-        value: MORE_SPORTS.join(", "),
-        hint: "Comma-separated. Leave empty to drop the overflow panel.",
-        wide: true,
-      },
-    ],
-  },
-  {
-    id: "students-activities",
-    name: "Clubs & Societies",
-    type: "Card grid",
-    status: "published",
-    summary: "The society grid's heading and intro",
-    fields: [
-      {
-        id: "students-activities-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: CLUBS_EYEBROW,
-      },
-      {
-        id: "students-activities-heading",
-        label: "Section heading",
-        kind: "text",
-        value: CLUBS_HEADING,
-      },
-      {
-        id: "students-activities-intro",
-        label: "Intro",
-        kind: "textarea",
-        value: CLUBS_INTRO,
-        wide: true,
-      },
-    ],
-  },
-  {
-    id: "students-houses",
-    name: "Houses",
-    type: "Card grid",
-    status: "published",
-    summary: "The four house cards and their published names",
-    fields: [
-      {
-        id: "students-houses-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: "House system",
-      },
-      {
-        id: "students-houses-heading",
-        label: "Heading",
-        kind: "text",
-        value: HOUSES_HEADING,
-      },
-      {
-        id: "students-houses-intro",
-        label: "Intro",
-        kind: "textarea",
-        value: HOUSES_INTRO,
-        wide: true,
-      },
-      {
-        id: "students-house-crimson",
-        label: "Crimson house name",
-        kind: "text",
-        hint: "Leave empty until the college publishes the roster.",
-      },
-      {
-        id: "students-house-gold",
-        label: "Gold house name",
-        kind: "text",
-        hint: "Leave empty until the college publishes the roster.",
-      },
-      {
-        id: "students-house-green",
-        label: "Green house name",
-        kind: "text",
-        hint: "Leave empty until the college publishes the roster.",
-      },
-      {
-        id: "students-house-blue",
-        label: "Blue house name",
-        kind: "text",
-        hint: "Leave empty until the college publishes the roster.",
-      },
-    ],
-  },
-  {
-    id: "students-prefects",
-    name: "Prefects' Guild",
-    type: "Text + media",
-    status: "published",
-    summary: "The student-leadership banner copy and photograph",
-    fields: [
-      {
-        id: "students-prefects-heading",
-        label: "Heading",
-        kind: "text",
-        value: PREFECTS_HEADING,
-      },
-      {
-        id: "students-prefects-body",
-        label: "Body",
-        kind: "textarea",
-        value: PREFECTS_BODY,
-        wide: true,
-      },
-      {
-        id: "students-prefects-image",
-        label: "Photograph",
-        kind: "image",
-        hint: "Landscape or portrait. Clearing this leaves the copy full width.",
       },
     ],
   },

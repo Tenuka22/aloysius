@@ -1000,6 +1000,16 @@ const SEED_PAGES: readonly SeedPage[] = [
         ratio: "mosaicTile",
       },
       {
+        fieldId: "life-scouts",
+        seed: "page-home-life-scouts",
+        ratio: "mosaicTile",
+      },
+      {
+        fieldId: "life-faith",
+        seed: "page-home-life-faith",
+        ratio: "mosaicTile",
+      },
+      {
         fieldId: "alumni-image",
         seed: "page-home-alumni",
         ratio: "alumniPhoto",
@@ -1014,7 +1024,7 @@ const SEED_PAGES: readonly SeedPage[] = [
       {
         fieldId: "principal-portrait",
         seed: "page-principal-portrait",
-        ratio: "principalPortrait",
+        ratio: "principalMessage",
       },
     ],
     fill: {
@@ -1031,24 +1041,13 @@ const SEED_PAGES: readonly SeedPage[] = [
   {
     page: "academics",
     registry: ACADEMICS_BLOCKS,
-    images: [
-      {
-        fieldId: "academics-hero-image",
-        seed: "page-academics-hero",
-        ratio: "hero",
-      },
-    ],
+    images: [],
     fill: {},
   },
   {
     page: "about",
     registry: ABOUT_BLOCKS,
     images: [
-      {
-        fieldId: "about-hero-image",
-        seed: "page-about-hero",
-        ratio: "hero",
-      },
       {
         fieldId: "history-1-image",
         seed: "page-about-history-1895",
@@ -1069,25 +1068,13 @@ const SEED_PAGES: readonly SeedPage[] = [
         seed: "page-about-history-today",
         ratio: "heritagePhoto",
       },
-      {
-        fieldId: "anthem-image",
-        seed: "page-about-anthem",
-        ratio: "alumniPhoto",
-      },
-      {
-        fieldId: "anthem-sinhala-image",
-        seed: "page-about-anthem-sinhala",
-        ratio: "alumniPhoto",
-      },
     ],
     fill: {},
   },
   {
     page: "news",
     registry: NEWS_BLOCKS,
-    images: [
-      { fieldId: "news-hero-image", seed: "page-news-hero", ratio: "hero" },
-    ],
+    images: [],
     fill: {},
   },
   {
@@ -1142,39 +1129,19 @@ const SEED_PAGES: readonly SeedPage[] = [
   {
     page: "alumni",
     registry: ALUMNI_BLOCKS,
-    images: [
-      { fieldId: "alumni-hero-image", seed: "page-alumni-hero", ratio: "hero" },
-      {
-        fieldId: "alumni-image",
-        seed: "page-alumni-about",
-        ratio: "alumniPhoto",
-      },
-    ],
+    images: [],
     fill: {},
   },
   {
     page: "media",
     registry: MEDIA_BLOCKS,
-    images: [
-      { fieldId: "media-hero-image", seed: "page-media-hero", ratio: "hero" },
-    ],
+    images: [],
     fill: {},
   },
   {
     page: "students",
     registry: STUDENTS_BLOCKS,
-    images: [
-      {
-        fieldId: "students-hero-image",
-        seed: "page-students-hero",
-        ratio: "hero",
-      },
-      {
-        fieldId: "students-prefects-image",
-        seed: "page-students-prefects",
-        ratio: "mosaicTile",
-      },
-    ],
+    images: [],
     fill: {},
   },
 ];
@@ -1681,52 +1648,40 @@ const seedResults = async (authorId: string) => {
  */
 const ACADEMIC_HEADS = [
   {
-    slug: "head-of-mathematics",
-    name: "Dr. Anoma Bandara",
-    role: "Head of Mathematics",
-    bio: "Oversees the Grade 6-13 mathematics programme and the Olympiad team.",
+    slug: "deputy-principal-1",
+    name: "Mr. Lakshman Wijesekara",
+    role: "Deputy Principal",
+    bio: null,
   },
   {
-    slug: "head-of-science",
-    name: "Mrs. Thilini Rajapaksa",
-    role: "Head of Science",
-    bio: "Leads the physical and biological science streams and the science exhibition.",
+    slug: "deputy-principal-2",
+    name: "Mrs. Sandya Abeysekara",
+    role: "Deputy Principal",
+    bio: null,
   },
   {
-    slug: "head-of-english",
-    name: "Mr. Rohan Peiris",
-    role: "Head of English",
-    bio: "Responsible for the English syllabus and the debating society.",
+    slug: "deputy-principal-3",
+    name: "Mr. Nuwan Perera",
+    role: "Deputy Principal",
+    bio: null,
   },
   {
-    slug: "head-of-commerce",
-    name: "Mrs. Gayani Fernando",
-    role: "Head of Commerce",
-    bio: "Runs accounting, economics and business studies across the senior school.",
+    slug: "deputy-principal-4",
+    name: "Mrs. Dilani Jayasuriya",
+    role: "Deputy Principal",
+    bio: null,
   },
   {
-    slug: "head-of-ict",
-    name: "Mr. Shanaka Wickramasinghe",
-    role: "Head of ICT & Technology",
-    bio: "Networked labs, the technology stream and the College's digital literacy work.",
-  },
-  {
-    slug: "head-of-arts",
-    name: "Mr. Chandana Gunasekara",
-    role: "Head of Arts & Aesthetics",
-    bio: "Art, music and drama, including the choir and the annual concerts.",
-  },
-  {
-    slug: "head-of-sports",
-    name: "Mr. Ruwan Jayawardena",
-    role: "Head of Sports",
-    bio: "Cricket, rugby, football and athletics on College grounds.",
+    slug: "deputy-principal-5",
+    name: "Mr. Kasun Rathnayake",
+    role: "Deputy Principal",
+    bio: null,
   },
   {
     slug: "head-of-primary",
     name: "Mrs. Neroli Fernando",
-    role: "Sectional Head, Primary",
-    bio: "Grades 1 to 5: literacy, numeracy, faith and character.",
+    role: "Sectional Head",
+    bio: null,
   },
 ] as const;
 
@@ -1825,16 +1780,16 @@ const seedContactDepartments = async () => {
 
 /**
  * The "On the Field" sports mosaic on `/students`. Replaces `SPORT_TILES`, a
- * fixed three-row array (Cricket, Rugby, Athletics) with its photograph
- * pinned to a `students-sports-*` block field - see `/cms/sport-tiles` and
- * `schema/sport-tile.ts`. `sortOrder` keeps this same Cricket, Rugby,
- * Athletics order; the mosaic's hero tile is whichever published row sorts
- * first, derived by the public page rather than stored here.
+ * fixed array with its photograph pinned to a block field - see
+ * `/cms/sport-tiles` and `schema/sport-tile.ts`. The four rows are the design's
+ * main sports (Cricket, Rugby, Hockey, Football); the public page matches each
+ * row to its tile by name.
  */
 const SPORT_TILES_SEED = [
   { name: "Cricket", sortOrder: 0 },
   { name: "Rugby", sortOrder: 1 },
-  { name: "Athletics", sortOrder: 2 },
+  { name: "Hockey", sortOrder: 2 },
+  { name: "Football", sortOrder: 3 },
 ] as const;
 
 const seedSportTiles = async (uploaderId: string) => {
@@ -1872,7 +1827,7 @@ const seedSportTiles = async (uploaderId: string) => {
 
 /**
  * The facilities showcase on `/academics`. Replaces `FACILITIES`, a fixed
- * twelve-row array with only its photograph CMS-editable - see
+ * nine-row array with only its photograph CMS-editable - see
  * `/cms/facilities` and `schema/facility.ts`. `sortOrder` keeps the same
  * laboratories-first, grounds-and-classrooms-last order the shipped array had.
  */
@@ -1896,26 +1851,10 @@ const FACILITIES_SEED = [
       "Specimens, microscopes and dissection for the biological stream.",
   },
   {
-    name: "ICT & Computer Labs",
-    tag: "Technology",
-    description:
-      "Networked computers for ICT, technology and digital literacy.",
-  },
-  {
-    name: "Engineering Technology Lab",
-    tag: "Technology",
-    description: "Workshop space for the A/L engineering technology stream.",
-  },
-  {
     name: "College Library",
     tag: "Learning",
     description:
       "Reference, lending and quiet study for every section of the College.",
-  },
-  {
-    name: "Primary Library",
-    tag: "Learning",
-    description: "An age-appropriate reading room for Grades 1 to 5.",
   },
   {
     name: "Music & Art Rooms",

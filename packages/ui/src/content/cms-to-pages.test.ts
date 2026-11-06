@@ -21,74 +21,32 @@ describe(blocksToStudentsProps, () => {
     const result = blocksToStudentsProps([]);
 
     expect(result.heading).toBe("Student Life");
-    expect(result.sportsHeading).toBe("On the Field");
-    expect(result.activitiesHeading).toBe("Beyond the Classroom");
-    expect(result.housesHeading).toBe("The College Houses");
-    expect(result.prefectsHeading).toBe("Prefects' Guild & Student Leadership");
+    expect(result.tagline).toBe(
+      "Sports, societies, houses and the traditions that shape every Aloysian."
+    );
   });
 
   it("uses saved copy when an editor has published it", () => {
     const result = blocksToStudentsProps(
       blocks({
-        "students-sports": { "students-sports-heading": "On the Turf" },
-        "students-activities": {
-          "students-activities-heading": "Clubs, Teams & Societies",
-        },
-        "students-prefects": {
-          "students-prefects-body":
-            "The Guild keeps the college's daily order.",
+        "students-header": {
+          "students-heading": "Life at the College",
+          "students-tagline": "Where boys become Aloysians.",
         },
       })
     );
 
-    expect(result.sportsHeading).toBe("On the Turf");
-    expect(result.activitiesHeading).toBe("Clubs, Teams & Societies");
-    expect(result.prefectsBody).toBe(
-      "The Guild keeps the college's daily order."
-    );
-  });
-
-  it("reads the overflow list as a comma-separated field", () => {
-    expect(
-      blocksToStudentsProps(
-        blocks({
-          "students-sports": { "students-more-sports": "Rowing, Boxing" },
-        })
-      ).moreSports
-    ).toStrictEqual(["Rowing", "Boxing"]);
-  });
-
-  it("drops the overflow panel when every entry is cleared", () => {
-    // An editor who empties the field means "no more sports panel", not
-    // "restore the shipped list".
-    expect(
-      blocksToStudentsProps(
-        blocks({ "students-sports": { "students-more-sports": "  ,  " } })
-      ).moreSports
-    ).toStrictEqual([]);
-  });
-
-  it("never invents a house name the college has not published", () => {
-    const result = blocksToStudentsProps(
-      blocks({
-        "students-houses": {
-          "students-house-gold": "  Loyola House  ",
-          "students-house-crimson": "   ",
-        },
-      })
-    );
-
-    expect(result.houseNames).toStrictEqual({ gold: "Loyola House" });
+    expect(result.heading).toBe("Life at the College");
+    expect(result.tagline).toBe("Where boys become Aloysians.");
   });
 
   it("drops a hidden block's copy rather than falling back to it", () => {
     const result = blocksToStudentsProps(
-      blocks(
-        { "students-sports": { "students-sports-heading": "On the Turf" } },
-        ["students-sports"]
-      )
+      blocks({ "students-header": { "students-heading": "Hidden" } }, [
+        "students-header",
+      ])
     );
 
-    expect(result.sportsHeading).toBeUndefined();
+    expect(result.heading).toBeUndefined();
   });
 });
