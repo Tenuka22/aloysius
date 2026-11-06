@@ -2,7 +2,11 @@ import * as stylex from "@stylexjs/stylex";
 import { Mail, MapPin, Phone } from "lucide-react";
 
 import {
-  ADMISSIONS_URL,
+  CONTACT_DEFAULT_FACEBOOK_URL,
+  CONTACT_DEFAULT_INSTAGRAM_URL,
+  CONTACT_DEFAULT_YOUTUBE_URL,
+} from "../../content/contact";
+import {
   COLLEGE_LOCATION,
   COLLEGE_NAME,
   FOUNDED_YEAR,
@@ -17,10 +21,6 @@ import {
   radius,
   space,
 } from "../../tokens/tokens.stylex";
-import { ButtonLink } from "../primitives/button";
-import { VisuallyHidden } from "../primitives/layout";
-import { Media } from "../primitives/media";
-import type { ImageSource } from "../primitives/media";
 
 /*
  * Brand marks, inlined rather than imported.
@@ -89,80 +89,13 @@ const YoutubeMark = ({ className }: BrandMarkProps) => (
   </svg>
 );
 
+/** Footer link, contact and tagline text: 15px on a phone to 16px on a laptop. */
+const FOOTER_TEXT = "clamp(0.9375rem, 0.9rem + 0.2vw, 1rem)";
+
 const styles = stylex.create({
   footer: {
     backgroundColor: color.surfaceSunken,
     color: color.onSurface,
-  },
-
-  /* ------------------------------------------------------------ visit band */
-  visit: {
-    position: "relative",
-    overflow: "hidden",
-    // Fluid, like the design's clamp(260px, 34vw, 420px); in rem so the 4K
-    // root-size scaling carries it along.
-    minBlockSize: "clamp(16rem, 34vw, 26rem)",
-    display: "flex",
-    alignItems: "center",
-    backgroundColor: color.surfaceInverse,
-    color: color.onInverse,
-    paddingInline: space.gutter,
-  },
-  visitPhoto: {
-    position: "absolute",
-    inset: 0,
-    inlineSize: "100%",
-    blockSize: "100%",
-  },
-  visitScrim: {
-    position: "absolute",
-    inset: 0,
-    backgroundImage:
-      "linear-gradient(90deg, rgba(1,52,5,0.92) 0%, rgba(1,52,5,0.55) 55%, rgba(1,52,5,0.15) 100%)",
-    pointerEvents: "none",
-  },
-  visitWatermark: {
-    position: "absolute",
-    insetInlineEnd: "-4rem",
-    insetBlockEnd: "-6rem",
-    blockSize: "26rem",
-    inlineSize: "auto",
-    opacity: 0.07,
-    pointerEvents: "none",
-  },
-  visitInner: {
-    position: "relative",
-    inlineSize: "100%",
-    maxWidth: space.content,
-    marginInline: "auto",
-    paddingBlock: space["2xl"],
-  },
-  visitEyebrow: {
-    margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingUltra,
-    textTransform: "uppercase",
-    color: color.accentOnInverse,
-  },
-  visitTitle: {
-    margin: 0,
-    marginBlockStart: space.sm,
-    fontFamily: font.display,
-    fontWeight: font.weightSemibold,
-    fontSize: "clamp(2.375rem, 1.5rem + 3.4vw, 4rem)",
-    lineHeight: font.leadingTight,
-    textWrap: "balance",
-  },
-  visitAccent: {
-    fontWeight: font.weightMedium,
-    color: color.accentOnInverse,
-  },
-  visitActions: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: space.xs,
-    marginBlockStart: space.lg,
   },
 
   /* ------------------------------------------------------------ body */
@@ -235,7 +168,7 @@ const styles = stylex.create({
   mottoNote: {
     margin: 0,
     maxWidth: "46ch",
-    fontSize: font.sizeSm,
+    fontSize: FOOTER_TEXT,
     lineHeight: font.leadingRelaxed,
     color: color.onSurfaceMuted,
   },
@@ -261,7 +194,7 @@ const styles = stylex.create({
     fontFamily: font.display,
     fontStyle: "italic",
     fontWeight: font.weightSemibold,
-    fontSize: font.sizeXl,
+    fontSize: "clamp(1.375rem, 1.25rem + 0.4vw, 1.5rem)",
     color: color.accentOnSurface,
   },
   list: {
@@ -279,7 +212,7 @@ const styles = stylex.create({
       default: "2.75rem",
       [bp.hover]: "1.75rem",
     },
-    fontSize: font.sizeSm,
+    fontSize: FOOTER_TEXT,
     fontWeight: font.weightMedium,
     textDecoration: "none",
     color: {
@@ -301,7 +234,7 @@ const styles = stylex.create({
     alignItems: "flex-start",
     gap: space["2xs"],
     paddingBlock: space["3xs"],
-    fontSize: font.sizeSm,
+    fontSize: FOOTER_TEXT,
     lineHeight: font.leadingNormal,
     color: color.onSurfaceMuted,
   },
@@ -337,8 +270,8 @@ const styles = stylex.create({
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    width: "2.75rem",
-    height: "2.75rem",
+    width: "38px",
+    height: "38px",
     borderRadius: radius.circle,
     backgroundColor: {
       default: color.surfaceInverse,
@@ -374,6 +307,19 @@ const styles = stylex.create({
     maxWidth: space.content,
     paddingBlock: space.md,
     fontSize: font.sizeXs,
+  },
+  legalLinks: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: "24px",
+  },
+  legalLink: {
+    color: {
+      default: color.onInverseSubtle,
+      ":hover": color.accent,
+    },
+    textDecoration: "none",
   },
   backToTop: {
     display: "inline-flex",
@@ -420,10 +366,10 @@ const COLLEGE_LINKS: readonly FooterLink[] = [
 
 const LEARNING_LINKS: readonly FooterLink[] = [
   { id: "academics", label: "Academics", href: "/academics" },
-  { id: "results", label: "Examination Results", href: "/results" },
   { id: "facilities", label: "Facilities", href: "/academics#facilities" },
-  { id: "admissions", label: "Admissions", href: ADMISSIONS_URL },
 ];
+
+const DEFAULT_ADDRESS = "Templars' Road, Galle 80000, Sri Lanka";
 
 const COMMUNITY_LINKS: readonly FooterLink[] = [
   { id: "students", label: "Student Life", href: "/students" },
@@ -468,95 +414,33 @@ const LinkColumn = ({
 export const SiteFooter = ({
   contact = EMPTY_CONTACT,
   crestSrc = "/logo.png",
-  showVisitBand = true,
-  visitImage,
 }: {
   contact?: FooterContact;
   crestSrc?: string;
-  /**
-   * The "Visit the College" band that opens the footer.
-   *
-   * Off on `/academics`, which already ends with its own full-width
-   * "Examination Results & Achievements" call to action in the same inverse
-   * green. Two stacked inverse bands read as one section that ran on, and the
-   * band's crest watermark landed right under the results copy.
-   */
-  showVisitBand?: boolean;
-  /** Wide photograph of the College for the "Visit" band; a crest watermark stands in until it is supplied. */
-  visitImage?: ImageSource;
 }) => {
   const socials = [
     {
       id: "facebook",
       label: "Facebook",
-      href: contact.facebookUrl,
+      href: contact.facebookUrl || CONTACT_DEFAULT_FACEBOOK_URL,
       Icon: FacebookMark,
     },
     {
       id: "instagram",
       label: "Instagram",
-      href: contact.instagramUrl,
+      href: contact.instagramUrl || CONTACT_DEFAULT_INSTAGRAM_URL,
       Icon: InstagramMark,
     },
     {
       id: "youtube",
       label: "YouTube",
-      href: contact.youtubeUrl,
+      href: contact.youtubeUrl || CONTACT_DEFAULT_YOUTUBE_URL,
       Icon: YoutubeMark,
     },
-  ].filter((item): item is typeof item & { href: string } =>
-    Boolean(item.href)
-  );
-
-  const hasContactDetails = Boolean(
-    contact.address || contact.telephone || contact.email
-  );
+  ];
 
   return (
     <footer {...stylex.props(styles.footer)}>
-      {showVisitBand ? (
-        <div {...stylex.props(styles.visit)}>
-          {visitImage ? (
-            <>
-              <Media
-                fill
-                placeholder=""
-                source={visitImage}
-                style={styles.visitPhoto}
-              />
-              <div aria-hidden="true" {...stylex.props(styles.visitScrim)} />
-            </>
-          ) : (
-            <img
-              alt=""
-              aria-hidden="true"
-              decoding="async"
-              loading="lazy"
-              src={crestSrc}
-              {...stylex.props(styles.visitWatermark)}
-            />
-          )}
-          <div {...stylex.props(styles.visitInner)}>
-            <p {...stylex.props(styles.visitEyebrow)}>Visit the College</p>
-            <h2 {...stylex.props(styles.visitTitle)}>
-              Come and see
-              <br />
-              <em {...stylex.props(styles.visitAccent)}>Aloysian life.</em>
-            </h2>
-            <div {...stylex.props(styles.visitActions)}>
-              <ButtonLink href="/contact">Plan a visit</ButtonLink>
-              <ButtonLink
-                external
-                href={ADMISSIONS_URL}
-                variant="outlineInverse"
-              >
-                Admissions
-              </ButtonLink>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
       <div {...stylex.props(styles.body)}>
         <div {...stylex.props(styles.inner)}>
           <div {...stylex.props(styles.brandRow)}>
@@ -604,15 +488,13 @@ export const SiteFooter = ({
             <div>
               <h2 {...stylex.props(styles.colTitle)}>Contact</h2>
               <address {...stylex.props(styles.address)}>
-                {contact.address ? (
-                  <p {...stylex.props(styles.contactItem)}>
-                    <MapPin
-                      aria-hidden="true"
-                      {...stylex.props(styles.contactIcon)}
-                    />
-                    {contact.address}
-                  </p>
-                ) : null}
+                <p {...stylex.props(styles.contactItem)}>
+                  <MapPin
+                    aria-hidden="true"
+                    {...stylex.props(styles.contactIcon)}
+                  />
+                  {contact.address ?? DEFAULT_ADDRESS}
+                </p>
                 {contact.telephone ? (
                   <p {...stylex.props(styles.contactItem)}>
                     <Phone
@@ -643,33 +525,25 @@ export const SiteFooter = ({
                 ) : null}
               </address>
 
-              {hasContactDetails ? null : (
-                // Until the CMS supplies an address, a link beats an empty column.
-                <a href="/contact" {...stylex.props(styles.link)}>
-                  Contact the college office
-                </a>
-              )}
-
-              {socials.length > 0 ? (
-                <ul {...stylex.props(styles.social)}>
-                  {socials.map(({ id, label, href, Icon }) => (
-                    <li key={id}>
-                      <a
-                        href={href}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        {...stylex.props(styles.socialLink)}
-                      >
-                        <Icon
-                          aria-hidden={true}
-                          {...stylex.props(styles.socialIcon)}
-                        />
-                        <VisuallyHidden>{label}</VisuallyHidden>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+              {/* The design always shows the three marks, each linking to the College's account. */}
+              <ul {...stylex.props(styles.social)}>
+                {socials.map(({ id, label, href, Icon }) => (
+                  <li key={id}>
+                    <a
+                      aria-label={label}
+                      href={href}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                      {...stylex.props(styles.socialLink)}
+                    >
+                      <Icon
+                        aria-hidden={true}
+                        {...stylex.props(styles.socialIcon)}
+                      />
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
@@ -677,13 +551,18 @@ export const SiteFooter = ({
 
       <div {...stylex.props(styles.legal)}>
         <div {...stylex.props(styles.legalInner)}>
-          <span>
-            &copy; {new Date().getFullYear()} {COLLEGE_NAME}, Galle. All rights
-            reserved.
+          <span>&copy; {COLLEGE_NAME}, Galle. All rights reserved.</span>
+          <span {...stylex.props(styles.legalLinks)}>
+            <a href="#privacy" {...stylex.props(styles.legalLink)}>
+              Privacy
+            </a>
+            <a href="#accessibility" {...stylex.props(styles.legalLink)}>
+              Accessibility
+            </a>
+            <a href="#top" {...stylex.props(styles.backToTop)}>
+              Back to top <span aria-hidden="true">&nbsp;&uarr;</span>
+            </a>
           </span>
-          <a href="#top" {...stylex.props(styles.backToTop)}>
-            Back to top <span aria-hidden="true">&nbsp;&uarr;</span>
-          </a>
         </div>
       </div>
     </footer>
