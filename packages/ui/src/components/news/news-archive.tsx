@@ -5,92 +5,32 @@ import { formatNewsDate } from "../../content/home";
 import type { NewsCategory } from "../../content/home";
 import {
   ALL_CATEGORIES,
-  categoriesPresentIn,
   NEWS_ARCHIVE_HEADING,
   NEWS_EMPTY_BODY,
   NEWS_EMPTY_HEADING,
   NEWS_FILTER_EMPTY_BODY,
   NEWS_FILTER_EMPTY_HEADING,
-  NEWS_FILTER_LABEL,
   NEWS_PAGE_SIZE,
 } from "../../content/news";
 import type { NewsStory } from "../../content/news";
 import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
-import { Container, Heading, Section } from "../primitives/layout";
+import { font } from "../../tokens/tokens.stylex";
+import { DcInner, DcSection } from "../home/dc";
 import { Media } from "../primitives/media";
 
-const MIN_TARGET = "2.75rem";
-
+/*
+ * Measurements are the approved design's (News.dc.html): 90px section padding,
+ * a three-column grid with 40px / 32px gaps, 230px photographs, a 25px serif
+ * headline, and 40px square page buttons. One column on a phone, two from
+ * 40rem, three from 64rem.
+ */
 const styles = stylex.create({
-  heading: {
-    marginBlockEnd: space.lg,
+  section: {
+    paddingBlock: "clamp(56px, 8vw, 90px)",
   },
-
-  /*
-   * The mock's chips are `<span onClick>`: not focusable, not announced, no
-   * pressed state. These are real buttons in a labelled group, and the row
-   * wraps instead of overflowing - seven chips in a no-wrap row is ~700px.
-   */
-  filter: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: space["2xs"],
-    // A fieldset ships with a UA border, padding and `min-inline-size:
-    // min-content` - the last of which makes the row refuse to shrink below
-    // its widest chip and overflow a 320px viewport. All four are reset.
-    borderWidth: 0,
-    borderStyle: "none",
-    minInlineSize: 0,
-    paddingBlock: 0,
-    paddingInline: 0,
-    marginBlockStart: 0,
-    marginInline: 0,
-    marginBlockEnd: space.xl,
-  },
-  chip: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    // SC 2.5.8 everywhere, not only on coarse pointers: these are the page's
-    // primary controls and they sit close together.
-    minBlockSize: MIN_TARGET,
-    paddingBlock: space["2xs"],
-    paddingInline: space.md,
-    borderWidth: space.px,
-    borderStyle: "solid",
-    fontFamily: font.body,
-    fontSize: font.sizeXs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
-    textTransform: "uppercase",
-    cursor: "pointer",
-    touchAction: "manipulation",
-    WebkitTapHighlightColor: "transparent",
-    transitionProperty: "background-color, color, border-color",
-    transitionDuration: motionToken.fast,
-    transitionTimingFunction: motionToken.ease,
-  },
-  chipIdle: {
-    backgroundColor: {
-      default: "transparent",
-      ":hover": color.surfaceSunken,
-    },
-    borderColor: color.borderStrong,
-    // Crimson, not gold: gold on cream is ~1.9:1 and fails SC 1.4.3 outright.
-    color: color.onSurface,
-  },
-  chipActive: {
-    backgroundColor: color.accent,
-    borderColor: color.accent,
-    color: color.onAccent,
-  },
-
   grid: {
     display: "grid",
-    // The mock's hard `repeat(3, …)` overflows below ~900px. One column on a
-    // phone, two from 40rem, three from 64rem.
-    gap: space.xl,
+    gap: "40px 32px",
     gridTemplateColumns: {
       default: "minmax(0, 1fr)",
       [bp.md]: "repeat(2, minmax(0, 1fr))",
@@ -103,100 +43,75 @@ const styles = stylex.create({
   card: {
     minWidth: 0,
   },
-  /*
-   * The designer's phone layout: a compact row with a small thumbnail beside
-   * the category and headline. From 40rem it becomes the full-width card.
-   */
   cardLink: {
-    display: {
-      default: "grid",
-      [bp.md]: "block",
-    },
-    gridTemplateColumns: {
-      default: "5.125rem minmax(0, 1fr)",
-      [bp.md]: "none",
-    },
-    columnGap: space.sm,
-    alignItems: "center",
-    textDecoration: "none",
+    display: "block",
     color: "inherit",
+    textDecoration: "none",
   },
-  thumb: {
-    gridRow: {
-      default: "span 2",
-      [bp.md]: "auto",
-    },
+  photo: {
+    position: "relative",
+    overflow: "hidden",
+    width: "100%",
+    height: "230px",
   },
   meta: {
     display: "flex",
     flexWrap: "wrap",
-    gap: space["2xs"],
-    alignItems: "center",
+    gap: "14px",
     margin: 0,
-    marginBlockStart: {
-      default: 0,
-      [bp.md]: space.sm,
-    },
-    marginBlockEnd: {
-      default: space["3xs"],
-      [bp.md]: space.sm,
-    },
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWider,
+    marginBlock: "18px 10px",
+    fontSize: "10.5px",
+    letterSpacing: "0.14em",
+    fontWeight: 700,
     textTransform: "uppercase",
   },
-  category: {
-    color: color.accentOnSurface,
+  categoryGreen: {
+    color: "#013405",
+  },
+  categoryCrimson: {
+    color: "#A51919",
   },
   date: {
-    color: color.onSurfaceSubtle,
-    textTransform: "none",
-    letterSpacing: font.trackingWide,
+    color: "rgba(1, 52, 5, 0.45)",
   },
   cardTitle: {
     margin: 0,
     fontFamily: font.display,
-    fontWeight: font.weightSemibold,
-    fontSize: {
-      default: font.sizeMd,
-      [bp.md]: font.sizeXl,
-    },
-    lineHeight: font.leadingSnug,
+    fontWeight: 600,
+    fontSize: "25px",
+    lineHeight: 1.2,
     textWrap: "pretty",
     color: {
-      default: color.onSurface,
-      ":hover": color.accentOnSurface,
+      default: "#013405",
+      ":hover": "#A51919",
     },
-    transitionProperty: "color",
-    transitionDuration: motionToken.fast,
   },
 
   empty: {
     // A bordered panel rather than a bare sentence, so an empty archive still
     // reads as a deliberate state instead of a broken section.
-    borderWidth: space.px,
+    borderWidth: "1px",
     borderStyle: "dashed",
-    borderColor: color.border,
-    paddingBlock: space["2xl"],
-    paddingInline: space.lg,
+    borderColor: "rgba(1, 52, 5, 0.15)",
+    paddingBlock: "64px",
+    paddingInline: "24px",
     textAlign: "center",
   },
   emptyHeading: {
     margin: 0,
     fontFamily: font.display,
-    fontWeight: font.weightSemibold,
-    fontSize: font.sizeXl,
-    lineHeight: font.leadingSnug,
+    fontWeight: 600,
+    fontSize: "28px",
+    lineHeight: 1.2,
   },
   emptyBody: {
     margin: 0,
-    marginBlockStart: space.xs,
+    marginBlockStart: "12px",
     marginInline: "auto",
     maxWidth: "48ch",
-    fontSize: font.sizeMd,
-    lineHeight: font.leadingRelaxed,
-    color: color.onSurfaceMuted,
+    fontSize: "15px",
+    lineHeight: 1.7,
+    color: "rgba(1, 52, 5, 0.75)",
     textWrap: "pretty",
   },
 
@@ -204,40 +119,40 @@ const styles = stylex.create({
     display: "flex",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: space["2xs"],
-    marginBlockStart: space["2xl"],
+    gap: "10px",
+    marginBlockStart: "clamp(48px, 7vw, 80px)",
+    marginBlockEnd: 0,
+    marginInline: 0,
     padding: 0,
     listStyle: "none",
   },
   page: {
-    display: "inline-flex",
+    display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    minInlineSize: MIN_TARGET,
-    minBlockSize: MIN_TARGET,
-    borderWidth: space.px,
+    inlineSize: "40px",
+    blockSize: "40px",
+    padding: 0,
+    borderWidth: "1px",
     borderStyle: "solid",
     fontFamily: font.body,
-    fontSize: font.sizeSm,
-    fontWeight: font.weightBold,
+    fontSize: "13px",
+    fontWeight: 700,
     cursor: "pointer",
     touchAction: "manipulation",
-    WebkitTapHighlightColor: "transparent",
-    transitionProperty: "background-color, color, border-color",
-    transitionDuration: motionToken.fast,
   },
   pageIdle: {
-    backgroundColor: {
-      default: "transparent",
-      ":hover": color.surfaceSunken,
+    backgroundColor: "transparent",
+    borderColor: {
+      default: "rgba(1, 52, 5, 0.25)",
+      ":hover": "#013405",
     },
-    borderColor: color.borderStrong,
-    color: color.onSurface,
+    color: "#013405",
   },
   pageActive: {
-    backgroundColor: color.surfaceInverse,
-    borderColor: color.surfaceInverse,
-    color: color.accentOnInverse,
+    backgroundColor: "#013405",
+    borderColor: "#013405",
+    color: "#FFB203",
   },
   pageDisabled: {
     opacity: 0.4,
@@ -273,15 +188,19 @@ const FIRST_PAGE = 1;
 /** Module-level so the default prop is referentially stable across renders. */
 const NO_STORIES: readonly NewsStory[] = [];
 
+/** Sports and Achievements are set in crimson, the rest in green, as designed. */
+const CRIMSON_CATEGORIES: ReadonlySet<NewsCategory> = new Set([
+  "Sports",
+  "Achievements",
+]);
+
 export interface NewsArchiveProps {
   stories?: readonly NewsStory[];
   pageSize?: number;
   /**
-   * Controls the category from outside - the News page keeps the chips in its
-   * hero, as in the design, and passes the choice down. When omitted the archive
-   * is self-contained and renders its own chips above the grid. A parent that
-   * controls the filter should also pass `key={filter}`, so the page number
-   * resets when the category changes.
+   * The category chosen in the hero. The News page keeps the chips in its hero,
+   * as in the design, and passes the choice down; it should also pass
+   * `key={filter}`, so the page number resets when the category changes.
    */
   filter?: Filter;
 }
@@ -296,16 +215,11 @@ export interface NewsArchiveProps {
 export const NewsArchive = ({
   stories = NO_STORIES,
   pageSize = NEWS_PAGE_SIZE,
-  filter: controlledFilter,
+  filter = ALL_CATEGORIES,
 }: NewsArchiveProps) => {
-  const controlled = controlledFilter !== undefined;
-  const [localFilter, setLocalFilter] = useState<Filter>(ALL_CATEGORIES);
-  const filter = controlledFilter ?? localFilter;
   const [page, setPage] = useState(FIRST_PAGE);
   const resultsRef = useRef<HTMLDivElement>(null);
   const headingId = useId();
-
-  const categories = useMemo(() => categoriesPresentIn(stories), [stories]);
 
   const filtered = useMemo(
     () =>
@@ -327,11 +241,6 @@ export const NewsArchive = ({
     currentPage * pageSize
   );
 
-  const selectFilter = (next: Filter) => {
-    setLocalFilter(next);
-    setPage(FIRST_PAGE);
-  };
-
   const goToPage = (next: number) => {
     setPage(next);
     // Without this the keyboard user is left focused on a pagination button at
@@ -346,45 +255,18 @@ export const NewsArchive = ({
   const emptyBody = hasStories ? NEWS_FILTER_EMPTY_BODY : NEWS_EMPTY_BODY;
 
   return (
-    <Section id="stories" labelledBy={headingId} tone="raised">
-      <Container>
-        <Heading
-          id={headingId}
-          level={2}
-          style={controlled ? styles.srOnly : styles.heading}
-        >
+    <DcSection
+      id="stories"
+      labelledBy={headingId}
+      style={styles.section}
+      tone="raised"
+    >
+      <DcInner>
+        {/* The design has no visible heading here; the section still needs a
+            name for the document outline and screen readers. */}
+        <h2 id={headingId} {...stylex.props(styles.srOnly)}>
           {NEWS_ARCHIVE_HEADING}
-        </Heading>
-
-        {!controlled && categories.length > 0 ? (
-          /* A real <fieldset>/<legend> rather than role="group": the
-             native element carries the grouping semantics, and the legend is
-             the group's accessible name without an aria-label. */
-          <fieldset {...stylex.props(styles.filter)}>
-            <legend {...stylex.props(styles.srOnly)}>
-              {NEWS_FILTER_LABEL}
-            </legend>
-            {[ALL_CATEGORIES, ...categories].map((category) => {
-              const active = category === filter;
-              return (
-                <button
-                  // `aria-pressed` rather than a tab list: these are toggles
-                  // over one region, not separate panels.
-                  aria-pressed={active}
-                  key={category}
-                  onClick={() => selectFilter(category as Filter)}
-                  type="button"
-                  {...stylex.props(
-                    styles.chip,
-                    active ? styles.chipActive : styles.chipIdle
-                  )}
-                >
-                  {category}
-                </button>
-              );
-            })}
-          </fieldset>
-        ) : null}
+        </h2>
 
         <div ref={resultsRef} tabIndex={-1} {...stylex.props(styles.results)}>
           {/* Politely announces the new count after a filter or page change,
@@ -408,15 +290,21 @@ export const NewsArchive = ({
                       href={story.href || undefined}
                       {...stylex.props(styles.cardLink)}
                     >
-                      <Media
-                        placeholder={`${story.category} story photograph`}
-                        ratio="3:2"
-                        source={story.image}
-                        style={styles.thumb}
-                        zoom
-                      />
+                      <div {...stylex.props(styles.photo)}>
+                        <Media
+                          fill
+                          placeholder={`${story.category} story photograph`}
+                          source={story.image}
+                        />
+                      </div>
                       <p {...stylex.props(styles.meta)}>
-                        <span {...stylex.props(styles.category)}>
+                        <span
+                          {...stylex.props(
+                            CRIMSON_CATEGORIES.has(story.category)
+                              ? styles.categoryCrimson
+                              : styles.categoryGreen
+                          )}
+                        >
                           {story.category}
                         </span>
                         {formattedDate ? (
@@ -428,8 +316,6 @@ export const NewsArchive = ({
                           </time>
                         ) : null}
                       </p>
-                      {/* A heading, not the mock's styled div - this is the
-                          only structure below the h2 across the whole grid. */}
                       <h3 {...stylex.props(styles.cardTitle)}>{story.title}</h3>
                     </CardTag>
                   </li>
@@ -444,8 +330,7 @@ export const NewsArchive = ({
           )}
         </div>
 
-        {/* The mock ships three page buttons regardless of how many stories
-            exist. Pagination appears only when there is a second page. */}
+        {/* Pagination appears only when there is a second page. */}
         {totalPages > FIRST_PAGE ? (
           <nav aria-label="Story archive pages">
             <ul {...stylex.props(styles.pagination)}>
@@ -474,7 +359,6 @@ export const NewsArchive = ({
               })}
               <li>
                 <button
-                  /* The mock's bare "→" has no accessible name at all. */
                   aria-label="Next page"
                   disabled={currentPage === totalPages}
                   onClick={() => goToPage(currentPage + 1)}
@@ -491,7 +375,7 @@ export const NewsArchive = ({
             </ul>
           </nav>
         ) : null}
-      </Container>
-    </Section>
+      </DcInner>
+    </DcSection>
   );
 };

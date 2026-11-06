@@ -11,8 +11,6 @@ import type { NewsCategory, NewsItem } from "./home";
  */
 
 export const NEWS_HERO_TITLE = "News & Events";
-export const NEWS_HERO_INTRO =
-  "Results, fixtures, feast days and circulars - what is happening at St. Aloysius' College, and what is coming next.";
 
 /**
  * A story in the archive.
@@ -70,14 +68,10 @@ export const NEWS_STORIES: readonly NewsStory[] = [
 export const ALL_CATEGORIES = "All";
 
 /**
- * The categories offered by the filter.
- *
- * Derived from the stories on the page rather than hard-coded, so the filter
- * can never offer a category that matches nothing - the mock's seven fixed
- * chips against six stories guaranteed dead filters. Order follows
- * `NEWS_CATEGORY_ORDER` so the chip row is stable as stories come and go.
+ * The category chips in the hero, in the design's fixed order after "All".
+ * Picking one with no stories shows the filter's own empty state.
  */
-const NEWS_CATEGORY_ORDER: readonly NewsCategory[] = [
+export const NEWS_CATEGORIES: readonly NewsCategory[] = [
   "College News",
   "Academic",
   "Sports",
@@ -85,13 +79,6 @@ const NEWS_CATEGORY_ORDER: readonly NewsCategory[] = [
   "Announcements",
   "Achievements",
 ];
-
-export const categoriesPresentIn = (
-  stories: readonly NewsStory[]
-): readonly NewsCategory[] => {
-  const present = new Set(stories.map((story) => story.category));
-  return NEWS_CATEGORY_ORDER.filter((category) => present.has(category));
-};
 
 /** How many stories one page of the archive holds before pagination appears. */
 export const NEWS_PAGE_SIZE = 9;
@@ -106,7 +93,7 @@ export const NEWS_FILTER_EMPTY_BODY =
   "Nothing has been published under this heading so far. Choose another category to see the rest of the archive.";
 
 export const FEATURED_EYEBROW = "Featured";
-export const FEATURED_READ_LABEL = "Read the story";
+export const FEATURED_READ_LABEL = "Read the Story";
 
 /**
  * A dated entry in the college calendar.

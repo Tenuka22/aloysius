@@ -10,16 +10,28 @@ import {
 } from "../../content/news";
 import type { CollegeEvent } from "../../content/news";
 import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
-import {
-  Container,
-  Eyebrow,
-  Heading,
-  Section,
-  VisuallyHidden,
-} from "../primitives/layout";
+import { font } from "../../tokens/tokens.stylex";
+import { DcEyebrow, DcHeading, DcInner, DcSection } from "../home/dc";
+import { VisuallyHidden } from "../primitives/layout";
 
+/*
+ * Measurements are the approved design's (News.dc.html): 110px section
+ * padding, a 120px date badge, 19px bold titles and an outlined "Details"
+ * button. Below 48rem the row stacks - badge and copy side by side, the action
+ * on its own line - because a 120px column plus a 40px gap leaves a phone
+ * about 80px for the title.
+ */
 const styles = stylex.create({
+  section: {
+    paddingBlock: "clamp(56px, 9vw, 110px)",
+  },
+  header: {
+    marginBlockEnd: "clamp(36px, 5vw, 56px)",
+  },
+  heading: {
+    fontSize: "clamp(34px, 4.2vw, 50px)",
+    lineHeight: 1.1,
+  },
   list: {
     display: "flex",
     flexDirection: "column",
@@ -27,75 +39,65 @@ const styles = stylex.create({
     margin: 0,
     padding: 0,
   },
-  /*
-   * The mock is a hard `120px 1fr auto` three-column row with a 40px gap - at
-   * 320px that leaves ~80px for the title. Below 48rem the row becomes a
-   * stack: badge and copy side by side, the action on its own line beneath.
-   */
   row: {
     display: "grid",
     gap: {
-      default: space.md,
-      [bp.lg]: space.xl,
+      default: "20px",
+      [bp.lg]: "40px",
     },
     gridTemplateColumns: {
       default: "auto minmax(0, 1fr)",
-      [bp.lg]: "7.5rem minmax(0, 1fr) auto",
+      [bp.lg]: "120px minmax(0, 1fr) auto",
     },
     alignItems: "center",
-    paddingBlock: space.lg,
-    borderBlockEndWidth: space.px,
+    paddingBlock: "30px",
+    borderBlockEndWidth: "1px",
     borderBlockEndStyle: "solid",
-    borderBlockEndColor: color.borderInverse,
+    borderBlockEndColor: "rgba(255, 248, 231, 0.12)",
   },
   badge: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    minInlineSize: "4.5rem",
-    paddingBlock: space.xs,
-    paddingInline: space["2xs"],
-    borderWidth: space.px,
+    minInlineSize: "72px",
+    paddingBlock: "14px",
+    paddingInline: "10px",
+    textAlign: "center",
+    borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: color.borderAccent,
+    borderColor: "rgba(255, 178, 3, 0.4)",
   },
   badgeDay: {
     fontFamily: font.display,
-    fontSize: font.sizeXl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingTight,
-    color: color.accentOnInverse,
+    fontSize: "34px",
+    fontWeight: 600,
+    color: "#FFB203",
+    lineHeight: 1,
   },
   badgeMonth: {
-    marginBlockStart: space["3xs"],
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWider,
+    marginBlockStart: "6px",
+    fontSize: "10px",
+    letterSpacing: "0.2em",
+    color: "rgba(255, 248, 231, 0.6)",
     textTransform: "uppercase",
-    color: color.onInverseSubtle,
   },
   copy: {
     minWidth: 0,
   },
   title: {
     margin: 0,
-    fontSize: font.sizeLg,
-    fontWeight: font.weightBold,
-    lineHeight: font.leadingSnug,
+    fontWeight: 700,
+    fontSize: "19px",
     textWrap: "pretty",
   },
   detail: {
     margin: 0,
-    marginBlockStart: space["3xs"],
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingNormal,
-    color: color.onInverseSubtle,
+    marginBlockStart: "6px",
+    fontSize: "13px",
+    color: "rgba(255, 248, 231, 0.6)",
   },
   action: {
-    // Full width under the copy on a phone, intrinsic in its own column from
-    // 48rem - the mock's `justify-content:space-between` strands it against
-    // the right edge the moment the row wraps.
     gridColumn: {
       default: "1 / -1",
       [bp.lg]: "auto",
@@ -107,70 +109,56 @@ const styles = stylex.create({
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    minBlockSize: "2.75rem",
-    paddingBlock: space.xs,
-    paddingInline: space.md,
-    borderWidth: space.px,
+    paddingBlock: "11px",
+    paddingInline: "22px",
+    borderWidth: "1px",
     borderStyle: "solid",
     borderColor: {
-      default: color.borderInverse,
-      ":hover": color.accent,
-    },
-    backgroundColor: {
-      default: "transparent",
-      ":hover": color.accent,
+      default: "rgba(255, 248, 231, 0.4)",
+      ":hover": "#FFB203",
     },
     color: {
-      default: color.onInverse,
-      ":hover": color.onAccent,
+      default: "#FFF8E7",
+      ":hover": "#FFB203",
     },
-    fontSize: font.sizeSm,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
+    fontSize: "12.5px",
+    fontWeight: 700,
     textDecoration: "none",
     whiteSpace: "nowrap",
-    transitionProperty: "background-color, color, border-color",
-    transitionDuration: motionToken.fast,
-    transitionTimingFunction: motionToken.ease,
   },
 
   empty: {
-    borderWidth: space.px,
+    borderWidth: "1px",
     borderStyle: "dashed",
-    borderColor: color.borderInverse,
-    paddingBlock: space["2xl"],
-    paddingInline: space.lg,
+    borderColor: "rgba(255, 248, 231, 0.2)",
+    paddingBlock: "64px",
+    paddingInline: "24px",
     textAlign: "center",
   },
   emptyHeading: {
     margin: 0,
     fontFamily: font.display,
-    fontWeight: font.weightSemibold,
-    fontSize: font.sizeXl,
-    lineHeight: font.leadingSnug,
-    color: color.onInverse,
+    fontWeight: 600,
+    fontSize: "28px",
+    lineHeight: 1.2,
   },
   emptyBody: {
     margin: 0,
-    marginBlockStart: space.xs,
+    marginBlockStart: "12px",
     marginInline: "auto",
     maxWidth: "48ch",
-    fontSize: font.sizeMd,
-    lineHeight: font.leadingRelaxed,
-    color: color.onInverseMuted,
+    fontSize: "15px",
+    lineHeight: 1.7,
+    color: "rgba(255, 248, 231, 0.75)",
     textWrap: "pretty",
-  },
-  header: {
-    marginBlockEnd: space.xl,
   },
 });
 
 /**
  * The college calendar strip.
  *
- * Every row is driven by a real ISO date - the mock's `[dd]`/`[MON]` badge
- * placeholders cannot ship, and an event whose date will not parse is dropped
- * rather than rendered as "NaN".
+ * Every row is driven by a real ISO date - an event whose date will not parse
+ * is dropped rather than rendered as "NaN".
  */
 export const UpcomingEvents = ({
   events = COLLEGE_EVENTS,
@@ -189,13 +177,18 @@ export const UpcomingEvents = ({
     );
 
   return (
-    <Section id="events" labelledBy="events-title" tone="inverse">
-      <Container>
+    <DcSection
+      id="events"
+      labelledBy="events-title"
+      style={styles.section}
+      tone="green"
+    >
+      <DcInner>
         <div {...stylex.props(styles.header)}>
-          <Eyebrow inverse>{EVENTS_EYEBROW}</Eyebrow>
-          <Heading id="events-title" level={2}>
+          <DcEyebrow gold>{EVENTS_EYEBROW}</DcEyebrow>
+          <DcHeading id="events-title" style={styles.heading}>
             {EVENTS_HEADING}
-          </Heading>
+          </DcHeading>
         </div>
 
         {dated.length > 0 ? (
@@ -240,7 +233,7 @@ export const UpcomingEvents = ({
             <p {...stylex.props(styles.emptyBody)}>{EVENTS_EMPTY_BODY}</p>
           </div>
         )}
-      </Container>
-    </Section>
+      </DcInner>
+    </DcSection>
   );
 };

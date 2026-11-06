@@ -4,7 +4,6 @@ import { useState } from "react";
 import type { NavItem } from "../../content/home";
 import {
   ALL_CATEGORIES,
-  categoriesPresentIn,
   COLLEGE_EVENTS,
   FEATURED_STORY,
   NEWS_STORIES,
@@ -38,9 +37,8 @@ const styles = stylex.create({
 });
 
 export interface NewsPageProps {
-  /** CMS `news-header` copy; falls back to the hero's own constants. */
+  /** CMS `news-header` heading; falls back to the hero's own constant. */
   heading?: string;
-  tagline?: string;
   contact?: FooterContact;
   extraNavItems?: readonly NavItem[];
   /** The lead story. Omitted, the featured section does not render. */
@@ -53,7 +51,6 @@ export interface NewsPageProps {
 
 export const NewsPage = ({
   heading,
-  tagline,
   contact,
   extraNavItems,
   featured = FEATURED_STORY,
@@ -73,9 +70,7 @@ export const NewsPage = ({
       <SiteHeader activeHref="/news" extraNavItems={extraNavItems} />
       <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
         <NewsHero
-          intro={tagline}
           title={heading}
-          categories={categoriesPresentIn(stories)}
           filter={filter}
           onFilterChange={(next) => setFilter(next as Filter)}
         />

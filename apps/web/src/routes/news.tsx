@@ -84,9 +84,6 @@ const NewsContent = () => {
     }
     const items = [];
     const { role } = session.user;
-    if (role === "admin" || role === "cms") {
-      items.push({ id: "cms", label: "CMS", href: "/cms" });
-    }
     if (role === "admin") {
       items.push({ id: "admin", label: "Admin", href: "/admin" });
     }
@@ -100,7 +97,6 @@ const NewsContent = () => {
       featured={featured ?? null}
       heading={cmsProps.heading}
       stories={stories}
-      tagline={cmsProps.tagline}
     />
   );
 };

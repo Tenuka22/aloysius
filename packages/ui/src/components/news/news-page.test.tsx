@@ -1,9 +1,10 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { NewsStory } from "../../content/news";
 import { FeaturedStory } from "./featured-story";
 import { NewsArchive } from "./news-archive";
+import { NewsHero } from "./news-hero";
 import { NewsPage } from "./news-page";
 import { UpcomingEvents } from "./upcoming-events";
 
@@ -72,9 +73,9 @@ describe(FeaturedStory, () => {
       />
     );
 
-    // SC 2.4.4: "Read the story" on its own is not a destination.
+    // SC 2.4.4: "Read the Story" on its own is not a destination.
     expect(
-      screen.getByRole("link", { name: "Read the story: Results announced" })
+      screen.getByRole("link", { name: "Read the Story: Results announced" })
     ).toHaveAttribute("href", "/news/f");
   });
 
@@ -88,27 +89,37 @@ describe(FeaturedStory, () => {
   });
 });
 
-describe(NewsArchive, () => {
-  it("offers only categories that actually have stories", () => {
-    render(
-      <NewsArchive stories={[story("a", "Sports"), story("b", "Sports")]} />
-    );
+describe(NewsHero, () => {
+  it("offers the design's seven fixed category chips", () => {
+    render(<NewsHero onFilterChange={vi.fn<() => void>()} />);
 
     const filter = screen.getByRole("group", {
       name: "Filter stories by category",
     });
-    const chips = within(filter).getAllByRole("button");
-    // "All" + "Sports" only — the mock's seven fixed chips guaranteed five
-    // filters that matched nothing.
-    expect(chips.map((chip) => chip.textContent)).toStrictEqual([
+    expect(
+      within(filter)
+        .getAllByRole("button")
+        .map((chip) => chip.textContent)
+    ).toStrictEqual([
       "All",
+      "College News",
+      "Academic",
       "Sports",
+      "Events",
+      "Announcements",
+      "Achievements",
     ]);
   });
+});
 
-  it("filters the grid and reflects the pressed state", () => {
+describe("News page filtering", () => {
+  it("filters the grid from the hero chips and reflects the pressed state", () => {
     render(
-      <NewsArchive stories={[story("a", "Sports"), story("b", "Academic")]} />
+      <NewsPage
+        events={[]}
+        featured={null}
+        stories={[story("a", "Sports"), story("b", "Academic")]}
+      />
     );
 
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(2);
@@ -129,6 +140,20 @@ describe(NewsArchive, () => {
     );
   });
 
+  it("shows the filter's own empty state for a category with no stories", () => {
+    render(
+      <NewsPage events={[]} featured={null} stories={[story("a", "Sports")]} />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Academic" }));
+
+    expect(
+      screen.getByText("No stories in this category yet")
+    ).toBeInTheDocument();
+  });
+});
+
+describe(NewsArchive, () => {
   it("shows no pagination until there is a second page", () => {
     const { rerender } = render(
       <NewsArchive pageSize={2} stories={[story("a", "Sports")]} />
@@ -155,7 +180,6 @@ describe(NewsArchive, () => {
     expect(
       within(pages).getByRole("button", { name: "Page 1" })
     ).toHaveAttribute("aria-current", "page");
-    // The mock's bare "→" had no accessible name at all.
     expect(
       within(pages).getByRole("button", { name: "Next page" })
     ).toBeEnabled();
@@ -184,43 +208,10 @@ describe(NewsArchive, () => {
     expect(screen.getByRole("button", { name: "Next page" })).toBeDisabled();
   });
 
-  it("clamps the page when a filter shrinks the result set", () => {
-    render(
-      <NewsArchive
-        pageSize={2}
-        stories={[
-          story("a", "Sports"),
-          story("b", "Sports"),
-          story("c", "Sports"),
-          story("d", "Academic"),
-        ]}
-      />
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
-    // Filtering to a one-story category while on page 2 must not leave the
-    // grid empty.
-    fireEvent.click(screen.getByRole("button", { name: "Academic" }));
-
-    expect(
-      screen.getByRole("heading", { level: 3, name: "Story d" })
-    ).toBeInTheDocument();
-  });
-
-  it("distinguishes an empty archive from an empty filter", () => {
-    const { rerender } = render(<NewsArchive stories={[]} />);
+  it("explains an empty archive", () => {
+    render(<NewsArchive stories={[]} />);
 
     expect(screen.getByText("No stories published yet")).toBeInTheDocument();
-    // With nothing published there is nothing to filter by either.
-    expect(
-      screen.queryByRole("group", { name: "Filter stories by category" })
-    ).toBeNull();
-
-    rerender(<NewsArchive stories={[story("a", "Sports")]} />);
-    fireEvent.click(screen.getByRole("button", { name: "Sports" }));
-    expect(
-      screen.getByRole("heading", { level: 3, name: "Story a" })
-    ).toBeInTheDocument();
   });
 
   it("announces the visible count in a live region", () => {

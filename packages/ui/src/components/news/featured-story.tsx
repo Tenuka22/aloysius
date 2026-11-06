@@ -4,21 +4,24 @@ import { formatNewsDate } from "../../content/home";
 import { FEATURED_EYEBROW, FEATURED_READ_LABEL } from "../../content/news";
 import type { NewsStory } from "../../content/news";
 import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
-import { Container, Section, VisuallyHidden } from "../primitives/layout";
+import { font } from "../../tokens/tokens.stylex";
+import { DcInner, DcSection } from "../home/dc";
+import { VisuallyHidden } from "../primitives/layout";
 import { Media } from "../primitives/media";
 
+/*
+ * Measurements are the approved design's (News.dc.html): 90px section padding,
+ * a 1.5fr / 1fr split with the copy aligned to the foot of a 460px photograph,
+ * a 44px headline and a gold-underlined "Read the Story" link. One column
+ * below 64rem, where the two-column split would starve the copy.
+ */
 const styles = stylex.create({
-  /*
-   * The mock's `1.5fr 1fr` with `align-items: end` has no media query, so below
-   * ~900px the copy column is narrower than its own words. One column to
-   * 64rem, then the two-column split - and `align-items: center` rather than
-   * `end`, because `end` strands the copy against the bottom of a 460px image
-   * as soon as the text is shorter than the photograph.
-   */
+  section: {
+    paddingBlock: "clamp(56px, 8vw, 90px)",
+  },
   grid: {
     display: "grid",
-    gap: space.xl,
+    gap: "clamp(28px, 4vw, 56px)",
     gridTemplateColumns: {
       default: "minmax(0, 1fr)",
       [bp.xl]: "minmax(0, 1.5fr) minmax(0, 1fr)",
@@ -28,81 +31,75 @@ const styles = stylex.create({
       [bp.xl]: "end",
     },
   },
+  photo: {
+    position: "relative",
+    overflow: "hidden",
+    width: "100%",
+    height: "clamp(240px, 40vw, 460px)",
+  },
+  photoLink: {
+    display: "block",
+    textDecoration: "none",
+  },
   copy: {
     minWidth: 0,
   },
   meta: {
     display: "flex",
     flexWrap: "wrap",
-    gap: space["2xs"],
-    alignItems: "center",
+    gap: "14px",
     margin: 0,
-    marginBlockEnd: space.sm,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWider,
+    marginBlockEnd: "16px",
+    fontSize: "11px",
+    letterSpacing: "0.14em",
+    fontWeight: 700,
     textTransform: "uppercase",
   },
   eyebrow: {
-    color: color.accentOnSurface,
+    color: "#A51919",
   },
   date: {
-    color: color.onSurfaceSubtle,
-    textTransform: "none",
-    letterSpacing: font.trackingWide,
+    color: "rgba(1, 52, 5, 0.45)",
   },
   title: {
     margin: 0,
+    marginBlockEnd: "20px",
     fontFamily: font.display,
-    fontWeight: font.weightSemibold,
-    fontSize: font.size2xl,
-    lineHeight: font.leadingSnug,
-    letterSpacing: font.trackingTight,
+    fontWeight: 600,
+    fontSize: "clamp(30px, 3.7vw, 44px)",
+    lineHeight: 1.1,
     textWrap: "pretty",
   },
   /*
    * The whole card is one link, but only the headline carries the accessible
-   * name - the image is decorative-by-duplication and the "Read the story"
-   * affordance is a span inside the same anchor. That keeps one focus stop per
-   * story instead of the mock's three overlapping targets.
+   * name - the "Read the Story" affordance is a second link to the same place,
+   * labelled with the story's title for links lists.
    */
   link: {
     color: {
-      default: color.onSurface,
-      ":hover": color.accentOnSurface,
+      default: "#013405",
+      ":hover": "#A51919",
     },
     textDecoration: "none",
-    transitionProperty: "color",
-    transitionDuration: motionToken.fast,
   },
   excerpt: {
     margin: 0,
-    marginBlockStart: space.md,
-    maxWidth: space.measure,
-    fontSize: font.sizeMd,
-    lineHeight: font.leadingRelaxed,
-    color: color.onSurfaceMuted,
+    marginBlockEnd: "30px",
+    fontSize: "15px",
+    lineHeight: 1.7,
+    color: "rgba(1, 52, 5, 0.75)",
     textWrap: "pretty",
   },
   readMore: {
     display: "inline-flex",
     alignItems: "center",
-    gap: space["2xs"],
-    minBlockSize: "2.75rem",
-    marginBlockStart: space.lg,
-    fontSize: font.sizeSm,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
+    gap: "10px",
+    paddingBlockEnd: "6px",
     borderBlockEndWidth: "2px",
     borderBlockEndStyle: "solid",
-    borderBlockEndColor: color.accent,
-    paddingBlockEnd: space["3xs"],
-  },
-  mediaLink: {
-    display: "block",
-    // A second link to the same place would be a duplicate focus stop, so the
-    // image is hidden from assistive tech and excluded from the tab order.
-    textDecoration: "none",
+    borderBlockEndColor: "#FFB203",
+    fontSize: "14px",
+    fontWeight: 700,
   },
 });
 
@@ -119,30 +116,35 @@ export const FeaturedStory = ({ story }: { story?: NewsStory }) => {
 
   const formattedDate = formatNewsDate(story.date);
   // Without a story page there is nothing to link to: the photograph and
-  // headline render plainly and the "Read the story" action is omitted.
+  // headline render plainly and the "Read the Story" action is omitted.
   const linked = Boolean(story.href);
-  const MediaTag = linked ? "a" : "div";
+  const PhotoTag = linked ? "a" : "div";
 
   return (
-    <Section labelledBy="featured-story-title" tone="surface">
-      <Container>
+    <DcSection
+      labelledBy="featured-story-title"
+      style={styles.section}
+      tone="cream"
+    >
+      <DcInner>
         <div {...stylex.props(styles.grid)}>
-          <MediaTag
+          <PhotoTag
             {...(linked
               ? { "aria-hidden": true, href: story.href, tabIndex: -1 }
               : {})}
-            {...stylex.props(styles.mediaLink)}
+            {...stylex.props(styles.photoLink)}
           >
-            <Media
-              placeholder="Featured story photograph"
-              // The LCP element on this page: eager, high priority, and the
-              // only image allowed to skip lazy loading.
-              priority
-              ratio="3:2"
-              source={story.image}
-              zoom
-            />
-          </MediaTag>
+            <div {...stylex.props(styles.photo)}>
+              <Media
+                fill
+                placeholder="Featured story photograph"
+                // The LCP element on this page: eager, high priority, and the
+                // only image allowed to skip lazy loading.
+                priority
+                source={story.image}
+              />
+            </div>
+          </PhotoTag>
 
           <div {...stylex.props(styles.copy)}>
             <p {...stylex.props(styles.meta)}>
@@ -174,7 +176,7 @@ export const FeaturedStory = ({ story }: { story?: NewsStory }) => {
                 {...stylex.props(styles.link, styles.readMore)}
               >
                 {FEATURED_READ_LABEL}
-                {/* SC 2.4.4: "Read the story" alone is not a destination when
+                {/* SC 2.4.4: "Read the Story" alone is not a destination when
                   read out of context in a links list. */}
                 <VisuallyHidden>: {story.title}</VisuallyHidden>
                 <span aria-hidden="true">&rarr;</span>
@@ -182,7 +184,7 @@ export const FeaturedStory = ({ story }: { story?: NewsStory }) => {
             ) : null}
           </div>
         </div>
-      </Container>
-    </Section>
+      </DcInner>
+    </DcSection>
   );
 };
