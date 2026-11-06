@@ -174,7 +174,7 @@ const SportTilesContent = () => {
       <ScreenHead
         eyebrow="Content"
         heading="Sport Tiles"
-        note="The sports shown in the 'On the Field' mosaic on the Student Life page, in display order."
+        note="Photographs for the four main sports on the Student Life page. A photo is matched to its sport by exact name: Cricket, Rugby, Hockey or Football. The other sports on that page are fixed."
       />
       <Panel>
         <PanelHead

@@ -198,7 +198,7 @@ const FacilitiesContent = () => {
       <ScreenHead
         eyebrow="Content"
         heading="Facilities"
-        note="The laboratories, libraries and specialist spaces shown in the Academics page showcase, in display order."
+        note="The laboratories, libraries and specialist spaces shown in the Academics page showcase, in display order. Until a row is added here, the page shows its standard list of nine facilities without photographs."
       />
       <Panel>
         <PanelHead

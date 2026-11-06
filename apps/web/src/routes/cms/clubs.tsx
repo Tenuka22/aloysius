@@ -260,7 +260,7 @@ const ClubsContent = () => {
       <ScreenHead
         eyebrow="Organisation"
         heading="Clubs"
-        note="Every club and society. Adding one here makes it selectable when attributing a gallery, event, announcement or news post."
+        note="Every club and society. Adding one here makes it selectable when attributing a gallery, event, announcement or news post. A description shows on the Student Life page under the club of the same name: Photography Club, Media Unit, Debating Society, Science Society, Scouts, Cadets, Choir & Eastern Band or Environmental Society."
       />
       <Panel>
         <PanelHead
