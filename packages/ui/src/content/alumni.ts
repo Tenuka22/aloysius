@@ -1,132 +1,74 @@
-import type { ImageSource } from "../components/primitives/media";
-
 /**
- * Static content for the `/alumni` page.
- *
- * The page is CMS-driven (`cms.getAlumni` -> `blocksToAlumniProps`), so this is
- * the fallback the mapper uses when nothing is published yet - the same role
- * `contact.ts` and `students.ts` play for their pages.
+ * Content for the `/alumni` page, to the approved UI/UX design
+ * (Alumni.dc.html). Every string is a typed constant carrying real copy, never
+ * a `[CMS: ...]` marker.
  */
 
 /** The default title breaks after the comma, as in the design. */
 export const ALUMNI_HERO_TITLE = "Once an Aloysian, Always an Aloysian";
 export const ALUMNI_HERO_INTRO =
-  "The Old Boys' Association of St. Aloysius' College connects generations of Aloysians, wherever in the world they now live.";
+  "The Old Boys’ Association and the global Aloysian family.";
 
-/*
- * `ALUMNI_HERO_EYEBROW` was removed with the eyebrow it fed: the page has no
- * kicker above its `h1`, and leaving the constant here would invite someone to
- * wire one back up.
- */
+export const ALUMNI_NOTABLES_LABEL = "Distinguished Aloysians";
 
-export const ALUMNI_ABOUT_HEADING = "A Bond That Outlasts School";
-export const ALUMNI_ABOUT_BODY =
-  "Every Aloysian leaves with a certificate and keeps something less formal: a common name, a common address, and a few thousand others who sat the same examinations. The Association is how that stays true after the fifth year, through the decades that follow, and across the world. Branches in Galle, Colombo and overseas run reunions, scholarships and support for current students, and keep the register that lets a lost Aloysian find his way back to the College.";
-export const ALUMNI_ABOUT_CAPTION = "Old Boys' Association event";
-
-/**
- * "What the Association Does" - the one sentence in `ALUMNI_ABOUT_BODY` that
- * lists the Association's activities ("run reunions, scholarships and support
- * for current students, and keep the register...") restated as a scannable
- * list rather than left buried mid-paragraph. No activity here is invented -
- * each restates a clause already in the body copy above.
- */
-export const ALUMNI_OFFER_HEADING = "What the Association Does";
-export interface AlumniOfferItem {
-  id: string;
-  title: string;
-  body: string;
-}
-export const ALUMNI_OFFER_ITEMS: readonly AlumniOfferItem[] = [
-  {
-    id: "reunions",
-    title: "Reunions",
-    body: "Branch gatherings that bring classmates back into the same room, year after year.",
-  },
-  {
-    id: "scholarships",
-    title: "Scholarships",
-    body: "Bursaries that carry the Association's support to boys still at the College.",
-  },
-  {
-    id: "support",
-    title: "Student support",
-    body: "Everyday support for current students, given in the Association's own name.",
-  },
-  {
-    id: "register",
-    title: "The register",
-    body: "The record that lets a lost Aloysian find his way back to the College.",
-  },
-];
-
-/**
- * The Association's branches, exactly as `ALUMNI_ABOUT_BODY` names them -
- * "Branches in Galle, Colombo and overseas" - with no per-branch detail
- * invented beyond what that sentence already states collectively.
- */
-export const ALUMNI_BRANCHES_HEADING = "Where to Find the Association";
-export const ALUMNI_BRANCHES_INTRO =
-  "Three branches carry the Association's name: one at the College itself, one in the capital, and one for every Aloysian who left the island.";
-
-export const ALUMNI_LINKS_HEADING = "Stay Connected";
-export const ALUMNI_LINKS_BODY =
-  "Members can update their details with the branch secretary, or contact the College office to re-establish an address on the register.";
-export const ALUMNI_OBA_LABEL = "Visit the OBA";
-
-/**
- * The Association's own site.
- *
- * A published destination rather than a placeholder, because a button with no
- * destination is the one thing this page must never render: an alumnus who
- * clicks "Visit the OBA" and lands nowhere has been told the College could not
- * be bothered to say where the Association lives.
- */
-export const ALUMNI_OBA_HREF = "https://sacoba.lk/";
+/* ------------------------------------------------------------- branches */
 
 export const ALUMNI_BRANCHES_EYEBROW = "The Association";
-export const ALUMNI_BRANCHES_TITLE = "OBA Branches Worldwide";
+export const ALUMNI_BRANCHES_HEADING = "One Brotherhood, Across the World";
+export const ALUMNI_BRANCHES_INTRO =
+  "Wherever Aloysians settle, the Old Boys’ Association keeps them close to the College — from Galle and Colombo to branches overseas.";
 
+/**
+ * A branch of the Association. `contact` (a president, phone or email) and
+ * `href` (the branch's own page) come from the CMS roster, matched by name;
+ * until they are supplied a branch is just its name and what it is.
+ */
 export interface AlumniBranch {
   id: string;
   name: string;
-  /** Contact or president, shown under the name. Omitted until supplied. */
+  /** What the branch is, e.g. "Main branch · Home of the Association". */
+  description?: string;
+  /** Contact or president, shown after the description. */
   contact?: string;
-  /** Adds a "Branch Details" link. Omitted until the branch has a page. */
+  /** Makes the branch a link. Omitted until the branch has a page. */
   href?: string;
 }
 
-/**
- * The branch cards. Add `contact` and `href` to a row as the details are
- * confirmed - a card without them still renders as just the branch name. An
- * empty list hides the section.
- */
-export const ALUMNI_BRANCH_CARDS: readonly AlumniBranch[] = [
-  { id: "galle", name: "Galle (Main Branch)" },
-  { id: "colombo", name: "Colombo Branch" },
-  { id: "overseas", name: "Overseas Branches" },
+/** The two home-country branches, numbered 01 and 02 in the design. */
+export const ALUMNI_LOCAL_BRANCHES: readonly AlumniBranch[] = [
+  {
+    id: "galle",
+    name: "Galle",
+    description: "Main branch · Home of the Association",
+    href: "https://sacoba.lk/",
+  },
+  {
+    id: "colombo",
+    name: "Colombo",
+    description: "Colombo branch",
+    href: "https://sacobacolombo.org/",
+  },
 ];
 
-export const ALUMNI_NOTABLES_EYEBROW = "Hall of Fame";
-export const ALUMNI_NOTABLES_TITLE = "Distinguished Aloysians";
-export const ALUMNI_NOTABLES_LABEL = "Distinguished Aloysians";
+export const ALUMNI_OVERSEAS_HEADING = "Overseas";
+export const ALUMNI_OVERSEAS_DESCRIPTION = "Branches of the Association abroad";
 
-export interface DistinguishedAloysian {
-  id: string;
-  /** Left unset until the person is confirmed; the portrait slot still shows. */
-  name?: string;
-  field: string;
-  /** Shown above the name when set, e.g. "Alumni President". */
-  role?: string;
-  image?: ImageSource;
-}
+/** The three overseas branches, numbered 03 in the design as one group. */
+export const ALUMNI_OVERSEAS_BRANCHES: readonly AlumniBranch[] = [
+  { id: "melbourne", name: "Melbourne" },
+  {
+    id: "london",
+    name: "London",
+    href: "https://staloysiusobauk.weebly.com/",
+  },
+  { id: "new-zealand", name: "New Zealand" },
+];
 
 /**
- * Maps a stored `alumni_notable.category` value to the display label shown
- * as `field` on a card. Kept in sync by hand with
- * `ALUMNI_NOTABLE_CATEGORIES` in `@aloysius/db/schema/alumni-notables`, the
- * same way `achievements.ts`'s `ACHIEVEMENT_CATEGORIES` mirrors its own
- * check constraint - the `ui` package never imports from `db`.
+ * Maps a stored `alumni_notable.category` value to its display label. Used by
+ * the CMS roster editor; kept in sync by hand with `ALUMNI_NOTABLE_CATEGORIES`
+ * in `@aloysius/db/schema/alumni-notables`, since the `ui` package never
+ * imports from `db`.
  */
 export const ALUMNI_NOTABLE_CATEGORY_LABELS: Record<string, string> = {
   "public-service": "Public Service",
@@ -135,13 +77,113 @@ export const ALUMNI_NOTABLE_CATEGORY_LABELS: Record<string, string> = {
   "arts-culture": "Arts & Culture",
 };
 
-/**
- * The Hall of Fame. Set `name` and `image: { src, alt }` on a row to fill it in,
- * or append rows. An empty list hides the section.
- */
+/* --------------------------------------------------------- hall of fame */
+
+export const ALUMNI_NOTABLES_EYEBROW = "Hall of Fame";
+export const ALUMNI_NOTABLES_TITLE = "Distinguished Aloysians";
+
+export interface DistinguishedAloysian {
+  id: string;
+  name: string;
+  /** What they are known for, set in gold capitals under the name. */
+  field: string;
+  /** A line about them. */
+  note: string;
+}
+
+/** The four featured Aloysians, each with a portrait. */
 export const ALUMNI_NOTABLES: readonly DistinguishedAloysian[] = [
-  { id: "public-service", field: "Public Service" },
-  { id: "academia", field: "Academia" },
-  { id: "sport", field: "Sport" },
-  { id: "arts-culture", field: "Arts & Culture" },
+  {
+    id: "sarachchandra",
+    name: "Ediriweera Sarachchandra",
+    field: "Literature & Theatre",
+    note: "Playwright, novelist, poet and literary critic.",
+  },
+  {
+    id: "ponnamperuma",
+    name: "Cyril Ponnamperuma",
+    field: "Science",
+    note: "Exobiology scientist at NASA’s Ames Research Center.",
+  },
+  {
+    id: "santha",
+    name: "Sunil Santha",
+    field: "Music",
+    note: "Musician, composer, singer and lyricist.",
+  },
+  {
+    id: "kottegoda",
+    name: "Shantha Kottegoda",
+    field: "Defence",
+    note: "General, Commander of the Army (2004–2005).",
+  },
+];
+
+export interface NotableAlumnus {
+  name: string;
+  note: string;
+}
+
+/** The longer roll of notable Aloysians beneath the four portraits. */
+export const ALUMNI_ROLL: readonly NotableAlumnus[] = [
+  {
+    name: "R. I. T. Alles",
+    note: "Educationist, founder of D. S. Senanayake College",
+  },
+  {
+    name: "N. U. Jayawardena",
+    note: "Economist, Governor of the Central Bank of Ceylon (1953–1954)",
+  },
+  {
+    name: "A. C. Alles",
+    note: "Judge of the Supreme Court of Sri Lanka (1964–1974)",
+  },
+  {
+    name: "Lalith Gamage",
+    note: "President, Sri Lanka Institute of Information Technology",
+  },
+  {
+    name: "Gihan Wikramanayake",
+    note: "Director, University of Colombo School of Computing",
+  },
+  {
+    name: "D. V. J. Harischandra",
+    note: "Consultant psychiatrist, author and Buddhist scholar",
+  },
+  {
+    name: "Sirisena Amarasiri",
+    note: "Chief Minister of Southern Province; Governor of Uva (1999–2003)",
+  },
+  {
+    name: "A. R. M. Thassim",
+    note: "Business owner, philanthropist, Mayor of Galle",
+  },
+  {
+    name: "Patrick Denipitiya",
+    note: "Songwriter, composer and music arranger",
+  },
+  {
+    name: "Dilith Jayaweera",
+    note: "Chairman, George Steuart Group; Member of Parliament",
+  },
+  {
+    name: "Lalith Jayaweera",
+    note: "Air Vice Marshal, Director General Health Services, SLAF",
+  },
+  {
+    name: "Asoka Abeygunawardana",
+    note: "Chairman & CEO, Strategic Enterprise Management Agency",
+  },
+  {
+    name: "Ariyaseela Wickramanayake",
+    note: "Founder Chairman to Master Divers, Pelwatte Dairy Industries",
+  },
+  { name: "Anura Karunathilaka", note: "Cabinet Minister" },
+  { name: "Rathna Gamage", note: "State Minister" },
+  { name: "Chandima Weerakkody", note: "Member of Parliament (Galle)" },
+  { name: "Mohan P. de Silva", note: "Member of Parliament (Galle)" },
+  { name: "Chathuranga de Silva", note: "One Day International cricketer" },
+  { name: "Ashen Bandara", note: "International cricketer" },
+  { name: "Harsha Vithana", note: "First-class cricketer" },
+  { name: "Percy Abeysekera", note: "Celebrated cricket superfan" },
 ];

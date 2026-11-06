@@ -210,7 +210,7 @@ const AlumniNotablesContent = () => {
       <ScreenHead
         eyebrow="Content"
         heading="Distinguished Alumni"
-        note="The Hall of Fame on the Alumni page — any number of names per category, each with an optional role and photo."
+        note="Portraits for the four featured Aloysians on the Alumni page. A photo is matched to the person by exact name, e.g. Sunil Santha."
       />
       <Panel>
         <PanelHead

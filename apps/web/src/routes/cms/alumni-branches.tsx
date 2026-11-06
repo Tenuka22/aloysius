@@ -176,7 +176,7 @@ const AlumniBranchesContent = () => {
       <ScreenHead
         eyebrow="Content"
         heading="Alumni Branches"
-        note="The OBA branch directory shown on the alumni page - Galle, Colombo, overseas, or any others the Association adds."
+        note="Contact and page links for the branches on the Alumni page. A row is matched to its branch by exact name: Galle, Colombo, Melbourne, London or New Zealand."
       />
       <Panel>
         <PanelHead

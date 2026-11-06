@@ -1,9 +1,6 @@
-import { AlumniPage } from "@aloysius/ui/components/pages/alumni-page";
-import { ALUMNI_NOTABLE_CATEGORY_LABELS } from "@aloysius/ui/content/alumni";
-import type {
-  AlumniBranch,
-  DistinguishedAloysian,
-} from "@aloysius/ui/content/alumni";
+import { AlumniPage } from "@aloysius/ui/components/alumni/alumni-page";
+import type { BranchDetails } from "@aloysius/ui/components/alumni/branches";
+import type { NotablePortraits } from "@aloysius/ui/components/alumni/distinguished";
 import { blocksToAlumniProps } from "@aloysius/ui/content/cms-to-pages";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -12,6 +9,16 @@ import { Suspense } from "react";
 import { authClient } from "@/lib/auth-client";
 import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
+
+/**
+ * `/alumni` - the Old Boys' Association.
+ *
+ * The page is the approved design's own content (`content/alumni.ts`): the
+ * branches, the four featured Aloysians and the wider roll. Three things come
+ * from the CMS - the hero title and tagline, each branch's contact line and
+ * page link (`cms.listAlumniBranches`, matched to the branch by name) and each
+ * featured Aloysian's portrait (`cms.listAlumniNotables`, matched by name).
+ */
 
 const AlumniContent = () => {
   const alumniQuery = orpc.cms.getAlumni.queryOptions();
@@ -25,20 +32,20 @@ const AlumniContent = () => {
   /* Always call the mapper so an unpublished page falls back to content/alumni.ts. */
   const cmsProps = blocksToAlumniProps(alumni?.blocks ?? []);
 
-  const notables: DistinguishedAloysian[] = notableRows.map((row) => ({
-    field: ALUMNI_NOTABLE_CATEGORY_LABELS[row.category] ?? row.category,
-    id: row.id,
-    image: row.imageUrl ? { alt: row.name, src: row.imageUrl } : undefined,
-    name: row.name,
-    role: row.role ?? undefined,
-  }));
+  const branchDetails: Record<string, BranchDetails[string]> = {};
+  for (const row of branchRows) {
+    branchDetails[row.name.toLowerCase()] = {
+      contact: row.contact ?? undefined,
+      href: row.href ?? undefined,
+    };
+  }
 
-  const branches: AlumniBranch[] = branchRows.map((row) => ({
-    contact: row.contact ?? undefined,
-    href: row.href ?? undefined,
-    id: row.id,
-    name: row.name,
-  }));
+  const portraits: Record<string, NotablePortraits[string]> = {};
+  for (const row of notableRows) {
+    if (row.imageUrl) {
+      portraits[row.name.toLowerCase()] = { alt: row.name, src: row.imageUrl };
+    }
+  }
 
   const extraNavItems = (() => {
     if (!session?.user) {
@@ -46,9 +53,6 @@ const AlumniContent = () => {
     }
     const items = [];
     const { role } = session.user;
-    if (role === "admin" || role === "cms") {
-      items.push({ id: "cms", label: "CMS", href: "/cms" });
-    }
     if (role === "admin") {
       items.push({ id: "admin", label: "Admin", href: "/admin" });
     }
@@ -57,12 +61,10 @@ const AlumniContent = () => {
 
   return (
     <AlumniPage
-      branches={branches}
+      branchDetails={branchDetails}
       extraNavItems={extraNavItems}
       heading={cmsProps.heading}
-      notables={notables}
-      obaHref={cmsProps.obaHref}
-      obaLabel={cmsProps.obaLabel}
+      portraits={portraits}
       tagline={cmsProps.tagline}
     />
   );
