@@ -1,12 +1,10 @@
 import type { ImageSource } from "../components/primitives/media";
 
 /**
- * Content for the About page, mirroring the pattern in `content/home.ts`:
- * every string is a typed constant with a real default so the page reads as
- * finished copy, not a `[CMS: ...]` placeholder. Sections that depend on data
- * this project does not yet have a public source for (the leadership roster)
- * take an optional prop and degrade to an empty state instead of inventing
- * names.
+ * Content for the About page, to the approved UI/UX design (About.dc.html).
+ *
+ * Every string is a typed constant with a real default so the page reads as
+ * finished copy, not a `[CMS: ...]` placeholder.
  */
 
 export interface JumpLink {
@@ -14,18 +12,21 @@ export interface JumpLink {
   href: string;
 }
 
+/** In the design's order; the first is drawn as the active link. */
 export const ABOUT_JUMP_LINKS: readonly JumpLink[] = [
   { label: "History", href: "#history" },
+  { label: "Crest", href: "#crest" },
+  { label: "Principals", href: "#principals" },
   { label: "Vision & Mission", href: "#vision" },
   { label: "Motto", href: "#motto" },
   { label: "Principal", href: "#principal" },
-  { label: "Academic Heads", href: "#academic-heads" },
   { label: "Anthem", href: "#anthem" },
+  { label: "Administration", href: "#administration" },
 ];
 
 export const ABOUT_HERO_TITLE = "Our Story, Our Heritage";
 export const ABOUT_HERO_INTRO =
-  "The history, mission and people of St. Aloysius' College - a Catholic institution rooted in the heart of Galle.";
+  "The history, mission and people of St. Aloysius’ College — a Catholic institution rooted in the heart of Galle.";
 
 export interface TimelineEntry {
   year: string;
@@ -38,37 +39,82 @@ export const HISTORY_HEADING = "More Than a Century in Galle";
 export const TIMELINE: readonly TimelineEntry[] = [
   {
     year: "1895",
-    title: "Founding of the College",
-    body: "St. Aloysius' College was established by Belgian Jesuit missionaries led by Bishop Joseph Van Reeth.",
+    title: "Founded on Mount Calvary",
+    body: "Established by newly arrived Belgian Jesuit missionaries led by Joseph Van Reeth, first Bishop of Galle, and named after the Jesuit saint Aloysius Gonzaga — beside St. Mary's Cathedral and Sacred Heart Convent.",
     image: {
-      src: "/about-history-1895.png",
-      alt: "Archival photograph from the college's founding in 1895",
+      src: "/about-history-1895.webp",
+      alt: "Archival photograph from the college's founding era",
     },
   },
   {
-    year: "1920s",
-    title: "Early Growth",
-    body: "Expansion of the College, early buildings and student body.",
+    year: "1896",
+    title: "The Jesuit Years",
+    body: "Under Jesuit principals from Joseph Van Reeth to Paul Caspersz, the College grew with English as its medium of instruction and five houses named after its pioneering fathers.",
     image: {
-      src: "/about-history-1920s.png",
-      alt: "Archival photograph of the college during the 1920s",
+      src: "/about-history-1920s.webp",
+      alt: "Archival photograph of the early campus",
     },
   },
   {
     year: "1971",
-    title: "A Century of Excellence",
-    body: "Became a national school with the appointment of the first Buddhist principal, marking milestones in academics, sport and national life.",
+    title: "A New Chapter",
+    body: "Following the nationalisation of schools, B. K. Silva became the first Buddhist principal and the medium of instruction changed to Sinhala.",
     image: {
-      src: "/about-history-1971.png",
-      alt: "Archival photograph of the college in 1971",
+      src: "/about-history-1971.webp",
+      alt: "Archival photograph of the college in the 1970s",
     },
   },
   {
     year: "Today",
-    title: "The Modern College",
-    body: "St. Aloysius' College today - facilities, programmes and a community of over 5,000 students.",
-    image: { src: "/about-history-today.png", alt: "The college campus today" },
+    title: "A National School",
+    body: "A boys' National School of over 3,500 students from Grade 1 to G.C.E. Advanced Level, serving families of many faiths across the South.",
+    image: {
+      src: "/about-history-today.webp",
+      alt: "The college campus today",
+    },
   },
+];
+
+export interface CrestSymbol {
+  no: string;
+  name: string;
+  meaning: string;
+}
+
+export const CREST_HEADING = "Symbols of an Aloysian";
+export const CREST_SYMBOLS: readonly CrestSymbol[] = [
+  { no: "01", name: "The Tusker", meaning: "Courage" },
+  { no: "02", name: "Lilies", meaning: "Purity of conscience" },
+  { no: "03", name: "The Torch", meaning: "The torch of learning" },
+  { no: "04", name: "The Rooster", meaning: "Symbol of Galle" },
+];
+
+/** The Roll of Principals, oldest first. The last entry is the current term. */
+export const PRINCIPALS_ROLL: readonly { period: string; name: string }[] = [
+  { period: "1896 – 1910", name: "Joseph Van Reeth" },
+  { period: "1910 – 1921", name: "Dionysius Murphy" },
+  { period: "1921 – 1925", name: "John Delaney" },
+  { period: "1925 – 1949", name: "Ernest Gaspard" },
+  { period: "1949 – 1962", name: "Paul Nazarine Peiris" },
+  { period: "1963 – 1968", name: "Paul Caspersz" },
+  { period: "1968 – 1970", name: "Stephen Fernando (Acting)" },
+  { period: "1970 – 1971", name: "Paul Caspersz" },
+  { period: "1971 – 1972", name: "B. K. Silva" },
+  { period: "1972 – 1973", name: "Dunstan Fernando" },
+  { period: "1973", name: "J. B. Varnakulasingham (Acting)" },
+  { period: "1973 – 1975", name: "L. D. P. Jayasinghe" },
+  { period: "1975 – 1976", name: "A. B. J. L. Fernando (Acting)" },
+  { period: "1976 – 1987", name: "D. Y. Wijewickrama" },
+  { period: "1987 – 1996", name: "A. V. Illeperuma" },
+  { period: "1996 – 2004", name: "N. K. Ariyawansa" },
+  { period: "2004", name: "Nandasena Pathirana (Acting)" },
+  { period: "2004 – 2014", name: "D. P. L. S. Gunasekara" },
+  { period: "2014", name: "Piyasiri Kumarage (Acting)" },
+  { period: "2014 – 2017", name: "Ranjith Thilakarathne" },
+  { period: "2017", name: "L. P. Weeraman (Acting)" },
+  { period: "2017 – 2020", name: "Nayanapriya Perera" },
+  { period: "2020 – 2024", name: "Anura Gamage" },
+  { period: "2024 – Present", name: "A. J. P. Pubudu Sampath" },
 ];
 
 export const VISION_STATEMENT =
@@ -87,23 +133,16 @@ export interface AnthemStanza {
   lines: readonly string[];
 }
 
-export interface AnthemLanguage {
-  label: string;
-  stanzas: readonly AnthemStanza[];
-}
-
 export const ANTHEM_TITLE = "The College Anthem";
-export const ANTHEM_DESC =
-  "Sung with pride by generations of Aloysians, our anthem embodies the spirit and values of St. Aloysius' College.";
-export const ANTHEM_CREDIT =
-  "English: Words by D. Anghie \u00B7 Music by Strom Sidicinus, S.J. \u00B7 Sinhala: Lyrics by Rev. Fr. Moses Perera \u00B7 Music by Sunil Santha";
 
-export const ANTHEM_IMAGE: ImageSource = {
-  src: "/about-anthem-creators.png",
-  alt: "Portraits of D. Anghie and Fr. Strom Sidicinus, S.J., who wrote the college anthem",
-};
+/**
+ * The recording the "Listen to the anthem" button plays. Empty until the
+ * College supplies one: the button is only drawn when there is something for
+ * it to play, rather than offering a control that does nothing.
+ */
+export const ANTHEM_AUDIO_SRC = "";
 
-const EN_STANZAS: readonly AnthemStanza[] = [
+export const ANTHEM_STANZAS: readonly AnthemStanza[] = [
   {
     id: 1,
     lines: [
@@ -294,14 +333,3 @@ const EN_STANZAS: readonly AnthemStanza[] = [
     ],
   },
 ];
-
-export const ANTHEM_LANGUAGES: Record<"en" | "si", AnthemLanguage> = {
-  en: {
-    label: "English",
-    stanzas: EN_STANZAS,
-  },
-  si: {
-    label: "\u0DC3\u0DD2\u0D82\u0DC4\u0DBD",
-    stanzas: [],
-  },
-};

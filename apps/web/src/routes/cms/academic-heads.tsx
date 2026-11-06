@@ -145,7 +145,7 @@ const HeadDialog = ({ editing, onClose, onSaved, open }: HeadDialogProps) => {
           value={form.name}
         />
         <Field
-          hint='Shown above the name, e.g. "Head of Physics".'
+          hint='Shown under the name, e.g. "Vice Principal".'
           kind="text"
           label="Role"
           onChange={(next) => patch({ role: next })}
@@ -194,8 +194,8 @@ const AcademicHeadsContent = () => {
     <>
       <ScreenHead
         eyebrow="People"
-        heading="Academic Heads"
-        note="Who leads each part of the College, shown under the Principal's message on the About page."
+        heading="Leadership"
+        note="The Vice Principals and Sectional Heads shown after the Principal in the Administration section of the About page."
       />
       <Panel>
         <PanelHead
@@ -213,15 +213,15 @@ const AcademicHeadsContent = () => {
               Add person
             </CmsButton>
           }
-          title="Heads of department"
+          title="Administration"
         />
         {heads.length === 0 ? (
           <p>
             Nobody published yet. The About page shows nothing in this position
-            until the first head is added.
+            until the first person is added.
           </p>
         ) : (
-          <RecordList label="Academic heads">
+          <RecordList label="Leadership">
             {heads.map((head) => (
               <RecordRow
                 actions={
@@ -277,7 +277,7 @@ const AcademicHeadsContent = () => {
 export const Route = createFileRoute("/cms/academic-heads")({
   head: () => ({
     meta: [
-      { title: "Academic Heads — St. Aloysius' College" },
+      { title: "Leadership — St. Aloysius' College" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

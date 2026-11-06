@@ -1,336 +1,198 @@
 import * as stylex from "@stylexjs/stylex";
 import { useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
 
 import {
-  ANTHEM_CREDIT,
-  ANTHEM_DESC,
-  ANTHEM_IMAGE,
-  ANTHEM_LANGUAGES,
+  ANTHEM_AUDIO_SRC,
+  ANTHEM_STANZAS,
   ANTHEM_TITLE,
 } from "../../content/about";
-import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
-import {
-  Container,
-  Eyebrow,
-  Heading,
-  Lead,
-  Section,
-} from "../primitives/layout";
-import { Media } from "../primitives/media";
-import type { ImageSource } from "../primitives/media";
+import type { AnthemStanza } from "../../content/about";
+import { font } from "../../tokens/tokens.stylex";
+import { DcEyebrow, DcHeading, DcInner, DcSection } from "../home/dc";
 import { Reveal } from "../primitives/reveal";
 
-const PREVIEW_COUNT = 4;
+/** Verses shown before "Read more": the first two, as the College asks. */
+const PREVIEW_STANZAS = 2;
 
 const styles = stylex.create({
-  inner: {
-    marginInline: "auto",
-    maxWidth: "48rem",
+  section: {
     textAlign: "center",
   },
-  headingSpacing: {
-    marginBlock: `${space.sm} ${space.md}`,
+  inner: {
+    maxWidth: "760px",
   },
-  lead: {
-    marginInline: "auto",
+  heading: {
+    marginBlockEnd: "40px",
+    fontSize: "clamp(34px, 4.2vw, 50px)",
   },
-  tabs: {
+  box: {
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "rgba(1, 52, 5, 0.15)",
+    borderBlockStartWidth: "2px",
+    borderBlockStartColor: "#FFB203",
+    backgroundColor: "#FFF8E7",
+    paddingBlock: "clamp(36px, 5vw, 56px)",
+    paddingInline: "clamp(20px, 4.4vw, 48px)",
+  },
+  lyrics: {
+    margin: 0,
+    padding: 0,
+    listStyle: "none",
+    fontFamily: font.display,
+    fontStyle: "italic",
+    fontSize: "clamp(20px, 2.2vw, 24px)",
+    lineHeight: 1.9,
+    color: "rgba(1, 52, 5, 0.75)",
+  },
+  stanza: {
+    display: "block",
+    marginBlockEnd: "1.4em",
+  },
+  stanzaLast: {
+    marginBlockEnd: 0,
+  },
+  line: {
+    display: "block",
+  },
+  actions: {
     display: "flex",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: space["3xs"],
-    marginBlockStart: space.xl,
-    marginBlockEnd: space.lg,
+    gap: "12px 16px",
+    marginBlockStart: "36px",
   },
-  tab: {
-    // 44px minimum so the language switch is comfortable on touch displays,
-    // kiosks and smart boards (WCAG 2.2 SC 2.5.8 clears at 24px; this is the
-    // comfort target).
-    minBlockSize: "2.75rem",
-    paddingBlock: space.xs,
-    paddingInline: space.md,
-    fontSize: font.sizeSm,
-    fontWeight: font.weightSemibold,
-    backgroundColor: color.placeholder,
-    color: color.onSurfaceSubtle,
-    borderWidth: 0,
-    cursor: "pointer",
-    transitionProperty: "background-color, color",
-    transitionDuration: motionToken.fast,
-  },
-  tabActive: {
-    backgroundColor: color.surfaceInverse,
-    color: color.onInverse,
-  },
-  credit: {
-    margin: 0,
-    marginBlockEnd: space.lg,
-    fontSize: font.sizeXs,
-    fontStyle: "italic",
-    color: color.onSurfaceSubtle,
-  },
-  image: {
-    marginInline: "auto",
-    marginBlockEnd: space.lg,
-    maxWidth: "32rem",
-  },
-  lyricsWrap: {
-    position: "relative",
-    textAlign: "start",
-  },
-  lyrics: {
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.border,
-    borderBlockStartWidth: "2px",
-    borderBlockStartColor: color.accent,
-    backgroundColor: color.surfaceRaised,
-    padding: {
-      default: space.md,
-      [bp.md]: space.xl,
-    },
-    columnGap: space.xl,
-  },
-  /*
-   * Two columns only once the full text is on screen. While the verses are
-   * truncated, a second column asks the reader to go down, back up, and then
-   * down again into a block that is cut off mid-way - so the preview stays
-   * single-column and the layout widens on expand.
-   */
-  lyricsColumns: {
-    columns: {
-      default: "1",
-      [bp.lg]: "2",
-    },
-  },
-  empty: {
-    textAlign: "center",
-    fontStyle: "italic",
-    color: color.onSurfaceSubtle,
-    paddingBlock: space.xl,
-  },
-  stanza: {
-    display: "flex",
-    gap: space.sm,
-    breakInside: "avoid",
-    paddingBlockEnd: space.md,
-    marginBlockEnd: space.md,
-    borderBlockEndWidth: space.px,
-    borderBlockEndStyle: "solid",
-    borderBlockEndColor: color.border,
-  },
-  stanzaNumber: {
-    flexShrink: 0,
-    width: "1.25rem",
-    fontFamily: font.display,
-    fontWeight: font.weightBold,
-    fontSize: font.sizeSm,
-    // Gold text on the cream surface is ~1.9:1 - crimson is the accent colour
-    // that passes on this background.
-    color: color.accentOnSurface,
-  },
-  stanzaLine: {
-    margin: 0,
-    fontFamily: font.display,
-    fontSize: font.sizeLg,
-    lineHeight: font.leadingRelaxed,
-    color: color.onSurfaceMuted,
-  },
-  fade: {
-    position: "absolute",
-    insetInline: 0,
-    insetBlockEnd: 0,
-    height: "7rem",
-    backgroundImage: `linear-gradient(180deg, transparent, ${color.surfaceRaised})`,
-    pointerEvents: "none",
-  },
-  expandButton: {
-    display: "flex",
-    width: "100%",
-    justifyContent: "center",
-    gap: space["2xs"],
-    marginBlockStart: space.md,
-    minBlockSize: "2.75rem",
+  listen: {
+    display: "inline-flex",
     alignItems: "center",
-    paddingBlock: space.sm,
-    fontSize: font.sizeSm,
-    fontWeight: font.weightSemibold,
-    color: color.onSurfaceMuted,
-    backgroundColor: "transparent",
-    borderWidth: space.px,
+    gap: "12px",
+    paddingBlock: "12px",
+    paddingInline: "26px",
+    borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: color.border,
+    borderColor: "#013405",
+    backgroundColor: {
+      default: "transparent",
+      ":hover": "#013405",
+    },
+    color: {
+      default: "#013405",
+      ":hover": "#FFB203",
+    },
+    fontFamily: "inherit",
+    fontSize: "13px",
+    fontWeight: 700,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
     cursor: "pointer",
   },
 });
 
+const Verse = ({ stanza, last }: { stanza: AnthemStanza; last: boolean }) => (
+  <li {...stylex.props(styles.stanza, last && styles.stanzaLast)}>
+    {stanza.lines.map((line) => (
+      <span {...stylex.props(styles.line)} key={line}>
+        {line}
+      </span>
+    ))}
+  </li>
+);
+
+/**
+ * The College anthem: the lyrics verse by verse and, once a recording is
+ * supplied, a button that plays it.
+ */
 export const Anthem = ({
   title = ANTHEM_TITLE,
-  description = ANTHEM_DESC,
-  credit = ANTHEM_CREDIT,
-  image = ANTHEM_IMAGE,
-  sinhalaImage = ANTHEM_IMAGE,
-  languages = ANTHEM_LANGUAGES,
+  stanzas = ANTHEM_STANZAS,
+  audioSrc = ANTHEM_AUDIO_SRC,
 }: {
   title?: string;
-  description?: string;
-  credit?: string;
-  image?: ImageSource;
-  sinhalaImage?: ImageSource;
-  languages?: typeof ANTHEM_LANGUAGES;
+  stanzas?: readonly AnthemStanza[];
+  audioSrc?: string;
 }) => {
-  const [activeLanguage, setActiveLanguage] = useState<"en" | "si">("en");
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const tablistRef = useRef<HTMLDivElement>(null);
+  const canExpand = stanzas.length > PREVIEW_STANZAS;
+  const visibleStanzas =
+    expanded || !canExpand ? stanzas : stanzas.slice(0, PREVIEW_STANZAS);
 
-  const codes = Object.keys(languages) as ("en" | "si")[];
-
-  /**
-   * `role="tablist"` is a promise that arrow keys move between the tabs and
-   * that Home/End jump to the ends; without it the pattern is worse for
-   * keyboard users than plain buttons would have been (WCAG 2.2 SC 2.1.1 plus
-   * the APG tabs pattern). Focus follows selection, which is correct here
-   * because switching panels is instant and has no side effects.
-   */
-  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    const index = codes.indexOf(activeLanguage);
-    let next = index;
-    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-      next = (index + 1) % codes.length;
-    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-      next = (index - 1 + codes.length) % codes.length;
-    } else if (event.key === "Home") {
-      next = 0;
-    } else if (event.key === "End") {
-      next = codes.length - 1;
+  const toggle = async () => {
+    const audio = audioRef.current;
+    if (!audio) {
+      return;
+    }
+    if (audio.paused) {
+      await audio.play();
     } else {
-      return;
+      audio.pause();
     }
-    const code = codes[next];
-    if (!code) {
-      return;
-    }
-    event.preventDefault();
-    setActiveLanguage(code);
-    setExpanded(false);
-    tablistRef.current
-      ?.querySelector<HTMLButtonElement>(`#anthem-tab-${code}`)
-      ?.focus();
   };
 
-  const { stanzas } = languages[activeLanguage];
-  const isLong = stanzas.length > PREVIEW_COUNT;
-  const visibleStanzas =
-    expanded || !isLong ? stanzas : stanzas.slice(0, PREVIEW_COUNT);
-
   return (
-    <Section id="anthem" labelledBy="anthem-title" tone="raised">
-      <Container>
-        <div {...stylex.props(styles.inner)}>
-          <Eyebrow>College Anthem</Eyebrow>
-          <Heading id="anthem-title" style={styles.headingSpacing}>
-            {title}
-          </Heading>
-          <Lead style={styles.lead}>{description}</Lead>
-
-          <Reveal direction="up">
-            <div
-              aria-label="Anthem language"
-              ref={tablistRef}
-              role="tablist"
-              {...stylex.props(styles.tabs)}
-            >
-              {codes.map((code) => {
-                const selected = activeLanguage === code;
-                return (
-                  <button
-                    aria-controls="anthem-lyrics"
-                    aria-selected={selected}
-                    id={`anthem-tab-${code}`}
-                    key={code}
-                    lang={code}
-                    onClick={() => {
-                      setActiveLanguage(code);
-                      setExpanded(false);
-                    }}
-                    onKeyDown={onTabKeyDown}
-                    role="tab"
-                    tabIndex={selected ? 0 : -1}
-                    type="button"
-                    {...stylex.props(styles.tab, selected && styles.tabActive)}
+    <DcSection
+      id="anthem"
+      labelledBy="anthem-title"
+      style={styles.section}
+      tone="raised"
+    >
+      <DcInner style={styles.inner}>
+        <DcEyebrow>College Anthem</DcEyebrow>
+        <DcHeading id="anthem-title" style={styles.heading}>
+          {title}
+        </DcHeading>
+        <Reveal direction="up">
+          <div {...stylex.props(styles.box)}>
+            <ol id="anthem-lyrics" {...stylex.props(styles.lyrics)}>
+              {visibleStanzas.map((stanza, index) => (
+                <Verse
+                  key={stanza.id}
+                  last={index === visibleStanzas.length - 1}
+                  stanza={stanza}
+                />
+              ))}
+            </ol>
+            <div {...stylex.props(styles.actions)}>
+              {canExpand ? (
+                <button
+                  aria-controls="anthem-lyrics"
+                  aria-expanded={expanded}
+                  onClick={() => setExpanded((value) => !value)}
+                  type="button"
+                  {...stylex.props(styles.listen)}
+                >
+                  {expanded ? "Read less" : "Read more"}
+                </button>
+              ) : null}
+              {audioSrc ? (
+                <>
+                  {/* The anthem is sung text; the lyrics above are its transcript. */}
+                  <audio
+                    onEnded={() => setPlaying(false)}
+                    onPause={() => setPlaying(false)}
+                    onPlay={() => setPlaying(true)}
+                    preload="none"
+                    ref={audioRef}
+                    src={audioSrc}
                   >
-                    {languages[code].label}
+                    <track kind="captions" />
+                  </audio>
+                  <button
+                    aria-pressed={playing}
+                    onClick={toggle}
+                    type="button"
+                    {...stylex.props(styles.listen)}
+                  >
+                    <span aria-hidden="true">{playing ? "❚❚" : "▶"}</span>
+                    {playing ? "Pause the anthem" : "Listen to the anthem"}
                   </button>
-                );
-              })}
-            </div>
-
-            <Media
-              placeholder="Anthem creators"
-              ratio="3:2"
-              source={activeLanguage === "si" ? sinhalaImage : image}
-              style={styles.image}
-            />
-            <p {...stylex.props(styles.credit)}>{credit}</p>
-
-            <div
-              aria-labelledby={`anthem-tab-${activeLanguage}`}
-              id="anthem-lyrics"
-              lang={activeLanguage}
-              role="tabpanel"
-              tabIndex={0}
-              {...stylex.props(styles.lyricsWrap)}
-            >
-              <div
-                {...stylex.props(
-                  styles.lyrics,
-                  (expanded || !isLong) && styles.lyricsColumns
-                )}
-              >
-                {stanzas.length === 0 ? (
-                  <p {...stylex.props(styles.empty)}>
-                    Lyrics for this language are coming soon.
-                  </p>
-                ) : (
-                  visibleStanzas.map((stanza) => (
-                    <div {...stylex.props(styles.stanza)} key={stanza.id}>
-                      <span {...stylex.props(styles.stanzaNumber)}>
-                        {stanza.id}
-                      </span>
-                      <div>
-                        {stanza.lines.map((line) => (
-                          <p {...stylex.props(styles.stanzaLine)} key={line}>
-                            {line}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-              {isLong && !expanded ? (
-                <div aria-hidden="true" {...stylex.props(styles.fade)} />
+                </>
               ) : null}
             </div>
-
-            {isLong ? (
-              <button
-                aria-controls="anthem-lyrics"
-                aria-expanded={expanded}
-                onClick={() => setExpanded((value) => !value)}
-                type="button"
-                {...stylex.props(styles.expandButton)}
-              >
-                {expanded
-                  ? "Show fewer verses"
-                  : `Read full anthem (${stanzas.length} verses)`}
-              </button>
-            ) : null}
-          </Reveal>
-        </div>
-      </Container>
-    </Section>
+          </div>
+        </Reveal>
+      </DcInner>
+    </DcSection>
   );
 };

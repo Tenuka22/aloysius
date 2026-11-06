@@ -1,20 +1,17 @@
 import type { ImageSource } from "../components/primitives/media";
 
 /**
- * A person the College publishes as leading something.
+ * A person the College publishes as part of its leadership.
  *
- * Read by `/about` from `cms.listAcademicHeads` and written at
- * `/cms/academic-heads`. The fields mirror the `person` table exactly, and
- * `image` is the `ImageSource` form of the router's flat `imageUrl` - the same
- * bridge `/results` does for its students.
+ * The Principal comes from the global Principal block; everyone else is read
+ * by `/about` from `cms.listAcademicHeads` and written at
+ * `/cms/academic-heads`. The fields mirror the `person` table, and `image` is
+ * the `ImageSource` form of the router's flat `imageUrl`.
  */
-export interface AcademicHead {
+export interface LeadershipPerson {
   id: string;
-  /** Stable identifier, unique across people. */
-  slug: string;
   name: string;
-  /** "Head of Physics". Shown above the name, because it is what is scanned. */
+  /** "Vice Principal". Shown under the name. */
   role: string | null;
-  bio: string | null;
   image?: ImageSource;
 }

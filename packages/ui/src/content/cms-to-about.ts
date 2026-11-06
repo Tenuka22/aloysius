@@ -1,5 +1,5 @@
 import type { ImageSource } from "../components/primitives/media";
-import type { AnthemStanza, TimelineEntry } from "../content/about";
+import type { TimelineEntry } from "../content/about";
 import type { CmsBlock } from "./cms-to-home";
 
 const fieldValue = (
@@ -23,31 +23,6 @@ const imageField = (
 ): CmsImageField | undefined => {
   const block = blocks.find((candidate) => candidate.id === blockId);
   return block?.fields.find((candidate) => candidate.id === fieldId);
-};
-
-/**
- * An optional image field: `undefined` when the editor has not set one.
- *
- * The counterpart to `imageOrDefault` below, for the fields that have no
- * shipped photograph to fall back to - the page header's hero image, where an
- * empty value means "no image", not "the default image".
- */
-const imageSource = (
-  blocks: CmsBlock[],
-  blockId: string,
-  fieldId: string,
-  alt: string
-): ImageSource | undefined => {
-  const field = imageField(blocks, blockId, fieldId);
-  const url = field?.value;
-  if (!url) {
-    return undefined;
-  }
-  return {
-    src: url.startsWith("image:") ? url.slice("image:".length) : url,
-    alt,
-    ...(field?.aspectRatio ? { aspectRatio: field.aspectRatio } : {}),
-  };
 };
 
 /**
@@ -77,10 +52,8 @@ const imageOrDefault = (
 };
 
 export interface AboutHeaderProps {
-  eyebrow?: string;
   heading?: string;
   tagline?: string;
-  heroImage?: ImageSource;
 }
 
 /**
@@ -92,20 +65,12 @@ export interface AboutHeaderProps {
  */
 export const blocksToAboutHeader = (
   blocks: CmsBlock[],
-  defaults: { eyebrow: string; heading: string; tagline: string }
+  defaults: { heading: string; tagline: string }
 ): AboutHeaderProps => ({
-  eyebrow:
-    fieldValue(blocks, "about-header", "about-eyebrow") ?? defaults.eyebrow,
   heading:
     fieldValue(blocks, "about-header", "about-heading") ?? defaults.heading,
   tagline:
     fieldValue(blocks, "about-header", "about-tagline") ?? defaults.tagline,
-  heroImage: imageSource(
-    blocks,
-    "about-header",
-    "about-hero-image",
-    "St. Aloysius' College, Galle"
-  ),
 });
 
 export interface AboutTextContent {
@@ -119,8 +84,6 @@ export interface AboutImages {
   history2Image: ImageSource;
   history3Image: ImageSource;
   history4Image: ImageSource;
-  anthemImage: ImageSource;
-  anthemSinhalaImage: ImageSource;
 }
 
 /**
@@ -165,31 +128,6 @@ export const blocksToAboutTimeline = (
   });
 
 /**
- * Parse the Sinhala anthem lyrics textarea into stanzas: a blank line
- * separates stanzas, a newline separates lines within one. Empty or unset
- * renders no Sinhala lyrics (the tab still shows, with its portrait image
- * and an empty state), rather than inventing stanzas that do not exist yet.
- */
-export const blocksToAnthemSinhalaStanzas = (
-  blocks: CmsBlock[]
-): readonly AnthemStanza[] => {
-  const raw = fieldValue(blocks, "anthem", "anthem-sinhala-lyrics")?.trim();
-  if (!raw) {
-    return [];
-  }
-  return raw
-    .split(/\n\s*\n/u)
-    .map((stanza) =>
-      stanza
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean)
-    )
-    .filter((lines) => lines.length > 0)
-    .map((lines, index) => ({ id: index + 1, lines }));
-};
-
-/**
  * Convert CMS blocks into the image overrides the About page's sections
  * accept. Only images are editable here; every other string on the page is
  * real, published prose from `content/about.ts`.
@@ -201,8 +139,6 @@ export const blocksToAboutImages = (
     history2: ImageSource;
     history3: ImageSource;
     history4: ImageSource;
-    anthem: ImageSource;
-    anthemSinhala: ImageSource;
   }
 ): AboutImages => ({
   history1Image: imageOrDefault(
@@ -228,17 +164,5 @@ export const blocksToAboutImages = (
     "history",
     "history-4-image",
     defaults.history4
-  ),
-  anthemImage: imageOrDefault(
-    blocks,
-    "anthem",
-    "anthem-image",
-    defaults.anthem
-  ),
-  anthemSinhalaImage: imageOrDefault(
-    blocks,
-    "anthem",
-    "anthem-sinhala-image",
-    defaults.anthemSinhala
   ),
 });

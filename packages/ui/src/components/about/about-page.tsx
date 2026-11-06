@@ -1,14 +1,14 @@
 import * as stylex from "@stylexjs/stylex";
 
-import { ANTHEM_LANGUAGES, TIMELINE } from "../../content/about";
-import type { AnthemStanza, TimelineEntry } from "../../content/about";
+import { TIMELINE } from "../../content/about";
+import type { TimelineEntry } from "../../content/about";
 import type {
   AboutHeaderProps,
   AboutImages,
   AboutTextContent,
 } from "../../content/cms-to-about";
 import type { NavItem } from "../../content/home";
-import type { AcademicHead } from "../../content/people";
+import type { LeadershipPerson } from "../../content/people";
 import type { PrincipalContent } from "../../content/principal";
 import { SkipLink } from "../primitives/layout";
 import { PrincipalMessage } from "../principal/principal-message";
@@ -16,13 +16,17 @@ import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
 import { AboutHero } from "./about-hero";
-import { AcademicHeads } from "./academic-heads";
+import { Administration } from "./administration";
 import { Anthem } from "./anthem";
+import { Crest } from "./crest";
 import { HistoryTimeline } from "./history-timeline";
 import { MottoBanner } from "./motto-banner";
+import { PrincipalsRoll } from "./principals-roll";
 import { VisionMission } from "./vision-mission";
 
 const MAIN_ID = "main-content";
+
+const NO_PEOPLE: readonly LeadershipPerson[] = [];
 
 const styles = stylex.create({
   main: {
@@ -33,8 +37,6 @@ const styles = stylex.create({
     },
   },
 });
-
-const NO_SINHALA_STANZAS: readonly AnthemStanza[] = [];
 
 export interface AboutPageProps {
   contact?: FooterContact;
@@ -50,12 +52,10 @@ export interface AboutPageProps {
   extraNavItems?: readonly NavItem[];
   /** The `about-header` CMS block, resolved by the route. */
   header?: AboutHeaderProps;
-  /** The academic-heads roster, resolved by the route. */
-  academicHeads?: readonly AcademicHead[];
+  /** Vice Principals and Sectional Heads, resolved by the route. */
+  leadership?: readonly LeadershipPerson[];
   /** The history timeline's per-entry title/body, merged over the defaults. */
   timeline?: readonly TimelineEntry[];
-  /** Sinhala anthem stanzas parsed from the CMS textarea; empty hides the tab's lyrics. */
-  anthemSinhalaStanzas?: readonly AnthemStanza[];
 }
 
 export const AboutPage = ({
@@ -65,9 +65,8 @@ export const AboutPage = ({
   principal,
   extraNavItems,
   header,
-  academicHeads,
+  leadership = NO_PEOPLE,
   timeline: timelineOverride,
-  anthemSinhalaStanzas = NO_SINHALA_STANZAS,
 }: AboutPageProps) => {
   const baseTimeline = timelineOverride ?? TIMELINE;
   const timeline = images
@@ -82,31 +81,37 @@ export const AboutPage = ({
       }))
     : baseTimeline;
 
-  const anthemLanguages =
-    anthemSinhalaStanzas.length > 0
-      ? {
-          ...ANTHEM_LANGUAGES,
-          si: { ...ANTHEM_LANGUAGES.si, stanzas: anthemSinhalaStanzas },
-        }
-      : undefined;
+  /*
+   * The Principal leads the Administration grid, from the same global block
+   * as the message above, so the name and portrait are written once.
+   */
+  const administration: LeadershipPerson[] = [
+    ...(principal && !principal.hidden && principal.name
+      ? [
+          {
+            id: "principal",
+            name: principal.name,
+            role: "Principal",
+            image: principal.portrait,
+          },
+        ]
+      : []),
+    ...leadership,
+  ];
 
   return (
     <>
       <SkipLink targetId={MAIN_ID} />
       <SiteHeader activeHref="/about" extraNavItems={extraNavItems} />
       <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
-        <AboutHero
-          eyebrow={header?.eyebrow}
-          heroImage={header?.heroImage}
-          intro={header?.tagline}
-          title={header?.heading}
-        />
+        <AboutHero intro={header?.tagline} title={header?.heading} />
         <HistoryTimeline heading={text?.historyHeading} entries={timeline} />
         <VisionMission
           mission={text?.missionStatement}
           vision={text?.visionStatement}
         />
         <MottoBanner />
+        <Crest />
         {principal && !principal.hidden && (
           <PrincipalMessage
             content={principal}
@@ -114,20 +119,9 @@ export const AboutPage = ({
             variant="article"
           />
         )}
-        {/*
-          Directly under the Principal, and in place of the Administration
-          section that used to sit at the foot of the page. The roster was a
-          fixed list of nothing, so it rendered "Leadership profiles will be
-          published here soon" under an otherwise finished page; it is now a
-          CMS roster an editor fills in, and it sits with the Principal because
-          that is who these people report to.
-        */}
-        <AcademicHeads heads={academicHeads} />
-        <Anthem
-          image={images?.anthemImage}
-          languages={anthemLanguages}
-          sinhalaImage={images?.anthemSinhalaImage}
-        />
+        <Administration people={administration} />
+        <Anthem />
+        <PrincipalsRoll />
       </main>
       <SiteFooter contact={contact} />
     </>

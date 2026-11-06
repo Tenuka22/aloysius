@@ -6,31 +6,28 @@ import {
   ABOUT_JUMP_LINKS,
 } from "../../content/about";
 import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, space } from "../../tokens/tokens.stylex";
-import { Container } from "../primitives/layout";
-import type { ImageSource } from "../primitives/media";
-import { Media } from "../primitives/media";
+import { font } from "../../tokens/tokens.stylex";
 
+/*
+ * Measurements are the approved design's (About.dc.html), not the site-wide
+ * fluid tokens: 130/110px section padding, 76px title, 17px intro, 13px jump
+ * links with a 28px gap. Fluid `clamp()` only takes over below the design's
+ * desktop width so a phone does not inherit a 76px headline.
+ */
 const styles = stylex.create({
   hero: {
     position: "relative",
     overflow: "hidden",
-    display: "grid",
-    placeItems: "center",
-    backgroundColor: color.surfaceInverse,
-    color: color.onInverse,
-    paddingBlock: space["3xl"],
-    paddingInline: space.gutter,
-    minBlockSize: {
-      default: "min(100svh - var(--header-height, 4rem), 46rem)",
-      [bp.short]: "auto",
-    },
+    backgroundColor: "#013405",
+    color: "#FFF8E7",
+    paddingBlock: "clamp(72px, 11vw, 130px) clamp(60px, 9vw, 110px)",
+    paddingInline: "clamp(20px, 5vw, 48px)",
   },
   watermark: {
     position: "absolute",
-    insetInlineEnd: "-5.5rem",
-    insetBlockStart: "-3.5rem",
-    height: "30rem",
+    insetInlineEnd: "-90px",
+    insetBlockStart: "-60px",
+    height: "480px",
     width: "auto",
     opacity: 0.07,
     pointerEvents: "none",
@@ -39,126 +36,99 @@ const styles = stylex.create({
       [bp.md]: "block",
     },
   },
-  content: {
+  inner: {
     position: "relative",
+    width: "100%",
+    maxWidth: "1180px",
+    marginInline: "auto",
   },
   breadcrumb: {
     margin: 0,
-    marginBlockEnd: space.md,
-    fontSize: font.sizeXs,
-    fontWeight: font.weightSemibold,
-    letterSpacing: font.trackingWider,
+    marginBlockEnd: "26px",
+    fontSize: "12px",
+    letterSpacing: "0.2em",
     textTransform: "uppercase",
-    color: color.onInverseSubtle,
+    color: "rgba(255, 248, 231, 0.6)",
   },
   breadcrumbLink: {
-    display: "inline-flex",
-    alignItems: "center",
-    minBlockSize: {
-      default: "1.5rem",
-      [bp.touch]: "2.75rem",
-    },
     color: {
-      default: color.onInverseSubtle,
-      ":hover": color.accentOnInverse,
+      default: "rgba(255, 248, 231, 0.6)",
+      ":hover": "#FFB203",
     },
     textDecoration: "none",
   },
   breadcrumbCurrent: {
-    color: color.accentOnInverse,
+    color: "#FFB203",
   },
   title: {
     margin: 0,
+    marginBlockEnd: "24px",
     maxWidth: "12ch",
     fontFamily: font.display,
-    fontWeight: font.weightSemibold,
-    fontSize: font.size4xl,
-    lineHeight: font.leadingTight,
-    letterSpacing: font.trackingTight,
-    textWrap: "balance",
+    fontWeight: 600,
+    fontSize: "clamp(44px, 6.5vw, 76px)",
+    lineHeight: 1.02,
   },
   intro: {
     margin: 0,
-    marginBlockStart: space.md,
-    maxWidth: space.measure,
-    fontSize: font.sizeLg,
-    lineHeight: font.leadingRelaxed,
-    color: color.onInverseMuted,
-    textWrap: "pretty",
+    maxWidth: "56ch",
+    fontSize: "17px",
+    lineHeight: 1.7,
+    color: "rgba(255, 248, 231, 0.75)",
   },
   jumpLinks: {
     display: "flex",
-    // Coarse-pointer rows need vertical breathing room once each chip is 44px.
-    rowGap: {
-      default: null,
-      [bp.touch]: space["2xs"],
-    },
     flexWrap: "wrap",
-    gap: space.md,
-    marginBlockStart: space.xl,
+    gap: "12px 28px",
+    marginBlockStart: "44px",
+    marginBlockEnd: 0,
+    marginInline: 0,
     padding: 0,
     listStyle: "none",
+    fontSize: "13px",
+    fontWeight: 700,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
   },
   jumpLink: {
-    /*
-     * WCAG 2.2 SC 2.5.8 (Target Size, Minimum): the underlined label alone was
-     * a ~20px tall target. Flex centring inside a 24px box satisfies AA on any
-     * pointer; coarse pointers get the full 44px comfort target.
-     */
-    display: "inline-flex",
-    alignItems: "center",
-    minBlockSize: {
-      default: "1.5rem",
-      [bp.touch]: "2.75rem",
-    },
-    fontSize: font.sizeSm,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
-    color: {
-      default: color.onInverseMuted,
-      ":hover": color.accentOnInverse,
-    },
-    textDecoration: "none",
+    display: "inline-block",
+    paddingBlockEnd: "6px",
     borderBlockEndWidth: "2px",
     borderBlockEndStyle: "solid",
     borderBlockEndColor: "transparent",
-    paddingBlockEnd: space["3xs"],
+    color: {
+      default: "rgba(255, 248, 231, 0.8)",
+      ":hover": "#FFB203",
+    },
+    textDecoration: "none",
   },
   jumpLinkFirst: {
-    color: color.accentOnInverse,
-    borderBlockEndColor: color.accent,
+    borderBlockEndColor: "#FFB203",
+    color: "#FFB203",
   },
-  eyebrow: {
-    margin: 0,
-    marginBlockEnd: space.xs,
-    fontSize: font.sizeSm,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWider,
-    textTransform: "uppercase",
-    color: color.accentOnInverse,
-  },
-  heroMedia: {
-    marginBlockStart: space["2xl"],
+  jumpLinkBright: {
+    color: {
+      default: "#FFF8E7",
+      ":hover": "#FFB203",
+    },
   },
 });
 
+/** The first three links are set in full cream, the rest at 80% - as designed. */
+const BRIGHT_LINK_COUNT = 3;
+
 export interface AboutHeroProps {
-  eyebrow?: string;
   title?: string;
   intro?: string;
   crestSrc?: string;
   jumpLinks?: typeof ABOUT_JUMP_LINKS;
-  /** Optional CMS photograph, rendered under the jump links. */
-  heroImage?: ImageSource;
 }
 
 export const AboutHero = ({
-  eyebrow,
   title = ABOUT_HERO_TITLE,
   intro = ABOUT_HERO_INTRO,
   crestSrc = "/logo.png",
   jumpLinks = ABOUT_JUMP_LINKS,
-  heroImage,
 }: AboutHeroProps) => (
   <section aria-labelledby="about-hero-title" {...stylex.props(styles.hero)}>
     <img
@@ -169,42 +139,38 @@ export const AboutHero = ({
       src={crestSrc}
       {...stylex.props(styles.watermark)}
     />
-    <Container>
-      <div {...stylex.props(styles.content)}>
-        <p {...stylex.props(styles.breadcrumb)}>
-          <a href="/" {...stylex.props(styles.breadcrumbLink)}>
-            Home
-          </a>{" "}
-          / <span {...stylex.props(styles.breadcrumbCurrent)}>About</span>
-        </p>
-        {eyebrow ? <p {...stylex.props(styles.eyebrow)}>{eyebrow}</p> : null}
-        <h1 id="about-hero-title" {...stylex.props(styles.title)}>
-          {title}
-        </h1>
-        <p {...stylex.props(styles.intro)}>{intro}</p>
-        <nav aria-label="On this page">
-          <ul {...stylex.props(styles.jumpLinks)}>
-            {jumpLinks.map((link, index) => (
-              <li key={link.href}>
-                <a
-                  href={link.href}
-                  {...stylex.props(
-                    styles.jumpLink,
-                    index === 0 && styles.jumpLinkFirst
-                  )}
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        {heroImage ? (
-          <div {...stylex.props(styles.heroMedia)}>
-            <Media placeholder="" ratio="16:9" source={heroImage} />
-          </div>
-        ) : null}
-      </div>
-    </Container>
+    <div {...stylex.props(styles.inner)}>
+      <p {...stylex.props(styles.breadcrumb)}>
+        <a href="/" {...stylex.props(styles.breadcrumbLink)}>
+          Home
+        </a>{" "}
+        &nbsp;/&nbsp;{" "}
+        <span {...stylex.props(styles.breadcrumbCurrent)}>About</span>
+      </p>
+      <h1 id="about-hero-title" {...stylex.props(styles.title)}>
+        {title}
+      </h1>
+      <p {...stylex.props(styles.intro)}>{intro}</p>
+      <nav aria-label="On this page">
+        <ul {...stylex.props(styles.jumpLinks)}>
+          {jumpLinks.map((link, index) => (
+            <li key={link.href}>
+              <a
+                href={link.href}
+                {...stylex.props(
+                  styles.jumpLink,
+                  index > 0 &&
+                    index < BRIGHT_LINK_COUNT &&
+                    styles.jumpLinkBright,
+                  index === 0 && styles.jumpLinkFirst
+                )}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
   </section>
 );

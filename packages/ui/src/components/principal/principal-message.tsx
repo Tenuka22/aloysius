@@ -3,77 +3,64 @@ import { useId } from "react";
 
 import type { PrincipalContent } from "../../content/principal";
 import { sanitizeRichText } from "../../lib/sanitize-rich-text";
-import { aspectRatios } from "../../tokens/aspect-ratios";
 import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, space } from "../../tokens/tokens.stylex";
-import { ArrowLink } from "../primitives/button";
-import { Container, Eyebrow, Heading, Section } from "../primitives/layout";
-import type { Tone } from "../primitives/layout";
-import { Media } from "../primitives/media";
+import { font } from "../../tokens/tokens.stylex";
+import {
+  DcEyebrow,
+  DcHeading,
+  DcInner,
+  DcLink,
+  DcSection,
+  DcSlot,
+} from "../home/dc";
 import { Reveal } from "../primitives/reveal";
 
-const styles = stylex.create({
+/** The About page's take on the section, to the approved UI/UX design. */
+const about = stylex.create({
   grid: {
     display: "grid",
-    gap: space.xl,
+    gap: "48px 72px",
+    alignItems: "center",
     gridTemplateColumns: {
       default: "minmax(0, 1fr)",
-      [bp.xl]: "minmax(0, 21rem) minmax(0, 1fr)",
+      [bp.lg]: "minmax(0, 340px) minmax(0, 1fr)",
     },
-    alignItems: "center",
   },
   portraitWrap: {
     position: "relative",
-    // The offset gold frame only reads on a wide layout; on a phone it would
-    // sit on top of the copy.
-    paddingInlineEnd: {
-      default: 0,
-      [bp.xl]: space["2xs"],
-    },
-    paddingBlockEnd: {
-      default: 0,
-      [bp.xl]: space["2xs"],
-    },
+    isolation: "isolate",
     maxWidth: {
-      default: "22rem",
-      [bp.xl]: "none",
+      default: "340px",
+      [bp.lg]: "none",
     },
-  },
-  frame: {
-    display: {
-      default: "none",
-      [bp.xl]: "block",
-    },
-    position: "absolute",
-    insetBlockStart: space["2xs"],
-    insetInlineStart: space["2xs"],
-    insetBlockEnd: 0,
-    insetInlineEnd: 0,
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.accent,
-    pointerEvents: "none",
   },
   portrait: {
-    position: "relative",
+    width: "100%",
+    aspectRatio: "3 / 4",
   },
-  headingSpacing: {
-    marginBlock: `${space.sm} ${space.md}`,
+  frame: {
+    position: "absolute",
+    insetInlineEnd: "-14px",
+    insetBlockEnd: "-14px",
+    width: "100%",
+    height: "100%",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "#FFB203",
+    zIndex: -1,
+    pointerEvents: "none",
+    display: {
+      default: "none",
+      [bp.md]: "block",
+    },
   },
-  /**
-   * The pull-quote treatment, used when the block has no heading. Capped at the
-   * readable measure so a long message wraps into a paragraph-shaped block
-   * instead of running the full width of a wide desktop column.
-   */
-  quote: {
-    margin: 0,
-    marginBlock: `${space.sm} ${space.md}`,
-    maxWidth: "26ch",
-    fontFamily: font.display,
-    fontSize: font.size2xl,
-    fontWeight: font.weightMedium,
-    lineHeight: font.leadingSnug,
-    textWrap: "pretty",
+  eyebrow: {
+    marginBlockEnd: "18px",
+  },
+  heading: {
+    marginBlockEnd: "24px",
+    fontSize: "clamp(32px, 3.7vw, 44px)",
+    lineHeight: 1.2,
   },
   /**
    * Container for the sanitised full message.
@@ -84,111 +71,205 @@ const styles = stylex.create({
    * editor and the published page from one place.
    */
   richText: {
-    maxWidth: space.measure,
-    color: color.onSurfaceMuted,
+    marginBlockEnd: "26px",
+    fontSize: "16px",
+    lineHeight: 1.75,
+    color: "rgba(1, 52, 5, 0.8)",
+    textWrap: "pretty",
   },
-  attribution: {
+  name: {
     margin: 0,
     fontFamily: font.display,
     fontStyle: "italic",
-    fontSize: font.sizeXl,
-    color: color.onSurfaceMuted,
-  },
-  role: {
-    margin: 0,
-    marginBlock: `${space["3xs"]} ${space.lg}`,
-    fontSize: font.size2xs,
-    fontWeight: font.weightSemibold,
-    letterSpacing: font.trackingWider,
-    textTransform: "uppercase",
-    color: color.onSurfaceSubtle,
+    fontSize: "28px",
+    color: "rgba(1, 52, 5, 0.5)",
   },
 });
 
+const home = stylex.create({
+  section: {
+    paddingBlock: "clamp(61px, 10vw, 110px)",
+  },
+  grid: {
+    display: "grid",
+    gap: "48px 72px",
+    alignItems: "center",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
+  },
+  portraitWrap: {
+    position: "relative",
+    isolation: "isolate",
+    maxWidth: "340px",
+  },
+  portrait: {
+    width: "100%",
+    aspectRatio: "3 / 4",
+  },
+  frame: {
+    position: "absolute",
+    insetInlineEnd: "-14px",
+    insetBlockEnd: "-14px",
+    width: "100%",
+    height: "100%",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "#FFB203",
+    zIndex: -1,
+    pointerEvents: "none",
+    display: {
+      default: "none",
+      [bp.md]: "block",
+    },
+  },
+  eyebrow: {
+    marginBlockEnd: "18px",
+  },
+  quote: {
+    margin: 0,
+    marginBlockEnd: "26px",
+    fontFamily: font.display,
+    fontSize: "32px",
+    fontWeight: 500,
+    lineHeight: 1.35,
+    textWrap: "pretty",
+  },
+  name: {
+    margin: 0,
+    fontFamily: font.display,
+    fontStyle: "italic",
+    fontSize: "28px",
+    color: "rgba(1, 52, 5, 0.5)",
+  },
+  role: {
+    margin: 0,
+    marginBlock: "6px 30px",
+    fontSize: "12px",
+    letterSpacing: "0.16em",
+    textTransform: "uppercase",
+    color: "rgba(1, 52, 5, 0.6)",
+  },
+});
+
+/** The homepage's take on the section, to the approved UI/UX design. */
+const HomePrincipal = ({
+  content,
+  id,
+  titleId,
+}: {
+  content: PrincipalContent;
+  id?: string;
+  titleId: string;
+}) => {
+  const { eyebrow, quote, name, role, portrait, link } = content;
+  return (
+    <DcSection id={id} labelledBy={titleId} style={home.section} tone="raised">
+      <DcInner narrow>
+        <div {...stylex.props(home.grid)}>
+          <Reveal direction="up">
+            <div {...stylex.props(home.portraitWrap)}>
+              <DcSlot
+                placeholder="Principal portrait"
+                source={portrait}
+                style={home.portrait}
+              />
+              <div aria-hidden="true" {...stylex.props(home.frame)} />
+            </div>
+          </Reveal>
+
+          <Reveal delay={1} direction="up">
+            <div>
+              <DcEyebrow style={home.eyebrow}>{eyebrow}</DcEyebrow>
+              <blockquote {...stylex.props(home.quote)} id={titleId}>
+                &ldquo;{quote}&rdquo;
+              </blockquote>
+              {name ? <p {...stylex.props(home.name)}>&mdash; {name}</p> : null}
+              <p {...stylex.props(home.role)}>{role}</p>
+              {link ? (
+                <DcLink href={link.href}>
+                  {link.label} <span aria-hidden="true">→</span>
+                </DcLink>
+              ) : null}
+            </div>
+          </Reveal>
+        </div>
+      </DcInner>
+    </DcSection>
+  );
+};
 /**
- * The Principal's message and portrait — the site's one shared section for
+ * The Principal's message and portrait - the site's one shared section for
  * both. The homepage and the About page render this same component from the
  * same CMS block, so an editor writes the message once.
  *
  * `variant` is the *page's* choice of how to set the message, and is
  * deliberately not inferred from the content: the homepage sets it as a
- * display-serif pull quote, the About page as body copy under the heading. If
- * this were decided by whether a heading happened to be filled in, an editor
- * clearing the heading on the About page would silently restyle it.
+ * display-serif pull quote, the About page as body copy under the heading.
  */
 export const PrincipalMessage = ({
   content,
   variant = "quote",
   id,
-  tone = "raised",
 }: {
   content: PrincipalContent;
   /** `quote` sets the message as a pull quote; `article` under the heading. */
   variant?: "quote" | "article";
   /** Anchor id for the section, e.g. `principal` for the About page's in-page nav. */
   id?: string;
-  tone?: Tone;
 }) => {
   const titleId = useId();
-  const { eyebrow, heading, quote, body, name, role, portrait, link } = content;
-  const asArticle = variant === "article";
+  const { heading, quote, body, name, portrait } = content;
+
+  if (variant === "quote") {
+    return <HomePrincipal content={content} id={id} titleId={titleId} />;
+  }
 
   return (
-    <Section id={id} labelledBy={titleId} tone={tone}>
-      <Container>
-        <div {...stylex.props(styles.grid)}>
+    <DcSection id={id} labelledBy={titleId} tone="cream">
+      <DcInner narrow>
+        <div {...stylex.props(about.grid)}>
           <Reveal direction="up">
-            <div {...stylex.props(styles.portraitWrap)}>
-              <Media
+            <div {...stylex.props(about.portraitWrap)}>
+              <DcSlot
                 placeholder="Principal portrait"
-                ratio={aspectRatios.principalPortrait}
                 source={portrait}
-                style={styles.portrait}
+                style={about.portrait}
               />
-              <div {...stylex.props(styles.frame)} />
+              <div aria-hidden="true" {...stylex.props(about.frame)} />
             </div>
           </Reveal>
 
           <Reveal delay={1} direction="up">
             <div>
-              <Eyebrow>{eyebrow}</Eyebrow>
-              {asArticle && heading ? (
-                <>
-                  <Heading id={titleId} level={2} style={styles.headingSpacing}>
-                    {heading}
-                  </Heading>
-                  {/*
-                   * The only `dangerouslySetInnerHTML` on the public site, and
-                   * the only place rich text is rendered. `body` comes from the
-                   * CMS, so it is sanitised here rather than trusted — see
-                   * `lib/sanitize-rich-text.ts`. Sanitising on every render is
-                   * deliberate: it is a pure string pass, and it means the page
-                   * cannot render unsanitised HTML if a value ever arrives by a
-                   * route that skipped the editor.
-                   */}
-                  <div
-                    data-rich-text=""
-                    {...stylex.props(styles.richText)}
-                    // oxlint-disable-next-line react/no-danger -- the value is sanitised immediately above by an allowlist pass
-                    dangerouslySetInnerHTML={{ __html: sanitizeRichText(body) }}
-                  />
-                </>
-              ) : (
-                <blockquote {...stylex.props(styles.quote)} id={titleId}>
-                  &ldquo;{quote}&rdquo;
-                </blockquote>
-              )}
+              <DcEyebrow style={about.eyebrow}>
+                Principal&rsquo;s Message
+              </DcEyebrow>
+              <DcHeading id={titleId} style={about.heading}>
+                {heading ?? "A Word from the Principal"}
+              </DcHeading>
+              {/*
+               * The only `dangerouslySetInnerHTML` on the public site, and
+               * the only place rich text is rendered. `body` comes from the
+               * CMS, so it is sanitised here rather than trusted - see
+               * `lib/sanitize-rich-text.ts`. Sanitising on every render is
+               * deliberate: it is a pure string pass, and it means the page
+               * cannot render unsanitised HTML if a value ever arrives by a
+               * route that skipped the editor.
+               */}
+              <div
+                data-rich-text=""
+                {...stylex.props(about.richText)}
+                // oxlint-disable-next-line react/no-danger -- the value is sanitised immediately above by an allowlist pass
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeRichText(body || `<p>${quote}</p>`),
+                }}
+              />
               {name ? (
-                <p {...stylex.props(styles.attribution)}>&mdash; {name}</p>
-              ) : null}
-              <p {...stylex.props(styles.role)}>{role}</p>
-              {link ? (
-                <ArrowLink href={link.href}>{link.label}</ArrowLink>
+                <p {...stylex.props(about.name)}>&mdash; {name}</p>
               ) : null}
             </div>
           </Reveal>
         </div>
-      </Container>
-    </Section>
+      </DcInner>
+    </DcSection>
   );
 };

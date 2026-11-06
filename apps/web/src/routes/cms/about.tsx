@@ -9,7 +9,7 @@ import {
   ScreenHead,
   ScreenWrap,
 } from "@aloysius/ui/components/cms/screen-head";
-import { ANTHEM_IMAGE, TIMELINE } from "@aloysius/ui/content/about";
+import { TIMELINE } from "@aloysius/ui/content/about";
 import { ABOUT_BLOCKS } from "@aloysius/ui/content/cms";
 import {
   useMutation,
@@ -28,8 +28,6 @@ const DEFAULT_IMAGES: Record<string, string> = {
   "history-2-image": TIMELINE[1].image?.src ?? "",
   "history-3-image": TIMELINE[2].image?.src ?? "",
   "history-4-image": TIMELINE[3].image?.src ?? "",
-  "anthem-image": ANTHEM_IMAGE.src,
-  "anthem-sinhala-image": ANTHEM_IMAGE.src,
 };
 
 const AboutContent = () => {
