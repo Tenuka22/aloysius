@@ -65,7 +65,7 @@ services:
         [ -n "$$TOKEN" ] || { echo "login returned no token"; exit 1; }
         export INFISICAL_TOKEN="$$TOKEN"
         echo "[5/5] exporting the prod secrets"
-        infisical sm export --projectId="$$INFISICAL_PROJECT_ID" --env=prod \
+        infisical sm secrets export --projectId="$$INFISICAL_PROJECT_ID" --env=prod \
           --format=dotenv > /secrets/app.env.tmp \
           || { echo "export failed: check INFISICAL_PROJECT_ID and that the identity can read the prod environment"; exit 1; }
         [ -s /secrets/app.env.tmp ] || { echo "export was empty: the prod environment has no secrets"; exit 1; }
