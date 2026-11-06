@@ -1,142 +1,145 @@
-name: aloysius
-
-# Deploys the images already published to this repo's GitLab Container
-# Registry project (registry.gitlab.com/tenuka22/aloysius-web), rather than
-# building from this checkout. The namespace is the GitLab *project* that owns
-# the registry - a GitLab registry lives under a project, not a user, so the
-# path is tenuka22/<project>/<image> and `tenuka22/aloysius/...` does not exist. .github/workflows/ci.yml's `publish` job
-# pushes them there on every `v*` tag. Use this with a platform that only
-# accepts compose YAML with no build context attached (Plesk's "Add Stack
-# -> Editor", a bare Docker host, etc). `docker-compose.yml` (no `.prod`)
-# is for local development: it builds both images from this repo.
+# Production stack, as deployed on the College's server.
 #
-# Pulling requires a login on the deploy host first, since the registry is
-# private by default:
-#   docker login registry.gitlab.com -u <GITLAB_REGISTRY_USER> -p <GITLAB_REGISTRY_TOKEN>
+# - Secrets are not in this file: `infisical-sync` exports the `prod`
+#   environment from Infisical into the `aloysius_secrets` volume, and `minio`
+#   and `web` source `/secrets/app.env` at start. Set INFISICAL_PROJECT_ID,
+#   IDENTITY_CLIENT_ID and IDENTITY_CLIENT_SECRET (and INFISICAL_DOMAIN if it is
+#   not https://secrets.aloysiuscollege.lk) in the deploy environment.
+# - `web` and `building` carry the Watchtower label, so a new `latest` image
+#   in registry.gitlab.com/tenuka22/aloysius-web is pulled and redeployed
+#   within the 300s poll interval. The registry login is read from
+#   /root/.docker/config.json on the host.
+# - Every published port is bound to 127.0.0.1 (3001-3005); a reverse proxy on
+#   the host is what exposes the site.
+# - `web` applies pending Drizzle migrations before it starts the server.
 #
-# Required: substitute every `REPLACE_ME` below before deploying, and set
-# `IMAGE_TAG` to the tag you actually pushed (e.g. `v0.0.1`). Both images are
-# built and published together from the same release, so they share one tag.
-#
-# Migrations are NOT a compose service here. `apps/web/Dockerfile`'s CMD applies
-# pending Drizzle migrations and then execs the server, so a release cannot start
-# against the wrong schema and there is no second service to keep in step with
-# the image. Same arrangement as ../school-management. Running it on every start
-# is safe: drizzle records each applied file, so an up-to-date database is a
-# no-op. `web` must still wait for `turso-db` to be healthy, since the migrate
-# step runs before anything can retry the connection.
-#
-# `SITE_URL` is the deployment's own fact about *this* school's public
-# address and cannot be read from the repo. It defaults to empty on purpose:
-# a stack that forgets it has no site URL, which is a visible deployment
-# mistake rather than a wrong one. `BETTER_AUTH_URL` must match it exactly -
-# `trustedOrigins` is derived from this value.
+# `docker-compose.yml` (no `.prod`) is for local development.
 
 services:
-  web:
-    image: registry.gitlab.com/tenuka22/aloysius-web/aloysius-web:${IMAGE_TAG:-latest}
-    init: true
-    ports:
-      - "${WEB_PORT:-4000}:${WEB_PORT:-4000}"
-    environment:
-      PORT: ${WEB_PORT:-4000}
-      NODE_ENV: production
-      BETTER_AUTH_URL: ${SITE_URL:-}
-      BETTER_AUTH_SECRET: REPLACE_ME_32_CHAR_SECRET
-      TURSO_DATABASE_URL: http://turso-db:8080
-      TURSO_AUTH_TOKEN: ${TURSO_AUTH_TOKEN:-}
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
-      ADMIN_PASSWORD: REPLACE_ME_ADMIN_PASSWORD
-      CMS_USERNAME: cms
-      CMS_PASSWORD: REPLACE_ME_CMS_PASSWORD
-      MINIO_ENDPOINT: minio
-      MINIO_PORT: "9000"
-      MINIO_ACCESS_KEY: REPLACE_ME_MINIO_ACCESS_KEY
-      MINIO_SECRET_KEY: REPLACE_ME_MINIO_SECRET_KEY
-      MINIO_BUCKET: aloysius
-      MINIO_USE_SSL: "false"
-    depends_on:
-      turso-db:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "node",
-          "-e",
-          "fetch('http://localhost:${WEB_PORT:-4000}/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
+  watchtower:
+    image: nickfedor/watchtower:1.19.0
     restart: unless-stopped
-
-  turso-db:
-    image: ghcr.io/tursodatabase/libsql-server:latest
     environment:
-      SQLD_NODE: primary
+      TZ: Asia/Colombo
+      DOCKER_CONFIG: /
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_POLL_INTERVAL: "300"
+      WATCHTOWER_CLEANUP: "true"
     volumes:
-      - aloysius_turso_data:/var/lib/sqld
-    healthcheck:
-      # The sqld image ships no curl/wget - just bash and coreutils - so this
-      # checks the HTTP port accepts TCP connections via bash's /dev/tcp.
-      test: ["CMD", "bash", "-c", "echo > /dev/tcp/127.0.0.1/8080"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/config.json:/config.json:ro
+
+  infisical-sync:
+    image: alpine:3.20
+    container_name: aloysius-web-infisical-sync-1
+    restart: "no"
+    environment:
+      INFISICAL_DOMAIN: ${INFISICAL_DOMAIN:-https://secrets.aloysiuscollege.lk}
+      INFISICAL_PROJECT_ID: ${INFISICAL_PROJECT_ID:?INFISICAL_PROJECT_ID is required}
+      IDENTITY_CLIENT_ID: ${IDENTITY_CLIENT_ID:?IDENTITY_CLIENT_ID is required}
+      IDENTITY_CLIENT_SECRET: ${IDENTITY_CLIENT_SECRET:?IDENTITY_CLIENT_SECRET is required}
+    volumes:
+      - aloysius_secrets:/secrets
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -eu
+        apk add --no-cache bash wget >/dev/null
+        wget -qO- 'https://artifacts-cli.infisical.com/setup.apk.sh' | sh >/dev/null
+        apk add --no-cache infisical >/dev/null
+        TOKEN=$$(infisical login --method=universal-auth \
+          --client-id="$$IDENTITY_CLIENT_ID" --client-secret="$$IDENTITY_CLIENT_SECRET" \
+          --plain --silent)
+        export INFISICAL_TOKEN="$$TOKEN"
+        infisical sm export --projectId="$$INFISICAL_PROJECT_ID" --env=prod \
+          --format=dotenv > /secrets/app.env.tmp
+        chmod 644 /secrets/app.env.tmp
+        mv /secrets/app.env.tmp /secrets/app.env
+        echo "secrets synced"
 
   minio:
     image: pgsty/silo:latest
-    # Published on request: API on 4001, console (can delete every object in
-    # the bucket) on 4002. The `web` container still reaches it internally as
-    # `minio:9000`.
-    #
-    # `building` deliberately does NOT default to 4002 here: that port belongs
-    # to the MinIO console, and two services defaulting to the same host port
-    # means the stack cannot start until someone overrides one of them.
+    container_name: aloysius-web-minio-1
+    restart: unless-stopped
+    depends_on:
+      infisical-sync:
+        condition: service_completed_successfully
+    entrypoint:
+      - sh
+      - -c
+      - >-
+        set -a && . /secrets/app.env && set +a &&
+        export MINIO_ROOT_USER="$$MINIO_ACCESS_KEY" MINIO_ROOT_PASSWORD="$$MINIO_SECRET_KEY" &&
+        exec /usr/bin/silo server /data --console-address ":9001"
     ports:
-      - "${MINIO_API_PORT:-4001}:9000"
-      - "${MINIO_CONSOLE_PORT:-4002}:9001"
-    environment:
-      MINIO_ROOT_USER: REPLACE_ME_MINIO_ACCESS_KEY
-      MINIO_ROOT_PASSWORD: REPLACE_ME_MINIO_SECRET_KEY
+      - "127.0.0.1:3001:9000"
+      - "127.0.0.1:3002:9001"
     volumes:
       - aloysius_minio_data:/data
-    command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+      - aloysius_secrets:/secrets:ro
+
+  turso-db:
+    image: ghcr.io/tursodatabase/libsql-server:latest
+    container_name: aloysius-web-turso-db-1
     restart: unless-stopped
+    user: root
+    environment:
+      SQLD_NODE: primary
+      SQLD_HTTP_LISTEN_ADDR: 0.0.0.0:8080
+    ports:
+      - "127.0.0.1:3003:8080"
+    volumes:
+      - aloysius_turso_data:/var/lib/sqld
+
+  web:
+    image: registry.gitlab.com/tenuka22/aloysius-web/aloysius-web:latest
+    container_name: aloysius-web-web-1
+    restart: unless-stopped
+    command:
+      - sh
+      - -c
+      - set -a && . /secrets/app.env && set +a && node /app/packages/db/scripts/migrate-deploy.mjs && exec node --run start
+    depends_on:
+      infisical-sync:
+        condition: service_completed_successfully
+      minio:
+        condition: service_started
+      turso-db:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 4000
+      TURSO_DATABASE_URL: http://turso-db:8080
+      TURSO_AUTH_TOKEN: ""
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_USE_SSL: "false"
+      MINIO_BUCKET: aloysius
+      ADMIN_USERNAME: admin
+      CMS_USERNAME: cms
+      BETTER_AUTH_URL: https://aloysiuscollege.lk
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    ports:
+      - "127.0.0.1:3004:4000"
+    volumes:
+      - aloysius_secrets:/secrets:ro
 
   building:
-    image: registry.gitlab.com/tenuka22/aloysius-web/aloysius-building:${IMAGE_TAG:-latest}
-    # 4004, not 4002: 4002 is the MinIO console's default above. Override with
-    # BUILDING_PORT if you want a different one. The image's own PORT/EXPOSE
-    # defaults are 4002, which is why PORT is set explicitly below.
-    ports:
-      - "${BUILDING_PORT:-4004}:${BUILDING_PORT:-4004}"
-    environment:
-      PORT: ${BUILDING_PORT:-4004}
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "bun",
-          "-e",
-          "fetch('http://localhost:${BUILDING_PORT:-4004}/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
+    image: registry.gitlab.com/tenuka22/aloysius-web/aloysius-building:latest
+    container_name: aloysius-web-building-1
     restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4004
+    ports:
+      - "127.0.0.1:3005:4004"
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
 
 volumes:
-  aloysius_turso_data:
   aloysius_minio_data:
+  aloysius_turso_data:
+  aloysius_secrets:
