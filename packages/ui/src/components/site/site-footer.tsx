@@ -315,6 +315,13 @@ const styles = stylex.create({
     gap: "24px",
   },
   legalLink: {
+    // WCAG 2.2 SC 2.5.8: a bare 12px inline link is a ~17px target.
+    display: "inline-flex",
+    alignItems: "center",
+    minBlockSize: {
+      default: "1.5rem",
+      [bp.touch]: "2.75rem",
+    },
     color: {
       default: color.onInverseSubtle,
       ":hover": color.accent,

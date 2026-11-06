@@ -65,6 +65,74 @@
   }
 
   /*
+   * The page sections are built to the approved design's pixel measurements
+   * (1180px columns, 54px headings, 15px body), which a rem-scaled root does
+   * not reach. On large screens the page body and footer are zoomed in steps
+   * that follow the same ramp as the root font-size above (screen width / 1920),
+   * so the design reads at the same proportion on a 4K television or an 8K
+   * kiosk as it does on a laptop, and its 1180px column keeps the same share of
+   * the screen. The header is rem-based and already scales with the root, so it
+   * is deliberately left out - zooming it too would scale it twice. Browsers
+   * without `zoom` fall back to the unscaled layout, which is what they got
+   * before, so nothing breaks.
+   */
+  @media (min-width: 140rem) {
+    #main-content,
+    #main-content ~ footer {
+      zoom: 1.167;
+    }
+  }
+
+  @media (min-width: 160rem) {
+    #main-content,
+    #main-content ~ footer {
+      zoom: 1.333;
+    }
+  }
+
+  @media (min-width: 200rem) {
+    #main-content,
+    #main-content ~ footer {
+      zoom: 1.667;
+    }
+  }
+
+  @media (min-width: 240rem) {
+    #main-content,
+    #main-content ~ footer {
+      zoom: 2;
+    }
+  }
+
+  @media (min-width: 280rem) {
+    #main-content,
+    #main-content ~ footer {
+      zoom: 2.333;
+    }
+  }
+
+  @media (min-width: 320rem) {
+    #main-content,
+    #main-content ~ footer {
+      zoom: 2.667;
+    }
+  }
+
+  @media (min-width: 400rem) {
+    #main-content,
+    #main-content ~ footer {
+      zoom: 3.333;
+    }
+  }
+
+  @media (min-width: 480rem) {
+    #main-content,
+    #main-content ~ footer {
+      zoom: 4;
+    }
+  }
+
+  /*
    * Lenis (momentum scrolling) and CSS `scroll-behavior: smooth` are mutually
    * exclusive: Lenis drives the scroll position every frame, and the native
    * smooth-scroll animation fights it, which shows up as anchor jumps that
