@@ -48,7 +48,6 @@ const CMS_PAGES = [
   "media",
   "students",
   "galleries",
-  "results",
 ] as const;
 
 export const dashboardStats = cmsProcedure.handler(async ({ context }) => {

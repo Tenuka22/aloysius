@@ -63,36 +63,12 @@ import {
   updateGallery as updateGalleryCms,
 } from "./galleries";
 import {
-  createMediaLink,
-  deleteMediaLink,
-  listMediaLinks,
-  updateMediaLink,
-} from "./media-links";
-import {
   createNewsPost,
   deleteNewsPost,
   listNewsPosts,
   updateNewsPost,
 } from "./news-posts";
 import { cmsPublisher } from "./publisher";
-import {
-  createAlRanker,
-  createNineA,
-  createNineABand,
-  createResultsYear,
-  createScholarship,
-  deleteAlRanker,
-  deleteNineA,
-  deleteNineABand,
-  deleteResultsYear,
-  deleteScholarship,
-  listResults,
-  updateAlRanker,
-  updateNineA,
-  updateNineABand,
-  updateResultsYear,
-  updateScholarship,
-} from "./results";
 import {
   createSportTile,
   deleteSportTile,
@@ -639,14 +615,6 @@ const academics = editorEndpoints("academics");
 /** The `/galleries` index masthead editor. See `GALLERIES_BLOCKS`. */
 const galleriesPage = editorEndpoints("galleries");
 
-/**
- * The `/results` masthead editor. See `RESULTS_BLOCKS`.
- *
- * The results *figures* are not blocks - they are rows, edited through the
- * results router at `/cms/results`. Only the page's framing is a block.
- */
-const results = editorEndpoints("results");
-
 export const cmsRouter = {
   getPrincipal: principal.get,
   getPrincipalDraft: principal.getDraft,
@@ -668,13 +636,6 @@ export const cmsRouter = {
   updateGalleriesPage: galleriesPage.update,
   watchGalleriesPage: galleriesPage.watch,
   publishGalleriesPage: galleriesPage.publish,
-
-  getResults: results.get,
-  getResultsDraft: results.getDraft,
-  getResultsHistory: results.getHistory,
-  updateResults: results.update,
-  watchResults: results.watch,
-  publishResults: results.publish,
 
   /** Fetch the latest published version for each block on the homepage. */
   getHomepage: publicProcedure.handler(async ({ context }) => {
@@ -1321,26 +1282,6 @@ export const cmsRouter = {
   updateNewsPost,
   deleteNewsPost,
 
-  // Examination results: the `/results` page reads one call that returns every
-  // year with its rankers, achievers and scholarship passers. CMS-direct, like
-  // announcements and news posts - see `results.ts` for why there is no queue.
-  listResults,
-  createResultsYear,
-  updateResultsYear,
-  deleteResultsYear,
-  createAlRanker,
-  updateAlRanker,
-  deleteAlRanker,
-  createNineA,
-  updateNineA,
-  deleteNineA,
-  createNineABand,
-  updateNineABand,
-  deleteNineABand,
-  createScholarship,
-  updateScholarship,
-  deleteScholarship,
-
   // Who leads each part of the College, shown on `/about`. Rows in `person`,
   // which had no caller until this - see `academic-heads.ts`.
   listAcademicHeads,
@@ -1380,13 +1321,6 @@ export const cmsRouter = {
   createGallery: createGalleryCms,
   updateGallery: updateGalleryCms,
   deleteGallery: deleteGalleryCms,
-
-  // The "Magazines & Reports" and "In the Press" tabs on `/media` - see
-  // `media-links.ts` for why `fileId` and `href` are both optional.
-  listMediaLinks,
-  createMediaLink,
-  updateMediaLink,
-  deleteMediaLink,
 
   // The `/academics` facilities showcase - see `schema/facility.ts` for why
   // this table replaced the shipped `FACILITIES` array wholesale.

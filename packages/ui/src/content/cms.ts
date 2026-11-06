@@ -35,7 +35,6 @@ import {
   PRINCIPAL_DEFAULTS,
   PRINCIPAL_FIELD,
 } from "./principal";
-import { RESULTS_HERO_INTRO, RESULTS_HERO_TITLE } from "./results";
 import { STUDENTS_HERO_INTRO, STUDENTS_HERO_TITLE } from "./students";
 
 export type ScreenId =
@@ -885,47 +884,6 @@ export const ALUMNI_BLOCKS: readonly PageBlock[] = [
         label: "Tagline",
         kind: "textarea",
         value: ALUMNI_HERO_INTRO,
-        wide: true,
-      },
-    ],
-  },
-];
-
-/* --------------------------------------------------------------- results */
-
-/**
- * The `/results` page header.
- *
- * Only the masthead. The year-by-year figures underneath it are database
- * content - `resultsYear` and its children, edited at `/cms/results` - so this
- * block is what an editor reaches for when the page's framing changes and not
- * when a ranker is added.
- */
-export const RESULTS_BLOCKS: readonly PageBlock[] = [
-  {
-    id: "results-header",
-    name: "Page Header",
-    type: "Hero",
-    status: "published",
-    summary: "Page title and tagline",
-    fields: [
-      {
-        id: "results-eyebrow",
-        label: "Eyebrow",
-        kind: "text",
-        value: "Examinations",
-      },
-      {
-        id: "results-heading",
-        label: "Heading",
-        kind: "text",
-        value: RESULTS_HERO_TITLE,
-      },
-      {
-        id: "results-tagline",
-        label: "Tagline",
-        kind: "textarea",
-        value: RESULTS_HERO_INTRO,
         wide: true,
       },
     ],

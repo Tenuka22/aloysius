@@ -47,13 +47,7 @@ import { contactDepartment } from "@aloysius/db/schema/contact-department";
 import { facility } from "@aloysius/db/schema/facility";
 import { files } from "@aloysius/db/schema/files";
 import { newsPost } from "@aloysius/db/schema/news-posts";
-import {
-  resultsAlRanker,
-  resultsNineA,
-  resultsNineABand,
-  resultsScholarship,
-  resultsYear,
-} from "@aloysius/db/schema/results";
+import { resultsYear } from "@aloysius/db/schema/results";
 import { achievement, event, person } from "@aloysius/db/schema/root-content";
 import { sportTile } from "@aloysius/db/schema/sport-tile";
 import type { PageBlock } from "@aloysius/ui/content/cms";
@@ -68,7 +62,6 @@ import {
   NEWS_BLOCKS,
   NOTICES_BLOCKS,
   PRINCIPAL_BLOCKS,
-  RESULTS_BLOCKS,
   STUDENTS_BLOCKS,
 } from "@aloysius/ui/content/cms";
 import type { AspectRatioKey } from "@aloysius/ui/tokens/aspect-ratios";
@@ -1101,17 +1094,6 @@ const SEED_PAGES: readonly SeedPage[] = [
   },
   {
     /*
-     * The masthead only. `/results`'s figures are `resultsYear` rows, seeded
-     * below - they are data, not blocks, and the page reads them through
-     * `cms.listResults`.
-     */
-    page: "results",
-    registry: RESULTS_BLOCKS,
-    images: [],
-    fill: {},
-  },
-  {
-    /*
      * The masthead above the photograph grid. The galleries themselves are
      * `gallery` rows, seeded by `seedGalleriesForDemo`.
      */
@@ -1290,347 +1272,10 @@ const seedPageContent = async (authorId: string) => {
   return { pages: SEED_PAGES.length, blocks: rows.length, images: urls.size };
 };
 
-/* --------------------------------------------------------- results years */
+/* -------------------------------------------------------------- portraits */
 
-/**
- * Two published examination years.
- *
- * `/results` used to read `RESULTS_BY_YEAR`, an empty object, while the page
- * hardcoded four year tabs - so it offered a visitor four years and then
- * reported that none of them had happened. The figures are database content now
- * (`resultsYear` and its children), and the tabs come from the years that
- * exist, so the demo needs real rows for that page to show anything.
- *
- * Two years rather than one because the page's year selector is the feature
- * being demonstrated; a single year would render correctly and prove nothing.
- */
-const RESULTS_YEARS = [
-  {
-    year: "2025",
-    summary: {
-      alUniversityEntrants: "118",
-      alThreeA: "41",
-      olNineA: "86",
-      scholarshipPassers: "9",
-    },
-    nineATotal: "86",
-    scholarshipCutOff: "472",
-    scholarshipHighest: "499",
-    rankers: [
-      {
-        stream: "physical-science" as const,
-        name: "Dilhara Jayasuriya",
-        result: "4 A's",
-        zScore: "2.9814",
-        districtRank: "1",
-        islandRank: "4",
-      },
-      {
-        stream: "physical-science" as const,
-        name: "Sanduni Wickramasinghe",
-        result: "3 A's",
-        zScore: "2.7102",
-        districtRank: "3",
-        islandRank: "17",
-      },
-      {
-        stream: "biological-science" as const,
-        name: "Thisuni Rajapaksa",
-        result: "4 A's",
-        zScore: "2.9107",
-        districtRank: "2",
-        islandRank: "9",
-      },
-      {
-        stream: "biological-science" as const,
-        name: "Amaya Gunasekara",
-        result: "3 A's",
-        zScore: "2.6640",
-        districtRank: "6",
-        islandRank: "28",
-      },
-      {
-        stream: "commerce" as const,
-        name: "Kavindri Silva",
-        result: "3 A's",
-        zScore: "2.4018",
-        districtRank: "9",
-        islandRank: "51",
-      },
-      {
-        stream: "commerce" as const,
-        name: "Ruwan Fernando",
-        result: "2 A's + 1 B",
-        zScore: "2.2214",
-        districtRank: "14",
-        islandRank: "88",
-      },
-      {
-        stream: "arts" as const,
-        name: "Nadeesha Herath",
-        result: "3 A's",
-        zScore: "2.5503",
-        districtRank: "7",
-        islandRank: "33",
-      },
-      {
-        stream: "engineering-technology" as const,
-        name: "Chamara Rathnayake",
-        result: "3 A's",
-        zScore: "2.4871",
-        districtRank: "11",
-        islandRank: "64",
-      },
-    ],
-    nineA: [
-      { name: "Methsarani Alwis" },
-      { name: "Dinuka Bandara" },
-      { name: "Hasini Weerasinghe" },
-      { name: "Sanjaya Mapa" },
-      { name: "Ishara Dias" },
-      { name: "Kasun Bandara" },
-    ],
-    bands: [
-      { band: "9A", count: "86" },
-      { band: "8A", count: "124" },
-      { band: "7A", count: "149" },
-      { band: "6A", count: "167" },
-    ],
-    scholarship: [
-      { name: "Ayesha Dias", marks: "499", className: "5-A" },
-      { name: "Malith Perera", marks: "497", className: "5-A" },
-      { name: "Shenali Gunaratne", marks: "494", className: "5-A" },
-      { name: "Bhuvanek Peris", marks: "488", className: "5-B" },
-      { name: "Nimasha Jayawardena", marks: "481", className: "5-B" },
-      { name: "Tharindu Ekanayake", marks: "476", className: "5-B" },
-    ],
-  },
-  {
-    year: "2024",
-    summary: {
-      alUniversityEntrants: "104",
-      alThreeA: "36",
-      olNineA: "79",
-      scholarshipPassers: "7",
-    },
-    nineATotal: "79",
-    scholarshipCutOff: "466",
-    scholarshipHighest: "497",
-    rankers: [
-      {
-        stream: "physical-science" as const,
-        name: "Prasad Jayawardena",
-        result: "4 A's",
-        zScore: "2.9301",
-        districtRank: "2",
-        islandRank: "11",
-      },
-      {
-        stream: "physical-science" as const,
-        name: "Ishara Liyanage",
-        result: "3 A's",
-        zScore: "2.6880",
-        districtRank: "5",
-        islandRank: "24",
-      },
-      {
-        stream: "biological-science" as const,
-        name: "Kasun Hewage",
-        result: "3 A's",
-        zScore: "2.6311",
-        districtRank: "8",
-        islandRank: "30",
-      },
-      {
-        stream: "commerce" as const,
-        name: "Nadeesha Kumari",
-        result: "3 A's",
-        zScore: "2.3802",
-        districtRank: "12",
-        islandRank: "70",
-      },
-      {
-        stream: "arts" as const,
-        name: "Roshan Peiris",
-        result: "2 A's + 1 B",
-        zScore: "2.1903",
-        districtRank: "18",
-        islandRank: "104",
-      },
-    ],
-    nineA: [
-      { name: "Shalika Gunawardena" },
-      { name: "Thilina Madush" },
-      { name: "Ayesha Kaluwara" },
-      { name: "Roshan De Silva" },
-    ],
-    bands: [
-      { band: "9A", count: "79" },
-      { band: "8A", count: "118" },
-      { band: "7A", count: "142" },
-      { band: "6A", count: "161" },
-    ],
-    scholarship: [
-      { name: "Sanjaya Rathnayake", marks: "497", className: "5-A" },
-      { name: "Menaka Siriwardena", marks: "489", className: "5-B" },
-      { name: "Dilantha Cooray", marks: "470", className: "5-B" },
-      { name: "Surangi Bandara", marks: "466", className: "5-B" },
-    ],
-  },
-] as const;
-
-/**
- * Portraits for the named students on `/results`.
- *
- * Without one, the A/L ranker card, the 9A grid and the scholarship podium all
- * render their placeholder - an empty bordered box, or a grey circle - which
- * is what a page of twenty real names and zero faces looks like. So they are
- * seeded like every other photograph in this script: real pictures from
- * picsum, stored through the same layer the CMS uploader writes to, which is
- * what makes them show up in the editors as replaceable images.
- *
- * The people are invented demo names and the faces are stock photographs. They
- * do not depict anyone named here.
- */
+/** The size every seeded person portrait is uploaded at. */
 const PORTRAIT_SIZE = { width: 800, height: 1000 } as const;
-
-const uploadPortraits = async (
-  entries: readonly { key: string; seed: string }[],
-  uploaderId: string
-) => {
-  const fileIds = await Promise.all(
-    entries.map((entry) =>
-      uploadSeedImage(
-        entry.seed,
-        PORTRAIT_SIZE.width,
-        PORTRAIT_SIZE.height,
-        uploaderId
-      )
-    )
-  );
-  return new Map(
-    entries.map((entry, index) => [entry.key, fileIds[index] ?? null])
-  );
-};
-
-/**
- * Write one examination year and everything under it.
- *
- * The children's positions are derived from their order in the arrays above,
- * because position is what the page renders as podium-versus-list and as the
- * order within a tab - storing them any other way would mean the two could
- * disagree.
- */
-const seedResults = async (authorId: string) => {
-  await Promise.all(
-    RESULTS_YEARS.map(async (entry) => {
-      const yearId = crypto.randomUUID();
-      await db
-        .insert(resultsYear)
-        .values({
-          id: yearId,
-          year: entry.year,
-          alUniversityEntrants: entry.summary.alUniversityEntrants,
-          alThreeA: entry.summary.alThreeA,
-          olNineA: entry.summary.olNineA,
-          scholarshipPassers: entry.summary.scholarshipPassers,
-          nineATotal: entry.nineATotal,
-          scholarshipCutOff: entry.scholarshipCutOff,
-          scholarshipHighest: entry.scholarshipHighest,
-          createdById: authorId,
-        })
-        .run();
-
-      // One portrait per named person, uploaded before any row needs it. The
-      // index is the identity here: the name changes are content edits, but a
-      // picture changing because someone fixed a typo would be its own bug.
-      const portraits = await uploadPortraits(
-        [
-          ...entry.rankers.map((_, index) => ({
-            key: `ranker-${index}`,
-            seed: `results-${entry.year}-ranker-${index}`,
-          })),
-          ...entry.nineA.map((_, index) => ({
-            key: `nine-a-${index}`,
-            seed: `results-${entry.year}-nine-a-${index}`,
-          })),
-          ...entry.scholarship.map((_, index) => ({
-            key: `scholarship-${index}`,
-            seed: `results-${entry.year}-scholarship-${index}`,
-          })),
-        ],
-        authorId
-      );
-
-      // Grouped so each stream's rows are numbered 1..n within that stream.
-      const perStream = new Map<string, number>();
-      await Promise.all(
-        entry.rankers.map((ranker, index) => {
-          const position = (perStream.get(ranker.stream) ?? 0) + 1;
-          perStream.set(ranker.stream, position);
-          return db
-            .insert(resultsAlRanker)
-            .values({
-              id: crypto.randomUUID(),
-              yearId,
-              stream: ranker.stream,
-              name: ranker.name,
-              result: ranker.result,
-              zScore: ranker.zScore,
-              districtRank: ranker.districtRank,
-              islandRank: ranker.islandRank,
-              imageId: portraits.get(`ranker-${index}`),
-              position,
-            })
-            .run();
-        })
-      );
-
-      await Promise.all([
-        ...entry.nineA.map((student, index) =>
-          db
-            .insert(resultsNineA)
-            .values({
-              id: crypto.randomUUID(),
-              yearId,
-              name: student.name,
-              imageId: portraits.get(`nine-a-${index}`),
-              position: index + 1,
-            })
-            .run()
-        ),
-        ...entry.bands.map((band, index) =>
-          db
-            .insert(resultsNineABand)
-            .values({
-              id: crypto.randomUUID(),
-              yearId,
-              band: band.band,
-              count: band.count,
-              position: index + 1,
-            })
-            .run()
-        ),
-        ...entry.scholarship.map((passer, index) =>
-          db
-            .insert(resultsScholarship)
-            .values({
-              id: crypto.randomUUID(),
-              yearId,
-              name: passer.name,
-              marks: passer.marks,
-              className: passer.className,
-              imageId: portraits.get(`scholarship-${index}`),
-              position: index + 1,
-            })
-            .run()
-        ),
-      ]);
-    })
-  );
-
-  return RESULTS_YEARS.length;
-};
 
 /* -------------------------------------------------------- academic heads */
 
@@ -1980,9 +1625,6 @@ const main = async () => {
   console.log("Seeding contact departments...");
   const contactDepartmentCount = await seedContactDepartments();
 
-  console.log("Sealing examination results...");
-  const resultsYears = await seedResults(cmsUserId);
-
   console.log("Done. Seeded:");
   console.log(`  ${clubCount} clubs`);
   console.log(`  ${ACHIEVEMENT_ROWS.length} achievements`);
@@ -1998,7 +1640,6 @@ const main = async () => {
     `  ${pageContent.pages} CMS pages (${pageContent.blocks} blocks published, ${pageContent.images} page images)`
   );
   console.log(`  ${heads} academic heads`);
-  console.log(`  ${resultsYears} examination years`);
   console.log(`  ${sportTileCount} sport tiles`);
   console.log(`  ${facilityCount} facilities`);
   console.log(`  ${contactDepartmentCount} contact departments`);

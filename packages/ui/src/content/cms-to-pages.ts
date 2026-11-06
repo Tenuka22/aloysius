@@ -17,7 +17,6 @@ import {
 import { GALLERIES_HERO_INTRO, GALLERIES_HERO_TITLE } from "./galleries";
 import { MEDIA_HERO_TITLE } from "./media";
 import { NEWS_HERO_TITLE } from "./news";
-import { RESULTS_HERO_INTRO, RESULTS_HERO_TITLE } from "./results";
 import { STUDENTS_HERO_INTRO, STUDENTS_HERO_TITLE } from "./students";
 
 const fieldValue = (
@@ -91,32 +90,6 @@ export const blocksToNewsProps = (blocks: CmsBlock[]): NewsPageProps => ({
     "news-header",
     "news-heading",
     NEWS_HERO_TITLE
-  ),
-});
-
-/* -------------------------------------------------------------- results */
-
-export interface ResultsHeroContentProps {
-  eyebrow?: string;
-  heading?: string;
-  tagline?: string;
-}
-
-export const blocksToResultsHeroProps = (
-  blocks: CmsBlock[]
-): ResultsHeroContentProps => ({
-  eyebrow: fieldOrDefault(blocks, "results-header", "results-eyebrow", ""),
-  heading: fieldOrDefault(
-    blocks,
-    "results-header",
-    "results-heading",
-    RESULTS_HERO_TITLE
-  ),
-  tagline: fieldOrDefault(
-    blocks,
-    "results-header",
-    "results-tagline",
-    RESULTS_HERO_INTRO
   ),
 });
 
