@@ -1,6 +1,8 @@
-import { MediaPage } from "@aloysius/ui/components/pages/media-page";
-import { blocksToMediaProps } from "@aloysius/ui/content/cms-to-pages";
-import type { MediaLink } from "@aloysius/ui/content/media";
+import { MediaPage } from "@aloysius/ui/components/media/media-page";
+import {
+  blocksToContactProps,
+  blocksToMediaProps,
+} from "@aloysius/ui/content/cms-to-pages";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -9,58 +11,34 @@ import { authClient } from "@/lib/auth-client";
 import { pageHead } from "@/lib/seo";
 import { orpc } from "@/utils/orpc";
 
-interface MediaLinkRow {
-  id: string;
-  kind: "publication" | "press";
-  title: string;
-  meta: string | null;
-  href: string;
-}
-
-const toMediaLink = (link: MediaLinkRow): MediaLink => ({
-  id: link.id,
-  title: link.title,
-  meta: link.meta ?? undefined,
-  href: link.href,
-});
-interface SplitMediaLinks {
-  publications: MediaLink[];
-  press: MediaLink[];
-}
-
-const splitMediaLinks = (links: readonly MediaLinkRow[]): SplitMediaLinks => {
-  const publications: MediaLink[] = [];
-  const press: MediaLink[] = [];
-  for (const link of links) {
-    const target = link.kind === "publication" ? publications : press;
-    target.push(toMediaLink(link));
-  }
-  return { publications, press };
-};
+/**
+ * `/media` - Gallery & Media: the album mosaic and the "College on Film"
+ * videos.
+ *
+ * Albums are the approved galleries (`club.listApprovedGalleries`, with no
+ * `club` input: /media is the site's general gallery, so it wants every
+ * approved gallery rather than one club's). The YouTube channel link is the
+ * one set on the Contact page, so it is written once.
+ */
 
 const MediaContent = () => {
   const { data: media } = useSuspenseQuery(orpc.cms.getMedia.queryOptions());
-  /*
-   * No `club` input: /media is the site's general gallery, so it wants every
-   * approved gallery rather than one club's. This is what the page was missing -
-   * it rendered a hero and two lines of copy with no images at all, because
-   * nothing on the route ever asked for a gallery.
-   */
   const { data: galleries } = useSuspenseQuery(
     orpc.club.listApprovedGalleries.queryOptions({ input: {} })
   );
-  const { data: mediaLinks } = useSuspenseQuery(
-    orpc.cms.listMediaLinks.queryOptions()
+  const { data: contact } = useSuspenseQuery(
+    orpc.cms.getContact.queryOptions()
   );
   const { data: session } = authClient.useSession();
 
   /* Always call the mapper so an unpublished page falls back to content/media.ts. */
   const cmsProps = blocksToMediaProps(media?.blocks ?? []);
+  const channelUrl = blocksToContactProps(contact?.blocks ?? []).youtubeUrl;
 
   /*
    * One tile per gallery, built from its cover (falling back to its first photo,
    * since a gallery may be uploaded without a cover). Only the images already
-   * uploaded by the CMS are shown - /media never invented stock.
+   * uploaded by the CMS are shown - /media never invents stock.
    */
   const galleryItems = galleries.flatMap((gallery) => {
     const imageUrl = gallery.coverImageUrl ?? gallery.photos[0]?.imageUrl;
@@ -80,17 +58,12 @@ const MediaContent = () => {
     ];
   });
 
-  const { publications, press } = splitMediaLinks(mediaLinks);
-
   const extraNavItems = (() => {
     if (!session?.user) {
       return [];
     }
     const items = [];
     const { role } = session.user;
-    if (role === "admin" || role === "cms") {
-      items.push({ id: "cms", label: "CMS", href: "/cms" });
-    }
     if (role === "admin") {
       items.push({ id: "admin", label: "Admin", href: "/admin" });
     }
@@ -99,11 +72,10 @@ const MediaContent = () => {
 
   return (
     <MediaPage
-      {...cmsProps}
+      channelUrl={channelUrl || undefined}
       extraNavItems={extraNavItems}
       galleries={galleryItems}
-      press={press}
-      publications={publications}
+      heading={cmsProps.heading}
     />
   );
 };
