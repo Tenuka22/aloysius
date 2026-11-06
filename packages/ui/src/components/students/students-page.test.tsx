@@ -61,7 +61,10 @@ describe(StudentsPage, () => {
     const { container } = render(<StudentsPage />);
 
     const sports = container.querySelector("#sports") as HTMLElement;
-    expect(within(sports).getByText("15")).toBeInTheDocument();
+    // "15" is also the last chip's number, so the total is found by its label.
+    expect(
+      within(sports).getByText(/at the college/iu).parentElement
+    ).toHaveTextContent("15");
     expect(within(sports).getByText("11 more sports")).toBeInTheDocument();
     for (const name of ["Cricket", "Rugby", "Hockey", "Football"]) {
       expect(
@@ -116,8 +119,7 @@ describe(ClubsSocieties, () => {
     ).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(8);
     // No invented filler under the clubs without one.
-    expect(
-      screen.getAllByText(/./u).filter((node) => node.tagName === "P")
-    ).toHaveLength(1);
+    expect(screen.getAllByRole("listitem")).toHaveLength(8);
+    expect(document.querySelectorAll("li p")).toHaveLength(1);
   });
 });
