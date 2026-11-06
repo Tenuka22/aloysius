@@ -1,29 +1,23 @@
 import * as stylex from "@stylexjs/stylex";
 
 import {
+  CONTACT_FORM_CLOSED_NOTE,
   CONTACT_FORM_ENQUIRY_EYEBROW,
-  CONTACT_FORM_ENQUIRY_HEADING,
+  CONTACT_FORM_ENQUIRY_HEADING_LINES,
   CONTACT_FORM_ENQUIRY_INTRO,
 } from "../../content/contact";
 import type { NavItem } from "../../content/home";
 import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, space } from "../../tokens/tokens.stylex";
-import {
-  Container,
-  Eyebrow,
-  Heading,
-  Section,
-  SkipLink,
-} from "../primitives/layout";
+import { font } from "../../tokens/tokens.stylex";
+import { DcEyebrow, DcSection } from "../home/dc";
+import { SkipLink } from "../primitives/layout";
 import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
-import { ContactDepartments } from "./contact-departments";
-import { ContactDetails } from "./contact-details";
-import type { ContactDetailsProps } from "./contact-details";
 import { ContactForm } from "./contact-form";
 import type { ContactFormProps } from "./contact-form";
 import { ContactHero } from "./contact-hero";
+import type { ContactHeroProps } from "./contact-hero";
 import { ContactMap } from "./contact-map";
 import type { ContactMapProps } from "./contact-map";
 
@@ -40,54 +34,18 @@ const styles = stylex.create({
     },
   },
   /*
-   * The enquiry form sits on its own deep-green section, as in the design. The
-   * card keeps its cream surface, so it stays the one raised object on the
-   * page; `minmax(0, …)` stops a long error message widening the track.
+   * Measurements are the approved design's (Contact.dc.html): a 120px green
+   * section, a 1240px inner, and a two-column split that collapses at the
+   * design's 340px track floor.
    */
-  formLayout: {
-    position: "relative",
-    display: "grid",
-    gap: space["2xl"],
-    gridTemplateColumns: {
-      default: "minmax(0, 1fr)",
-      [bp.xl]: "minmax(0, 1fr) minmax(0, 1.4fr)",
-    },
-    alignItems: "start",
-  },
-  formIntro: {
-    margin: 0,
-    marginBlockStart: space.sm,
-    maxWidth: "38ch",
-    fontSize: font.sizeMd,
-    lineHeight: font.leadingRelaxed,
-    color: color.onInverseMuted,
-    textWrap: "pretty",
-  },
-  formFacts: {
-    margin: 0,
-    marginBlockStart: space.lg,
-    padding: 0,
-    listStyle: "none",
-    fontSize: font.sizeSm,
-    color: color.onInverseMuted,
-  },
-  formFact: {
-    display: "flex",
-    alignItems: "baseline",
-    gap: space.xs,
-  },
-  diamond: {
-    flexShrink: 0,
-    inlineSize: "0.45rem",
-    blockSize: "0.45rem",
-    backgroundColor: color.accent,
-    transform: "rotate(45deg)",
+  formSection: {
+    paddingBlock: "clamp(64px, 10vw, 120px)",
   },
   watermark: {
     position: "absolute",
-    insetInlineStart: "-8rem",
-    insetBlockEnd: "-11rem",
-    height: "35rem",
+    insetInlineStart: "-140px",
+    insetBlockEnd: "-180px",
+    height: "560px",
     width: "auto",
     opacity: 0.05,
     pointerEvents: "none",
@@ -96,14 +54,62 @@ const styles = stylex.create({
       [bp.md]: "block",
     },
   },
+  formLayout: {
+    position: "relative",
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))",
+    gap: "clamp(40px, 6vw, 96px)",
+    alignItems: "start",
+    width: "100%",
+    maxWidth: "1240px",
+    marginInline: "auto",
+  },
+  eyebrow: {
+    marginBlockEnd: "18px",
+  },
+  heading: {
+    margin: 0,
+    fontFamily: font.display,
+    fontWeight: 600,
+    fontSize: "clamp(36px, 4.4vw, 52px)",
+    lineHeight: 1.05,
+  },
+  intro: {
+    margin: 0,
+    marginBlock: "20px 32px",
+    maxWidth: "38ch",
+    fontSize: "15px",
+    lineHeight: 1.75,
+    color: "rgba(255, 248, 231, 0.7)",
+    textWrap: "pretty",
+  },
+  facts: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "14px",
+    margin: 0,
+    padding: 0,
+    listStyle: "none",
+    fontSize: "13.5px",
+    color: "rgba(255, 248, 231, 0.75)",
+  },
+  fact: {
+    display: "flex",
+    alignItems: "baseline",
+    gap: "12px",
+  },
+  diamond: {
+    flexShrink: 0,
+    inlineSize: "7px",
+    blockSize: "7px",
+    backgroundColor: "#FFB203",
+    transform: "rotate(45deg)",
+  },
 });
 
 export interface ContactPageProps
-  extends ContactDetailsProps, ContactMapProps, ContactFormProps {
+  extends ContactHeroProps, ContactMapProps, ContactFormProps {
   contact?: FooterContact;
-  /** CMS `contact-header` copy; falls back to the page's own constants. */
-  heading?: string;
-  tagline?: string;
   extraNavItems?: NavItem[];
 }
 
@@ -113,70 +119,70 @@ export const ContactPage = ({
   departments,
   email,
   extraNavItems,
-  heading,
-  mapImage,
   mapUrl,
   mapEmbedUrl,
   officeHours,
   onSubmit,
-  tagline,
+  intro,
+  title,
   telephone,
-}: ContactPageProps) => (
-  <>
-    <SkipLink targetId={MAIN_ID} />
-    <SiteHeader activeHref="/contact" extraNavItems={extraNavItems} />
-    <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
-      {/*
-        `heading` and `tagline` are the CMS `contact-header` block. They were
-        resolved by the route and then dropped, because `ContactHero` was
-        rendered with no props at all - so an editor who changed them saw no
-        change on the page.
-      */}
-      <ContactHero intro={tagline} title={heading}>
-        <ContactDetails
+}: ContactPageProps) => {
+  const [firstLine, secondLine] = CONTACT_FORM_ENQUIRY_HEADING_LINES;
+  return (
+    <>
+      <SkipLink targetId={MAIN_ID} />
+      <SiteHeader activeHref="/contact" extraNavItems={extraNavItems} />
+      <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
+        <ContactHero
           address={address}
           email={email}
+          intro={intro}
           officeHours={officeHours}
           telephone={telephone}
+          title={title}
         />
-      </ContactHero>
-      <ContactMap
-        address={address}
-        mapEmbedUrl={mapEmbedUrl}
-        mapImage={mapImage}
-        mapUrl={mapUrl}
-      />
-      <ContactDepartments departments={departments} />
-      <Section id="contact-form" labelledBy="contact-form-title" tone="inverse">
-        <Container>
+        <ContactMap mapEmbedUrl={mapEmbedUrl} mapUrl={mapUrl} />
+        <DcSection
+          id="contact-form"
+          labelledBy="contact-form-title"
+          style={styles.formSection}
+          tone="green"
+        >
+          <img
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            loading="lazy"
+            src="/logo.png"
+            {...stylex.props(styles.watermark)}
+          />
           <div {...stylex.props(styles.formLayout)}>
-            <img
-              alt=""
-              aria-hidden="true"
-              decoding="async"
-              loading="lazy"
-              src="/logo.png"
-              {...stylex.props(styles.watermark)}
-            />
             <div>
-              <Eyebrow inverse>{CONTACT_FORM_ENQUIRY_EYEBROW}</Eyebrow>
-              <Heading id="contact-form-title" level={2}>
-                {CONTACT_FORM_ENQUIRY_HEADING}
-              </Heading>
-              <p {...stylex.props(styles.formIntro)}>
+              <DcEyebrow gold style={styles.eyebrow}>
+                {CONTACT_FORM_ENQUIRY_EYEBROW}
+              </DcEyebrow>
+              <h2 id="contact-form-title" {...stylex.props(styles.heading)}>
+                {firstLine} <br />
+                {secondLine}
+              </h2>
+              <p {...stylex.props(styles.intro)}>
                 {CONTACT_FORM_ENQUIRY_INTRO}
               </p>
-              {officeHours ? (
-                <ul {...stylex.props(styles.formFacts)}>
-                  <li {...stylex.props(styles.formFact)}>
+              <ul {...stylex.props(styles.facts)}>
+                {officeHours ? (
+                  <li {...stylex.props(styles.fact)}>
                     <span
                       aria-hidden="true"
                       {...stylex.props(styles.diamond)}
                     />
                     Office hours: {officeHours}
                   </li>
-                </ul>
-              ) : null}
+                ) : null}
+                <li {...stylex.props(styles.fact)}>
+                  <span aria-hidden="true" {...stylex.props(styles.diamond)} />
+                  {CONTACT_FORM_CLOSED_NOTE}
+                </li>
+              </ul>
             </div>
             <ContactForm
               departments={departments}
@@ -184,9 +190,9 @@ export const ContactPage = ({
               onSubmit={onSubmit}
             />
           </div>
-        </Container>
-      </Section>
-    </main>
-    <SiteFooter contact={contact} />
-  </>
-);
+        </DcSection>
+      </main>
+      <SiteFooter contact={contact} />
+    </>
+  );
+};

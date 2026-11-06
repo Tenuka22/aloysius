@@ -10,7 +10,6 @@ import {
   CONTACT_FIELDS,
   CONTACT_FORM_COUNTER_THRESHOLD,
   CONTACT_FORM_FAILURE,
-  CONTACT_FORM_FOOTNOTE,
   CONTACT_FORM_MAILTO_HANDOFF,
   CONTACT_FORM_MAILTO_MAX_LENGTH,
   CONTACT_FORM_MAILTO_SUBJECT,
@@ -34,10 +33,7 @@ import type {
   ContactFormValues,
   ContactTopic,
 } from "../../content/contact";
-import { bp } from "../../tokens/breakpoints.stylex";
-import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
-
-const MIN_TARGET = "2.75rem";
+import { color, font, space } from "../../tokens/tokens.stylex";
 
 const spin = stylex.keyframes({
   from: { transform: "rotate(0deg)" },
@@ -49,107 +45,94 @@ const styles = stylex.create({
   topics: {
     display: "flex",
     flexWrap: "wrap",
-    gap: space.xs,
+    gap: "8px",
     margin: 0,
     padding: 0,
-    marginBlockEnd: space.lg,
+    marginBlockEnd: "34px",
     borderWidth: 0,
     minInlineSize: 0,
   },
+  /* Names the group for assistive tech; the design draws no visible caption. */
   topicsLegend: {
-    float: "left",
-    inlineSize: "100%",
+    position: "absolute",
+    inlineSize: "1px",
+    blockSize: "1px",
+    overflow: "hidden",
+    clipPath: "inset(50%)",
+    whiteSpace: "nowrap",
     padding: 0,
-    marginBlockEnd: space.xs,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWider,
-    textTransform: "uppercase",
-    color: color.onInverseMuted,
   },
   chip: {
-    minBlockSize: MIN_TARGET,
-    paddingInline: space.sm,
-    borderWidth: space.px,
+    paddingBlock: "10px",
+    paddingInline: "16px",
+    borderWidth: "1px",
     borderStyle: "solid",
-    fontSize: font.sizeXs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWide,
+    fontFamily: font.body,
+    fontSize: "12px",
+    fontWeight: 700,
+    letterSpacing: "0.06em",
     cursor: "pointer",
-    transitionProperty: "background-color, color, border-color",
-    transitionDuration: motionToken.fast,
   },
   chipIdle: {
     backgroundColor: "transparent",
-    borderColor: color.borderInverse,
-    color: color.onInverse,
+    borderColor: "rgba(255, 248, 231, 0.3)",
+    color: "rgba(255, 248, 231, 0.85)",
   },
   chipActive: {
-    backgroundColor: color.accent,
-    borderColor: color.accent,
-    color: color.onAccent,
+    backgroundColor: "#FFB203",
+    borderColor: "#FFB203",
+    color: "#013405",
   },
 
   /* --------------------------------------------------------------- fields */
   fields: {
     display: "grid",
-    columnGap: space.lg,
-    rowGap: space.lg,
-    gridTemplateColumns: {
-      default: "minmax(0, 1fr)",
-      [bp.md]: "repeat(2, minmax(0, 1fr))",
-    },
+    columnGap: "28px",
+    rowGap: "30px",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
   },
   fieldWide: {
-    gridColumn: {
-      default: "auto",
-      [bp.md]: "1 / -1",
-    },
+    gridColumn: "1 / -1",
   },
   label: {
     display: "block",
-    marginBlockEnd: space["2xs"],
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWider,
+    marginBlockEnd: "6px",
+    fontSize: "10.5px",
+    fontWeight: 700,
+    letterSpacing: "0.18em",
     textTransform: "uppercase",
-    color: color.onInverseMuted,
+    color: "rgba(255, 248, 231, 0.65)",
   },
   control: {
     boxSizing: "border-box",
     inlineSize: "100%",
-    minBlockSize: MIN_TARGET,
-    paddingBlock: space.xs,
+    paddingBlock: "10px",
     paddingInline: 0,
     backgroundColor: "transparent",
     borderWidth: 0,
-    borderBlockEndWidth: space.px,
+    borderBlockEndWidth: "1px",
     borderBlockEndStyle: "solid",
     borderBlockEndColor: {
       default: "rgba(255, 248, 231, 0.3)",
-      ":hover": "rgba(255, 248, 231, 0.55)",
-      ":focus": color.accent,
+      ":focus": "#FFB203",
     },
     borderRadius: 0,
-    color: color.onInverse,
+    color: "#FFF8E7",
     fontFamily: font.body,
-    fontSize: "1rem",
+    fontSize: "16px",
     outline: {
       default: null,
       ":focus": "none",
     },
     "::placeholder": {
-      color: "rgba(255, 248, 231, 0.55)",
+      color: "rgba(255, 248, 231, 0.4)",
     },
-    transitionProperty: "border-color",
-    transitionDuration: motionToken.fast,
   },
   controlInvalid: {
     borderBlockEndColor: color.dangerBright,
   },
   textarea: {
     resize: "vertical",
-    minBlockSize: "7rem",
   },
   counterRow: {
     display: "flex",
@@ -185,42 +168,38 @@ const styles = stylex.create({
     flexWrap: "wrap",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: space.md,
-    marginBlockStart: space.xl,
+    gap: "20px",
+    marginBlockStart: "38px",
   },
   sentTo: {
     margin: 0,
-    fontSize: font.sizeXs,
-    color: color.onInverseSubtle,
+    fontSize: "12.5px",
+    color: "rgba(255, 248, 231, 0.55)",
   },
   sentToName: {
-    color: color.accentOnInverse,
-    fontWeight: font.weightBold,
-  },
-  footnote: {
-    margin: 0,
-    marginBlockStart: space["3xs"],
-    fontSize: font.size2xs,
-    color: color.onInverseSubtle,
+    color: "#FFB203",
+    fontWeight: 700,
   },
   submit: {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: space.xs,
-    minBlockSize: MIN_TARGET,
-    paddingInline: space.xl,
+    gap: "10px",
+    paddingBlock: "16px",
+    paddingInline: "36px",
     borderWidth: 0,
     backgroundColor: {
-      default: color.accent,
-      ":hover": color.accentHover,
-      ":disabled": color.accent,
+      default: "#FFB203",
+      ":hover": "#FFD45A",
+      ":disabled": "#FFB203",
     },
-    color: color.onAccent,
-    fontSize: font.sizeSm,
-    fontWeight: font.weightExtrabold,
-    letterSpacing: font.trackingWide,
+    color: "#013405",
+    fontFamily: font.body,
+    fontSize: "13.5px",
+    fontWeight: 800,
+    letterSpacing: "0.08em",
     textTransform: "uppercase",
+    whiteSpace: "nowrap",
     cursor: {
       default: "pointer",
       ":disabled": "progress",
@@ -229,8 +208,6 @@ const styles = stylex.create({
       default: 1,
       ":disabled": 0.75,
     },
-    transitionProperty: "background-color",
-    transitionDuration: motionToken.fast,
   },
   spinner: {
     animationName: spin,
@@ -616,7 +593,6 @@ export const ContactForm = ({
               {recipient.name}
             </strong>
           </p>
-          <p {...stylex.props(styles.footnote)}>{CONTACT_FORM_FOOTNOTE}</p>
         </div>
         <button
           disabled={sending}

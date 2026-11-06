@@ -217,7 +217,7 @@ const ContactDepartmentsContent = () => {
       <ScreenHead
         eyebrow="Content"
         heading="Contact Departments"
-        note="The 'Reach the right office' directory on the Contact page. A department's email address is also where its matching enquiry topic's messages are sent."
+        note="Each office's email address is where its matching enquiry topic's messages are sent from the Contact page form. The offices are no longer listed on the page itself."
       />
       <Panel>
         <PanelHead

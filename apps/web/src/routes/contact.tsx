@@ -48,9 +48,6 @@ const ContactContent = () => {
     }
     const items = [];
     const { role } = session.user;
-    if (role === "admin" || role === "cms") {
-      items.push({ id: "cms", label: "CMS", href: "/cms" });
-    }
     if (role === "admin") {
       items.push({ id: "admin", label: "Admin", href: "/admin" });
     }
@@ -71,12 +68,12 @@ const ContactContent = () => {
       departments={departments}
       email={cmsProps.email}
       extraNavItems={extraNavItems}
-      heading={cmsProps.heading}
+      intro={cmsProps.tagline}
       mapEmbedUrl={cmsProps.mapEmbedUrl}
       mapUrl={cmsProps.mapUrl}
       officeHours={cmsProps.officeHours}
-      tagline={cmsProps.tagline}
       telephone={cmsProps.telephone}
+      title={cmsProps.heading}
     />
   );
 };

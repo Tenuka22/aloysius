@@ -7,8 +7,8 @@ import {
 } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ContactDetails } from "./contact-details";
 import { ContactForm } from "./contact-form";
+import { ContactHero } from "./contact-hero";
 import { ContactMap } from "./contact-map";
 import { ContactPage } from "./contact-page";
 
@@ -109,20 +109,22 @@ describe(ContactPage, () => {
   });
 });
 
-describe(ContactDetails, () => {
-  it("omits a detail the CMS has not supplied rather than showing an empty row", () => {
-    render(<ContactDetails telephone="091 223 4567" />);
+describe(ContactHero, () => {
+  it("omits a channel the CMS has not supplied rather than showing an empty one", () => {
+    render(<ContactHero telephone="091 223 4567" />);
 
     expect(screen.getByText("Telephone")).toBeInTheDocument();
     // Email and office hours were not supplied, so they must not appear at all
-    // - no empty row, and no `[CMS: ...]` placeholder like the mock had.
+    // - no empty column, and no `[CMS: ...]` placeholder like the mock had.
     expect(screen.queryByText("Email")).not.toBeInTheDocument();
     expect(screen.queryByText("Office hours")).not.toBeInTheDocument();
+    // The address is always there.
+    expect(screen.getByText("Address")).toBeInTheDocument();
   });
 
   it("dials a stripped number and mails the address", () => {
     render(
-      <ContactDetails email="office@example.lk" telephone="+94 (91) 223 4567" />
+      <ContactHero email="office@example.lk" telephone="+94 (91) 223 4567" />
     );
 
     // Spaces and brackets in a `tel:` target are invalid and some Android
@@ -137,14 +139,11 @@ describe(ContactDetails, () => {
 });
 
 describe(ContactMap, () => {
-  it("renders directions as a link only when a map URL is configured", () => {
-    const { rerender } = render(<ContactMap />);
-    expect(
-      screen.queryByRole("link", { name: /get directions/iu })
-    ).not.toBeInTheDocument();
+  it("always offers directions, opened safely in a new tab", () => {
+    render(<ContactMap mapUrl="https://maps.example/galle" />);
 
-    rerender(<ContactMap mapUrl="https://maps.example/galle" />);
     const link = screen.getByRole("link", { name: /get directions/iu });
+    expect(link).toHaveAttribute("href", "https://maps.example/galle");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
@@ -176,7 +175,7 @@ describe(ContactForm, () => {
     const nameField = screen.getByLabelText(/full name/iu);
     // The label is always the accessible name; the placeholder is only a
     // worked example and never stands in for it (SC 3.3.2).
-    expect(nameField).toHaveAttribute("placeholder", "Nimal Perera");
+    expect(nameField).toHaveAttribute("placeholder", "Your name");
     expect(screen.getByText("Full name")).toBeVisible();
   });
 

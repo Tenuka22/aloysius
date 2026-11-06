@@ -21,13 +21,20 @@ export const CONTACT_HERO_TITLE = "Visit, call or write to us.";
 /** The default title breaks here, with the second half set in gold italic. */
 export const CONTACT_HERO_TITLE_ACCENT = "or write to us.";
 export const CONTACT_HERO_INTRO =
-  "The College office handles admissions, records, alumni affairs and general enquiries.";
+  "The College office handles admissions, records and general enquiries. Departments below can be reached directly.";
 
-export const CONTACT_DEPARTMENTS_EYEBROW = "Directory";
-export const CONTACT_DEPARTMENTS_HEADING = "Reach the right office";
-export const CONTACT_DEPARTMENTS_INTRO =
-  "Writing to the correct department gets you an answer faster. If unsure, contact the main office.";
+/** The notes under each channel in the hero, as designed. */
+export const CONTACT_TELEPHONE_NOTE = "Main office, during office hours";
+export const CONTACT_EMAIL_NOTE = "Replies within school working days";
+export const CONTACT_HOURS_NOTE = "Monday to Friday";
+export const CONTACT_ADDRESS_NOTE =
+  "Mount Calvary, beside St. Mary’s Cathedral";
 
+/*
+ * The directory is no longer a section on the page (the design has none), but
+ * each office's own email still decides where a topic's enquiry is addressed -
+ * see `resolveRecipient` in the form.
+ */
 export interface ContactDepartment {
   id: string;
   name: string;
@@ -77,9 +84,6 @@ export const CONTACT_DEPARTMENTS: readonly ContactDepartment[] = [
   },
 ];
 
-export const CONTACT_DETAILS_EYEBROW = "Visit & Write";
-export const CONTACT_DETAILS_HEADING = "College Office";
-
 /**
  * The main college building, Templers' Road, Kaluwella, Galle 80000.
  *
@@ -87,8 +91,7 @@ export const CONTACT_DETAILS_HEADING = "College Office";
  * on lankainformation.lk and by Wikipedia's infobox for the college; Kaluwella
  * is the locality both listings give alongside Templers' Road.
  */
-export const CONTACT_DEFAULT_ADDRESS =
-  "St. Aloysius' College, Templers' Road, Kaluwella, Galle 80000, Sri Lanka";
+export const CONTACT_DEFAULT_ADDRESS = "Templars’ Road, Galle 80000";
 
 /**
  * +94 91 223 4657, written in the local format a visitor in Galle would read.
@@ -107,11 +110,31 @@ export const CONTACT_DEFAULT_ADDRESS =
  */
 export const CONTACT_DEFAULT_TELEPHONE = "+94 91 223 4657";
 
+/**
+ * The College's social accounts, shown in the footer on every page.
+ *
+ * Supplied by the site owner. They are the St. Aloysius' College Photography
+ * Club's accounts (sacpc_official, sacphotographyclub). Each is overridable in
+ * the CMS Contact block, and a blank CMS field falls back to these.
+ */
+export const CONTACT_DEFAULT_FACEBOOK_URL =
+  "https://www.facebook.com/share/18qM1TEnBj/";
+export const CONTACT_DEFAULT_INSTAGRAM_URL =
+  "https://www.instagram.com/sacpc_official";
+export const CONTACT_DEFAULT_YOUTUBE_URL =
+  "https://youtube.com/@sacphotographyclub";
+
 /** Supplied by the site owner; the college's own domain, so it is unambiguous. */
 export const CONTACT_DEFAULT_EMAIL = "info@aloysiuscollege.lk";
 
-export const CONTACT_MAP_PLACEHOLDER = "Location map — Galle";
 export const CONTACT_MAP_LINK_LABEL = "Get directions";
+
+/** The address card laid over the map, one line per entry, as designed. */
+export const CONTACT_MAP_ADDRESS_LINES: readonly string[] = [
+  "Templars’ Road, Mount Calvary",
+  "Galle 80000, Southern Province",
+  "Sri Lanka",
+];
 
 /**
  * The office's real map, embedded from Google Maps.
@@ -128,26 +151,16 @@ export const CONTACT_MAP_LINK_LABEL = "Get directions";
  * `contact-map-embed` for the day the College supplies an exact position.
  */
 export const CONTACT_MAP_EMBED_URL =
-  "https://www.google.com/maps?q=6.0359809,80.2118981&z=17&hl=en&output=embed";
+  "https://www.google.com/maps?q=6.035833,80.212222&z=17&output=embed";
 
-/** The plain link, for "View on map" — the College's own Google Maps place. */
-export const CONTACT_MAP_URL = "https://maps.app.goo.gl/JKpQvaxCjGSM5L8GA";
+/** Google Maps directions to the College, opened by "Get directions". */
+export const CONTACT_MAP_URL =
+  "https://www.google.com/maps/dir/?api=1&destination=St.+Aloysius'+College,+Galle";
 
 /** Accessible name for the embedded map, which carries no visible text. */
 export const CONTACT_MAP_TITLE =
   "Google map of the College office at Templers' Road, Kaluwella, Galle";
 
-export const CONTACT_FORM_EYEBROW = "Enquiries";
-export const CONTACT_FORM_HEADING = "Send a Message";
-export const CONTACT_FORM_INTRO =
-  "Messages reach the College office, which routes them to the relevant department.";
-export const CONTACT_FORM_FOOTNOTE = "Responses within school working days.";
-/**
- * One statement in place of an asterisk on every label. Asterisks are noise
- * when nothing is optional, and they have to be explained somewhere anyway.
- */
-export const CONTACT_FORM_REQUIRED_NOTE =
-  "All fields are required except telephone.";
 /** Shown on the message field once the reply is close to the cap. */
 export const CONTACT_FORM_COUNTER_THRESHOLD = 0.75;
 export const CONTACT_FORM_SUBMIT_LABEL = "Send message";
@@ -230,7 +243,7 @@ export const CONTACT_FIELDS: readonly ContactField[] = [
   {
     id: "name",
     label: "Full name",
-    placeholder: "Nimal Perera",
+    placeholder: "Your name",
     type: "text",
     autoComplete: "name",
     maxLength: 120,
@@ -239,7 +252,7 @@ export const CONTACT_FIELDS: readonly ContactField[] = [
   {
     id: "email",
     label: "Email",
-    placeholder: "nimal.perera@gmail.com",
+    placeholder: "you@example.com",
     type: "email",
     autoComplete: "email",
     maxLength: 254,
@@ -258,17 +271,15 @@ export const CONTACT_FIELDS: readonly ContactField[] = [
   {
     id: "subject",
     label: "Subject",
-    placeholder: "Admissions enquiry — Grade 6 entry",
+    placeholder: "Subject",
     type: "text",
-    wide: true,
     maxLength: 160,
     requiredMessage: "Add a subject so your enquiry reaches the right desk.",
   },
   {
     id: "message",
     label: "Message",
-    placeholder:
-      "Tell the office what you need, and include any dates or grades that are relevant.",
+    placeholder: "How can we help?",
     multiline: true,
     wide: true,
     maxLength: 4000,
@@ -284,9 +295,14 @@ export const CONTACT_MESSAGE_TOO_SHORT_MESSAGE =
 export type ContactFormValues = Record<ContactField["id"], string>;
 
 export const CONTACT_FORM_ENQUIRY_EYEBROW = "Enquiry";
-export const CONTACT_FORM_ENQUIRY_HEADING = "Send us a message";
+export const CONTACT_FORM_ENQUIRY_HEADING_LINES = [
+  "Send us",
+  "a message",
+] as const;
 export const CONTACT_FORM_ENQUIRY_INTRO =
-  "Choose a topic, write your message and it is addressed to the right office. Replies come within school working days.";
+  "Messages are routed to the office you choose and answered within school working days.";
+export const CONTACT_FORM_CLOSED_NOTE =
+  "Closed on weekends and public holidays";
 
 export interface ContactTopic {
   id: string;

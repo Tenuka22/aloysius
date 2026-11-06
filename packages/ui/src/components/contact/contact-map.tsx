@@ -1,141 +1,138 @@
 import * as stylex from "@stylexjs/stylex";
 
 import {
-  CONTACT_DEFAULT_ADDRESS,
+  CONTACT_MAP_ADDRESS_LINES,
+  CONTACT_MAP_EMBED_URL,
   CONTACT_MAP_LINK_LABEL,
-  CONTACT_MAP_PLACEHOLDER,
   CONTACT_MAP_TITLE,
+  CONTACT_MAP_URL,
 } from "../../content/contact";
 import { bp } from "../../tokens/breakpoints.stylex";
-import {
-  color,
-  font,
-  motionToken,
-  shadow,
-  space,
-} from "../../tokens/tokens.stylex";
-import { Media } from "../primitives/media";
-import type { ImageSource } from "../primitives/media";
 
+/*
+ * Measurements are the approved design's (Contact.dc.html): a full-bleed map
+ * 78vh tall (520-720px) with a cream address card laid over its bottom-left
+ * corner. Below 48rem the card stops floating and stacks under the map
+ * instead: an overlay on a 320px-wide map would cover most of what it labels.
+ */
 const styles = stylex.create({
-  /*
-   * A full-bleed map band with the address card laid over its corner. Below
-   * 48rem the card stops floating and stacks under the map instead: an overlay
-   * on a 320px-wide map would cover most of the thing it labels.
-   */
   band: {
     position: "relative",
-    backgroundColor: color.surfaceInverseDeep,
+    backgroundColor: "#062B0A",
   },
   frame: {
-    blockSize: {
+    height: {
       default: "20rem",
-      [bp.md]: "min(70vh, 40rem)",
+      [bp.md]: "min(78vh, 720px)",
     },
-    minBlockSize: "20rem",
+    minHeight: {
+      default: "20rem",
+      [bp.md]: "520px",
+    },
   },
   mapEmbed: {
     display: "block",
-    inlineSize: "100%",
-    blockSize: "100%",
+    width: "100%",
+    height: "100%",
     borderWidth: 0,
+    filter: "saturate(0.85) contrast(1.02)",
   },
   card: {
-    backgroundColor: color.surface,
+    backgroundColor: "#FFF8E7",
     borderBlockStartWidth: "3px",
     borderBlockStartStyle: "solid",
-    borderBlockStartColor: color.accent,
-    paddingBlock: space.lg,
-    paddingInline: space.gutter,
+    borderBlockStartColor: "#FFB203",
+    paddingBlock: "28px",
+    paddingInline: "30px",
+    maxWidth: {
+      default: "none",
+      [bp.md]: "340px",
+    },
     position: {
       default: "static",
       [bp.md]: "absolute",
     },
     insetInlineStart: {
       default: "auto",
-      [bp.md]: space.gutter,
+      [bp.md]: "clamp(20px, 4vw, 48px)",
     },
     insetBlockEnd: {
       default: "auto",
-      [bp.md]: space.gutter,
+      [bp.md]: "clamp(20px, 4vw, 48px)",
     },
-    maxInlineSize: {
-      default: "none",
-      [bp.md]: "21.5rem",
-    },
-    boxShadow: {
-      default: "none",
-      [bp.md]: shadow.md,
-    },
+    boxShadow: "0 30px 60px -24px rgba(0, 0, 0, 0.45)",
+  },
+  brand: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+  },
+  crest: {
+    height: "42px",
+    width: "auto",
+  },
+  brandText: {
+    lineHeight: 1.2,
   },
   name: {
     margin: 0,
-    fontSize: font.sizeSm,
-    fontWeight: font.weightExtrabold,
-    letterSpacing: font.trackingWide,
+    fontWeight: 800,
+    fontSize: "13px",
+    letterSpacing: "0.05em",
     textTransform: "uppercase",
-    color: color.onSurface,
   },
   city: {
     margin: 0,
-    marginBlockStart: space["3xs"],
-    fontSize: font.size2xs,
-    letterSpacing: font.trackingWider,
+    marginBlockStart: "3px",
+    fontSize: "10px",
+    letterSpacing: "0.22em",
+    color: "#A51919",
     textTransform: "uppercase",
-    color: color.accentOnSurface,
   },
   address: {
     margin: 0,
-    marginBlockStart: space.sm,
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingRelaxed,
-    color: color.onSurfaceMuted,
+    marginBlockStart: "18px",
+    fontSize: "14px",
+    lineHeight: 1.65,
+    color: "rgba(1, 52, 5, 0.8)",
+    fontStyle: "normal",
   },
   action: {
     display: "inline-flex",
     alignItems: "center",
-    minBlockSize: "2.75rem",
-    marginBlockStart: space.md,
-    paddingInline: space.md,
+    gap: "10px",
+    marginBlockStart: "20px",
+    paddingBlock: "12px",
+    paddingInline: "20px",
     backgroundColor: {
-      default: color.surfaceInverse,
-      ":hover": color.surfaceInverseDeep,
+      default: "#013405",
+      ":hover": "#062B0A",
     },
     color: {
-      default: color.accentOnInverse,
-      ":hover": color.accentHover,
+      default: "#FFB203",
+      ":hover": "#FFD45A",
     },
-    fontSize: font.sizeXs,
-    fontWeight: font.weightExtrabold,
-    letterSpacing: font.trackingWide,
+    fontSize: "12.5px",
+    fontWeight: 800,
+    letterSpacing: "0.06em",
     textDecoration: "none",
     textTransform: "uppercase",
     whiteSpace: "nowrap",
-    transitionProperty: "background-color, color",
-    transitionDuration: motionToken.fast,
   },
 });
 
 export interface ContactMapProps {
-  address?: string;
-  /**
-   * External map link, opened by "Get directions". Without it the action is
-   * omitted rather than rendered as a dead control.
-   */
+  /** External directions link; the default is Google Maps directions. */
   mapUrl?: string;
-  mapImage?: ImageSource;
-  /**
-   * An embedded map. Without one the band falls back to the branded
-   * placeholder, so the block is never a broken frame.
-   */
+  /** The embedded map; the default is the College's Google Maps pin. */
   mapEmbedUrl?: string;
+  crestSrc?: string;
 }
 
 export const ContactMap = ({
-  address = CONTACT_DEFAULT_ADDRESS,
-  mapUrl,
-  mapImage,
-  mapEmbedUrl,
+  mapUrl = CONTACT_MAP_URL,
+  mapEmbedUrl = CONTACT_MAP_EMBED_URL,
+  crestSrc = "/logo.png",
 }: ContactMapProps) => (
   <section aria-label="Location" {...stylex.props(styles.band)}>
     <div {...stylex.props(styles.frame)}>
@@ -149,33 +146,46 @@ export const ContactMap = ({
         which the sandbox exists to prevent. The Google Maps embed still
         renders; "Get directions" is the pan-and-zoom path.
       */}
-      {mapEmbedUrl ? (
-        <iframe
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          sandbox="allow-scripts allow-popups"
-          src={mapEmbedUrl}
-          title={CONTACT_MAP_TITLE}
-          {...stylex.props(styles.mapEmbed)}
-        />
-      ) : (
-        <Media fill placeholder={CONTACT_MAP_PLACEHOLDER} source={mapImage} />
-      )}
+      <iframe
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        sandbox="allow-scripts allow-popups"
+        src={mapEmbedUrl}
+        title={CONTACT_MAP_TITLE}
+        {...stylex.props(styles.mapEmbed)}
+      />
     </div>
     <div {...stylex.props(styles.card)}>
-      <p {...stylex.props(styles.name)}>St. Aloysius&rsquo; College</p>
-      <p {...stylex.props(styles.city)}>Galle, Sri Lanka</p>
-      <p {...stylex.props(styles.address)}>{address}</p>
-      {mapUrl ? (
-        <a
-          href={mapUrl}
-          rel="noopener noreferrer"
-          target="_blank"
-          {...stylex.props(styles.action)}
-        >
-          {CONTACT_MAP_LINK_LABEL} &rarr;
-        </a>
-      ) : null}
+      <div {...stylex.props(styles.brand)}>
+        <img
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          loading="lazy"
+          src={crestSrc}
+          {...stylex.props(styles.crest)}
+        />
+        <div {...stylex.props(styles.brandText)}>
+          <p {...stylex.props(styles.name)}>St. Aloysius&rsquo; College</p>
+          <p {...stylex.props(styles.city)}>Galle, Sri Lanka</p>
+        </div>
+      </div>
+      <address {...stylex.props(styles.address)}>
+        {CONTACT_MAP_ADDRESS_LINES.map((line, index) => (
+          <span key={line}>
+            {index > 0 ? <br /> : null}
+            {line}
+          </span>
+        ))}
+      </address>
+      <a
+        href={mapUrl}
+        rel="noopener noreferrer"
+        target="_blank"
+        {...stylex.props(styles.action)}
+      >
+        {CONTACT_MAP_LINK_LABEL} &rarr;
+      </a>
     </div>
   </section>
 );
