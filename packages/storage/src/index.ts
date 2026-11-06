@@ -23,6 +23,10 @@ export interface Storage {
   ) => Promise<void>;
   get: (key: string) => Promise<StoredObject | null>;
   remove: (key: string) => Promise<void>;
+  /** Size and type without reading the body; `null` when the key is absent. */
+  head: (key: string) => Promise<{ size: number; contentType: string } | null>;
+  /** `length` bytes from `offset` - what a browser's Range request needs. */
+  getRange: (key: string, offset: number, length: number) => Promise<Buffer>;
 }
 
 const createMinioBackend = (config: StorageConfig): Storage => {
@@ -89,6 +93,27 @@ const createMinioBackend = (config: StorageConfig): Storage => {
     async remove(key) {
       const client = await getClient();
       await client.removeObject(bucket, key);
+    },
+    async head(key) {
+      try {
+        const client = await getClient();
+        const stat = await client.statObject(bucket, key);
+        const contentType =
+          (stat.metaData?.["content-type"] as string | undefined) ??
+          "application/octet-stream";
+        return { size: stat.size, contentType };
+      } catch {
+        return null;
+      }
+    },
+    async getRange(key, offset, length) {
+      const client = await getClient();
+      const stream = await client.getPartialObject(bucket, key, offset, length);
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+      return Buffer.concat(chunks);
     },
   };
 };

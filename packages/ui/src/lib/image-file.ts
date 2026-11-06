@@ -1,5 +1,5 @@
 /**
- * Which files the cropper will accept, and the size it refuses to open.
+ * Which files the cropper will accept. There is no size limit; every photo is re-encoded to WebP by the cropper.
  *
  * Kept out of `image-crop-dialog.tsx` on purpose: a module holding a component
  * should hold that component, and these are values other modules need in order
@@ -20,19 +20,6 @@ export const ACCEPTED_IMAGE_TYPES = [
 export const ACCEPTED_IMAGE_ATTR = ACCEPTED_IMAGE_TYPES.join(",");
 
 /**
- * The largest file accepted, matching the server's `MAX_FILE_SIZE` in
- * `packages/api/src/routers/files/get-upload-url.ts`.
- *
- * Declared here as well as there because the server's limit is a *rejection*
- * after the bytes have crossed the network, and an editor who finds out at that
- * point has usually already spent a minute on the crop.
- */
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-
-/** `MAX_UPLOAD_BYTES` in megabytes, for the message that quotes it. */
-export const MAX_MB = Math.round(MAX_UPLOAD_BYTES / 1024 / 1024);
-
-/**
  * Reject files before they are previewed.
  *
  * Returns a message describing the *first* problem, or `null` when the file is
@@ -45,9 +32,6 @@ export const describeFileProblem = (file: File): string | null => {
   );
   if (!acceptedImage) {
     return `"${file.name}" is not a JPEG, PNG, WebP or AVIF image.`;
-  }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return `"${file.name}" is ${Math.round(file.size / 1024 / 1024)} MB. The limit is ${MAX_MB} MB.`;
   }
   return null;
 };

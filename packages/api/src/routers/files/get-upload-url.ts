@@ -3,16 +3,6 @@ import * as v from "valibot";
 import { protectedProcedure } from "../../index";
 
 /**
- * How large an upload may be, in bytes.
- *
- * The client's own limit is `MAX_UPLOAD_BYTES` in
- * `packages/ui/src/components/cms/image-crop-dialog.tsx`; this is the copy that
- * actually enforces it. They have to agree, and the check that rejects bytes
- * that have already crossed the network is the only one that counts.
- */
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
-/**
  * The extension a minted key carries, or `bin`.
  *
  * Taken from the last dot of the name and then *reduced to what the key pattern
@@ -33,7 +23,7 @@ export const getUploadUrl = protectedProcedure
     v.object({
       name: v.pipe(v.string(), v.minLength(1)),
       type: v.pipe(v.string(), v.minLength(1)),
-      size: v.pipe(v.number(), v.minValue(1), v.maxValue(MAX_FILE_SIZE)),
+      size: v.pipe(v.number(), v.minValue(1)),
     })
   )
   .handler(({ input }) => {

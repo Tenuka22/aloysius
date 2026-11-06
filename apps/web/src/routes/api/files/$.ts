@@ -30,9 +30,6 @@ import { auth, ensureServerBootstrap, getStorage } from "../../../services";
  */
 const KEY_PATTERN = /^admin\/[0-9a-f-]{36}\.[a-z0-9]{1,10}$/u;
 
-/** Must match `MAX_FILE_SIZE` in `packages/api/src/routers/files/get-upload-url.ts`. */
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
 const notFound = () => new Response("Not found", { status: 404 });
 
 /** Strip the leading `/api/files/` and decode what is left. */
@@ -47,7 +44,86 @@ const readKey = (pathname: string): string => {
   }
 };
 
-const getStoredFile = async (key: string): Promise<Response> => {
+const RANGE_PATTERN = /^bytes=(?<start>\d*)-(?<end>\d*)$/u;
+
+/** One response never carries more than this, however open-ended the request. */
+const MAX_RANGE_BYTES = 8 * 1024 * 1024;
+
+const CACHE_HEADERS = {
+  "Accept-Ranges": "bytes",
+  "Cache-Control": "public, max-age=31536000, immutable",
+};
+
+/**
+ * Serve a slice, so a browser can start a video after the first few megabytes
+ * and seek without downloading the whole file. Without this every request read
+ * the entire object into memory, and a browser that gave up part-way produced a
+ * connection reset on the server.
+ */
+const getStoredRange = async (
+  key: string,
+  rangeHeader: string
+): Promise<Response> => {
+  const storage = getStorage();
+  const head = await storage.head(key).catch(() => null);
+  if (!head) {
+    return notFound();
+  }
+
+  const match = RANGE_PATTERN.exec(rangeHeader);
+  const startText = match?.groups?.start ?? "";
+  const endText = match?.groups?.end ?? "";
+  if (!match || (startText === "" && endText === "")) {
+    return new Response(null, {
+      headers: { "Content-Range": `bytes */${head.size}` },
+      status: 416,
+    });
+  }
+
+  // `bytes=-N` is the final N bytes; otherwise start..end, end optional.
+  const start =
+    startText === ""
+      ? Math.max(head.size - Number(endText), 0)
+      : Number(startText);
+  const requestedEnd =
+    startText === "" || endText === "" ? head.size - 1 : Number(endText);
+  const end = Math.min(
+    requestedEnd,
+    head.size - 1,
+    start + MAX_RANGE_BYTES - 1
+  );
+
+  if (start >= head.size || start > end) {
+    return new Response(null, {
+      headers: { "Content-Range": `bytes */${head.size}` },
+      status: 416,
+    });
+  }
+
+  try {
+    const body = await storage.getRange(key, start, end - start + 1);
+    return new Response(new Uint8Array(body), {
+      headers: {
+        ...CACHE_HEADERS,
+        "Content-Length": String(body.length),
+        "Content-Range": `bytes ${start}-${end}/${head.size}`,
+        "Content-Type": head.contentType,
+      },
+      status: 206,
+    });
+  } catch {
+    return notFound();
+  }
+};
+
+const getStoredFile = async (
+  key: string,
+  rangeHeader: string | null
+): Promise<Response> => {
+  if (rangeHeader) {
+    return getStoredRange(key, rangeHeader);
+  }
+
   let stored: Awaited<ReturnType<ReturnType<typeof getStorage>["get"]>>;
   try {
     stored = await getStorage().get(key);
@@ -61,8 +137,8 @@ const getStoredFile = async (key: string): Promise<Response> => {
 
   return new Response(new Uint8Array(stored.data), {
     headers: {
+      ...CACHE_HEADERS,
       "Content-Type": stored.contentType,
-      "Cache-Control": "public, max-age=31536000, immutable",
     },
   });
 };
@@ -91,9 +167,6 @@ const storeFile = async (key: string, request: Request): Promise<Response> => {
   const declared = Number(request.headers.get("content-length"));
   if (!Number.isFinite(declared) || declared < 1) {
     return new Response("A file size is required.", { status: 411 });
-  }
-  if (declared > MAX_FILE_SIZE) {
-    return new Response("That file is too large.", { status: 413 });
   }
 
   const body = await request.arrayBuffer();
@@ -124,7 +197,7 @@ export const Route = createFileRoute("/api/files/$")({
         if (!key) {
           return notFound();
         }
-        return getStoredFile(key);
+        return getStoredFile(key, request.headers.get("range"));
       },
       PUT: ({ request }) => {
         const key = readKey(new URL(request.url).pathname);

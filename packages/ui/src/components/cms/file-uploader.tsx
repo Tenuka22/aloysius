@@ -2,11 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 
-import {
-  ACCEPTED_IMAGE_ATTR,
-  describeFileProblem,
-  MAX_MB,
-} from "../../lib/image-file";
+import { ACCEPTED_IMAGE_ATTR, describeFileProblem } from "../../lib/image-file";
 import { ratioSpec } from "../../tokens/aspect-ratios";
 import type { AspectRatioKey } from "../../tokens/aspect-ratios";
 import { bp } from "../../tokens/breakpoints.stylex";
@@ -317,7 +313,8 @@ export const FileUploader = ({
       </div>
 
       <p {...stylex.props(styles.hint)}>
-        {hint ?? `JPEG, PNG, WebP or AVIF, up to ${MAX_MB} MB. ${spec.label}.`}
+        {hint ??
+          `JPEG, PNG, WebP or AVIF, any size. Converted to WebP on upload. ${spec.label}.`}
       </p>
 
       {clearedNote ? <p {...stylex.props(styles.hint)}>{clearedNote}</p> : null}
