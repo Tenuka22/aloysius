@@ -1,25 +1,14 @@
 import type { ImageSource } from "../components/primitives/media";
-import type { JumpLink } from "./about";
 
 /**
- * Content for the Academics page, following the same rule as `content/about.ts`:
- * every string is a typed constant carrying real copy, never a `[CMS: ...]`
- * marker. Facts this project has no public source for - the head of each
- * department, the year-by-year results table - are modelled as optional fields
- * so the page degrades to an honest empty state rather than inventing a name or
- * a pass rate.
+ * Content for the Academics page, to the approved UI/UX design
+ * (Academics.dc.html). Every string is a typed constant carrying real copy,
+ * never a `[CMS: ...]` marker.
  */
 
 export const ACADEMICS_HERO_TITLE = "Academic Excellence";
 export const ACADEMICS_HERO_INTRO =
-  "Curriculum, streams and departments - from the primary years through to the G.C.E. Advanced Level.";
-
-export const ACADEMICS_JUMP_LINKS: readonly JumpLink[] = [
-  { label: "Sections of Study", href: "#sections" },
-  { label: "A/L Streams", href: "#streams" },
-  { label: "Facilities", href: "#facilities" },
-  { label: "Results", href: "#results" },
-];
+  "Curriculum, streams and departments — from primary years to Advanced Level.";
 
 export interface StudySection {
   id: string;
@@ -32,24 +21,21 @@ export interface StudySection {
 export const STUDY_SECTIONS: readonly StudySection[] = [
   {
     id: "primary",
-    grades: "Grades 1-5",
+    grades: "Grades 1–5",
     name: "Primary Section",
-    description:
-      "Foundations in literacy, numeracy, faith and character, taught in small classes by specialist primary staff.",
+    description: "Foundations in literacy, numeracy, faith and character.",
   },
   {
     id: "secondary",
-    grades: "Grades 6-11",
+    grades: "Grades 6–11",
     name: "Secondary Section",
-    description:
-      "The national curriculum through to the G.C.E. Ordinary Level, with subject specialisation from Grade 10.",
+    description: "The national curriculum through to G.C.E. Ordinary Level.",
   },
   {
     id: "advanced",
-    grades: "Grades 12-13",
+    grades: "Grades 12–13",
     name: "Advanced Level",
-    description:
-      "Four specialised streams preparing students for university entrance and professional study.",
+    description: "Specialised streams preparing students for university.",
   },
 ];
 
@@ -66,31 +52,40 @@ export const AL_STREAMS: readonly Stream[] = [
     id: "physical-science",
     index: "01",
     name: "Physical Science",
-    description: "Combined mathematics, physics and chemistry.",
+    description: "Combined maths, physics, chemistry.",
   },
   {
     id: "biological-science",
     index: "02",
     name: "Biological Science",
-    description: "Biology and chemistry with physics or agricultural science.",
+    description: "Biology, chemistry, physics / agriculture.",
   },
   {
     id: "commerce",
     index: "03",
     name: "Commerce",
-    description: "Accounting, economics and business studies.",
+    description: "Accounting, economics, business studies.",
   },
   {
-    id: "arts-technology",
+    id: "arts",
     index: "04",
-    name: "Arts & Technology",
-    description:
-      "Humanities, information technology and engineering technology.",
+    name: "Arts",
+    description: "Languages, humanities and aesthetic subjects.",
+  },
+  {
+    id: "technology",
+    index: "05",
+    name: "Technology",
+    description: "Engineering technology, science for technology and ICT.",
   },
 ];
 
 export const FACILITIES_EYEBROW = "Facilities";
-export const FACILITIES_HEADING = "Where Aloysians learn & grow";
+/** The heading is set in two lines: the second, in gold italics, is the emphasis. */
+export const FACILITIES_HEADING_LINES = [
+  "Where Aloysians",
+  "learn & grow",
+] as const;
 export const FACILITIES_INTRO =
   "Laboratories, libraries and specialist spaces supporting every stream, from the primary section to Advanced Level.";
 
@@ -132,30 +127,11 @@ export const FACILITIES: readonly Facility[] = [
       "Specimens, microscopes and dissection for the biological stream.",
   },
   {
-    id: "ict-labs",
-    name: "ICT & Computer Labs",
-    tag: "Technology",
-    description:
-      "Networked computers for ICT, technology and digital literacy.",
-  },
-  {
-    id: "engineering-lab",
-    name: "Engineering Technology Lab",
-    tag: "Technology",
-    description: "Workshop space for the A/L engineering technology stream.",
-  },
-  {
     id: "library",
     name: "College Library",
     tag: "Learning",
     description:
       "Reference, lending and quiet study for every section of the College.",
-  },
-  {
-    id: "primary-library",
-    name: "Primary Library",
-    tag: "Learning",
-    description: "An age-appropriate reading room for Grades 1 to 5.",
   },
   {
     id: "music-art",
@@ -189,9 +165,3 @@ export const FACILITIES: readonly Facility[] = [
     description: "Multimedia-equipped rooms for interactive teaching.",
   },
 ];
-
-export const RESULTS_HEADING = "Examination Results & Achievements";
-export const RESULTS_BODY =
-  "Ordinary Level and Advanced Level performance, published year by year alongside national and provincial honours.";
-export const RESULTS_CTA_LABEL = "View results";
-export const RESULTS_CTA_HREF = "/results";

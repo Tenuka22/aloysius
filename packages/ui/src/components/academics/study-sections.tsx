@@ -2,71 +2,60 @@ import * as stylex from "@stylexjs/stylex";
 
 import { STUDY_SECTIONS } from "../../content/academics";
 import type { StudySection } from "../../content/academics";
-import { color, font, space } from "../../tokens/tokens.stylex";
-import { Container, Eyebrow, Heading, Section } from "../primitives/layout";
+import { bp } from "../../tokens/breakpoints.stylex";
+import { font } from "../../tokens/tokens.stylex";
+import { DcEyebrow, DcHeading, DcInner, DcSection } from "../home/dc";
 import { Reveal } from "../primitives/reveal";
 
 const styles = stylex.create({
-  /*
-   * `auto-fit` + `minmax` rather than the mock's hard `repeat(3, 1fr)`: one
-   * column at 320px, two once there is room, three on a laptop, and it keeps
-   * filling sensibly on an ultra-wide panel - no extra breakpoint needed.
-   *
-   * `min(100%, 18rem)` is what stops the track floor from exceeding the
-   * container on a narrow phone, which is the usual cause of an `auto-fit`
-   * grid overflowing horizontally.
-   */
+  heading: {
+    marginBlockEnd: "clamp(36px, 5vw, 64px)",
+  },
   grid: {
     display: "grid",
     listStyle: "none",
     margin: 0,
-    marginBlockStart: space["2xl"],
     padding: 0,
-    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 18rem), 1fr))",
-    gap: space.md,
-  },
-  card: {
-    display: "flex",
-    flexDirection: "column",
-    gap: space["2xs"],
-    // Equal-height cards regardless of which description runs longest.
-    blockSize: "100%",
-    padding: space.lg,
-    backgroundColor: color.surfaceRaised,
-    borderWidth: space.px,
-    borderStyle: "solid",
-    borderColor: color.border,
-    // The gold cap from the design, as a thicker top edge on the same border.
-    borderBlockStartWidth: "2px",
-    borderBlockStartColor: color.accent,
-  },
-  grades: {
-    margin: 0,
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWider,
-    textTransform: "uppercase",
-    // Crimson, not gold: gold on cream is ~1.9:1 and fails AA for text.
-    color: color.accentOnSurface,
-  },
-  name: {
-    margin: 0,
-    fontFamily: font.display,
-    fontSize: font.sizeXl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingSnug,
-    color: color.onSurface,
-    textWrap: "balance",
-  },
-  description: {
-    margin: 0,
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingRelaxed,
-    color: color.onSurfaceMuted,
-    textWrap: "pretty",
+    gap: "28px",
+    gridTemplateColumns: {
+      default: "minmax(0, 1fr)",
+      [bp.lg]: "repeat(3, minmax(0, 1fr))",
+    },
   },
   cell: {
     blockSize: "100%",
+  },
+  card: {
+    blockSize: "100%",
+    paddingBlock: "40px",
+    paddingInline: "34px",
+    backgroundColor: "#fffdf6",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "rgba(1, 52, 5, 0.15)",
+    borderBlockStartWidth: "2px",
+    borderBlockStartColor: "#FFB203",
+  },
+  grades: {
+    margin: 0,
+    fontSize: "11px",
+    fontWeight: 700,
+    letterSpacing: "0.2em",
+    textTransform: "uppercase",
+    color: "#A51919",
+  },
+  name: {
+    margin: 0,
+    marginBlock: "14px 12px",
+    fontFamily: font.display,
+    fontSize: "32px",
+    fontWeight: 600,
+  },
+  description: {
+    margin: 0,
+    fontSize: "14.5px",
+    lineHeight: 1.7,
+    color: "rgba(1, 52, 5, 0.75)",
   },
 });
 
@@ -75,13 +64,12 @@ export const StudySections = ({
 }: {
   sections?: readonly StudySection[];
 }) => (
-  <Section id="sections" labelledBy="sections-title" tone="surface">
-    <Container>
-      <Eyebrow>The college</Eyebrow>
-      <Heading id="sections-title" level={2}>
+  <DcSection id="sections" labelledBy="sections-title" tone="cream">
+    <DcInner>
+      <DcEyebrow>The College</DcEyebrow>
+      <DcHeading id="sections-title" style={styles.heading}>
         Sections of Study
-      </Heading>
-
+      </DcHeading>
       <ul {...stylex.props(styles.grid)}>
         {sections.map((section, index) => (
           <li key={section.id} {...stylex.props(styles.cell)}>
@@ -101,6 +89,6 @@ export const StudySections = ({
           </li>
         ))}
       </ul>
-    </Container>
-  </Section>
+    </DcInner>
+  </DcSection>
 );

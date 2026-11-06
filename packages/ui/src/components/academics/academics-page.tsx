@@ -1,16 +1,19 @@
 import * as stylex from "@stylexjs/stylex";
 
+import {
+  ACADEMICS_HERO_INTRO,
+  ACADEMICS_HERO_TITLE,
+} from "../../content/academics";
 import type { Facility } from "../../content/academics";
 import type { AcademicsHeaderProps } from "../../content/cms-to-pages";
 import type { NavItem } from "../../content/home";
 import { SkipLink } from "../primitives/layout";
+import { PageHero } from "../site/page-hero";
 import { SiteFooter } from "../site/site-footer";
 import type { FooterContact } from "../site/site-footer";
 import { SiteHeader } from "../site/site-header";
-import { AcademicsHero } from "./academics-hero";
 import { AlStreams } from "./al-streams";
 import { FacilitiesShowcase } from "./facilities-showcase";
-import { ResultsCta } from "./results-cta";
 import { StudySections } from "./study-sections";
 
 const MAIN_ID = "main-content";
@@ -51,22 +54,16 @@ export const AcademicsPage = ({
     <SkipLink targetId={MAIN_ID} />
     <SiteHeader activeHref="/academics" extraNavItems={extraNavItems} />
     <main id={MAIN_ID} tabIndex={-1} {...stylex.props(styles.main)}>
-      <AcademicsHero
-        eyebrow={header?.eyebrow}
-        heroImage={header?.heroImage}
-        intro={header?.tagline}
-        title={header?.heading}
+      <PageHero
+        crumb="Academics"
+        intro={header?.tagline ?? ACADEMICS_HERO_INTRO}
+        title={header?.heading ?? ACADEMICS_HERO_TITLE}
+        titleId="academics-hero-title"
       />
       <StudySections />
       <AlStreams />
       <FacilitiesShowcase facilities={facilities} />
-      <ResultsCta />
     </main>
-    {/*
-      No footer's "Visit the College" band here: the results CTA above is the
-      same inverse green and full-bleed, so the two stacked read as one section
-      that ran on past the end of its content.
-    */}
-    <SiteFooter contact={contact} showVisitBand={false} />
+    <SiteFooter contact={contact} />
   </>
 );

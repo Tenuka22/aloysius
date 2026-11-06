@@ -14,7 +14,8 @@ import { orpc } from "@/utils/orpc";
  * Sections of study and A/L streams are real shipped copy
  * (`content/academics.ts`), not CMS-editable - see `cms-to-pages.ts`'s note on
  * `ACADEMICS_BLOCKS`. The page header is CMS content, and the facilities
- * showcase is the `facility` table, edited as a roster at `/cms/facilities`.
+ * showcase is the `facility` table, edited as a roster at `/cms/facilities`;
+ * until that roster has rows the shipped list from the design is shown.
  *
  * The leadership section that used to be here is gone: the Principal, the
  * Primary sectional head and the Secondary deputy principal are all on `/about`
@@ -43,9 +44,6 @@ const AcademicsContent = () => {
     }
     const items = [];
     const { role } = session.user;
-    if (role === "admin" || role === "cms") {
-      items.push({ id: "cms", label: "CMS", href: "/cms" });
-    }
     if (role === "admin") {
       items.push({ id: "admin", label: "Admin", href: "/admin" });
     }
@@ -55,7 +53,7 @@ const AcademicsContent = () => {
   return (
     <AcademicsPage
       extraNavItems={extraNavItems}
-      facilities={facilities}
+      facilities={facilities.length > 0 ? facilities : undefined}
       header={
         academics?.blocks
           ? blocksToAcademicsHeaderProps(academics.blocks)

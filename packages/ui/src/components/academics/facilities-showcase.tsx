@@ -1,52 +1,88 @@
 import * as stylex from "@stylexjs/stylex";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useState } from "react";
 
 import {
   FACILITIES,
   FACILITIES_EYEBROW,
-  FACILITIES_HEADING,
+  FACILITIES_HEADING_LINES,
   FACILITIES_INTRO,
 } from "../../content/academics";
 import type { Facility } from "../../content/academics";
 import { bp } from "../../tokens/breakpoints.stylex";
-import {
-  color,
-  font,
-  motionToken,
-  shadow,
-  space,
-} from "../../tokens/tokens.stylex";
-import { Container, Eyebrow, Heading, Section } from "../primitives/layout";
-import { Media } from "../primitives/media";
+import { font } from "../../tokens/tokens.stylex";
+import { DcInner, DcSection, DcSlot } from "../home/dc";
+
+const MONO = "ui-monospace, Menlo, monospace";
 
 const pad = (value: number) => String(value).padStart(2, "0");
 
+/*
+ * Measurements are the approved design's (Academics.dc.html): 130px section
+ * padding, a 1240px inner, a 1 / 1.35 two-column layout, 17px list rows and a
+ * sticky 4:5 stage with every photograph stacked and cross-faded.
+ */
 const styles = stylex.create({
+  section: {
+    backgroundColor: "#04220A",
+    paddingBlock: "clamp(72px, 11vw, 130px)",
+  },
+  watermark: {
+    position: "absolute",
+    insetInlineStart: "-160px",
+    insetBlockEnd: "-200px",
+    height: "620px",
+    width: "auto",
+    opacity: 0.045,
+    pointerEvents: "none",
+    display: {
+      default: "none",
+      [bp.md]: "block",
+    },
+  },
+  inner: {
+    maxWidth: "1240px",
+  },
   header: {
     display: "flex",
     flexWrap: "wrap",
     alignItems: "flex-end",
     justifyContent: "space-between",
-    gap: space.lg,
-    marginBlockEnd: space.xl,
+    gap: "32px",
+    marginBlockEnd: "clamp(40px, 5vw, 64px)",
+  },
+  eyebrow: {
+    display: "block",
+    margin: 0,
+    marginBlockEnd: "20px",
+    fontSize: "11px",
+    fontWeight: 700,
+    letterSpacing: "0.46em",
+    textTransform: "uppercase",
+    color: "#FFB203",
+  },
+  heading: {
+    margin: 0,
+    fontFamily: font.display,
+    fontWeight: 600,
+    fontSize: "clamp(40px, 5.4vw, 72px)",
+    lineHeight: 1,
+  },
+  headingEmphasis: {
+    display: "block",
+    fontStyle: "italic",
+    fontWeight: 500,
+    color: "#FFB203",
   },
   intro: {
     margin: 0,
     maxWidth: "40ch",
-    fontSize: font.sizeMd,
-    lineHeight: font.leadingRelaxed,
-    color: color.onInverseMuted,
-    textWrap: "pretty",
+    fontSize: "15.5px",
+    lineHeight: 1.75,
+    color: "rgba(255, 248, 231, 0.7)",
   },
-  /*
-   * The list leads and the photograph follows on a phone; side by side with the
-   * photograph sticky from 64rem, so it stays in view while a long list is
-   * scrolled.
-   */
   layout: {
     display: "grid",
-    gap: space.xl,
+    gap: "clamp(32px, 5vw, 72px)",
     gridTemplateColumns: {
       default: "minmax(0, 1fr)",
       [bp.xl]: "minmax(0, 1fr) minmax(0, 1.35fr)",
@@ -54,177 +90,201 @@ const styles = stylex.create({
     alignItems: "start",
   },
   list: {
+    display: "flex",
+    flexDirection: "column",
     margin: 0,
     padding: 0,
     listStyle: "none",
-    borderBlockStartWidth: space.px,
+    borderBlockStartWidth: "1px",
     borderBlockStartStyle: "solid",
-    borderBlockStartColor: color.borderInverse,
+    borderBlockStartColor: "rgba(255, 248, 231, 0.14)",
   },
   item: {
-    borderBlockEndWidth: space.px,
+    borderBlockEndWidth: "1px",
     borderBlockEndStyle: "solid",
-    borderBlockEndColor: color.borderInverse,
+    borderBlockEndColor: "rgba(255, 248, 231, 0.14)",
   },
   /* A real button: hover previews, but click, Enter and Space all select. */
   pick: {
     display: "grid",
-    gridTemplateColumns: "2.75rem minmax(0, 1fr) auto",
-    gap: space.sm,
+    gridTemplateColumns: "44px minmax(0, 1fr) auto",
+    gap: "18px",
     alignItems: "baseline",
     inlineSize: "100%",
-    minBlockSize: "2.75rem",
-    paddingBlock: space.sm,
+    paddingBlock: "17px",
     paddingInlineEnd: 0,
     backgroundColor: "transparent",
     borderWidth: 0,
-    color: color.onInverse,
+    color: "inherit",
     font: "inherit",
     textAlign: "start",
     cursor: "pointer",
     transitionProperty: "padding-inline-start",
-    transitionDuration: motionToken.base,
-    transitionTimingFunction: motionToken.ease,
+    transitionDuration: "0.35s",
+    transitionTimingFunction: "ease",
   },
   pickIdle: {
-    paddingInlineStart: 0,
+    paddingInlineStart: "0px",
   },
   pickActive: {
-    paddingInlineStart: space.xs,
+    paddingInlineStart: "14px",
   },
   num: {
-    fontFamily: font.mono,
-    fontSize: font.size2xs,
+    fontFamily: MONO,
+    fontSize: "11px",
+    letterSpacing: "0.06em",
   },
-  numIdle: { color: color.onInverseSubtle },
-  numActive: { color: color.accentOnInverse },
+  numIdle: { color: "rgba(255, 248, 231, 0.4)" },
+  numActive: { color: "#FFB203" },
   name: {
     fontFamily: font.display,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingSnug,
+    fontWeight: 600,
+    lineHeight: 1.1,
     transitionProperty: "color, font-size",
-    transitionDuration: motionToken.fast,
+    transitionDuration: "0.3s",
+    transitionTimingFunction: "ease",
   },
   nameIdle: {
-    fontSize: font.sizeXl,
-    color: color.onInverseMuted,
+    fontSize: "24px",
+    color: "rgba(255, 248, 231, 0.78)",
   },
   nameActive: {
-    fontSize: font.size2xl,
-    color: color.accentOnInverse,
+    fontSize: "30px",
+    color: "#FFB203",
   },
   tag: {
-    fontSize: font.size2xs,
-    fontWeight: font.weightBold,
-    letterSpacing: font.trackingWider,
+    fontSize: "9.5px",
+    fontWeight: 700,
+    letterSpacing: "0.18em",
     textTransform: "uppercase",
     whiteSpace: "nowrap",
-    color: color.onInverseSubtle,
   },
+  tagIdle: { color: "rgba(255, 248, 231, 0.32)" },
+  tagActive: { color: "rgba(255, 248, 231, 0.75)" },
 
   stage: {
     position: {
       default: "static",
       [bp.xl]: "sticky",
     },
-    insetBlockStart: space["3xl"],
+    insetBlockStart: "110px",
   },
   frame: {
     position: "relative",
     overflow: "hidden",
-    backgroundColor: color.surfaceInverse,
-    boxShadow: shadow.md,
+    aspectRatio: "4 / 5",
+    maxHeight: "680px",
+    width: "100%",
+    backgroundColor: "#013405",
+    boxShadow: "0 40px 80px -30px rgba(0, 0, 0, 0.6)",
+  },
+  layer: {
+    position: "absolute",
+    inset: 0,
+    transitionProperty: "opacity",
+    transitionDuration: "0.6s",
+    transitionTimingFunction: "ease",
+  },
+  layerOn: { opacity: 1 },
+  layerOff: { opacity: 0, pointerEvents: "none" },
+  photo: {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
   },
   scrim: {
     position: "absolute",
     inset: 0,
     backgroundImage:
-      "linear-gradient(180deg, rgba(4, 34, 10, 0) 40%, rgba(4, 34, 10, 0.94) 100%)",
+      "linear-gradient(180deg, rgba(4, 34, 10, 0) 45%, rgba(4, 34, 10, 0.94) 100%)",
     pointerEvents: "none",
   },
   badges: {
     position: "absolute",
-    insetBlockStart: space.sm,
-    insetInline: space.sm,
+    insetBlockStart: "22px",
+    insetInline: "22px",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     pointerEvents: "none",
   },
   badgeTag: {
-    paddingBlock: space["3xs"],
-    paddingInline: space.xs,
-    backgroundColor: color.accent,
-    color: color.onAccent,
-    fontSize: font.size2xs,
-    fontWeight: font.weightExtrabold,
-    letterSpacing: font.trackingWider,
+    paddingBlock: "6px",
+    paddingInline: "12px",
+    backgroundColor: "#FFB203",
+    color: "#013405",
+    fontSize: "10px",
+    fontWeight: 800,
+    letterSpacing: "0.22em",
     textTransform: "uppercase",
   },
   badgeCount: {
-    fontFamily: font.mono,
-    fontSize: font.sizeXs,
-    color: color.onInverse,
+    fontFamily: MONO,
+    fontSize: "12px",
+    color: "rgba(255, 248, 231, 0.85)",
   },
   caption: {
     position: "absolute",
-    insetInline: space.md,
-    insetBlockEnd: space.md,
+    insetInline: "clamp(20px, 3vw, 34px)",
+    insetBlockEnd: "clamp(20px, 3vw, 32px)",
     pointerEvents: "none",
   },
   captionName: {
     margin: 0,
     fontFamily: font.display,
-    fontSize: font.size2xl,
-    fontWeight: font.weightSemibold,
-    lineHeight: font.leadingSnug,
-    color: color.onInverse,
+    fontSize: "clamp(30px, 3.2vw, 46px)",
+    fontWeight: 600,
+    lineHeight: 1.05,
   },
   rule: {
-    inlineSize: "2.75rem",
+    inlineSize: "44px",
     blockSize: "2px",
-    marginBlock: space.sm,
-    backgroundColor: color.accent,
+    marginBlock: "18px 14px",
+    backgroundColor: "#FFB203",
   },
   captionBody: {
     margin: 0,
     maxWidth: "46ch",
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingRelaxed,
-    color: color.onInverseMuted,
+    fontSize: "15px",
+    lineHeight: 1.65,
+    color: "rgba(255, 248, 231, 0.82)",
   },
   controls: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: space.sm,
-    marginBlockStart: space.sm,
+    gap: "16px",
+    marginBlockStart: "18px",
   },
   hint: {
-    fontSize: font.sizeXs,
-    color: color.onInverseSubtle,
+    fontSize: "12px",
+    letterSpacing: "0.08em",
+    color: "rgba(255, 248, 231, 0.5)",
   },
   arrows: {
     display: "flex",
-    gap: space.xs,
+    gap: "8px",
   },
   arrow: {
-    display: "inline-flex",
+    display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    inlineSize: "2.75rem",
-    blockSize: "2.75rem",
+    inlineSize: "42px",
+    blockSize: "42px",
+    padding: 0,
     backgroundColor: "transparent",
-    borderWidth: space.px,
+    borderWidth: "1px",
     borderStyle: "solid",
     borderColor: {
-      default: color.borderInverse,
-      ":hover": color.accent,
+      default: "rgba(255, 248, 231, 0.3)",
+      ":hover": "#FFB203",
     },
     color: {
-      default: color.onInverse,
-      ":hover": color.accentOnInverse,
+      default: "#FFF8E7",
+      ":hover": "#FFB203",
     },
+    font: "inherit",
     cursor: "pointer",
   },
 });
@@ -232,7 +292,8 @@ const styles = stylex.create({
 /**
  * An interactive facilities list. Hover (or focus, click, Enter) on a row
  * previews it in the photograph panel beside it; the arrows step through the
- * list. The panel is announced politely so a screen-reader user hears which
+ * list. Every photograph is stacked in the panel and cross-faded, as in the
+ * design. The panel is announced politely so a screen-reader user hears which
  * facility is showing without losing their place in the list.
  *
  * `facilities` is CMS content - the `facility` table edited at
@@ -243,8 +304,10 @@ const styles = stylex.create({
  */
 export const FacilitiesShowcase = ({
   facilities = FACILITIES,
+  crestSrc = "/logo.png",
 }: {
   facilities?: readonly Facility[];
+  crestSrc?: string;
 }) => {
   const [index, setIndex] = useState(0);
 
@@ -255,19 +318,31 @@ export const FacilitiesShowcase = ({
     return null;
   }
 
+  const [firstLine, secondLine] = FACILITIES_HEADING_LINES;
+
   return (
-    <Section
+    <DcSection
       id="facilities"
       labelledBy="facilities-title"
-      tone="inverseGradient"
+      style={styles.section}
+      tone="green"
     >
-      <Container width="wide">
+      <img
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+        loading="lazy"
+        src={crestSrc}
+        {...stylex.props(styles.watermark)}
+      />
+      <DcInner style={styles.inner}>
         <div {...stylex.props(styles.header)}>
           <div>
-            <Eyebrow inverse>{FACILITIES_EYEBROW}</Eyebrow>
-            <Heading id="facilities-title" level={2}>
-              {FACILITIES_HEADING}
-            </Heading>
+            <p {...stylex.props(styles.eyebrow)}>{FACILITIES_EYEBROW}</p>
+            <h2 id="facilities-title" {...stylex.props(styles.heading)}>
+              {firstLine}{" "}
+              <em {...stylex.props(styles.headingEmphasis)}>{secondLine}</em>
+            </h2>
           </div>
           <p {...stylex.props(styles.intro)}>{FACILITIES_INTRO}</p>
         </div>
@@ -304,7 +379,14 @@ export const FacilitiesShowcase = ({
                     >
                       {facility.name}
                     </span>
-                    <span {...stylex.props(styles.tag)}>{facility.tag}</span>
+                    <span
+                      {...stylex.props(
+                        styles.tag,
+                        on ? styles.tagActive : styles.tagIdle
+                      )}
+                    >
+                      {facility.tag}
+                    </span>
                   </button>
                 </li>
               );
@@ -313,11 +395,23 @@ export const FacilitiesShowcase = ({
 
           <div {...stylex.props(styles.stage)}>
             <div {...stylex.props(styles.frame)}>
-              <Media
-                placeholder={`${active.name} photograph`}
-                ratio="4:5"
-                source={active.image}
-              />
+              {facilities.map((facility, position) => (
+                <div
+                  aria-hidden={position !== current}
+                  key={facility.id}
+                  {...stylex.props(
+                    styles.layer,
+                    position === current ? styles.layerOn : styles.layerOff
+                  )}
+                >
+                  <DcSlot
+                    inverse
+                    placeholder={`${facility.name} photograph`}
+                    source={facility.image}
+                    style={styles.photo}
+                  />
+                </div>
+              ))}
               <div {...stylex.props(styles.scrim)} />
               <div {...stylex.props(styles.badges)}>
                 <span {...stylex.props(styles.badgeTag)}>{active.tag}</span>
@@ -335,7 +429,7 @@ export const FacilitiesShowcase = ({
             </div>
             <div {...stylex.props(styles.controls)}>
               <span {...stylex.props(styles.hint)}>
-                Select a facility to view it
+                Hover or select a facility to view it
               </span>
               <span {...stylex.props(styles.arrows)}>
                 <button
@@ -344,7 +438,7 @@ export const FacilitiesShowcase = ({
                   type="button"
                   {...stylex.props(styles.arrow)}
                 >
-                  <ArrowLeft aria-hidden="true" size={18} />
+                  <span aria-hidden="true">←</span>
                 </button>
                 <button
                   aria-label="Next facility"
@@ -352,13 +446,13 @@ export const FacilitiesShowcase = ({
                   type="button"
                   {...stylex.props(styles.arrow)}
                 >
-                  <ArrowRight aria-hidden="true" size={18} />
+                  <span aria-hidden="true">→</span>
                 </button>
               </span>
             </div>
           </div>
         </div>
-      </Container>
-    </Section>
+      </DcInner>
+    </DcSection>
   );
 };

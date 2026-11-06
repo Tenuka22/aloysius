@@ -27,7 +27,6 @@ describe(AcademicsPage, () => {
       "Sections of Study",
       "A/L Streams",
       "Where Aloysians learn & grow",
-      "Examination Results & Achievements",
     ]) {
       expect(
         screen.getByRole("heading", { level: 2, name })
@@ -35,20 +34,17 @@ describe(AcademicsPage, () => {
     }
   });
 
-  it("points every jump link at a section that actually exists", () => {
-    const { container } = render(<AcademicsPage />);
+  it("has no jump links or results band - the design has neither", () => {
+    render(<AcademicsPage />);
 
-    const jumpNav = screen.getByRole("navigation", { name: "On this page" });
-    const links = within(jumpNav).getAllByRole("link");
-    expect(links).toHaveLength(4);
-
-    for (const link of links) {
-      const href = link.getAttribute("href") ?? "";
-      expect(href.startsWith("#")).toBeTruthy();
-      // A jump link to a missing id is a dead control, and nothing in the type
-      // system catches it - only this assertion does.
-      expect(container.querySelector(href)).not.toBeNull();
-    }
+    expect(
+      screen.queryByRole("navigation", { name: "On this page" })
+    ).toBeNull();
+    expect(
+      screen.queryByRole("heading", {
+        name: "Examination Results & Achievements",
+      })
+    ).toBeNull();
   });
 
   it("marks Academics as the current page in the primary nav", () => {
@@ -60,7 +56,7 @@ describe(AcademicsPage, () => {
     ).toHaveAttribute("aria-current", "page");
   });
 
-  it("lists all four A/L streams", () => {
+  it("lists all five A/L streams", () => {
     const { container } = render(<AcademicsPage />);
 
     // Scoped to the streams section: "Commerce" is legitimately both a stream
@@ -72,7 +68,8 @@ describe(AcademicsPage, () => {
       "Physical Science",
       "Biological Science",
       "Commerce",
-      "Arts & Technology",
+      "Arts",
+      "Technology",
     ]) {
       expect(
         within(streams as HTMLElement).getByRole("heading", { level: 3, name })

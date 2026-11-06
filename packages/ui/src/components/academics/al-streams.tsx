@@ -2,70 +2,63 @@ import * as stylex from "@stylexjs/stylex";
 
 import { AL_STREAMS } from "../../content/academics";
 import type { Stream } from "../../content/academics";
-import { color, font, motionToken, space } from "../../tokens/tokens.stylex";
-import { Container, Eyebrow, Heading, Section } from "../primitives/layout";
+import { font } from "../../tokens/tokens.stylex";
+import { DcEyebrow, DcHeading, DcInner, DcSection } from "../home/dc";
 import { Reveal } from "../primitives/reveal";
 
+const GOLD_LINE = "rgba(255, 178, 3, 0.2)";
+
 const styles = stylex.create({
+  heading: {
+    marginBlockEnd: "clamp(36px, 5vw, 60px)",
+  },
   /*
    * The hairline rules between cells are drawn by a 1px grid gap over the
-   * container's gold background rather than per-cell borders - that way the
-   * lines never double up where two cells meet, at any column count.
+   * container's gold background rather than per-cell borders, so the lines
+   * never double up where two cells meet at any column count.
    */
   grid: {
     display: "grid",
     listStyle: "none",
     margin: 0,
-    marginBlockStart: space["2xl"],
     padding: 0,
-    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 14rem), 1fr))",
-    gap: space.px,
-    backgroundColor: color.borderAccent,
-    borderWidth: space.px,
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
+    gap: "1px",
+    backgroundColor: GOLD_LINE,
+    borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: color.borderAccent,
+    borderColor: GOLD_LINE,
+  },
+  cell: {
+    blockSize: "100%",
   },
   card: {
-    display: "flex",
-    flexDirection: "column",
-    gap: space["2xs"],
     blockSize: "100%",
-    padding: space.lg,
+    paddingBlock: "36px",
+    paddingInline: "28px",
     backgroundColor: {
-      default: color.surfaceInverse,
-      ":hover": color.surfaceInverseDeep,
+      default: "#013405",
+      ":hover": "#062B0A",
     },
-    transitionProperty: "background-color",
-    transitionDuration: motionToken.base,
   },
   index: {
     margin: 0,
     fontFamily: font.display,
-    fontSize: font.size2xl,
-    fontWeight: font.weightSemibold,
-    lineHeight: 1,
-    color: color.accentOnInverse,
+    fontSize: "38px",
+    fontWeight: 600,
+    color: "#FFB203",
   },
   name: {
     margin: 0,
-    fontSize: font.sizeLg,
-    fontWeight: font.weightBold,
-    lineHeight: font.leadingSnug,
-    color: color.onInverse,
-    textWrap: "balance",
+    marginBlock: "14px 8px",
+    fontSize: "17px",
+    fontWeight: 700,
   },
   description: {
     margin: 0,
-    fontSize: font.sizeSm,
-    lineHeight: font.leadingRelaxed,
-    color: color.onInverseSubtle,
-    textWrap: "pretty",
-  },
-  heading: {
-    color: color.onInverse,
-  },
-  cell: {
-    blockSize: "100%",
+    fontSize: "13px",
+    lineHeight: 1.6,
+    color: "rgba(255, 248, 231, 0.65)",
   },
 });
 
@@ -74,13 +67,12 @@ export const AlStreams = ({
 }: {
   streams?: readonly Stream[];
 }) => (
-  <Section id="streams" labelledBy="streams-title" tone="inverseGradient">
-    <Container>
-      <Eyebrow inverse>Advanced Level</Eyebrow>
-      <Heading id="streams-title" level={2} style={styles.heading}>
+  <DcSection id="streams" labelledBy="streams-title" tone="greenGradient">
+    <DcInner>
+      <DcEyebrow gold>Advanced Level</DcEyebrow>
+      <DcHeading id="streams-title" style={styles.heading}>
         A/L Streams
-      </Heading>
-
+      </DcHeading>
       <ul {...stylex.props(styles.grid)}>
         {streams.map((stream) => (
           <li key={stream.id} {...stylex.props(styles.cell)}>
@@ -96,6 +88,6 @@ export const AlStreams = ({
           </li>
         ))}
       </ul>
-    </Container>
-  </Section>
+    </DcInner>
+  </DcSection>
 );
