@@ -6,6 +6,20 @@ import { bp } from "../../tokens/breakpoints.stylex";
 import { color, font, space } from "../../tokens/tokens.stylex";
 import { Media } from "../primitives/media";
 
+/** Id of the element directly after the hero; the scroll cue targets it. */
+export const HERO_NEXT_SECTION_ID = "home-intro";
+
+const scrollToNextSection = (): void => {
+  const target = document.querySelector(`#${HERO_NEXT_SECTION_ID}`);
+  if (!target) {
+    return;
+  }
+  const reduceMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+  target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+};
+
 const styles = stylex.create({
   hero: {
     position: "relative",
@@ -104,6 +118,25 @@ const styles = stylex.create({
     textWrap: "balance",
     textShadow: "0 1px 2px rgba(0, 0, 0, 0.6)",
   },
+  scrollCue: {
+    position: "absolute",
+    insetBlockEnd: space.lg,
+    insetInlineStart: "50%",
+    transform: "translateX(-50%)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "2.75rem",
+    height: "2.75rem",
+    borderRadius: "50%",
+    borderWidth: space.px,
+    borderStyle: "solid",
+    borderColor: color.accentOnInverse,
+    color: color.accentOnInverse,
+    backgroundColor: "transparent",
+    cursor: "pointer",
+    zIndex: 1,
+  },
 });
 
 /**
@@ -188,6 +221,27 @@ export const Hero = ({
         <hr {...stylex.props(styles.rule)} />
         <p {...stylex.props(styles.tagline)}>{motto}</p>
       </div>
+
+      <button
+        aria-label="Scroll to the next section"
+        onClick={scrollToNextSection}
+        type="button"
+        {...stylex.props(styles.scrollCue)}
+      >
+        <svg
+          aria-hidden="true"
+          fill="none"
+          height="18"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+          width="18"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
     </section>
   );
 };

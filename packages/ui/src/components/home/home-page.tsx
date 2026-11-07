@@ -22,7 +22,7 @@ import { Achievements } from "./achievements";
 import { Alumni } from "./alumni";
 import { Gallery } from "./gallery";
 import { Heritage } from "./heritage";
-import { Hero } from "./hero";
+import { HERO_NEXT_SECTION_ID, Hero } from "./hero";
 import { News } from "./news";
 import { StudentLife } from "./student-life";
 
@@ -126,6 +126,7 @@ export const HomePage = ({
             place={cms?.heroPlace}
           />
         )}
+        <div id={HERO_NEXT_SECTION_ID} />
         {!h?.heritage && (
           <Heritage
             images={cms?.heritageImages}

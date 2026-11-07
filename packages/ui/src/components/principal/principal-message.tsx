@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { useId } from "react";
+import { useId, useState } from "react";
 
 import type { PrincipalContent } from "../../content/principal";
 import { sanitizeRichText } from "../../lib/sanitize-rich-text";
@@ -148,6 +148,23 @@ const home = stylex.create({
     textTransform: "uppercase",
     color: "rgba(1, 52, 5, 0.72)",
   },
+  disclosure: {
+    marginBlockStart: "6px",
+    padding: 0,
+    borderWidth: 0,
+    backgroundColor: "transparent",
+    color: "inherit",
+    fontFamily: "inherit",
+    fontSize: "inherit",
+    lineHeight: "inherit",
+    textDecoration: "underline",
+    textUnderlineOffset: "0.2em",
+    cursor: "pointer",
+    ":focus-visible": {
+      outline: "2px solid currentColor",
+      outlineOffset: "3px",
+    },
+  },
 });
 
 /** The homepage's take on the section, to the approved UI/UX design. */
@@ -160,7 +177,13 @@ const HomePrincipal = ({
   id?: string;
   titleId: string;
 }) => {
-  const { eyebrow, quote, name, role, portrait, link } = content;
+  const { eyebrow, quote, body, name, role, portrait, link } = content;
+  const bodyId = useId();
+  const [expanded, setExpanded] = useState(false);
+  // The pull quote shows only the quote, so the full message expands in place
+  // rather than linking to a page that repeats it.
+  const expandable = Boolean(body) && Boolean(link);
+
   return (
     <DcSection id={id} labelledBy={titleId} style={home.section} tone="raised">
       <DcInner narrow>
@@ -184,10 +207,31 @@ const HomePrincipal = ({
               </blockquote>
               {name ? <p {...stylex.props(home.name)}>&mdash; {name}</p> : null}
               <p {...stylex.props(home.role)}>{role}</p>
-              {link ? (
+              {expandable && link ? (
+                <button
+                  aria-controls={bodyId}
+                  aria-expanded={expanded}
+                  onClick={() => setExpanded((open) => !open)}
+                  type="button"
+                  {...stylex.props(home.disclosure)}
+                >
+                  {expanded ? "Show less" : link.label}{" "}
+                  <span aria-hidden="true">{expanded ? "↑" : "→"}</span>
+                </button>
+              ) : null}
+              {link && !expandable ? (
                 <DcLink href={link.href}>
                   {link.label} <span aria-hidden="true">→</span>
                 </DcLink>
+              ) : null}
+              {expandable && expanded ? (
+                <div
+                  id={bodyId}
+                  data-rich-text=""
+                  {...stylex.props(about.richText)}
+                  // oxlint-disable-next-line react/no-danger -- the value is sanitised immediately above by an allowlist pass
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichText(body) }}
+                />
               ) : null}
             </div>
           </Reveal>

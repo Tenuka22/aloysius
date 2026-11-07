@@ -230,7 +230,7 @@ export const HOMEPAGE_BLOCKS: readonly PageBlock[] = [
         id: "hero-place",
         label: "Sub-label",
         kind: "text",
-        value: "Galle Ã¢â‚¬Â¢ Sri Lanka",
+        value: "Galle \u2022 Sri Lanka",
       },
       {
         id: "hero-title",
